@@ -25,6 +25,9 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '~/component
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '~/components/ui/Badge';
 
+const ENV_NETLIFY_ACCESS_TOKEN =
+  typeof process !== 'undefined' ? process.env?.VITE_NETLIFY_ACCESS_TOKEN : undefined;
+
 // Add the Netlify logo SVG component at the top of the file
 const NetlifyLogo = () => (
   <svg viewBox="0 0 40 40" className="w-5 h-5">
@@ -59,7 +62,7 @@ export default function NetlifyConnection() {
       user: connection.user,
       token: connection.token ? '[TOKEN_EXISTS]' : '[NO_TOKEN]',
     },
-    envToken: process.env?.VITE_NETLIFY_ACCESS_TOKEN ? '[ENV_TOKEN_EXISTS]' : '[NO_ENV_TOKEN]',
+    envToken: ENV_NETLIFY_ACCESS_TOKEN ? '[ENV_TOKEN_EXISTS]' : '[NO_ENV_TOKEN]',
   });
 
   const [deploymentCount, setDeploymentCount] = useState(0);
@@ -924,7 +927,7 @@ export default function NetlifyConnection() {
             <div className="mt-2 text-xs text-gray-500">
               <p>Debug: Token present: {connection.token ? '✅' : '❌'}</p>
               <p>Debug: User present: {connection.user ? '✅' : '❌'}</p>
-              <p>Debug: Env token: {process.env?.VITE_NETLIFY_ACCESS_TOKEN ? '✅' : '❌'}</p>
+              <p>Debug: Env token: {ENV_NETLIFY_ACCESS_TOKEN ? '✅' : '❌'}</p>
             </div>
             <div className="flex gap-2 mt-4">
               <button
