@@ -1,11 +1,10 @@
 'use client';
-import { Header } from '~/components/header/Header';
+import { BaseChat } from '~/components/chat/BaseChat';
 
 export default function Page() {
   return (
-    <div className="flex flex-col h-full w-full">
-      <Header />
-      <div>diagnostic</div>
+    <div className="flex flex-col h-full w-full bg-bolt-elements-background-depth-1">
+      <BaseChat />
     </div>
   );
 }
