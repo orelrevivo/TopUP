@@ -1,7 +1,6 @@
 'use client';
-import { FitAddon } from '@xterm/addon-fit';
-import { WebLinksAddon } from '@xterm/addon-web-links';
-import { Terminal as XTerm } from '@xterm/xterm';
+import type { FitAddon } from '@xterm/addon-fit';
+import type { Terminal as XTerm } from '@xterm/xterm';
 import { forwardRef, memo, useEffect, useImperativeHandle, useRef } from 'react';
 import type { Theme } from '~/lib/stores/theme';
 import { createScopedLogger } from '~/utils/logger';
@@ -34,68 +33,89 @@ export const Terminal = memo(
       useEffect(() => {
         const element = terminalElementRef.current!;
 
-        const fitAddon = new FitAddon();
-        const webLinksAddon = new WebLinksAddon();
-        fitAddonRef.current = fitAddon;
+        let terminal: XTerm | undefined;
+        let resizeObserver: ResizeObserver | undefined;
+        let disposed = false;
 
-        const terminal = new XTerm({
-          cursorBlink: true,
-          convertEol: true,
-          disableStdin: readonly,
-          theme: getTerminalTheme(readonly ? { cursor: '#00000000' } : {}),
-          fontSize: 12,
-          fontFamily: 'Menlo, courier-new, courier, monospace',
-          allowProposedApi: true,
-          scrollback: 1000,
+        // xterm and its addons reference browser-only globals (e.g. `self`) at
+        // module load time, so we import them lazily on the client to avoid
+        // breaking server-side rendering.
+        (async () => {
+          const [{ Terminal: XTermCtor }, { FitAddon }, { WebLinksAddon }] = await Promise.all([
+            import('@xterm/xterm'),
+            import('@xterm/addon-fit'),
+            import('@xterm/addon-web-links'),
+          ]);
 
-          // Enable better clipboard handling
-          rightClickSelectsWord: true,
-        });
-
-        terminalRef.current = terminal;
-
-        // Error handling for addon loading
-        try {
-          terminal.loadAddon(fitAddon);
-          terminal.loadAddon(webLinksAddon);
-          terminal.open(element);
-        } catch (error) {
-          logger.error(`Failed to initialize terminal [${id}]:`, error);
-
-          // Attempt recovery
-          setTimeout(() => {
-            try {
-              terminal.open(element);
-              fitAddon.fit();
-            } catch (retryError) {
-              logger.error(`Terminal recovery failed [${id}]:`, retryError);
-            }
-          }, 100);
-        }
-
-        const resizeObserver = new ResizeObserver((entries) => {
-          // Debounce resize events
-          if (entries.length > 0) {
-            try {
-              fitAddon.fit();
-              onTerminalResize?.(terminal.cols, terminal.rows);
-            } catch (error) {
-              logger.error(`Resize error [${id}]:`, error);
-            }
+          if (disposed) {
+            return;
           }
-        });
 
-        resizeObserverRef.current = resizeObserver;
-        resizeObserver.observe(element);
+          const fitAddon = new FitAddon();
+          const webLinksAddon = new WebLinksAddon();
+          fitAddonRef.current = fitAddon;
 
-        logger.debug(`Attach [${id}]`);
+          terminal = new XTermCtor({
+            cursorBlink: true,
+            convertEol: true,
+            disableStdin: readonly,
+            theme: getTerminalTheme(readonly ? { cursor: '#00000000' } : {}),
+            fontSize: 12,
+            fontFamily: 'Menlo, courier-new, courier, monospace',
+            allowProposedApi: true,
+            scrollback: 1000,
 
-        onTerminalReady?.(terminal);
+            // Enable better clipboard handling
+            rightClickSelectsWord: true,
+          });
+
+          terminalRef.current = terminal;
+
+          // Error handling for addon loading
+          try {
+            terminal.loadAddon(fitAddon);
+            terminal.loadAddon(webLinksAddon);
+            terminal.open(element);
+          } catch (error) {
+            logger.error(`Failed to initialize terminal [${id}]:`, error);
+
+            // Attempt recovery
+            setTimeout(() => {
+              try {
+                terminal?.open(element);
+                fitAddon.fit();
+              } catch (retryError) {
+                logger.error(`Terminal recovery failed [${id}]:`, retryError);
+              }
+            }, 100);
+          }
+
+          resizeObserver = new ResizeObserver((entries) => {
+            // Debounce resize events
+            if (entries.length > 0 && terminal) {
+              try {
+                fitAddon.fit();
+                onTerminalResize?.(terminal.cols, terminal.rows);
+              } catch (error) {
+                logger.error(`Resize error [${id}]:`, error);
+              }
+            }
+          });
+
+          resizeObserverRef.current = resizeObserver;
+          resizeObserver.observe(element);
+
+          logger.debug(`Attach [${id}]`);
+
+          onTerminalReady?.(terminal);
+        })();
 
         return () => {
+          disposed = true;
+
           try {
-            resizeObserver.disconnect();
-            terminal.dispose();
+            resizeObserver?.disconnect();
+            terminal?.dispose();
           } catch (error) {
             logger.error(`Cleanup error [${id}]:`, error);
           }
@@ -103,7 +123,11 @@ export const Terminal = memo(
       }, []);
 
       useEffect(() => {
-        const terminal = terminalRef.current!;
+        const terminal = terminalRef.current;
+
+        if (!terminal) {
+          return;
+        }
 
         // we render a transparent cursor in case the terminal is readonly
         terminal.options.theme = getTerminalTheme(readonly ? { cursor: '#00000000' } : {});
