@@ -145,7 +145,7 @@ export function updateSupabaseConnection(connection: Partial<SupabaseConnectionS
 
 export function initializeSupabaseConnection() {
   // Auto-connect using environment variable if available
-  const envToken = typeof process !== 'undefined' ? process.env?.VITE_SUPABASE_ACCESS_TOKEN : undefined;
+  const envToken = process.env?.VITE_SUPABASE_ACCESS_TOKEN;
 
   if (envToken && !supabaseConnection.get().token) {
     updateSupabaseConnection({ token: envToken });

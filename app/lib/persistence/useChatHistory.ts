@@ -34,17 +34,7 @@ export interface ChatHistoryItem {
 
 const persistenceEnabled = !process.env.NEXT_PUBLIC_DISABLE_PERSISTENCE;
 
-// Avoid a top-level `await` here: it turns this file into an async module,
-// which (when re-exported through the persistence barrel) can resolve to
-// `undefined` exports during SSR and break components that import from it.
-// Initialize the IndexedDB connection lazily in the browser instead.
-export let db: IDBDatabase | undefined = undefined;
-
-if (persistenceEnabled && typeof indexedDB !== 'undefined') {
-  openDatabase().then((database) => {
-    db = database;
-  });
-}
+export const db = persistenceEnabled ? await openDatabase() : undefined;
 
 export const chatId = atom<string | undefined>(undefined);
 export const description = atom<string | undefined>(undefined);

@@ -14,8 +14,6 @@ import {
   autoConnectVercel,
 } from '~/lib/stores/vercel';
 
-const ENV_VERCEL_ACCESS_TOKEN = typeof process !== 'undefined' ? process.env?.VITE_VERCEL_ACCESS_TOKEN : undefined;
-
 export default function VercelConnection() {
   console.log('VercelConnection component mounted');
 
@@ -30,7 +28,7 @@ export default function VercelConnection() {
       user: connection.user,
       token: connection.token ? '[TOKEN_EXISTS]' : '[NO_TOKEN]',
     },
-    envToken: ENV_VERCEL_ACCESS_TOKEN ? '[ENV_TOKEN_EXISTS]' : '[NO_ENV_TOKEN]',
+    envToken: process.env?.VITE_VERCEL_ACCESS_TOKEN ? '[ENV_TOKEN_EXISTS]' : '[NO_ENV_TOKEN]',
   });
 
   useEffect(() => {
@@ -44,13 +42,13 @@ export default function VercelConnection() {
       console.log('Vercel initializeConnection:', {
         user: connection.user,
         token: connection.token ? '[TOKEN_EXISTS]' : '[NO_TOKEN]',
-        envToken: ENV_VERCEL_ACCESS_TOKEN ? '[ENV_TOKEN_EXISTS]' : '[NO_ENV_TOKEN]',
+        envToken: process.env?.VITE_VERCEL_ACCESS_TOKEN ? '[ENV_TOKEN_EXISTS]' : '[NO_ENV_TOKEN]',
       });
 
       hasInitialized.current = true;
 
       // Auto-connect using environment variable if no existing connection but token exists
-      if (!connection.user && connection.token && ENV_VERCEL_ACCESS_TOKEN) {
+      if (!connection.user && connection.token && process.env?.VITE_VERCEL_ACCESS_TOKEN) {
         console.log('Vercel: Attempting auto-connection');
 
         const result = await autoConnectVercel();
@@ -177,7 +175,7 @@ export default function VercelConnection() {
                 <div className="mt-2 text-xs text-gray-500">
                   <p>Debug: Token present: {connection.token ? '✅' : '❌'}</p>
                   <p>Debug: User present: {connection.user ? '✅' : '❌'}</p>
-                  <p>Debug: Env token: {ENV_VERCEL_ACCESS_TOKEN ? '✅' : '❌'}</p>
+                  <p>Debug: Env token: {process.env?.VITE_VERCEL_ACCESS_TOKEN ? '✅' : '❌'}</p>
                 </div>
               </div>
             </div>
