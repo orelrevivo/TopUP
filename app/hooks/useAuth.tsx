@@ -2,6 +2,9 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { loadProfileFromServer } from "~/lib/stores/profile";
+import { SESSION_DURATION_DAYS } from "~/lib/auth";
+
+const SESSION_KEY = "session_token";
 
 interface User {
   id: string;
@@ -20,13 +23,38 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function setSessionCookie(token: string) {
+  const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
+  const secure = window.location.protocol === "https:" ? "; Secure" : "";
+  document.cookie = `session=${token}; Path=/; SameSite=Lax${secure}; Max-Age=${maxAge}`;
+  localStorage.setItem(SESSION_KEY, token);
+}
+
+function clearSessionCookie() {
+  document.cookie = "session=; Path=/; SameSite=Lax; Max-Age=0";
+  localStorage.removeItem(SESSION_KEY);
+}
+
+function restoreSessionFromStorage() {
+  const token = localStorage.getItem(SESSION_KEY);
+  if (token) {
+    const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
+    const secure = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `session=${token}; Path=/; SameSite=Lax${secure}; Max-Age=${maxAge}`;
+  }
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch("/api/auth/me");
+      restoreSessionFromStorage();
+      const token = localStorage.getItem(SESSION_KEY);
+      const headers: Record<string, string> = {};
+      if (token) headers["x-session-token"] = token;
+      const res = await fetch("/api/auth/me", { headers });
       const data = (await res.json()) as { user?: { id: string; email: string; displayName?: string | null } };
       setUser(data.user ?? null);
       if (data.user) {
@@ -50,8 +78,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json()) as { user?: any; error?: string };
+      const data = (await res.json()) as { user?: any; token?: string; error?: string };
       if (!res.ok) return { error: data.error ?? "Login failed" };
+      if (data.token) setSessionCookie(data.token);
       setUser(data.user);
       syncStorageFromServer();
       loadProfileFromServer();
@@ -68,8 +97,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json()) as { user?: any; error?: string };
+      const data = (await res.json()) as { user?: any; token?: string; error?: string };
       if (!res.ok) return { error: data.error ?? "Registration failed" };
+      if (data.token) setSessionCookie(data.token);
       setUser(data.user);
       syncStorageFromServer();
       loadProfileFromServer();
@@ -85,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch {
       // ignore
     }
+    clearSessionCookie();
     setUser(null);
   }, []);
 
@@ -101,7 +132,10 @@ export function useAuth() {
 
 async function syncStorageFromServer() {
   try {
-    const res = await fetch("/api/sync");
+    const token = localStorage.getItem(SESSION_KEY);
+    const headers: Record<string, string> = {};
+    if (token) headers["x-session-token"] = token;
+    const res = await fetch("/api/sync", { headers });
     if (!res.ok) return;
     const data = (await res.json()) as Record<string, any>;
     for (const [key, value] of Object.entries(data)) {

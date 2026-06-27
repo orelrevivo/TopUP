@@ -4,6 +4,7 @@ import type { NextRequest } from "next/server";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const COOKIE_NAME = "session";
+const HEADER_NAME = "x-session-token";
 export const SESSION_DURATION_DAYS = 7;
 
 export async function hashPassword(password: string): Promise<string> {
@@ -38,10 +39,21 @@ export function getTokenFromCookies(cookieHeader: string | null): string | null 
 }
 
 export async function getUserId(request: NextRequest): Promise<string | null> {
-  const token = request.cookies.get(COOKIE_NAME)?.value ?? null;
-  if (!token) return null;
-  const payload = await verifyToken(token);
-  return payload?.userId ?? null;
+  // Try cookie first
+  const fromCookie = request.cookies.get(COOKIE_NAME)?.value ?? null;
+  if (fromCookie) {
+    const payload = await verifyToken(fromCookie);
+    if (payload?.userId) return payload.userId;
+  }
+
+  // Fallback to x-session-token header (set by client when cookies don't work)
+  const fromHeader = request.headers.get(HEADER_NAME);
+  if (fromHeader) {
+    const payload = await verifyToken(fromHeader);
+    if (payload?.userId) return payload.userId;
+  }
+
+  return null;
 }
 
 /** Fallback: extract token from raw Cookie header string */
@@ -50,3 +62,5 @@ export function getTokenFromHeader(cookieHeader: string | null): string | null {
   const match = cookieHeader.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
   return match ? match[1] : null;
 }
+
+export { COOKIE_NAME };

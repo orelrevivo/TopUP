@@ -24,9 +24,16 @@ export const updateProfile = (updates: Partial<Profile>) => {
   }
 };
 
+const SESSION_KEY = 'session_token';
+
+function authHeaders(): Record<string, string> {
+  const token = typeof window !== 'undefined' ? localStorage.getItem(SESSION_KEY) : null;
+  return token ? { 'x-session-token': token } : {};
+}
+
 export const loadProfileFromServer = async () => {
   try {
-    const res = await fetch('/api/profile');
+    const res = await fetch('/api/profile', { headers: authHeaders() });
     if (!res.ok) return;
     const serverProfile = (await res.json()) as Profile;
     if (serverProfile.username || serverProfile.avatar || serverProfile.bio) {
@@ -44,7 +51,7 @@ export const saveProfileToServer = async (profile: Profile) => {
   try {
     await fetch('/api/profile', {
       method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json', ...authHeaders() },
       body: JSON.stringify(profile),
     });
   } catch {

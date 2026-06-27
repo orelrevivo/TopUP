@@ -3,6 +3,13 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "~/hooks/useAuth";
 
+const SESSION_KEY = "session_token";
+
+function authHeaders(): Record<string, string> {
+  const token = typeof window !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
+  return token ? { "x-session-token": token } : {};
+}
+
 function tryParseJSON(value: string): any {
   try {
     return JSON.parse(value);
@@ -60,7 +67,7 @@ export function StorageSync() {
         }
         fetch("/api/migrate", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "application/json", ...authHeaders() },
           body: JSON.stringify({ chats, settings: lsSettings }),
         }).catch(() => {});
       }
@@ -71,15 +78,17 @@ export function StorageSync() {
 
     const overrideSetItem = (key: string, value: string) => {
       originalSetItem(key, value);
+      if (key === SESSION_KEY) return;
       fetch("/api/sync", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...authHeaders() },
         body: JSON.stringify({ key, value: tryParseJSON(value) }),
       }).catch(() => {});
     };
 
     const overrideRemoveItem = (key: string) => {
       originalRemoveItem(key);
+      if (key === SESSION_KEY) return;
       fetch(`/api/sync?key=${encodeURIComponent(key)}`, { method: "DELETE" }).catch(() => {});
     };
 
