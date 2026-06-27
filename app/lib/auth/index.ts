@@ -39,14 +39,27 @@ export function getTokenFromCookies(cookieHeader: string | null): string | null 
 }
 
 export async function getUserId(request: NextRequest): Promise<string | null> {
-  // Try cookie first
-  const fromCookie = request.cookies.get(COOKIE_NAME)?.value ?? null;
-  if (fromCookie) {
-    const payload = await verifyToken(fromCookie);
+  // Try Next.js cookies API first
+  const cookieVal = request.cookies.get(COOKIE_NAME)?.value ?? null;
+  if (cookieVal) {
+    const payload = await verifyToken(cookieVal);
     if (payload?.userId) return payload.userId;
   }
 
-  // Fallback to x-session-token header (set by client when cookies don't work)
+  // Fallback: parse raw Cookie header directly
+  // (works around a known Next.js edge-runtime bug where
+  //  request.cookies.get() returns undefined despite the
+  //  cookie being present in the request)
+  const rawCookie = request.headers.get("cookie");
+  if (rawCookie) {
+    const match = rawCookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
+    if (match) {
+      const payload = await verifyToken(match[1]);
+      if (payload?.userId) return payload.userId;
+    }
+  }
+
+  // Final fallback: x-session-token header set by localStorage backup
   const fromHeader = request.headers.get(HEADER_NAME);
   if (fromHeader) {
     const payload = await verifyToken(fromHeader);
