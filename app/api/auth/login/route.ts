@@ -35,8 +35,11 @@ export async function POST(request: Request) {
     const token = await createToken(user.id);
     const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
     const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
-    const isSecure = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
-    const secureFlag = isSecure ? "Secure; " : "";
+    const isProduction = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
+
+    const cookieFlags = isProduction
+      ? `HttpOnly; Secure; Path=/; SameSite=None; Max-Age=${maxAge}; Expires=${expires}`
+      : `HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}; Expires=${expires}`;
 
     const body = JSON.stringify({
       user: { id: user.id, email: user.email, displayName: user.displayName },
@@ -47,7 +50,7 @@ export async function POST(request: Request) {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Set-Cookie": `session=${token}; HttpOnly; ${secureFlag}Path=/; SameSite=Lax; Max-Age=${maxAge}; Expires=${expires}`,
+        "Set-Cookie": `session=${token}; ${cookieFlags}`,
       },
     });
   } catch (error) {

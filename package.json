@@ -90,6 +90,7 @@
     "istextorbinary": "^9.5.0",
     "jose": "^5.9.6",
     "js-cookie": "^3.0.8",
+    "jsonwebtoken": "^9.0.3",
     "jspdf": "^2.5.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.485.0",
