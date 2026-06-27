@@ -27,11 +27,7 @@ export async function verifyToken(token: string): Promise<{ userId: string } | n
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return { userId: payload.userId as string };
-  } catch (err: any) {
-    const errMsg = err?.message || String(err);
-    console.error("verifyToken error:", errMsg);
-    // @ts-ignore
-    globalThis.__lastAuthError = `Verification failed: ${errMsg}. Token length: ${token?.length}. Secret length: ${process.env.JWT_SECRET?.length ?? 0}`;
+  } catch {
     return null;
   }
 }
