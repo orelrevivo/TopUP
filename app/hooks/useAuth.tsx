@@ -26,17 +26,15 @@ const AuthContext = createContext<AuthContextValue | null>(null);
 function setSessionCookie(token: string) {
   const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
   const isHttps = window.location.protocol === "https:";
-  const sameSite = isHttps ? "None" : "Lax";
   const secure = isHttps ? "; Secure" : "";
-  document.cookie = `session=${token}; Path=/; SameSite=${sameSite}${secure}; Max-Age=${maxAge}`;
+  document.cookie = `session=${token}; Path=/; SameSite=Lax${secure}; Max-Age=${maxAge}`;
   localStorage.setItem(SESSION_KEY, token);
 }
 
 function clearSessionCookie() {
   const isHttps = window.location.protocol === "https:";
-  const sameSite = isHttps ? "None" : "Lax";
   const secure = isHttps ? "; Secure" : "";
-  document.cookie = `session=; Path=/; SameSite=${sameSite}${secure}; Max-Age=0`;
+  document.cookie = `session=; Path=/; SameSite=Lax${secure}; Max-Age=0`;
   localStorage.removeItem(SESSION_KEY);
 }
 
@@ -45,9 +43,8 @@ function restoreSessionFromStorage() {
   if (token) {
     const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
     const isHttps = window.location.protocol === "https:";
-    const sameSite = isHttps ? "None" : "Lax";
     const secure = isHttps ? "; Secure" : "";
-    document.cookie = `session=${token}; Path=/; SameSite=${sameSite}${secure}; Max-Age=${maxAge}`;
+    document.cookie = `session=${token}; Path=/; SameSite=Lax${secure}; Max-Age=${maxAge}`;
   }
 }
 
