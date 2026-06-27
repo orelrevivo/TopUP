@@ -38,7 +38,7 @@ export async function POST(request: Request) {
     const isProduction = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
 
     const cookieFlags = isProduction
-      ? `HttpOnly; Secure; Path=/; SameSite=None; Max-Age=${maxAge}; Expires=${expires}`
+      ? `HttpOnly; Secure; Path=/; SameSite=Lax; Max-Age=${maxAge}; Expires=${expires}`
       : `HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}; Expires=${expires}`;
 
     const body = JSON.stringify({
