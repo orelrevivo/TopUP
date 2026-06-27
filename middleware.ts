@@ -2,38 +2,49 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { jwtVerify } from "jose";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+const JWT_SECRET = process.env.JWT_SECRET
+  ? new TextEncoder().encode(process.env.JWT_SECRET)
+  : null;
 const COOKIE_NAME = "session";
 const PUBLIC_ROUTES = ["/login", "/signup", "/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/health"];
 const STATIC_PREFIXES = ["/_next", "/favicon", "/icons", "/logo", "/apple-touch-icon", "/social_preview"];
 
 export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
-
-  if (PUBLIC_ROUTES.some((r) => pathname === r) || STATIC_PREFIXES.some((p) => pathname.startsWith(p))) {
-    return NextResponse.next();
-  }
-
-  if (pathname === "/api/auth/me") {
-    return NextResponse.next();
-  }
-
-  const sessionCookie = request.cookies.get(COOKIE_NAME);
-  if (!sessionCookie) {
-    if (pathname === "/" || pathname.startsWith("/api/")) {
-      return NextResponse.next();
-    }
-    return NextResponse.redirect(new URL("/login", request.url));
-  }
-
   try {
-    await jwtVerify(sessionCookie.value, JWT_SECRET);
-    return NextResponse.next();
-  } catch {
-    if (pathname === "/" || pathname.startsWith("/api/")) {
+    const { pathname } = request.nextUrl;
+
+    if (PUBLIC_ROUTES.some((r) => pathname === r) || STATIC_PREFIXES.some((p) => pathname.startsWith(p))) {
+      return NextResponse.next();
+    }
+
+    if (pathname === "/api/auth/me") {
+      return NextResponse.next();
+    }
+
+    const sessionCookie = request.cookies.get(COOKIE_NAME);
+
+    if (!sessionCookie) {
+      if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/")) {
+        return NextResponse.next();
+      }
+      return NextResponse.redirect(new URL("/login", request.url));
+    }
+
+    if (JWT_SECRET) {
+      try {
+        await jwtVerify(sessionCookie.value, JWT_SECRET);
+        return NextResponse.next();
+      } catch {
+        // Token invalid — let API routes handle auth
+      }
+    }
+
+    if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/")) {
       return NextResponse.next();
     }
     return NextResponse.redirect(new URL("/login", request.url));
+  } catch {
+    return NextResponse.next();
   }
 }
 

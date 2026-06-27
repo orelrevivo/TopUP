@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
     response.cookies.set("session", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
+      secure: process.env.VERCEL === "1" || process.env.NODE_ENV === "production",
       path: "/",
       maxAge,
       expires: new Date(Date.now() + maxAge * 1000),
