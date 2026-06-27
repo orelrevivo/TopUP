@@ -848,7 +848,7 @@ class DebugLogger {
   private _getAppVersion(): string {
     try {
       // Try to get version from environment or default
-      return process.env?.VITE_APP_VERSION || '1.0.0';
+      return process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0';
     } catch {
       return '1.0.0';
     }
@@ -948,8 +948,8 @@ class DebugLogger {
       }
 
       // Try to get from environment/build variables
-      const branch = process.env?.VITE_GIT_BRANCH || 'unknown';
-      const commit = process.env?.VITE_GIT_COMMIT || 'unknown';
+      const branch = process.env.NEXT_PUBLIC_GIT_BRANCH || 'unknown';
+      const commit = process.env.NEXT_PUBLIC_GIT_COMMIT || 'unknown';
 
       return {
         branch,

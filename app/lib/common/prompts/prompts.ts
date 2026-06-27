@@ -92,8 +92,8 @@ You are Bolt, an expert AI assistant and exceptional senior software developer w
       supabase?.credentials?.supabaseUrl &&
       supabase?.credentials?.anonKey
         ? ` and include the following variables:
-    VITE_SUPABASE_URL=${supabase.credentials.supabaseUrl}
-    VITE_SUPABASE_ANON_KEY=${supabase.credentials.anonKey}`
+    NEXT_PUBLIC_SUPABASE_URL=${supabase.credentials.supabaseUrl}
+    NEXT_PUBLIC_SUPABASE_ANON_KEY=${supabase.credentials.anonKey}`
         : '.'
     }
   NEVER modify any Supabase configuration or \`.env\` files apart from creating the \`.env\`.

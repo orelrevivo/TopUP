@@ -2,7 +2,7 @@
 import { useState, useCallback } from 'react';
 import { useStore } from '@nanostores/react';
 import { classNames } from '~/utils/classNames';
-import { profileStore, updateProfile } from '~/lib/stores/profile';
+import { profileStore, updateProfile, saveProfileToServer } from '~/lib/stores/profile';
 import { toast } from 'react-toastify';
 import { debounce } from '~/utils/debounce';
 
@@ -10,11 +10,19 @@ export default function ProfileTab() {
   const profile = useStore(profileStore);
   const [isUploading, setIsUploading] = useState(false);
 
+  const saveToServer = useCallback(
+    debounce((p: { username?: string; bio?: string; avatar?: string }) => {
+      saveProfileToServer({ ...profileStore.get(), ...p });
+      toast.success(`${Object.keys(p).join(', ')} updated`);
+    }, 1000),
+    [],
+  );
+
   // Create debounced update functions
   const debouncedUpdate = useCallback(
     debounce((field: 'username' | 'bio', value: string) => {
       updateProfile({ [field]: value });
-      toast.success(`${field.charAt(0).toUpperCase() + field.slice(1)} updated`);
+      saveToServer({ [field]: value });
     }, 1000),
     [],
   );
@@ -35,6 +43,7 @@ export default function ProfileTab() {
       reader.onloadend = () => {
         const base64String = reader.result as string;
         updateProfile({ avatar: base64String });
+        saveProfileToServer({ ...profileStore.get(), avatar: base64String });
         setIsUploading(false);
         toast.success('Profile picture updated');
       };

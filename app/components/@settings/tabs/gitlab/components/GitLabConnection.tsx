@@ -81,13 +81,13 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
             <p className="flex items-center gap-1 mb-1">
               <span className="i-ph:lightbulb w-3.5 h-3.5 text-bolt-elements-icon-success" />
               <span className="font-medium">Tip:</span> You can also set the{' '}
-              <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 rounded">VITE_GITLAB_ACCESS_TOKEN</code>{' '}
+              <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 rounded">NEXT_PUBLIC_GITLAB_ACCESS_TOKEN</code>{' '}
               environment variable to connect automatically.
             </p>
             <p>
               For self-hosted GitLab instances, also set{' '}
               <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 rounded">
-                VITE_GITLAB_URL=https://your-gitlab-instance.com
+                NEXT_PUBLIC_GITLAB_URL=https://your-gitlab-instance.com
               </code>
             </p>
           </div>

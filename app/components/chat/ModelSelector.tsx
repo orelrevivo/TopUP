@@ -575,7 +575,7 @@ export const ModelSelector = ({
               ) : (
                 filteredProviders.map((providerOption, index) => (
                   <div
-                    ref={(el) => (providerOptionsRef.current[index] = el)}
+                    ref={(el: HTMLDivElement | null) => { providerOptionsRef.current[index] = el; }}
                     key={providerOption.name}
                     role="option"
                     aria-selected={provider?.name === providerOption.name}
@@ -805,7 +805,7 @@ export const ModelSelector = ({
               ) : (
                 filteredModels.map((modelOption, index) => (
                   <div
-                    ref={(el) => (modelOptionsRef.current[index] = el)}
+                    ref={(el: HTMLDivElement | null) => { modelOptionsRef.current[index] = el; }}
                     key={modelOption.name}
                     role="option"
                     aria-selected={model === modelOption.name}

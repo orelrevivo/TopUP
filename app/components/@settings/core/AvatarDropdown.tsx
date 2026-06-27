@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { useStore } from '@nanostores/react';
 import { classNames } from '~/utils/classNames';
 import { profileStore } from '~/lib/stores/profile';
+import { useAuth } from '~/hooks/useAuth';
 import type { TabType, Profile } from './types';
 
 interface AvatarDropdownProps {
@@ -12,6 +13,7 @@ interface AvatarDropdownProps {
 
 export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
   const profile = useStore(profileStore) as Profile;
+  const { user } = useAuth();
 
   return (
     <DropdownMenu.Root>
@@ -73,7 +75,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             </div>
             <div className="flex-1 min-w-0">
               <div className="font-medium text-sm text-gray-900 dark:text-white truncate">
-                {profile?.username || 'Guest User'}
+                {profile?.username || user?.displayName || user?.email?.split('@')[0] || 'Guest'}
               </div>
               {profile?.bio && <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{profile.bio}</div>}
             </div>

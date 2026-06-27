@@ -6,8 +6,8 @@ import { calculateStatsSummary } from '~/utils/githubStats';
 import type { GitHubConnection } from '~/types/GitHub';
 
 // Auto-connect using environment variable
-const envToken = process.env?.VITE_GITHUB_ACCESS_TOKEN;
-const envTokenType = process.env?.VITE_GITHUB_TOKEN_TYPE;
+const envToken = process.env.NEXT_PUBLIC_GITHUB_ACCESS_TOKEN ?? '';
+const envTokenType = process.env.NEXT_PUBLIC_GITHUB_TOKEN_TYPE ?? '';
 
 const githubConnectionAtom = atom<GitHubConnection>({
   user: null,

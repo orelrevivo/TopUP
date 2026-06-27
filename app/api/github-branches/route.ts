@@ -60,7 +60,7 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
         context?.cloudflare?.env?.GITHUB_TOKEN ||
         context?.cloudflare?.env?.VITE_GITHUB_ACCESS_TOKEN ||
         process.env.GITHUB_TOKEN ||
-        process.env.VITE_GITHUB_ACCESS_TOKEN ||
+        process.env.NEXT_PUBLIC_GITHUB_ACCESS_TOKEN ||
         '';
     }
 

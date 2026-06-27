@@ -38,7 +38,7 @@ const IGNORE_PATTERNS = [
 ];
 
 export function GitUrlImport() {
-  const [searchParams] = useSearchParams();
+  const searchParams = useSearchParams();
   const { ready: historyReady, importChat } = useChatHistory();
   const { ready: gitReady, gitClone } = useGit();
   const [imported, setImported] = useState(false);

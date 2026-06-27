@@ -147,6 +147,7 @@ export const ChatImpl = memo(
         },
         maxLLMSteps: mcpSettings.maxLLMSteps,
       },
+      experimental_throttle: 50,
       sendExtraMessageFields: true,
       onError: (e) => {
         setFakeLoading(false);

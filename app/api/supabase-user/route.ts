@@ -13,7 +13,7 @@ async function supabaseUserLoader({ request, context }: { request: Request; cont
     const supabaseToken =
       apiKeys.VITE_SUPABASE_ACCESS_TOKEN ||
       context?.cloudflare?.env?.VITE_SUPABASE_ACCESS_TOKEN ||
-      process.env.VITE_SUPABASE_ACCESS_TOKEN;
+      process.env.NEXT_PUBLIC_SUPABASE_ACCESS_TOKEN;
 
     if (!supabaseToken) {
       return json({ error: 'Supabase token not found' }, { status: 401 });
@@ -99,7 +99,7 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
     const supabaseToken =
       apiKeys.VITE_SUPABASE_ACCESS_TOKEN ||
       context?.cloudflare?.env?.VITE_SUPABASE_ACCESS_TOKEN ||
-      process.env.VITE_SUPABASE_ACCESS_TOKEN;
+      process.env.NEXT_PUBLIC_SUPABASE_ACCESS_TOKEN;
 
     if (!supabaseToken) {
       return json({ error: 'Supabase token not found' }, { status: 401 });

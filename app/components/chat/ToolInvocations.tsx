@@ -2,7 +2,6 @@
 import type { ToolInvocationUIPart } from '@ai-sdk/ui-utils';
 import { AnimatePresence, motion } from 'framer-motion';
 import { memo, useMemo, useState, useEffect } from 'react';
-import { createHighlighter, type BundledLanguage, type BundledTheme, type HighlighterGeneric } from 'shiki';
 import { classNames } from '~/utils/classNames';
 import {
   TOOL_EXECUTION_APPROVAL,
@@ -12,36 +11,23 @@ import {
 } from '~/utils/constants';
 import { cubicEasingFn } from '~/utils/easings';
 import { logger } from '~/utils/logger';
-import { themeStore, type Theme } from '~/lib/stores/theme';
+import { themeStore } from '~/lib/stores/theme';
 import { useStore } from '@nanostores/react';
 import type { ToolCallAnnotation } from '~/types/context';
-
-const highlighterOptions = {
-  langs: ['json'],
-  themes: ['light-plus', 'dark-plus'],
-};
-
-const jsonHighlighter: HighlighterGeneric<BundledLanguage, BundledTheme> =
-  import.meta.hot?.data.jsonHighlighter ?? (await createHighlighter(highlighterOptions));
-
-if (import.meta.hot) {
-  import.meta.hot.data.jsonHighlighter = jsonHighlighter;
-}
 
 interface JsonCodeBlockProps {
   className?: string;
   code: string;
-  theme: Theme;
+  theme?: string;
 }
 
-function JsonCodeBlock({ className, code, theme }: JsonCodeBlockProps) {
+function JsonCodeBlock({ className, code }: JsonCodeBlockProps) {
   let formattedCode = code;
 
   try {
     if (typeof formattedCode === 'object') {
       formattedCode = JSON.stringify(formattedCode, null, 2);
     } else if (typeof formattedCode === 'string') {
-      // Attempt to parse and re-stringify for formatting
       try {
         const parsed = JSON.parse(formattedCode);
         formattedCode = JSON.stringify(parsed, null, 2);
@@ -50,24 +36,19 @@ function JsonCodeBlock({ className, code, theme }: JsonCodeBlockProps) {
       }
     }
   } catch (e) {
-    // If parsing fails, keep original code
     logger.error('Failed to parse JSON', { error: e });
   }
 
   return (
     <div
       className={classNames('text-xs rounded-md overflow-hidden mcp-tool-invocation-code', className)}
-      dangerouslySetInnerHTML={{
-        __html: jsonHighlighter.codeToHtml(formattedCode, {
-          lang: 'json',
-          theme: theme === 'dark' ? 'dark-plus' : 'light-plus',
-        }),
-      }}
       style={{
         padding: '0',
         margin: '0',
       }}
-    ></div>
+    >
+      <pre className="bg-bolt-elements-background-depth-4 p-2 rounded overflow-x-auto">{formattedCode}</pre>
+    </div>
   );
 }
 
@@ -159,7 +140,6 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
                 toolInvocations={toolCalls}
                 toolCallAnnotations={toolCallAnnotations}
                 addToolResult={addToolResult}
-                theme={theme}
               />
             </div>
           </motion.div>
@@ -176,7 +156,7 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
             <div className="bg-bolt-elements-artifacts-borderColor h-[1px]" />
 
             <div className="p-5 text-left bg-bolt-elements-actions-background">
-              <ToolResultsList toolInvocations={toolResults} toolCallAnnotations={toolCallAnnotations} theme={theme} />
+              <ToolResultsList toolInvocations={toolResults} toolCallAnnotations={toolCallAnnotations} />
             </div>
           </motion.div>
         )}
@@ -193,10 +173,9 @@ const toolVariants = {
 interface ToolResultsListProps {
   toolInvocations: ToolInvocationUIPart[];
   toolCallAnnotations: ToolCallAnnotation[];
-  theme: Theme;
 }
 
-const ToolResultsList = memo(({ toolInvocations, toolCallAnnotations, theme }: ToolResultsListProps) => {
+const ToolResultsList = memo(({ toolInvocations, toolCallAnnotations }: ToolResultsListProps) => {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
       <ul className="list-none space-y-4">
@@ -252,11 +231,11 @@ const ToolResultsList = memo(({ toolInvocations, toolCallAnnotations, theme }: T
                 </div>
                 <div className="text-bolt-elements-textSecondary text-xs mb-1">Parameters:</div>
                 <div className="bg-[#FAFAFA] dark:bg-[#0A0A0A] p-3 rounded-md">
-                  <JsonCodeBlock className="mb-0" code={JSON.stringify(tool.toolInvocation.args)} theme={theme} />
+                  <JsonCodeBlock className="mb-0" code={JSON.stringify(tool.toolInvocation.args)} />
                 </div>
                 <div className="text-bolt-elements-textSecondary text-xs mt-3 mb-1">Result:</div>
                 <div className="bg-[#FAFAFA] dark:bg-[#0A0A0A] p-3 rounded-md">
-                  <JsonCodeBlock className="mb-0" code={JSON.stringify(tool.toolInvocation.result)} theme={theme} />
+                  <JsonCodeBlock className="mb-0" code={JSON.stringify(tool.toolInvocation.result)} />
                 </div>
               </div>
             </motion.li>
@@ -271,7 +250,6 @@ interface ToolCallsListProps {
   toolInvocations: ToolInvocationUIPart[];
   toolCallAnnotations: ToolCallAnnotation[];
   addToolResult: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;
-  theme: Theme;
 }
 
 const ToolCallsList = memo(({ toolInvocations, toolCallAnnotations, addToolResult }: ToolCallsListProps) => {

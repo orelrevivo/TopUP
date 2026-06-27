@@ -6,7 +6,7 @@ import { calculateStatsSummary } from '~/utils/gitlabStats';
 import type { GitLabConnection, GitLabStats } from '~/types/GitLab';
 
 // Auto-connect using environment variable
-const envToken = process.env?.VITE_GITLAB_ACCESS_TOKEN;
+const envToken = process.env.NEXT_PUBLIC_GITLAB_ACCESS_TOKEN ?? '';
 
 const gitlabConnectionAtom = atom<GitLabConnection>({
   user: null,

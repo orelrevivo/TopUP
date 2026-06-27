@@ -13,7 +13,7 @@ async function vercelUserLoader({ request, context }: { request: Request; contex
     let vercelToken =
       apiKeys.VITE_VERCEL_ACCESS_TOKEN ||
       context?.cloudflare?.env?.VITE_VERCEL_ACCESS_TOKEN ||
-      process.env.VITE_VERCEL_ACCESS_TOKEN;
+      process.env.NEXT_PUBLIC_VERCEL_ACCESS_TOKEN;
 
     // Also check for token in request headers (for direct API calls)
     if (!vercelToken) {
@@ -95,7 +95,7 @@ async function vercelUserAction({ request, context }: { request: Request; contex
     let vercelToken =
       apiKeys.VITE_VERCEL_ACCESS_TOKEN ||
       context?.cloudflare?.env?.VITE_VERCEL_ACCESS_TOKEN ||
-      process.env.VITE_VERCEL_ACCESS_TOKEN;
+      process.env.NEXT_PUBLIC_VERCEL_ACCESS_TOKEN;
 
     // Also check for token in request headers (for direct API calls)
     if (!vercelToken) {

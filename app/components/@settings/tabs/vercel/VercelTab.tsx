@@ -237,7 +237,7 @@ export default function VercelTab() {
       const userData = (await testResponse.json()) as VercelUserResponse;
 
       // Set cookies for server-side API access
-      Cookies.set('VITE_VERCEL_ACCESS_TOKEN', token, { expires: 365 });
+      Cookies.set('NEXT_PUBLIC_VERCEL_ACCESS_TOKEN', token, { expires: 365 });
 
       // Normalize the user data structure
       const normalizedUser = userData.user || {
@@ -269,7 +269,7 @@ export default function VercelTab() {
 
   const handleDisconnect = () => {
     // Clear Vercel-related cookies
-    Cookies.remove('VITE_VERCEL_ACCESS_TOKEN');
+    Cookies.remove('NEXT_PUBLIC_VERCEL_ACCESS_TOKEN');
 
     updateVercelConnection({ user: null, token: '' });
     toast.success('Disconnected from Vercel');
@@ -741,7 +741,7 @@ export default function VercelTab() {
                   <span className="i-ph:lightbulb w-3.5 h-3.5 text-bolt-elements-icon-success dark:text-bolt-elements-icon-success" />
                   <span className="font-medium">Tip:</span> You can also set the{' '}
                   <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 rounded">
-                    VITE_VERCEL_ACCESS_TOKEN
+                    NEXT_PUBLIC_VERCEL_ACCESS_TOKEN
                   </code>{' '}
                   environment variable to connect automatically.
                 </p>

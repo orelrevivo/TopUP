@@ -5,6 +5,8 @@ import { chatStore } from '~/lib/stores/chat';
 import { classNames } from '~/utils/classNames';
 import { HeaderActionButtons } from './HeaderActionButtons.client';
 import { ChatDescription } from '~/lib/persistence/ChatDescription.client';
+import { AuthButtons } from '~/components/auth/AuthButtons';
+import { UserAvatar } from '~/components/auth/UserAvatar';
 
 export function Header() {
   const chat = useStore(chatStore);
@@ -24,7 +26,18 @@ export function Header() {
           <img src="/logo-dark-styled.png" alt="logo" className="w-[90px] inline-block hidden dark:block" />
         </a>
       </div>
-      {chat.started && ( // Display ChatDescription and HeaderActionButtons only when the chat has started.
+      <span className="flex-1" />
+      <div className="flex items-center gap-2">
+        <ClientOnly>
+          {() => (
+            <>
+              <AuthButtons />
+              <UserAvatar />
+            </>
+          )}
+        </ClientOnly>
+      </div>
+      {chat.started && (
         <>
           <span className="flex-1 px-4 truncate text-center text-bolt-elements-textPrimary">
             <ClientOnly>{() => <ChatDescription />}</ClientOnly>

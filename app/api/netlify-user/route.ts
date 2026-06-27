@@ -13,7 +13,7 @@ async function netlifyUserLoader({ request, context }: { request: Request; conte
     const netlifyToken =
       apiKeys.VITE_NETLIFY_ACCESS_TOKEN ||
       context?.cloudflare?.env?.VITE_NETLIFY_ACCESS_TOKEN ||
-      process.env.VITE_NETLIFY_ACCESS_TOKEN;
+      process.env.NEXT_PUBLIC_NETLIFY_ACCESS_TOKEN;
 
     if (!netlifyToken) {
       return json({ error: 'Netlify token not found' }, { status: 401 });
@@ -84,7 +84,7 @@ async function netlifyUserAction({ request, context }: { request: Request; conte
     const netlifyToken =
       apiKeys.VITE_NETLIFY_ACCESS_TOKEN ||
       context?.cloudflare?.env?.VITE_NETLIFY_ACCESS_TOKEN ||
-      process.env.VITE_NETLIFY_ACCESS_TOKEN;
+      process.env.NEXT_PUBLIC_NETLIFY_ACCESS_TOKEN;
 
     if (!netlifyToken) {
       return json({ error: 'Netlify token not found' }, { status: 401 });

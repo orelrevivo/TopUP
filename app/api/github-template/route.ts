@@ -214,7 +214,7 @@ export async function GET(request: Request) {
   try {
     // Access environment variables from Cloudflare context or process.env
     const githubToken =
-      context?.cloudflare?.env?.GITHUB_TOKEN || process.env.GITHUB_TOKEN || process.env.VITE_GITHUB_ACCESS_TOKEN;
+      context?.cloudflare?.env?.GITHUB_TOKEN || process.env.GITHUB_TOKEN || process.env.NEXT_PUBLIC_GITHUB_ACCESS_TOKEN;
 
     let fileList;
 

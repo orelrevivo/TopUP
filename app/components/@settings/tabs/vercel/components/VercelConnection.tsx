@@ -28,7 +28,7 @@ export default function VercelConnection() {
       user: connection.user,
       token: connection.token ? '[TOKEN_EXISTS]' : '[NO_TOKEN]',
     },
-    envToken: process.env?.VITE_VERCEL_ACCESS_TOKEN ? '[ENV_TOKEN_EXISTS]' : '[NO_ENV_TOKEN]',
+    envToken: '[NO_ENV_TOKEN]',
   });
 
   useEffect(() => {
@@ -42,13 +42,13 @@ export default function VercelConnection() {
       console.log('Vercel initializeConnection:', {
         user: connection.user,
         token: connection.token ? '[TOKEN_EXISTS]' : '[NO_TOKEN]',
-        envToken: process.env?.VITE_VERCEL_ACCESS_TOKEN ? '[ENV_TOKEN_EXISTS]' : '[NO_ENV_TOKEN]',
+    envToken: '[NO_ENV_TOKEN]',
       });
 
       hasInitialized.current = true;
 
       // Auto-connect using environment variable if no existing connection but token exists
-      if (!connection.user && connection.token && process.env?.VITE_VERCEL_ACCESS_TOKEN) {
+      if (!connection.user && connection.token) {
         console.log('Vercel: Attempting auto-connection');
 
         const result = await autoConnectVercel();
@@ -125,8 +125,7 @@ export default function VercelConnection() {
               className="w-5 h-5 dark:invert"
               height="24"
               width="24"
-              crossOrigin="anonymous"
-              src={`https://cdn.simpleicons.org/vercel/black`}
+              crossOrigin="anonymous" src={`https://cdn.simpleicons.org/vercel/black`}
             />
             <h3 className="text-base font-medium text-bolt-elements-textPrimary">Vercel Connection</h3>
           </div>
@@ -166,7 +165,7 @@ export default function VercelConnection() {
                     <span className="i-ph:lightbulb w-3.5 h-3.5 text-bolt-elements-icon-success" />
                     <span className="font-medium">Tip:</span> You can also set{' '}
                     <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 rounded text-xs">
-                      VITE_VERCEL_ACCESS_TOKEN
+                      NEXT_PUBLIC_VERCEL_ACCESS_TOKEN
                     </code>{' '}
                     in your .env.local for automatic connection.
                   </p>
@@ -175,7 +174,7 @@ export default function VercelConnection() {
                 <div className="mt-2 text-xs text-gray-500">
                   <p>Debug: Token present: {connection.token ? '✅' : '❌'}</p>
                   <p>Debug: User present: {connection.user ? '✅' : '❌'}</p>
-                  <p>Debug: Env token: {process.env?.VITE_VERCEL_ACCESS_TOKEN ? '✅' : '❌'}</p>
+                  <p>Debug: Env token: not available in this environment</p>
                 </div>
               </div>
             </div>

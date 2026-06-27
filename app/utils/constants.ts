@@ -16,7 +16,7 @@ export const TOOL_NO_EXECUTE_FUNCTION = 'Error: No execute function found on too
 export const TOOL_EXECUTION_DENIED = 'Error: User denied access to tool execution';
 export const TOOL_EXECUTION_ERROR = 'Error: An error occured while calling tool';
 
-const llmManager = LLMManager.getInstance(process.env);
+const llmManager = LLMManager.getInstance(process.env as Record<string, string>);
 
 export const PROVIDER_LIST = llmManager.getAllProviders();
 export const DEFAULT_PROVIDER = llmManager.getDefaultProvider();

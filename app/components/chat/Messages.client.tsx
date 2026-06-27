@@ -4,7 +4,7 @@ import { Fragment } from 'react';
 import { classNames } from '~/utils/classNames';
 import { AssistantMessage } from './AssistantMessage';
 import { UserMessage } from './UserMessage';
-import { useLocation } from 'next/navigation';
+
 import { db, chatId } from '~/lib/persistence/useChatHistory';
 import { forkChat } from '~/lib/persistence/db';
 import { toast } from 'react-toastify';
@@ -28,10 +28,9 @@ interface MessagesProps {
 export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
   (props: MessagesProps, ref: ForwardedRef<HTMLDivElement> | undefined) => {
     const { id, isStreaming = false, messages = [] } = props;
-    const location = useLocation();
 
     const handleRewind = (messageId: string) => {
-      const searchParams = new URLSearchParams(location.search);
+      const searchParams = new URLSearchParams(window.location.search);
       searchParams.set('rewindTo', messageId);
       window.location.search = searchParams.toString();
     };

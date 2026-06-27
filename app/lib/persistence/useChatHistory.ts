@@ -4,19 +4,9 @@ import { atom } from 'nanostores';
 import { generateId, type JSONValue, type Message } from 'ai';
 import { toast } from 'react-toastify';
 import { workbenchStore } from '~/lib/stores/workbench';
-import { logStore } from '~/lib/stores/logs'; // Import logStore
-import {
-  getMessages,
-  getNextId,
-  getUrlId,
-  openDatabase,
-  setMessages,
-  duplicateChat,
-  createChatFromMessages,
-  getSnapshot,
-  setSnapshot,
-  type IChatMetadata,
-} from './db';
+import { logStore } from '~/lib/stores/logs';
+import * as chatApi from '~/lib/api/data/chat';
+import type { IChatMetadata } from './db';
 import type { FileMap } from '~/lib/stores/files';
 import type { Snapshot } from './types';
 import { webcontainer } from '~/lib/webcontainer';
@@ -32,13 +22,12 @@ export interface ChatHistoryItem {
   metadata?: IChatMetadata;
 }
 
-const persistenceEnabled = !process.env.NEXT_PUBLIC_DISABLE_PERSISTENCE;
-
-export const db = persistenceEnabled ? await openDatabase() : undefined;
+export const db = {} as IDBDatabase;
 
 export const chatId = atom<string | undefined>(undefined);
 export const description = atom<string | undefined>(undefined);
 export const chatMetadata = atom<IChatMetadata | undefined>(undefined);
+
 export function useChatHistory() {
   const router = useRouter();
   const params = useParams();
@@ -51,94 +40,74 @@ export function useChatHistory() {
   const [urlId, setUrlId] = useState<string | undefined>();
 
   useEffect(() => {
-    if (!db) {
-      setReady(true);
-
-      if (persistenceEnabled) {
-        const error = new Error('Chat persistence is unavailable');
-        logStore.logError('Chat persistence initialization failed', error);
-        toast.error('Chat persistence is unavailable');
-      }
-
-      return;
-    }
-
     if (mixedId) {
-      Promise.all([
-        getMessages(db, mixedId),
-        getSnapshot(db, mixedId), // Fetch snapshot from DB
-      ])
-        .then(async ([storedMessages, snapshot]) => {
-          if (storedMessages && storedMessages.messages.length > 0) {
-            /*
-             * const snapshotStr = localStorage.getItem(`snapshot:${mixedId}`); // Remove localStorage usage
-             * const snapshot: Snapshot = snapshotStr ? JSON.parse(snapshotStr) : { chatIndex: 0, files: {} }; // Use snapshot from DB
-             */
-            const validSnapshot = snapshot || { chatIndex: '', files: {} }; // Ensure snapshot is not undefined
-            const summary = validSnapshot.summary;
+      let cancelled = false;
 
-            const rewindId = searchParams.get('rewindTo');
-            let startingIdx = -1;
-            const endingIdx = rewindId
-              ? storedMessages.messages.findIndex((m) => m.id === rewindId) + 1
-              : storedMessages.messages.length;
-            const snapshotIndex = storedMessages.messages.findIndex((m) => m.id === validSnapshot.chatIndex);
+      const load = () =>
+        Promise.all([chatApi.getChat(mixedId), chatApi.getSnapshot(mixedId)])
+          .then(async ([storedMessages, snapshot]) => {
+            if (cancelled) return;
+            if (storedMessages && storedMessages.messages.length > 0) {
+              const validSnapshot: Snapshot = (snapshot || { chatIndex: '', files: {} }) as Snapshot;
+              const summary = validSnapshot.summary;
 
-            if (snapshotIndex >= 0 && snapshotIndex < endingIdx) {
-              startingIdx = snapshotIndex;
-            }
+              const rewindId = searchParams.get('rewindTo');
+              let startingIdx = -1;
+              const endingIdx = rewindId
+                ? storedMessages.messages.findIndex((m) => m.id === rewindId) + 1
+                : storedMessages.messages.length;
+              const snapshotIndex = storedMessages.messages.findIndex((m) => m.id === validSnapshot.chatIndex);
 
-            if (snapshotIndex > 0 && storedMessages.messages[snapshotIndex].id == rewindId) {
-              startingIdx = -1;
-            }
+              if (snapshotIndex >= 0 && snapshotIndex < endingIdx) {
+                startingIdx = snapshotIndex;
+              }
 
-            let filteredMessages = storedMessages.messages.slice(startingIdx + 1, endingIdx);
-            let archivedMessages: Message[] = [];
+              if (snapshotIndex > 0 && storedMessages.messages[snapshotIndex].id == rewindId) {
+                startingIdx = -1;
+              }
 
-            if (startingIdx >= 0) {
-              archivedMessages = storedMessages.messages.slice(0, startingIdx + 1);
-            }
+              let filteredMessages = storedMessages.messages.slice(startingIdx + 1, endingIdx);
+              let archivedMessages: Message[] = [];
 
-            setArchivedMessages(archivedMessages);
+              if (startingIdx >= 0) {
+                archivedMessages = storedMessages.messages.slice(0, startingIdx + 1);
+              }
 
-            if (startingIdx > 0) {
-              const files = Object.entries(validSnapshot?.files || {})
-                .map(([key, value]) => {
-                  if (value?.type !== 'file') {
-                    return null;
-                  }
+              setArchivedMessages(archivedMessages);
 
-                  return {
-                    content: value.content,
-                    path: key,
-                  };
-                })
-                .filter((x): x is { content: string; path: string } => !!x); // Type assertion
-              const projectCommands = await detectProjectCommands(files);
+              if (startingIdx > 0) {
+                const files = Object.entries(validSnapshot?.files || {})
+                  .map(([key, value]) => {
+                    if (value?.type !== 'file') {
+                      return null;
+                    }
+                    return {
+                      content: value.content,
+                      path: key,
+                    };
+                  })
+                  .filter((x): x is { content: string; path: string } => !!x);
+                const projectCommands = await detectProjectCommands(files);
+                const commandActionsString = createCommandActionsString(projectCommands);
 
-              // Call the modified function to get only the command actions string
-              const commandActionsString = createCommandActionsString(projectCommands);
-
-              filteredMessages = [
-                {
-                  id: generateId(),
-                  role: 'user',
-                  content: `Restore project from snapshot`, // Removed newline
-                  annotations: ['no-store', 'hidden'],
-                },
-                {
-                  id: storedMessages.messages[snapshotIndex].id,
-                  role: 'assistant',
-
-                  // Combine followup message and the artifact with files and command actions
-                  content: `Bolt Restored your chat from a snapshot. You can revert this message to load the full chat history.
+                filteredMessages = [
+                  {
+                    id: generateId(),
+                    role: 'user',
+                    content: `Restore project from snapshot`,
+                    annotations: ['no-store', 'hidden'],
+                  },
+                  {
+                    id: storedMessages.messages[snapshotIndex].id,
+                    role: 'assistant',
+                    content: `Bolt Restored your chat from a snapshot. You can revert this message to load the full chat history.
                   <boltArtifact id="restored-project-setup" title="Restored Project & Setup" type="bundled">
-                  ${Object.entries(snapshot?.files || {})
+                  ${Object.entries((snapshot?.files || {}) as FileMap)
                     .map(([key, value]) => {
                       if (value?.type === 'file') {
                         return `
                       <boltAction type="file" filePath="${key}">
-${value.content}
+${(value as any).content}
                       </boltAction>
                       `;
                       } else {
@@ -148,7 +117,7 @@ ${value.content}
                     .join('\n')}
                   ${commandActionsString} 
                   </boltArtifact>
-                  `, // Added commandActionsString, followupMessage, updated id and title
+                  `,
                   annotations: [
                     'no-store',
                     ...(summary
@@ -162,49 +131,42 @@ ${value.content}
                       : []),
                   ],
                 },
-
-                // Remove the separate user and assistant messages for commands
-                /*
-                 *...(commands !== null // This block is no longer needed
-                 *  ? [ ... ]
-                 *  : []),
-                 */
                 ...filteredMessages,
               ];
               restoreSnapshot(mixedId);
             }
 
-            setInitialMessages(filteredMessages);
+              setInitialMessages(filteredMessages);
+              setUrlId(storedMessages.urlId ?? storedMessages.id);
+              description.set(storedMessages.description);
+              chatId.set(storedMessages.id);
+              chatMetadata.set(storedMessages.metadata as IChatMetadata | undefined);
+            }
+          })
+          .catch((error) => {
+            if (cancelled) return;
+            console.error(error);
+            logStore.logError('Failed to load chat messages or snapshot', error);
+            toast.error('Failed to load chat: ' + error.message);
+          })
+          .finally(() => {
+            if (!cancelled) setReady(true);
+          });
 
-            setUrlId(storedMessages.urlId);
-            description.set(storedMessages.description);
-            chatId.set(storedMessages.id);
-            chatMetadata.set(storedMessages.metadata);
-          } else {
-            router.replace('/');
-          }
+      load();
 
-          setReady(true);
-        })
-        .catch((error) => {
-          console.error(error);
-
-          logStore.logError('Failed to load chat messages or snapshot', error); // Updated error message
-          toast.error('Failed to load chat: ' + error.message); // More specific error
-        });
+      return () => {
+        cancelled = true;
+      };
     } else {
-      // Handle case where there is no mixedId (e.g., new chat)
       setReady(true);
     }
-  }, [mixedId, db, router, searchParams]); // Added db, router, searchParams dependencies
+  }, [mixedId, router, searchParams]);
 
   const takeSnapshot = useCallback(
     async (chatIdx: string, files: FileMap, _chatId?: string | undefined, chatSummary?: string) => {
       const id = chatId.get();
-
-      if (!id || !db) {
-        return;
-      }
+      if (!id) return;
 
       const snapshot: Snapshot = {
         chatIndex: chatIdx,
@@ -212,32 +174,26 @@ ${value.content}
         summary: chatSummary,
       };
 
-      // localStorage.setItem(`snapshot:${id}`, JSON.stringify(snapshot)); // Remove localStorage usage
       try {
-        await setSnapshot(db, id, snapshot);
+        await chatApi.setSnapshot(id, snapshot);
       } catch (error) {
         console.error('Failed to save snapshot:', error);
         toast.error('Failed to save chat snapshot.');
       }
     },
-    [db],
+    [],
   );
 
   const restoreSnapshot = useCallback(async (id: string, snapshot?: Snapshot) => {
-    // const snapshotStr = localStorage.getItem(`snapshot:${id}`); // Remove localStorage usage
     const container = await webcontainer;
-
     const validSnapshot = snapshot || { chatIndex: '', files: {} };
 
-    if (!validSnapshot?.files) {
-      return;
-    }
+    if (!validSnapshot?.files) return;
 
     Object.entries(validSnapshot.files).forEach(async ([key, value]) => {
       if (key.startsWith(container.workdir)) {
         key = key.replace(container.workdir, '');
       }
-
       if (value?.type === 'folder') {
         await container.fs.mkdir(key, { recursive: true });
       }
@@ -247,13 +203,9 @@ ${value.content}
         if (key.startsWith(container.workdir)) {
           key = key.replace(container.workdir, '');
         }
-
         await container.fs.writeFile(key, value.content, { encoding: value.isBinary ? undefined : 'utf8' });
-      } else {
       }
     });
-
-    // workbenchStore.files.setKey(snapshot?.files)
   }, []);
 
   return {
@@ -261,13 +213,16 @@ ${value.content}
     initialMessages,
     updateChatMestaData: async (metadata: IChatMetadata) => {
       const id = chatId.get();
-
-      if (!db || !id) {
-        return;
-      }
+      if (!id) return;
 
       try {
-        await setMessages(db, id, initialMessages, urlId, description.get(), undefined, metadata);
+        await chatApi.saveChat({
+          id,
+          messages: initialMessages,
+          urlId,
+          description: description.get(),
+          metadata: metadata as Record<string, any>,
+        });
         chatMetadata.set(metadata);
       } catch (error) {
         toast.error('Failed to update chat metadata');
@@ -275,9 +230,7 @@ ${value.content}
       }
     },
     storeMessageHistory: async (messages: Message[]) => {
-      if (!db || messages.length === 0) {
-        return;
-      }
+      if (messages.length === 0) return;
 
       const { firstArtifact } = workbenchStore;
       messages = messages.filter((m) => !m.annotations?.includes('no-store'));
@@ -285,10 +238,10 @@ ${value.content}
       let _urlId = urlId;
 
       if (!urlId && firstArtifact?.id) {
-        const urlId = await getUrlId(db, firstArtifact.id);
-        _urlId = urlId;
-        navigateChat(urlId);
-        setUrlId(urlId);
+        const resolvedUrlId = await chatApi.getUrlId(firstArtifact.id);
+        _urlId = resolvedUrlId;
+        navigateChat(resolvedUrlId);
+        setUrlId(resolvedUrlId);
       }
 
       let chatSummary: string | undefined = undefined;
@@ -312,44 +265,36 @@ ${value.content}
         description.set(firstArtifact?.title);
       }
 
-      // Ensure chatId.get() is used here as well
       if (initialMessages.length === 0 && !chatId.get()) {
-        const nextId = await getNextId(db);
-
+        const nextId = await chatApi.getNextId();
         chatId.set(nextId);
-
         if (!urlId) {
           navigateChat(nextId);
         }
       }
 
-      // Ensure chatId.get() is used for the final setMessages call
       const finalChatId = chatId.get();
 
       if (!finalChatId) {
         console.error('Cannot save messages, chat ID is not set.');
         toast.error('Failed to save chat messages: Chat ID missing.');
-
         return;
       }
 
-      await setMessages(
-        db,
-        finalChatId, // Use the potentially updated chatId
-        [...archivedMessages, ...messages],
+      await chatApi.saveChat({
+        id: finalChatId,
+        messages: [...archivedMessages, ...messages],
         urlId,
-        description.get(),
-        undefined,
-        chatMetadata.get(),
-      );
+        description: description.get(),
+        timestamp: new Date().toISOString(),
+        metadata: chatMetadata.get() as Record<string, any>,
+      });
     },
     duplicateCurrentChat: async (listItemId: string) => {
-      if (!db || (!mixedId && !listItemId)) {
-        return;
-      }
+      if (!mixedId && !listItemId) return;
 
       try {
-        const newId = await duplicateChat(db, mixedId || listItemId);
+        const newId = await chatApi.duplicateChat(mixedId || listItemId);
         router.push(`/chat/${newId}`);
         toast.success('Chat duplicated successfully');
       } catch (error) {
@@ -358,12 +303,12 @@ ${value.content}
       }
     },
     importChat: async (description: string, messages: Message[], metadata?: IChatMetadata) => {
-      if (!db) {
-        return;
-      }
-
       try {
-        const newId = await createChatFromMessages(db, description, messages, metadata);
+        const newId = await chatApi.createChatFromMessages(
+          description,
+          messages,
+          metadata as Record<string, any> | undefined,
+        );
         window.location.href = `/chat/${newId}`;
         toast.success('Chat imported successfully');
       } catch (error) {
@@ -375,14 +320,12 @@ ${value.content}
       }
     },
     exportChat: async (id = urlId) => {
-      if (!db || !id) {
-        return;
-      }
+      if (!id) return;
 
-      const chat = await getMessages(db, id);
+      const chat = await chatApi.getChat(id);
       const chatData = {
-        messages: chat.messages,
-        description: chat.description,
+        messages: chat?.messages || [],
+        description: chat?.description,
         exportDate: new Date().toISOString(),
       };
 
@@ -400,13 +343,7 @@ ${value.content}
 }
 
 function navigateChat(nextId: string) {
-  /**
-   * FIXME: Using the intended navigate function causes a rerender for <Chat /> that breaks the app.
-   *
-   * `navigate(`/chat/${nextId}`, { replace: true });`
-   */
   const url = new URL(window.location.href);
   url.pathname = `/chat/${nextId}`;
-
   window.history.replaceState({}, '', url);
 }

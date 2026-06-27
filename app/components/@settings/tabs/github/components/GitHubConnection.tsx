@@ -68,14 +68,14 @@ export function GitHubConnection({ connectionTest, onTestConnection }: GitHubCon
               <span className="i-ph:lightbulb w-3.5 h-3.5 text-bolt-elements-icon-success dark:text-bolt-elements-icon-success" />
               <span className="font-medium">Tip:</span> You can also set the{' '}
               <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 rounded">
-                VITE_GITHUB_ACCESS_TOKEN
+                NEXT_PUBLIC_GITHUB_ACCESS_TOKEN
               </code>{' '}
               environment variable to connect automatically.
             </p>
             <p>
               For fine-grained tokens, also set{' '}
               <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-2 rounded">
-                VITE_GITHUB_TOKEN_TYPE=fine-grained
+                NEXT_PUBLIC_GITHUB_TOKEN_TYPE=fine-grained
               </code>
             </p>
           </div>

@@ -3,24 +3,11 @@ import { useStore } from '@nanostores/react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { computed } from 'nanostores';
 import { memo, useEffect, useRef, useState } from 'react';
-import { createHighlighter, type BundledLanguage, type BundledTheme, type HighlighterGeneric } from 'shiki';
 import type { ActionState } from '~/lib/runtime/action-runner';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { classNames } from '~/utils/classNames';
 import { cubicEasingFn } from '~/utils/easings';
 import { WORK_DIR } from '~/utils/constants';
-
-const highlighterOptions = {
-  langs: ['shell'],
-  themes: ['light-plus', 'dark-plus'],
-};
-
-const shellHighlighter: HighlighterGeneric<BundledLanguage, BundledTheme> =
-  import.meta.hot?.data.shellHighlighter ?? (await createHighlighter(highlighterOptions));
-
-if (import.meta.hot) {
-  import.meta.hot.data.shellHighlighter = shellHighlighter;
-}
 
 interface ArtifactProps {
   messageId: string;
@@ -167,13 +154,9 @@ function ShellCodeBlock({ classsName, code }: ShellCodeBlockProps) {
   return (
     <div
       className={classNames('text-xs', classsName)}
-      dangerouslySetInnerHTML={{
-        __html: shellHighlighter.codeToHtml(code, {
-          lang: 'shell',
-          theme: 'dark-plus',
-        }),
-      }}
-    ></div>
+    >
+      <pre className="bg-bolt-elements-background-depth-4 p-2 rounded overflow-x-auto">{code}</pre>
+    </div>
   );
 }
 

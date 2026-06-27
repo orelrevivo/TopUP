@@ -15,6 +15,7 @@ import { useSearchFilter } from '~/lib/hooks/useSearchFilter';
 import { classNames } from '~/utils/classNames';
 import { useStore } from '@nanostores/react';
 import { profileStore } from '~/lib/stores/profile';
+import { useAuth } from '~/hooks/useAuth';
 
 const menuVariants = {
   closed: {
@@ -72,6 +73,7 @@ export const Menu = () => {
   const [dialogContent, setDialogContent] = useState<DialogContent>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const profile = useStore(profileStore);
+  const { user } = useAuth();
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
@@ -343,7 +345,7 @@ export const Menu = () => {
           <div className="flex items-center gap-3">
             <HelpButton onClick={() => window.open('https://stackblitz-labs.github.io/bolt.diy/', '_blank')} />
             <span className="font-medium text-sm text-gray-900 dark:text-white truncate">
-              {profile?.username || 'Guest User'}
+              {profile?.username || user?.displayName || user?.email?.split('@')[0] || 'Guest'}
             </span>
             <div className="flex items-center justify-center w-[32px] h-[32px] overflow-hidden bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-500 rounded-full shrink-0">
               {profile?.avatar ? (
