@@ -16,7 +16,7 @@ export async function POST(request: Request) {
 
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
-    if (!user) {
+    if (!user || !user.passwordHash) {
       return new Response(JSON.stringify({ error: "Invalid email or password" }), {
         status: 401,
         headers: { "Content-Type": "application/json" },

@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getUserId } from '~/lib/auth';
 import { db } from '~/lib/db';
 import { users, memories } from '~/lib/db/schema';
@@ -6,7 +6,7 @@ import { eq, sql } from 'drizzle-orm';
 
 export const maxDuration = 60; // Extend duration for Next.js serverless functions
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { prompt, frames, testOnly } = body;
@@ -54,7 +54,7 @@ export async function POST(req: Request) {
 
     // Construct OpenAI vision payload
     const content: any[] = [{ type: 'text', text: prompt || 'Analyze this screen recording.' }];
-    
+
     // Add frames (cap at 100 to prevent payload limits)
     const maxFrames = Math.min(frames.length, 100);
     for (let i = 0; i < maxFrames; i++) {
@@ -93,12 +93,12 @@ export async function POST(req: Request) {
     }
 
     const data = await response.json();
-    
+
     // Billing
     if (data.usage) {
       const inputTokens = data.usage.prompt_tokens || 0;
       const outputTokens = data.usage.completion_tokens || 0;
-      
+
       // Calculate cost in cents with markup
       // e.g., GPT-4o cost: $5 / 1M input, $15 / 1M output = 0.0005 cents / input, 0.0015 cents / output
       // With markup (x4) = 0.002 cents/input, 0.006 cents/output
@@ -110,7 +110,7 @@ export async function POST(req: Request) {
 
     const rawContent = data.choices[0]?.message?.content;
     let parsed: { prompt?: string; memory?: string } = {};
-    
+
     try {
       parsed = JSON.parse(rawContent);
     } catch (e) {

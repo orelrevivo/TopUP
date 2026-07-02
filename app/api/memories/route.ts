@@ -1,10 +1,10 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getUserId } from '~/lib/auth';
 import { db } from '~/lib/db';
 import { memories } from '~/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 
-export async function GET(req: Request) {
+export async function GET(req: NextRequest) {
   try {
     const userId = await getUserId(req);
     if (!userId) {
@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   }
 }
 
-export async function DELETE(req: Request) {
+export async function DELETE(req: NextRequest) {
   try {
     const userId = await getUserId(req);
     if (!userId) {

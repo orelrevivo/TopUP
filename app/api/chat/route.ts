@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 const json = NextResponse.json;
 import { getUserId } from '~/lib/auth';
 import { db } from '~/lib/db';
@@ -46,7 +46,7 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 async function chatAction({ context, request }: RouteArgs) {
-  const userId = await getUserId(request as unknown as Request);
+  const userId = await getUserId(request as unknown as NextRequest);
   if (!userId) {
     return new Response(JSON.stringify({ error: true, message: 'Unauthorized. Please log in.' }), { status: 401 });
   }
@@ -239,7 +239,7 @@ async function chatAction({ context, request }: RouteArgs) {
             dataStream.writeData({
               type: 'progress',
               label: 'database',
-              status: 'error',
+              status: 'complete',
               order: progressCounter++,
               message: e.message || 'Database provisioning failed',
             } satisfies ProgressAnnotation);

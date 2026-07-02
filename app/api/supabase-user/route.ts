@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getUserId } from '~/lib/auth';
 import { db } from '~/lib/db';
 import { users } from '~/lib/db/schema';
@@ -92,7 +92,7 @@ export async function GET(request: Request) {
 
 async function supabaseUserAction({ request, context }: { request: Request; context: any }) {
   try {
-    const userId = await getUserId(request);
+    const userId = await getUserId(request as unknown as NextRequest);
     if (userId) {
       const userRows = await db.select({ subscriptionTier: users.subscriptionTier }).from(users).where(eq(users.id, userId));
       if (userRows.length > 0 && userRows[0].subscriptionTier === 'free') {

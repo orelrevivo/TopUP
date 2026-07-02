@@ -2,7 +2,9 @@
 const nextConfig = {
   reactStrictMode: false,
 
-  serverExternalPackages: ["shiki"],
+  experimental: {
+    serverComponentsExternalPackages: ["shiki"],
+  },
 
   async headers() {
     return [
