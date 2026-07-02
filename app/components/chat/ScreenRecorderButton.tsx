@@ -27,7 +27,7 @@ export const ScreenRecorderButton: React.FC<ScreenRecorderButtonProps> = ({ onPr
   useEffect(() => {
     fetch('/api/user/credits')
       .then(r => r.ok ? r.json() : {})
-      .then(d => {
+      .then((d: any) => {
         if (d.subscriptionTier) setTier(d.subscriptionTier.toLowerCase());
       })
       .catch(() => { });

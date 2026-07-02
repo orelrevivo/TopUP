@@ -14,7 +14,6 @@ async function api(path: string, options?: RequestInit): Promise<any> {
   }
 
   const res = await fetch(`${BASE}${path}`, {
-    headers,
     credentials: 'include',
     ...options,
     headers, // re-apply merged headers after spread

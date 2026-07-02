@@ -18,15 +18,15 @@ export default function CheckoutClient({ clientId }: CheckoutClientProps) {
     const params = new URLSearchParams(window.location.search);
     const amtStr = params.get('amount');
     const tierStr = params.get('tier');
-    
+
     if (amtStr) {
       setAmount(parseInt(amtStr, 10));
     }
-    
+
     if (tierStr) {
       setTier(tierStr);
     }
-    
+
     if (clientId && clientId.trim() !== '') {
       setStatus('ready');
     } else {
@@ -39,8 +39,8 @@ export default function CheckoutClient({ clientId }: CheckoutClientProps) {
       const details = await actions.order.capture()
 
       // Read session token from localStorage — key matches useAuth.tsx SESSION_KEY
-      const sessionToken = localStorage.getItem('session_token') || 
-                           document.cookie.match(/session=([^;]+)/)?.[1] || '';
+      const sessionToken = localStorage.getItem('session_token') ||
+        document.cookie.match(/session=([^;]+)/)?.[1] || '';
 
       const body: any = {
         orderId: details.id,
@@ -84,8 +84,8 @@ export default function CheckoutClient({ clientId }: CheckoutClientProps) {
           <h1 className="text-2xl font-bold mb-2">Payment Successful!</h1>
           <p className="text-gray-400 mb-6">Your balance has been updated in the main app.</p>
           <p className="text-sm text-gray-500">This window will close automatically. If it doesn't, you can safely close it.</p>
-          <button 
-            onClick={() => window.close()} 
+          <button
+            onClick={() => window.close()}
             className="mt-6 px-6 py-2 bg-gray-800 hover:bg-gray-700 text-white rounded-lg transition-colors"
           >
             Close Window
@@ -99,7 +99,7 @@ export default function CheckoutClient({ clientId }: CheckoutClientProps) {
     <div className="flex flex-col items-center justify-center min-h-screen bg-gray-900 text-white p-4">
       <div className="bg-gray-800 border border-gray-700 p-8 rounded-2xl max-w-md w-full text-center shadow-2xl">
         <h1 className="text-2xl font-bold mb-2 text-white">Complete Purchase</h1>
-        
+
         {tier ? (
           <p className="text-gray-400 mb-8">You are upgrading to the <strong className="text-purple-400">{tier}</strong> plan for <strong>${amount}.00</strong></p>
         ) : (
@@ -107,13 +107,13 @@ export default function CheckoutClient({ clientId }: CheckoutClientProps) {
         )}
 
         {status === 'loading' && <div className="text-purple-400">Loading checkout...</div>}
-        
+
         {status === 'error' && (
           <div className="text-red-400 p-4 bg-red-400/10 rounded-lg text-sm text-left break-words">
-            <strong>Payment Error:</strong><br/>
-            {errorMsg ? errorMsg : "There was an error initializing the payment or capturing the order. Please try again."}<br/><br/>
-            <strong>Debug info:</strong> clientId length is {clientId ? clientId.length : 0}.<br/>
-            Check the browser console (F12 -> Console) for more details.
+            <strong>Payment Error:</strong><br />
+            {errorMsg ? errorMsg : "There was an error initializing the payment or capturing the order. Please try again."}<br /><br />
+            <strong>Debug info:</strong> clientId length is {clientId ? clientId.length : 0}.<br />
+            Check the browser console (F12 {'->'} Console) for more details.
           </div>
         )}
 

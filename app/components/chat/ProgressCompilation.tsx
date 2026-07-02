@@ -91,7 +91,7 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
 const ProgressItem = ({ progress }: { progress: ProgressAnnotation }) => {
   return (
     <motion.div
-      className={classNames('flex text-sm gap-3', progress.status === 'error' ? 'text-red-500 font-medium' : '')}
+      className={classNames('flex text-sm gap-3', (progress.status as string) === 'error' ? 'text-red-500 font-medium' : '')}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -103,7 +103,7 @@ const ProgressItem = ({ progress }: { progress: ProgressAnnotation }) => {
             <div className="i-svg-spinners:90-ring-with-bg"></div>
           ) : progress.status === 'complete' ? (
             <div className="i-ph:check"></div>
-          ) : progress.status === 'error' ? (
+          ) : (progress.status as string) === 'error' ? (
             <div className="i-ph:warning-circle text-red-500"></div>
           ) : null}
         </div>

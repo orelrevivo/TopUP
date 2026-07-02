@@ -91,7 +91,7 @@ export function Header() {
           <ControlPanel
             open={isPanelOpen}
             onClose={handleClosePanel}
-            initialTab={initialTab}
+            activeTab={initialTab}
           />
         )}
       </ClientOnly>

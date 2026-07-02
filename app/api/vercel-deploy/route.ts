@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getUserId } from '~/lib/auth';
 import { db } from '~/lib/db';
 import { users } from '~/lib/db/schema';
@@ -255,7 +255,7 @@ export async function POST(request: Request, { params }: any) {
       return json({ error: 'Not connected to Vercel' }, { status: 401 });
     }
 
-    const userId = await getUserId(request as unknown as Request);
+    const userId = await getUserId(request as unknown as NextRequest);
     if (userId) {
       const userRows = await db.select({ subscriptionTier: users.subscriptionTier }).from(users).where(eq(users.id, userId));
       if (userRows.length > 0 && userRows[0].subscriptionTier === 'free') {

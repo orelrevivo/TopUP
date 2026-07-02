@@ -1,7 +1,7 @@
 'use client';
 
 import ignore from 'ignore';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useGit } from '~/lib/hooks/useGit';
 import { Header } from '~/components/header/Header';
@@ -39,6 +39,14 @@ const MAX_TOTAL_SIZE = 500 * 1024;
 type CloneStatus = 'idle' | 'cloning' | 'importing' | 'success' | 'error';
 
 export default function GitPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-falbor-elements-background-depth-1"><div className="i-svg-spinners:90-ring-with-bg text-4xl text-accent-500"></div></div>}>
+      <GitPageContent />
+    </Suspense>
+  );
+}
+
+function GitPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const repoUrl = searchParams.get('url') ?? '';
