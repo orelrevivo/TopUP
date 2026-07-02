@@ -21,7 +21,7 @@ function tryParseJSON(value: string): any {
 function migrateFromIndexedDB(): Promise<any[]> {
   return new Promise((resolve) => {
     if (typeof indexedDB === "undefined") return resolve([]);
-    const request = indexedDB.open("boltHistory", 2);
+    const request = indexedDB.open("falborHistory", 2);
     request.onsuccess = () => {
       const db = request.result;
       try {

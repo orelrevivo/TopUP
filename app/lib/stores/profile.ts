@@ -6,7 +6,7 @@ export interface Profile {
   avatar: string;
 }
 
-const storedProfile = typeof window !== 'undefined' ? localStorage.getItem('bolt_profile') : null;
+const storedProfile = typeof window !== 'undefined' ? localStorage.getItem('falbor_profile') : null;
 const initialProfile: Profile = storedProfile
   ? JSON.parse(storedProfile)
   : {
@@ -20,7 +20,7 @@ export const profileStore = atom<Profile>(initialProfile);
 export const updateProfile = (updates: Partial<Profile>) => {
   profileStore.set({ ...profileStore.get(), ...updates });
   if (typeof window !== 'undefined') {
-    localStorage.setItem('bolt_profile', JSON.stringify(profileStore.get()));
+    localStorage.setItem('falbor_profile', JSON.stringify(profileStore.get()));
   }
 };
 
@@ -39,7 +39,7 @@ export const loadProfileFromServer = async () => {
     if (serverProfile.username || serverProfile.avatar || serverProfile.bio) {
       profileStore.set(serverProfile);
       if (typeof window !== 'undefined') {
-        localStorage.setItem('bolt_profile', JSON.stringify(serverProfile));
+        localStorage.setItem('falbor_profile', JSON.stringify(serverProfile));
       }
     }
   } catch {

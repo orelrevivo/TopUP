@@ -1,24 +1,24 @@
 import type { WebContainer } from '@webcontainer/api';
 import { path as nodePath } from '~/utils/path';
 import { atom, map, type MapStore } from 'nanostores';
-import type { ActionAlert, BoltAction, DeployAlert, FileHistory, SupabaseAction, SupabaseAlert } from '~/types/actions';
+import type { ActionAlert, FalborAction, DeployAlert, FileHistory, SupabaseAction, SupabaseAlert } from '~/types/actions';
 import { createScopedLogger } from '~/utils/logger';
 import { unreachable } from '~/utils/unreachable';
 import type { ActionCallbackData } from './message-parser';
-import type { BoltShell } from '~/utils/shell';
+import type { FalborShell } from '~/utils/shell';
 
 const logger = createScopedLogger('ActionRunner');
 
 export type ActionStatus = 'pending' | 'running' | 'complete' | 'aborted' | 'failed';
 
-export type BaseActionState = BoltAction & {
+export type BaseActionState = FalborAction & {
   status: Exclude<ActionStatus, 'failed'>;
   abort: () => void;
   executed: boolean;
   abortSignal: AbortSignal;
 };
 
-export type FailedActionState = BoltAction &
+export type FailedActionState = FalborAction &
   Omit<BaseActionState, 'status'> & {
     status: Extract<ActionStatus, 'failed'>;
     error: string;
@@ -66,7 +66,7 @@ class ActionCommandError extends Error {
 export class ActionRunner {
   #webcontainer: Promise<WebContainer>;
   #currentExecutionPromise: Promise<void> = Promise.resolve();
-  #shellTerminal: () => BoltShell;
+  #shellTerminal: () => FalborShell;
   runnerId = atom<string>(`${Date.now()}`);
   actions: ActionsMap = map({});
   onAlert?: (alert: ActionAlert) => void;
@@ -76,7 +76,7 @@ export class ActionRunner {
 
   constructor(
     webcontainerPromise: Promise<WebContainer>,
-    getShellTerminal: () => BoltShell,
+    getShellTerminal: () => FalborShell,
     onAlert?: (alert: ActionAlert) => void,
     onSupabaseAlert?: (alert: SupabaseAlert) => void,
     onDeployAlert?: (alert: DeployAlert) => void,
@@ -487,14 +487,6 @@ export class ActionRunner {
         }
 
         // Show alert for migration action
-        this.onSupabaseAlert?.({
-          type: 'info',
-          title: 'Supabase Migration',
-          description: `Create migration file: ${filePath}`,
-          content,
-          source: 'supabase',
-        });
-
         // Only create the migration file
         await this.#runFileAction({
           type: 'file',
@@ -502,6 +494,37 @@ export class ActionRunner {
           content,
           changeSource: 'supabase',
         } as any);
+
+        // Auto-execute the migration using the API
+        try {
+          const { chatId } = await import('~/lib/persistence/useChatHistory');
+          const currentId = chatId.get() || 'default';
+          const res = await fetch('/api/database/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ chatId: currentId, sql: content })
+          });
+
+          if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.error || 'Failed to execute migration');
+          }
+
+          this.onAlert?.({
+            type: 'success',
+            title: 'Supabase Migration Executed',
+            description: `Successfully executed migration: ${filePath}`,
+            content: 'Migration applied to the database.',
+          });
+        } catch (err: any) {
+          logger.error('Failed to auto-execute migration:', err);
+          this.onAlert?.({
+            type: 'error',
+            title: 'Migration Execution Failed',
+            description: `Failed to execute ${filePath}`,
+            content: err.message,
+          });
+        }
         return { success: true };
 
       case 'query': {

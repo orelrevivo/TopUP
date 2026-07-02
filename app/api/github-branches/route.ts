@@ -73,7 +73,7 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${githubToken}`,
-        'User-Agent': 'bolt.diy-app',
+        'User-Agent': 'falbor-app',
       },
     });
 
@@ -97,7 +97,7 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
       headers: {
         Accept: 'application/vnd.github.v3+json',
         Authorization: `Bearer ${githubToken}`,
-        'User-Agent': 'bolt.diy-app',
+        'User-Agent': 'falbor-app',
       },
     });
 

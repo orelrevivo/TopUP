@@ -1,4 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { getUserId } from '~/lib/auth';
+import { db } from '~/lib/db';
+import { users } from '~/lib/db/schema';
+import { eq } from 'drizzle-orm';
 const json = NextResponse.json;
 import { getApiKeysFromCookie } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
@@ -23,7 +27,7 @@ async function supabaseUserLoader({ request, context }: { request: Request; cont
     const response = await fetch('https://api.supabase.com/v1/projects', {
       headers: {
         Authorization: `Bearer ${supabaseToken}`,
-        'User-Agent': 'bolt.diy-app',
+        'User-Agent': 'falbor-app',
       },
     });
 
@@ -88,6 +92,14 @@ export async function GET(request: Request) {
 
 async function supabaseUserAction({ request, context }: { request: Request; context: any }) {
   try {
+    const userId = await getUserId(request);
+    if (userId) {
+      const userRows = await db.select({ subscriptionTier: users.subscriptionTier }).from(users).where(eq(users.id, userId));
+      if (userRows.length > 0 && userRows[0].subscriptionTier === 'free') {
+        return json({ error: 'Custom Supabase connections are a Pro feature. Please upgrade your subscription.' }, { status: 403 });
+      }
+    }
+
     const formData = await request.formData();
     const action = formData.get('action');
 
@@ -110,7 +122,7 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
       const response = await fetch('https://api.supabase.com/v1/projects', {
         headers: {
           Authorization: `Bearer ${supabaseToken}`,
-          'User-Agent': 'bolt.diy-app',
+          'User-Agent': 'falbor-app',
         },
       });
 
@@ -164,7 +176,7 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
       const response = await fetch(`https://api.supabase.com/v1/projects/${projectId}/api-keys`, {
         headers: {
           Authorization: `Bearer ${supabaseToken}`,
-          'User-Agent': 'bolt.diy-app',
+          'User-Agent': 'falbor-app',
         },
       });
 

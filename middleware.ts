@@ -7,13 +7,19 @@ const JWT_SECRET = process.env.JWT_SECRET
   : null;
 const COOKIE_NAME = "session";
 const PUBLIC_ROUTES = ["/login", "/signup", "/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/health"];
-const STATIC_PREFIXES = ["/_next", "/favicon", "/icons", "/logo", "/apple-touch-icon", "/social_preview"];
+const STATIC_PREFIXES = ["/_next", "/favicon", "/icons", "/logo", "/apple-touch-icon", "/social_preview", "/landing"];
 
 export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
 
-    if (PUBLIC_ROUTES.some((r) => pathname === r) || STATIC_PREFIXES.some((p) => pathname.startsWith(p))) {
+    const STATIC_EXTENSIONS = /\.(png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?|ttf|eot|pdf)$/i;
+
+    if (
+      STATIC_EXTENSIONS.test(pathname) ||
+      PUBLIC_ROUTES.some((r) => pathname === r) ||
+      STATIC_PREFIXES.some((p) => pathname.startsWith(p))
+    ) {
       return NextResponse.next();
     }
 

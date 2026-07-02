@@ -7,10 +7,12 @@ const isBrowser = typeof window !== 'undefined';
 type MCPSettings = {
   mcpConfig: MCPConfig;
   maxLLMSteps: number;
+  mcpEnabled: boolean;
 };
 
 const defaultSettings = {
   maxLLMSteps: 5,
+  mcpEnabled: false,
   mcpConfig: {
     mcpServers: {},
   },

@@ -28,11 +28,16 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
     ['system', /^(df|du|free|uname|whoami|id|groups|date|uptime)\s*/],
   ]);
 
+  public wasReset = false;
+
   constructor(options: StreamingMessageParserOptions = {}) {
     super(options);
   }
 
   parse(messageId: string, input: string): string {
+    this.wasReset = false;
+    input = input || '';
+    
     // First try the normal parsing
     let output = super.parse(messageId, input);
 
@@ -43,6 +48,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
       if (enhancedInput !== input) {
         // Reset and reparse with enhanced input
         this.reset();
+        this.wasReset = true;
         output = super.parse(messageId, enhancedInput);
       }
     }
@@ -51,7 +57,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   }
 
   private _hasDetectedArtifacts(input: string): boolean {
-    return input.includes('<boltArtifact') || input.includes('</boltArtifact>');
+    return input.includes('<falborArtifact') || input.includes('</falborArtifact>');
   }
 
   private _detectAndWrapCodeBlocks(messageId: string, input: string): string {
@@ -204,21 +210,21 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   private _wrapInArtifact(artifactId: string, filePath: string, content: string): string {
     const title = filePath.split('/').pop() || 'File';
 
-    return `<boltArtifact id="${artifactId}" title="${title}" type="bundled">
-<boltAction type="file" filePath="${filePath}">
+    return `<falborArtifact id="${artifactId}" title="${title}" type="bundled">
+<falborAction type="file" filePath="${filePath}">
 ${content}
-</boltAction>
-</boltArtifact>`;
+</falborAction>
+</falborArtifact>`;
   }
 
   private _wrapInShellAction(content: string, messageId: string): string {
     const artifactId = `artifact-${messageId}-${this._artifactCounter++}`;
 
-    return `<boltArtifact id="${artifactId}" title="Shell Command" type="shell">
-<boltAction type="shell">
+    return `<falborArtifact id="${artifactId}" title="Shell Command" type="shell">
+<falborAction type="shell">
 ${content.trim()}
-</boltAction>
-</boltArtifact>`;
+</falborAction>
+</falborArtifact>`;
   }
 
   private _normalizeFilePath(filePath: string): string {

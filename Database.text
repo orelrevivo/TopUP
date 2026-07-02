@@ -1,0 +1,18 @@
+Database Structure
+c:\Users\orelr\OneDrive\Desktop\New folder\app\lib\services\supabaseService.ts
+c:\Users\orelr\OneDrive\Desktop\New folder\app\components\chat\SupabaseConnection.tsx
+c:\Users\orelr\OneDrive\Desktop\New folder\app\components\workbench\DatabaseView.tsx
+c:\Users\orelr\OneDrive\Desktop\New folder\app\lib\common\prompts\new-prompt.ts
+c:\Users\orelr\OneDrive\Desktop\New folder\app\lib\common\prompts\optimized.ts
+c:\Users\orelr\OneDrive\Desktop\New folder\app\api\database\execute\route.ts
+app/components/workbench/
+├── DatabaseView.tsx          ← Orchestrator only (state + data logic + layout)
+└── database/
+    ├── types.ts              ← All shared TypeScript types
+    ├── StudioSidebar.tsx     ← The left navigation sidebar
+    ├── DatabaseSetupScreen.tsx ← "Not connected" empty state
+    ├── TablesTab.tsx         ← Tables browser + SQL migrations + data viewer
+    ├── AuthTab.tsx           ← User list + signup chart + Ban/Delete actions
+    ├── StorageTab.tsx        ← Bucket list + file browser
+    ├── FunctionsTab.tsx      ← SQL functions list
+    └── LogsTab.tsx           ← Logs info panel

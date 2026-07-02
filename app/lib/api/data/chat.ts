@@ -1,9 +1,23 @@
 const BASE = "/api/data/chats";
 
 async function api(path: string, options?: RequestInit): Promise<any> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem("session_token");
+    if (token) headers["x-session-token"] = token;
+  }
+
+  if (options?.headers) {
+    const optHeaders = options.headers as Record<string, string>;
+    Object.assign(headers, optHeaders);
+  }
+
   const res = await fetch(`${BASE}${path}`, {
-    headers: { "Content-Type": "application/json" },
+    headers,
+    credentials: 'include',
     ...options,
+    headers, // re-apply merged headers after spread
   });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -59,9 +73,10 @@ export async function deleteAllChats(): Promise<void> {
 }
 
 export async function getNextId(): Promise<string> {
-  const chats = await getAllChats();
-  const maxId = chats.reduce((max, c) => Math.max(max, Number(c.id) || 0), 0);
-  return String(maxId + 1);
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+    return crypto.randomUUID();
+  }
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
 export async function getUrlId(id: string): Promise<string> {

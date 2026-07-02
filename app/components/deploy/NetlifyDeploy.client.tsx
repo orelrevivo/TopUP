@@ -222,9 +222,16 @@ export function useNetlifyDeploy() {
         localStorage.setItem(`netlify-site-${currentChatId}`, data.site.id);
       }
 
+      const deployUrl = deploymentStatus.ssl_url || deploymentStatus.url;
+
+      if (deployUrl) {
+        localStorage.setItem(`deploy-url-${currentChatId}`, deployUrl);
+        localStorage.setItem(`deploy-source-${currentChatId}`, 'netlify');
+      }
+
       // Notify that deployment completed successfully
       deployArtifact.runner.handleDeployAction('complete', 'complete', {
-        url: deploymentStatus.ssl_url || deploymentStatus.url,
+        url: deployUrl,
         source: 'netlify',
       });
 

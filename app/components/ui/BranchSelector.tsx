@@ -137,26 +137,26 @@ export function BranchSelector({
           exit={{ opacity: 0, scale: 0.95 }}
           transition={{ duration: 0.2 }}
           className={classNames(
-            'bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-bolt-elements-borderColor max-w-md w-full max-h-[80vh] flex flex-col',
+            'bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-falbor-elements-borderColor max-w-md w-full max-h-[80vh] flex flex-col',
             className,
           )}
         >
           {/* Header */}
-          <div className="p-6 border-b border-bolt-elements-borderColor flex items-center justify-between">
+          <div className="p-6 border-b border-falbor-elements-borderColor flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
                 <GitBranch className="w-6 h-6 text-blue-600" />
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Select Branch</h3>
-                <p className="text-sm text-bolt-elements-textSecondary">
+                <h3 className="text-lg font-semibold text-falbor-elements-textPrimary">Select Branch</h3>
+                <p className="text-sm text-falbor-elements-textSecondary">
                   {repoOwner}/{repoName}
                 </p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 rounded-lg hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary transition-all"
+              className="p-2 rounded-lg hover:bg-falbor-elements-background-depth-1 text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-all"
             >
               <X className="w-5 h-5" />
             </button>
@@ -166,8 +166,8 @@ export function BranchSelector({
           <div className="flex-1 overflow-hidden flex flex-col">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center p-8 space-y-4">
-                <div className="animate-spin w-8 h-8 border-2 border-bolt-elements-borderColorActive border-t-transparent rounded-full" />
-                <p className="text-sm text-bolt-elements-textSecondary">Loading branches...</p>
+                <div className="animate-spin w-8 h-8 border-2 border-falbor-elements-borderColorActive border-t-transparent rounded-full" />
+                <p className="text-sm text-falbor-elements-textSecondary">Loading branches...</p>
               </div>
             ) : error ? (
               <div className="flex flex-col items-center justify-center p-8 space-y-4">
@@ -184,13 +184,13 @@ export function BranchSelector({
               <>
                 {/* Search */}
                 {branches.length > 10 && (
-                  <div className="p-4 border-b border-bolt-elements-borderColor">
+                  <div className="p-4 border-b border-falbor-elements-borderColor">
                     <input
                       type="text"
                       placeholder="Search branches..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full px-3 py-2 rounded-lg bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive"
+                      className="w-full px-3 py-2 rounded-lg bg-falbor-elements-background-depth-1 border border-falbor-elements-borderColor text-falbor-elements-textPrimary placeholder-falbor-elements-textTertiary focus:outline-none focus:ring-1 focus:ring-falbor-elements-borderColorActive"
                     />
                   </div>
                 )}
@@ -207,13 +207,13 @@ export function BranchSelector({
                             'w-full text-left p-3 rounded-lg transition-all duration-200 border',
                             selectedBranch === branch.name
                               ? 'bg-blue-50 border-blue-200 text-blue-900 dark:bg-blue-950 dark:border-blue-800 dark:text-blue-100'
-                              : 'bg-bolt-elements-background-depth-1 border-transparent hover:bg-bolt-elements-background-depth-2',
+                              : 'bg-falbor-elements-background-depth-1 border-transparent hover:bg-falbor-elements-background-depth-2',
                           )}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2 min-w-0">
-                              <GitBranch className="w-4 h-4 flex-shrink-0 text-bolt-elements-textSecondary" />
-                              <span className="font-medium text-bolt-elements-textPrimary truncate">{branch.name}</span>
+                              <GitBranch className="w-4 h-4 flex-shrink-0 text-falbor-elements-textSecondary" />
+                              <span className="font-medium text-falbor-elements-textPrimary truncate">{branch.name}</span>
                               <div className="flex items-center gap-1 flex-shrink-0">
                                 {branch.isDefault && <Star className="w-3 h-3 text-yellow-500" />}
                                 {branch.protected && <Shield className="w-3 h-3 text-red-500" />}
@@ -221,7 +221,7 @@ export function BranchSelector({
                             </div>
                             {selectedBranch === branch.name && <Check className="w-4 h-4 text-blue-600" />}
                           </div>
-                          <div className="text-xs text-bolt-elements-textSecondary mt-1 truncate">
+                          <div className="text-xs text-falbor-elements-textSecondary mt-1 truncate">
                             {branch.sha.substring(0, 8)}
                           </div>
                         </button>
@@ -229,7 +229,7 @@ export function BranchSelector({
                     </div>
                   ) : (
                     <div className="flex items-center justify-center p-8">
-                      <p className="text-sm text-bolt-elements-textSecondary">
+                      <p className="text-sm text-falbor-elements-textSecondary">
                         {searchQuery ? 'No branches found matching your search.' : 'No branches available.'}
                       </p>
                     </div>
@@ -241,8 +241,8 @@ export function BranchSelector({
 
           {/* Footer */}
           {!isLoading && !error && branches.length > 0 && (
-            <div className="p-6 border-t border-bolt-elements-borderColor flex items-center justify-between">
-              <div className="text-sm text-bolt-elements-textSecondary">
+            <div className="p-6 border-t border-falbor-elements-borderColor flex items-center justify-between">
+              <div className="text-sm text-falbor-elements-textSecondary">
                 {selectedBranch && (
                   <>
                     Selected: <span className="font-medium">{selectedBranch}</span>

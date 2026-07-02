@@ -22,7 +22,7 @@ const bugReportSchema = z.object({
       browser: z.string().optional(),
       os: z.string().optional(),
       screenResolution: z.string().optional(),
-      boltVersion: z.string().optional(),
+      falborVersion: z.string().optional(),
       aiProviders: z.string().optional(),
       projectType: z.string().optional(),
       currentModel: z.string().optional(),
@@ -114,8 +114,8 @@ function formatIssueBody(data: z.infer<typeof bugReportSchema>): string {
       body += `- Screen: ${data.environmentInfo.screenResolution}\n`;
     }
 
-    if (data.environmentInfo.boltVersion) {
-      body += `- bolt.diy: ${data.environmentInfo.boltVersion}\n`;
+    if (data.environmentInfo.falborVersion) {
+      body += `- falbor: ${data.environmentInfo.falborVersion}\n`;
     }
 
     if (data.environmentInfo.aiProviders) {
@@ -137,7 +137,7 @@ function formatIssueBody(data: z.infer<typeof bugReportSchema>): string {
     body += `**Contact:** ${data.contactEmail}\n\n`;
   }
 
-  body += '---\n*Submitted via bolt.diy bug report feature*';
+  body += '---\n*Submitted via falbor bug report feature*';
 
   return body;
 }
@@ -188,7 +188,7 @@ export async function POST(request: Request) {
 
     // Get GitHub configuration
     const githubToken = process.env.GITHUB_BUG_REPORT_TOKEN;
-    const targetRepo = process.env.BUG_REPORT_REPO || 'stackblitz-labs/bolt.diy';
+    const targetRepo = process.env.BUG_REPORT_REPO || 'stackblitz-labs/falbor';
 
     if (!githubToken) {
       console.error('GitHub bug report token not configured');
@@ -201,7 +201,7 @@ export async function POST(request: Request) {
     // Initialize GitHub client
     const octokit = new Octokit({
       auth: githubToken,
-      userAgent: 'bolt.diy-bug-reporter',
+      userAgent: 'falbor-bug-reporter',
     });
 
     // Create GitHub issue

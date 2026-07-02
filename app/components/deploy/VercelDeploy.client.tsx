@@ -211,6 +211,11 @@ export function useVercelDeploy() {
         localStorage.setItem(`vercel-project-${currentChatId}`, data.project.id);
       }
 
+      if (data.deploy?.url) {
+        localStorage.setItem(`deploy-url-${currentChatId}`, data.deploy.url);
+        localStorage.setItem(`deploy-source-${currentChatId}`, 'vercel');
+      }
+
       // Notify that deployment completed successfully
       deployArtifact.runner.handleDeployAction('complete', 'complete', {
         url: data.deploy.url,

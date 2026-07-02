@@ -50,7 +50,7 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="text-sm font-medium text-bolt-elements-textPrimary">
+        <h4 className="text-sm font-medium text-falbor-elements-textPrimary">
           Repositories ({filteredRepositories.length})
         </h4>
         {onRefresh && (
@@ -78,13 +78,13 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
           placeholder="Search repositories..."
           value={searchQuery}
           onChange={(e) => handleSearch(e.target.value)}
-          className="w-full px-4 py-2 pl-10 rounded-lg bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive"
+          className="w-full px-4 py-2 pl-10 rounded-lg bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor text-falbor-elements-textPrimary placeholder-falbor-elements-textTertiary focus:outline-none focus:ring-1 focus:ring-falbor-elements-borderColorActive"
         />
         <div className="absolute left-3 top-1/2 -translate-y-1/2">
           {isSearching ? (
-            <div className="i-ph:spinner animate-spin w-4 h-4 text-bolt-elements-textSecondary" />
+            <div className="i-ph:spinner animate-spin w-4 h-4 text-falbor-elements-textSecondary" />
           ) : (
-            <div className="i-ph:magnifying-glass w-4 h-4 text-bolt-elements-textSecondary" />
+            <div className="i-ph:magnifying-glass w-4 h-4 text-falbor-elements-textSecondary" />
           )}
         </div>
       </div>
@@ -92,7 +92,7 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
       {/* Repository Grid */}
       <div className="space-y-4">
         {filteredRepositories.length === 0 ? (
-          <div className="text-center py-8 text-bolt-elements-textSecondary">
+          <div className="text-center py-8 text-falbor-elements-textSecondary">
             {searchQuery ? 'No repositories found matching your search.' : 'No repositories available.'}
           </div>
         ) : (
@@ -105,8 +105,8 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex items-center justify-between pt-4 border-t border-bolt-elements-borderColor">
-                <div className="text-sm text-bolt-elements-textSecondary">
+              <div className="flex items-center justify-between pt-4 border-t border-falbor-elements-borderColor">
+                <div className="text-sm text-falbor-elements-textSecondary">
                   Showing {Math.min(startIndex + 1, filteredRepositories.length)} to{' '}
                   {Math.min(endIndex, filteredRepositories.length)} of {filteredRepositories.length} repositories
                 </div>
@@ -120,7 +120,7 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
                     <div className="i-ph:caret-left w-4 h-4" />
                     Previous
                   </Button>
-                  <span className="text-sm text-bolt-elements-textSecondary px-3">
+                  <span className="text-sm text-falbor-elements-textSecondary px-3">
                     {currentPage} of {totalPages}
                   </span>
                   <Button

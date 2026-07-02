@@ -2,7 +2,7 @@
 import ignore from 'ignore';
 import { useGit } from '~/lib/hooks/useGit';
 import type { Message } from 'ai';
-import { detectProjectCommands, createCommandsMessage, escapeBoltTags } from '~/utils/projectCommands';
+import { detectProjectCommands, createCommandsMessage, escapeFalborTags } from '~/utils/projectCommands';
 import { generateId } from '~/utils/fileUtils';
 import { useState } from 'react';
 import { toast } from 'react-toastify';
@@ -124,23 +124,22 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
         const filesMessage: Message = {
           role: 'assistant',
           content: `Cloning the repo ${repoUrl} into ${workdir}
-${
-  skippedFiles.length > 0
-    ? `\nSkipped files (${skippedFiles.length}):
+${skippedFiles.length > 0
+              ? `\nSkipped files (${skippedFiles.length}):
 ${skippedFiles.map((f) => `- ${f}`).join('\n')}`
-    : ''
-}
+              : ''
+            }
 
-<boltArtifact id="imported-files" title="Git Cloned Files" type="bundled">
+<falborArtifact id="imported-files" title="Git Cloned Files" type="bundled">
 ${fileContents
-  .map(
-    (file) =>
-      `<boltAction type="file" filePath="${file.path}">
-${escapeBoltTags(file.content)}
-</boltAction>`,
-  )
-  .join('\n')}
-</boltArtifact>`,
+              .map(
+                (file) =>
+                  `<falborAction type="file" filePath="${file.path}">
+${escapeFalborTags(file.content)}
+</falborAction>`,
+              )
+              .join('\n')}
+</falborArtifact>`,
           id: generateId(),
           createdAt: new Date(),
         };
@@ -170,12 +169,12 @@ ${escapeBoltTags(file.content)}
         }}
         title="Clone a repo"
         variant="default"
-        size="lg"
+        size="default"
         className={classNames(
-          'gap-2 bg-bolt-elements-background-depth-1',
-          'text-bolt-elements-textPrimary',
-          'hover:bg-bolt-elements-background-depth-2',
-          'border border-bolt-elements-borderColor',
+          'gap-2 bg-falbor-elements-background-depth-1 w-full',
+          'text-falbor-elements-textPrimary',
+          'hover:bg-falbor-elements-background-depth-2',
+          'border border-falbor-elements-borderColor',
           'h-10 px-4 py-2 min-w-[120px] justify-center',
           'transition-all duration-200 ease-in-out',
           className,
@@ -192,15 +191,15 @@ ${escapeBoltTags(file.content)}
       {/* Provider Selection Dialog */}
       {isDialogOpen && !selectedProvider && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor max-w-md w-full">
+          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor max-w-md w-full">
             <div className="p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                <h3 className="text-lg font-semibold text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary">
                   Choose Repository Provider
                 </h3>
                 <button
                   onClick={() => setIsDialogOpen(false)}
-                  className="p-2 rounded-lg bg-transparent hover:bg-bolt-elements-background-depth-1 dark:hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
+                  className="p-2 rounded-lg bg-transparent hover:bg-falbor-elements-background-depth-1 dark:hover:bg-falbor-elements-background-depth-1 text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary dark:hover:text-falbor-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
                 >
                   <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
                 </button>
@@ -209,17 +208,17 @@ ${escapeBoltTags(file.content)}
               <div className="space-y-3">
                 <button
                   onClick={() => setSelectedProvider('github')}
-                  className="w-full p-4 rounded-lg bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive dark:hover:border-bolt-elements-borderColorActive transition-all duration-200 text-left group"
+                  className="w-full p-4 rounded-lg bg-falbor-elements-background-depth-1 dark:bg-falbor-elements-background-depth-1 hover:bg-falbor-elements-background-depth-2 dark:hover:bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor hover:border-falbor-elements-borderColorActive dark:hover:border-falbor-elements-borderColorActive transition-all duration-200 text-left group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center group-hover:bg-blue-500/20 dark:group-hover:bg-blue-500/30 transition-colors">
                       <Github className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                     </div>
                     <div>
-                      <div className="font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                      <div className="font-medium text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary">
                         GitHub
                       </div>
-                      <div className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+                      <div className="text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary">
                         Clone from GitHub repositories
                       </div>
                     </div>
@@ -228,17 +227,17 @@ ${escapeBoltTags(file.content)}
 
                 <button
                   onClick={() => setSelectedProvider('gitlab')}
-                  className="w-full p-4 rounded-lg bg-bolt-elements-background-depth-1 dark:bg-bolt-elements-background-depth-1 hover:bg-bolt-elements-background-depth-2 dark:hover:bg-bolt-elements-background-depth-2 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor hover:border-bolt-elements-borderColorActive dark:hover:border-bolt-elements-borderColorActive transition-all duration-200 text-left group"
+                  className="w-full p-4 rounded-lg bg-falbor-elements-background-depth-1 dark:bg-falbor-elements-background-depth-1 hover:bg-falbor-elements-background-depth-2 dark:hover:bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor hover:border-falbor-elements-borderColorActive dark:hover:border-falbor-elements-borderColorActive transition-all duration-200 text-left group"
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center group-hover:bg-orange-500/20 dark:group-hover:bg-orange-500/30 transition-colors">
                       <GitBranch className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                     </div>
                     <div>
-                      <div className="font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                      <div className="font-medium text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary">
                         GitLab
                       </div>
-                      <div className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+                      <div className="text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary">
                         Clone from GitLab repositories
                       </div>
                     </div>
@@ -253,17 +252,17 @@ ${escapeBoltTags(file.content)}
       {/* GitHub Repository Selection */}
       {isDialogOpen && selectedProvider === 'github' && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="p-6 border-b border-bolt-elements-borderColor dark:border-bolt-elements-borderColor flex items-center justify-between">
+          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-falbor-elements-borderColor dark:border-falbor-elements-borderColor flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 dark:bg-blue-500/20 flex items-center justify-center">
                   <Github className="w-6 h-6 text-blue-600 dark:text-blue-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                  <h3 className="text-lg font-semibold text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary">
                     Import GitHub Repository
                   </h3>
-                  <p className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+                  <p className="text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary">
                     Clone a repository from GitHub to your workspace
                   </p>
                 </div>
@@ -273,7 +272,7 @@ ${escapeBoltTags(file.content)}
                   setIsDialogOpen(false);
                   setSelectedProvider(null);
                 }}
-                className="p-2 rounded-lg bg-transparent hover:bg-bolt-elements-background-depth-1 dark:hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
+                className="p-2 rounded-lg bg-transparent hover:bg-falbor-elements-background-depth-1 dark:hover:bg-falbor-elements-background-depth-1 text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary dark:hover:text-falbor-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
               </button>
@@ -289,17 +288,17 @@ ${escapeBoltTags(file.content)}
       {/* GitLab Repository Selection */}
       {isDialogOpen && selectedProvider === 'gitlab' && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
-            <div className="p-6 border-b border-bolt-elements-borderColor dark:border-bolt-elements-borderColor flex items-center justify-between">
+          <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div className="p-6 border-b border-falbor-elements-borderColor dark:border-falbor-elements-borderColor flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-orange-500/10 dark:bg-orange-500/20 flex items-center justify-center">
                   <GitBranch className="w-6 h-6 text-orange-600 dark:text-orange-400" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary">
+                  <h3 className="text-lg font-semibold text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary">
                     Import GitLab Repository
                   </h3>
-                  <p className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary">
+                  <p className="text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary">
                     Clone a repository from GitLab to your workspace
                   </p>
                 </div>
@@ -309,7 +308,7 @@ ${escapeBoltTags(file.content)}
                   setIsDialogOpen(false);
                   setSelectedProvider(null);
                 }}
-                className="p-2 rounded-lg bg-transparent hover:bg-bolt-elements-background-depth-1 dark:hover:bg-bolt-elements-background-depth-1 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
+                className="p-2 rounded-lg bg-transparent hover:bg-falbor-elements-background-depth-1 dark:hover:bg-falbor-elements-background-depth-1 text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary dark:hover:text-falbor-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
               >
                 <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
               </button>

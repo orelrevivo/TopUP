@@ -44,9 +44,9 @@ function getCompletionTokenLimit(modelDetails: any): number {
 }
 
 function sanitizeText(text: string): string {
-  let sanitized = text.replace(/<div class=\\"__boltThought__\\">.*?<\/div>/s, '');
+  let sanitized = text.replace(/<div class=\\"__falborThought__\\">.*?<\/div>/s, '');
   sanitized = sanitized.replace(/<think>.*?<\/think>/s, '');
-  sanitized = sanitized.replace(/<boltAction type="file" filePath="package-lock\.json">[\s\S]*?<\/boltAction>/g, '');
+  sanitized = sanitized.replace(/<falborAction type="file" filePath="package-lock\.json">[\s\S]*?<\/falborAction>/g, '');
 
   return sanitized.trim();
 }
@@ -65,6 +65,7 @@ export async function streamText(props: {
   messageSliceId?: number;
   chatMode?: 'discuss' | 'build';
   designScheme?: DesignScheme;
+  supabaseProjectData?: any;
 }) {
   const {
     messages,
@@ -79,6 +80,7 @@ export async function streamText(props: {
     summary,
     chatMode,
     designScheme,
+    supabaseProjectData,
   } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
@@ -160,7 +162,8 @@ export async function streamText(props: {
         hasSelectedProject: options?.supabaseConnection?.hasSelectedProject || false,
         credentials: options?.supabaseConnection?.credentials || undefined,
       },
-    }) ?? getSystemPrompt();
+      supabaseProjectData,
+    }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData);
 
   if (chatMode === 'build' && contextFiles && contextOptimization) {
     const codeContext = createFilesContext(contextFiles, true);
@@ -241,19 +244,19 @@ export async function streamText(props: {
   const filteredOptions =
     isReasoning && options
       ? Object.fromEntries(
-          Object.entries(options).filter(
-            ([key]) =>
-              ![
-                'temperature',
-                'topP',
-                'presencePenalty',
-                'frequencyPenalty',
-                'logprobs',
-                'topLogprobs',
-                'logitBias',
-              ].includes(key),
-          ),
-        )
+        Object.entries(options).filter(
+          ([key]) =>
+            ![
+              'temperature',
+              'topP',
+              'presencePenalty',
+              'frequencyPenalty',
+              'logprobs',
+              'topLogprobs',
+              'logitBias',
+            ].includes(key),
+        ),
+      )
       : options || {};
 
   // DEBUG: Log filtered options

@@ -320,7 +320,7 @@ export async function GET(request: Request) {
       author: typeof __GIT_AUTHOR !== 'undefined' ? __GIT_AUTHOR : 'development',
       email: typeof __GIT_EMAIL !== 'undefined' ? __GIT_EMAIL : 'development@local',
       remoteUrl: typeof __GIT_REMOTE_URL !== 'undefined' ? __GIT_REMOTE_URL : 'local',
-      repoName: typeof __GIT_REPO_NAME !== 'undefined' ? __GIT_REPO_NAME : 'bolt.diy',
+      repoName: typeof __GIT_REPO_NAME !== 'undefined' ? __GIT_REPO_NAME : 'falbor',
     },
     timestamp: new Date().toISOString(),
   };

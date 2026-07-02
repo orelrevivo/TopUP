@@ -65,13 +65,21 @@ export function useGit() {
       const headers: {
         [x: string]: string;
       } = {
-        'User-Agent': 'bolt.diy',
+        'User-Agent': 'falbor',
       };
 
       const auth = lookupSavedPassword(url);
 
       if (auth) {
         headers.Authorization = `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString('base64')}`;
+      }
+
+      // Auto-inject GitHub token from env for github.com URLs
+      const githubToken = process.env.NEXT_PUBLIC_GITHUB_ACCESS_TOKEN;
+      const isGitHubUrl = baseUrl.includes('github.com');
+
+      if (isGitHubUrl && githubToken && !githubToken.startsWith('your_') && !headers.Authorization) {
+        headers.Authorization = `Bearer ${githubToken}`;
       }
 
       try {
@@ -94,22 +102,32 @@ export function useGit() {
           onProgress: (event) => {
             console.log('Git clone progress:', event);
           },
-          onAuth: (baseUrl) => {
-            let auth = lookupSavedPassword(baseUrl);
+          onAuth: (authUrl) => {
+            // 1. Check cookies first (previously saved creds)
+            const saved = lookupSavedPassword(authUrl);
 
-            if (auth) {
-              console.log('Using saved authentication for', baseUrl);
-              return auth;
+            if (saved) {
+              console.log('Using saved authentication for', authUrl);
+              return saved;
             }
 
-            console.log('Repository requires authentication:', baseUrl);
+            // 2. Auto-use GitHub token from env for github.com
+            const ghToken = process.env.NEXT_PUBLIC_GITHUB_ACCESS_TOKEN;
+
+            if (authUrl.includes('github.com') && ghToken && !ghToken.startsWith('your_')) {
+              console.log('Using GitHub token from environment for', authUrl);
+              return { username: 'oauth2', password: ghToken };
+            }
+
+            // 3. Last resort — ask the user
+            console.log('Repository requires authentication:', authUrl);
 
             if (confirm('This repository requires authentication. Would you like to enter your GitHub credentials?')) {
-              auth = {
+              const enteredAuth = {
                 username: prompt('Enter username') || '',
                 password: prompt('Enter password or personal access token') || '',
               };
-              return auth;
+              return enteredAuth;
             } else {
               return { cancel: true };
             }

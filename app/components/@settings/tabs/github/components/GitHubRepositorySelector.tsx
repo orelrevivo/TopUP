@@ -140,7 +140,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
   if (!isConnected || !connection) {
     return (
       <div className="text-center p-8">
-        <p className="text-bolt-elements-textSecondary mb-4">Please connect to GitHub first to browse repositories</p>
+        <p className="text-falbor-elements-textSecondary mb-4">Please connect to GitHub first to browse repositories</p>
         <Button variant="outline" onClick={() => window.location.reload()}>
           Refresh Connection
         </Button>
@@ -151,8 +151,8 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
   if (isStatsLoading && !stats) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
-        <div className="animate-spin w-8 h-8 border-2 border-bolt-elements-borderColorActive border-t-transparent rounded-full" />
-        <p className="text-sm text-bolt-elements-textSecondary">Loading repositories...</p>
+        <div className="animate-spin w-8 h-8 border-2 border-falbor-elements-borderColorActive border-t-transparent rounded-full" />
+        <p className="text-sm text-falbor-elements-textSecondary">Loading repositories...</p>
       </div>
     );
   }
@@ -160,8 +160,8 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
   if (!repositories.length) {
     return (
       <div className="text-center p-8">
-        <GitBranch className="w-12 h-12 text-bolt-elements-textTertiary mx-auto mb-4" />
-        <p className="text-bolt-elements-textSecondary mb-4">No repositories found</p>
+        <GitBranch className="w-12 h-12 text-falbor-elements-textTertiary mx-auto mb-4" />
+        <p className="text-falbor-elements-textSecondary mb-4">No repositories found</p>
         <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
           <RefreshCw className={classNames('w-4 h-4 mr-2', { 'animate-spin': isRefreshing })} />
           Refresh
@@ -180,8 +180,8 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
       {/* Header with stats */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="text-lg font-semibold text-bolt-elements-textPrimary">Select Repository to Clone</h3>
-          <p className="text-sm text-bolt-elements-textSecondary">
+          <h3 className="text-lg font-semibold text-falbor-elements-textPrimary">Select Repository to Clone</h3>
+          <p className="text-sm text-falbor-elements-textSecondary">
             {filteredRepositories.length} of {repositories.length} repositories
           </p>
         </div>
@@ -207,23 +207,23 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
       <div className="flex flex-col sm:flex-row gap-4">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-bolt-elements-textTertiary" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-falbor-elements-textTertiary" />
           <input
             type="text"
             placeholder="Search repositories..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 rounded-lg bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive"
+            className="w-full pl-10 pr-4 py-2 rounded-lg bg-falbor-elements-background-depth-1 border border-falbor-elements-borderColor text-falbor-elements-textPrimary placeholder-falbor-elements-textTertiary focus:outline-none focus:ring-1 focus:ring-falbor-elements-borderColorActive"
           />
         </div>
 
         {/* Sort */}
         <div className="flex items-center gap-2">
-          <Calendar className="w-4 h-4 text-bolt-elements-textTertiary" />
+          <Calendar className="w-4 h-4 text-falbor-elements-textTertiary" />
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value as SortOption)}
-            className="px-3 py-2 rounded-lg bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor text-bolt-elements-textPrimary text-sm focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive"
+            className="px-3 py-2 rounded-lg bg-falbor-elements-background-depth-1 border border-falbor-elements-borderColor text-falbor-elements-textPrimary text-sm focus:outline-none focus:ring-1 focus:ring-falbor-elements-borderColorActive"
           >
             <option value="updated">Recently updated</option>
             <option value="stars">Most starred</option>
@@ -234,11 +234,11 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
 
         {/* Filter */}
         <div className="flex items-center gap-2">
-          <Filter className="w-4 h-4 text-bolt-elements-textTertiary" />
+          <Filter className="w-4 h-4 text-falbor-elements-textTertiary" />
           <select
             value={filterBy}
             onChange={(e) => setFilterBy(e.target.value as FilterOption)}
-            className="px-3 py-2 rounded-lg bg-bolt-elements-background-depth-1 border border-bolt-elements-borderColor text-bolt-elements-textPrimary text-sm focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive"
+            className="px-3 py-2 rounded-lg bg-falbor-elements-background-depth-1 border border-falbor-elements-borderColor text-falbor-elements-textPrimary text-sm focus:outline-none focus:ring-1 focus:ring-falbor-elements-borderColorActive"
           >
             <option value="all">All repositories</option>
             <option value="own">Own repositories</option>
@@ -259,8 +259,8 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
 
           {/* Pagination */}
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4 border-t border-bolt-elements-borderColor">
-              <div className="text-sm text-bolt-elements-textSecondary">
+            <div className="flex items-center justify-between pt-4 border-t border-falbor-elements-borderColor">
+              <div className="text-sm text-falbor-elements-textSecondary">
                 Showing {Math.min(startIndex + 1, filteredRepositories.length)} to{' '}
                 {Math.min(startIndex + REPOS_PER_PAGE, filteredRepositories.length)} of {filteredRepositories.length}{' '}
                 repositories
@@ -274,7 +274,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
                 >
                   Previous
                 </Button>
-                <span className="text-sm text-bolt-elements-textSecondary px-3">
+                <span className="text-sm text-falbor-elements-textSecondary px-3">
                   {currentPage} of {totalPages}
                 </span>
                 <Button
@@ -291,7 +291,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
         </>
       ) : (
         <div className="text-center py-8">
-          <p className="text-bolt-elements-textSecondary">No repositories found matching your search criteria.</p>
+          <p className="text-falbor-elements-textSecondary">No repositories found matching your search criteria.</p>
         </div>
       )}
 

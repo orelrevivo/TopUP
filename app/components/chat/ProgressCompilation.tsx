@@ -8,7 +8,12 @@ import { cubicEasingFn } from '~/utils/easings';
 export default function ProgressCompilation({ data }: { data?: ProgressAnnotation[] }) {
   const [progressList, setProgressList] = React.useState<ProgressAnnotation[]>([]);
   const [expanded, setExpanded] = useState(false);
+  const prevDataRef = React.useRef('');
   React.useEffect(() => {
+    const currStr = JSON.stringify(data);
+    if (currStr === prevDataRef.current) return;
+    prevDataRef.current = currStr;
+
     if (!data || data.length == 0) {
       setProgressList([]);
       return;
@@ -38,16 +43,13 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
     <AnimatePresence>
       <div
         className={classNames(
-          'bg-bolt-elements-background-depth-2',
-          'border border-bolt-elements-borderColor',
-          'shadow-lg rounded-lg  relative w-full max-w-chat mx-auto z-prompt',
-          'p-1',
+          'shadow-lg rounded-t-lg relative w-full max-w-[90%] mx-auto z-prompt',
         )}
       >
         <div
           className={classNames(
-            'bg-bolt-elements-item-backgroundAccent',
-            'p-1 rounded-lg text-bolt-elements-item-contentAccent',
+            'bg-[#EBEBEB] dark:bg-[#1F1F1F]',
+            'px-2 py-1 rounded-t-lg text-[#545454]',
             'flex ',
           )}
         >
@@ -75,7 +77,7 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
             animate={{ width: 'auto' }}
             exit={{ width: 0 }}
             transition={{ duration: 0.15, ease: cubicEasingFn }}
-            className=" p-1 rounded-lg bg-bolt-elements-item-backgroundAccent hover:bg-bolt-elements-artifacts-backgroundHover"
+            className=" p-1 rounded-lg bg-white border border-gray-400 hover:bg-falbor-elements-artifacts-backgroundHover"
             onClick={() => setExpanded((v) => !v)}
           >
             <div className={expanded ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'}></div>
@@ -89,7 +91,7 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
 const ProgressItem = ({ progress }: { progress: ProgressAnnotation }) => {
   return (
     <motion.div
-      className={classNames('flex text-sm gap-3')}
+      className={classNames('flex text-sm gap-3', progress.status === 'error' ? 'text-red-500 font-medium' : '')}
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
@@ -101,9 +103,10 @@ const ProgressItem = ({ progress }: { progress: ProgressAnnotation }) => {
             <div className="i-svg-spinners:90-ring-with-bg"></div>
           ) : progress.status === 'complete' ? (
             <div className="i-ph:check"></div>
+          ) : progress.status === 'error' ? (
+            <div className="i-ph:warning-circle text-red-500"></div>
           ) : null}
         </div>
-        {/* {x.label} */}
       </div>
       {progress.message}
     </motion.div>

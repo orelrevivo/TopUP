@@ -56,7 +56,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
 
   return (
     <motion.div
-      className="bg-bolt-elements-background border border-bolt-elements-borderColor rounded-lg"
+      className="bg-falbor-elements-background border border-falbor-elements-borderColor rounded-lg"
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.2 }}
@@ -72,21 +72,21 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                 />
               </svg>
             </div>
-            <h3 className="text-base font-medium text-bolt-elements-textPrimary">GitLab Connection</h3>
+            <h3 className="text-base font-medium text-falbor-elements-textPrimary">GitLab Connection</h3>
           </div>
         </div>
 
         {!isConnected && (
-          <div className="text-xs text-bolt-elements-textSecondary bg-bolt-elements-background-depth-1 p-3 rounded-lg mb-4">
+          <div className="text-xs text-falbor-elements-textSecondary bg-falbor-elements-background-depth-1 p-3 rounded-lg mb-4">
             <p className="flex items-center gap-1 mb-1">
-              <span className="i-ph:lightbulb w-3.5 h-3.5 text-bolt-elements-icon-success" />
+              <span className="i-ph:lightbulb w-3.5 h-3.5 text-falbor-elements-icon-success" />
               <span className="font-medium">Tip:</span> You can also set the{' '}
-              <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 rounded">NEXT_PUBLIC_GITLAB_ACCESS_TOKEN</code>{' '}
+              <code className="px-1 py-0.5 bg-falbor-elements-background-depth-2 rounded">NEXT_PUBLIC_GITLAB_ACCESS_TOKEN</code>{' '}
               environment variable to connect automatically.
             </p>
             <p>
               For self-hosted GitLab instances, also set{' '}
-              <code className="px-1 py-0.5 bg-bolt-elements-background-depth-2 rounded">
+              <code className="px-1 py-0.5 bg-falbor-elements-background-depth-2 rounded">
                 NEXT_PUBLIC_GITLAB_URL=https://your-gitlab-instance.com
               </code>
             </p>
@@ -96,7 +96,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
         <form onSubmit={handleConnect}>
           <div className="grid grid-cols-1 gap-4">
             <div>
-              <label className="block text-sm text-bolt-elements-textSecondary mb-2">GitLab URL</label>
+              <label className="block text-sm text-falbor-elements-textSecondary mb-2">GitLab URL</label>
               <input
                 type="text"
                 value={gitlabUrl}
@@ -105,17 +105,17 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                 placeholder="https://gitlab.com"
                 className={classNames(
                   'w-full px-3 py-2 rounded-lg text-sm',
-                  'bg-bolt-elements-background-depth-1',
-                  'border border-bolt-elements-borderColor',
-                  'text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary',
-                  'focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive',
+                  'bg-falbor-elements-background-depth-1',
+                  'border border-falbor-elements-borderColor',
+                  'text-falbor-elements-textPrimary placeholder-falbor-elements-textTertiary',
+                  'focus:outline-none focus:ring-1 focus:ring-falbor-elements-borderColorActive',
                   'disabled:opacity-50',
                 )}
               />
             </div>
 
             <div>
-              <label className="block text-sm text-bolt-elements-textSecondary mb-2">Access Token</label>
+              <label className="block text-sm text-falbor-elements-textSecondary mb-2">Access Token</label>
               <input
                 type="password"
                 value={token}
@@ -124,19 +124,19 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                 placeholder="Enter your GitLab access token"
                 className={classNames(
                   'w-full px-3 py-2 rounded-lg text-sm',
-                  'bg-bolt-elements-background-depth-1',
-                  'border border-bolt-elements-borderColor',
-                  'text-bolt-elements-textPrimary placeholder-bolt-elements-textTertiary',
-                  'focus:outline-none focus:ring-1 focus:ring-bolt-elements-borderColorActive',
+                  'bg-falbor-elements-background-depth-1',
+                  'border border-falbor-elements-borderColor',
+                  'text-falbor-elements-textPrimary placeholder-falbor-elements-textTertiary',
+                  'focus:outline-none focus:ring-1 focus:ring-falbor-elements-borderColorActive',
                   'disabled:opacity-50',
                 )}
               />
-              <div className="mt-2 text-sm text-bolt-elements-textSecondary">
+              <div className="mt-2 text-sm text-falbor-elements-textSecondary">
                 <a
                   href={`${gitlabUrl}/-/user_settings/personal_access_tokens`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-bolt-elements-borderColorActive hover:underline inline-flex items-center gap-1"
+                  className="text-falbor-elements-borderColorActive hover:underline inline-flex items-center gap-1"
                 >
                   Get your token
                   <div className="i-ph:arrow-square-out w-4 h-4" />
@@ -204,7 +204,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                       <div className="i-ph:plug w-4 h-4" />
                       Disconnect
                     </button>
-                    <span className="text-sm text-bolt-elements-textSecondary flex items-center gap-1">
+                    <span className="text-sm text-falbor-elements-textSecondary flex items-center gap-1">
                       <div className="i-ph:check-circle w-4 h-4 text-green-500" />
                       Connected to GitLab
                     </span>
@@ -219,7 +219,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                           'noopener,noreferrer',
                         )
                       }
-                      className="flex items-center gap-2 hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-colors"
+                      className="flex items-center gap-2 hover:bg-falbor-elements-item-backgroundActive/10 hover:text-falbor-elements-textPrimary dark:hover:text-falbor-elements-textPrimary transition-colors"
                     >
                       <div className="i-ph:layout w-4 h-4" />
                       Dashboard
@@ -228,7 +228,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
                       onClick={onTestConnection}
                       disabled={connectionTest?.status === 'testing'}
                       variant="outline"
-                      className="flex items-center gap-2 hover:bg-bolt-elements-item-backgroundActive/10 hover:text-bolt-elements-textPrimary dark:hover:text-bolt-elements-textPrimary transition-colors"
+                      className="flex items-center gap-2 hover:bg-falbor-elements-item-backgroundActive/10 hover:text-falbor-elements-textPrimary dark:hover:text-falbor-elements-textPrimary transition-colors"
                     >
                       {connectionTest?.status === 'testing' ? (
                         <>

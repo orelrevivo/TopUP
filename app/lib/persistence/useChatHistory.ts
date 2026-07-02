@@ -100,15 +100,15 @@ export function useChatHistory() {
                   {
                     id: storedMessages.messages[snapshotIndex].id,
                     role: 'assistant',
-                    content: `Bolt Restored your chat from a snapshot. You can revert this message to load the full chat history.
-                  <boltArtifact id="restored-project-setup" title="Restored Project & Setup" type="bundled">
+                    content: `Falbor Restored your chat from a snapshot. You can revert this message to load the full chat history.
+                  <falborArtifact id="restored-project-setup" title="Restored Project & Setup" type="bundled">
                   ${Object.entries((snapshot?.files || {}) as FileMap)
                     .map(([key, value]) => {
                       if (value?.type === 'file') {
                         return `
-                      <boltAction type="file" filePath="${key}">
+                      <falborAction type="file" filePath="${key}">
 ${(value as any).content}
-                      </boltAction>
+                      </falborAction>
                       `;
                       } else {
                         return ``;
@@ -116,7 +116,7 @@ ${(value as any).content}
                     })
                     .join('\n')}
                   ${commandActionsString} 
-                  </boltArtifact>
+                  </falborArtifact>
                   `,
                   annotations: [
                     'no-store',
@@ -140,7 +140,12 @@ ${(value as any).content}
               setUrlId(storedMessages.urlId ?? storedMessages.id);
               description.set(storedMessages.description);
               chatId.set(storedMessages.id);
-              chatMetadata.set(storedMessages.metadata as IChatMetadata | undefined);
+              const loadedMetadata = (storedMessages.metadata || {}) as Record<string, any>;
+              const savedDeployUrl = typeof window !== 'undefined' ? localStorage.getItem(`deploy-url-${storedMessages.id}`) : null;
+              if (savedDeployUrl && !loadedMetadata.deployUrl) {
+                loadedMetadata.deployUrl = savedDeployUrl;
+              }
+              chatMetadata.set(loadedMetadata as IChatMetadata | undefined);
             }
           })
           .catch((error) => {
@@ -265,11 +270,13 @@ ${(value as any).content}
         description.set(firstArtifact?.title);
       }
 
-      if (initialMessages.length === 0 && !chatId.get()) {
-        const nextId = await chatApi.getNextId();
-        chatId.set(nextId);
+      if (initialMessages.length === 0) {
+        if (!chatId.get()) {
+          const nextId = await chatApi.getNextId();
+          chatId.set(nextId);
+        }
         if (!urlId) {
-          navigateChat(nextId);
+          navigateChat(chatId.get()!);
         }
       }
 

@@ -17,6 +17,12 @@ export interface PreviewInfo {
 // Create a broadcast channel for preview updates
 const PREVIEW_CHANNEL = 'preview-updates';
 
+// Keys too large to broadcast (e.g. base64 avatars). Add any others here.
+const SYNC_BLOCKLIST = new Set(['falbor_profile', 'falbor_user_profile']);
+
+// Maximum byte size we'll include in a broadcast payload (~256 KB)
+const MAX_SYNC_VALUE_BYTES = 256 * 1024;
+
 export class PreviewsStore {
   #availablePreviews = new Map<number, PreviewInfo>();
   #webcontainer: Promise<WebContainer>;
@@ -62,13 +68,28 @@ export class PreviewsStore {
       };
     }
 
-    // Override localStorage setItem to catch all changes
+    // Override localStorage.setItem to broadcast changes to other tabs.
+    // Uses the prototype directly so our override never triggers itself recursively.
     if (typeof window !== 'undefined') {
-      const originalSetItem = localStorage.setItem;
+      const originalSetItem = localStorage.setItem.bind(localStorage);
+      const protoSetItem = Object.getPrototypeOf(localStorage).setItem;
 
-      localStorage.setItem = (...args) => {
-        originalSetItem.apply(localStorage, args);
-        this._broadcastStorageSync();
+      localStorage.setItem = (key: string, value: string) => {
+        // Always write to storage first — but guard against quota errors
+        try {
+          originalSetItem(key, value);
+        } catch (err) {
+          if (err instanceof DOMException && err.name === 'QuotaExceededError') {
+            console.warn(`[Preview] localStorage quota exceeded writing "${key}" (${value.length} chars). Skipping broadcast.`);
+            return; // Don't crash; just skip
+          }
+          throw err; // Re-throw unexpected errors
+        }
+
+        // Only broadcast small, non-blocklisted keys so we don't explode the channel
+        if (!SYNC_BLOCKLIST.has(key) && new Blob([value]).size <= MAX_SYNC_VALUE_BYTES) {
+          this._broadcastStorageSync();
+        }
       };
     }
 
@@ -114,12 +135,13 @@ export class PreviewsStore {
   // Sync storage data between tabs
   private _syncStorage(storage: Record<string, string>) {
     if (typeof window !== 'undefined') {
+      const protoSetItem = Object.getPrototypeOf(localStorage).setItem;
+
       Object.entries(storage).forEach(([key, value]) => {
         try {
-          const originalSetItem = Object.getPrototypeOf(localStorage).setItem;
-          originalSetItem.call(localStorage, key, value);
+          protoSetItem.call(localStorage, key, value);
         } catch (error) {
-          console.error('[Preview] Error syncing storage:', error);
+          console.error('[Preview] Error syncing storage key:', key, error);
         }
       });
 
@@ -133,18 +155,16 @@ export class PreviewsStore {
         }
       });
 
-      // Reload the page content
-      if (typeof window !== 'undefined' && window.location) {
-        const iframe = document.querySelector('iframe');
+      // Reload iframes
+      const iframe = document.querySelector('iframe');
 
-        if (iframe) {
-          iframe.src = iframe.src;
-        }
+      if (iframe) {
+        iframe.src = iframe.src;
       }
     }
   }
 
-  // Broadcast storage state to other tabs
+  // Broadcast storage state to other tabs — skips blocklisted and oversized keys
   private _broadcastStorageSync() {
     if (typeof window !== 'undefined') {
       const storage: Record<string, string> = {};
@@ -152,8 +172,14 @@ export class PreviewsStore {
       for (let i = 0; i < localStorage.length; i++) {
         const key = localStorage.key(i);
 
-        if (key) {
-          storage[key] = localStorage.getItem(key) || '';
+        if (!key || SYNC_BLOCKLIST.has(key)) {
+          continue;
+        }
+
+        const value = localStorage.getItem(key) || '';
+
+        if (new Blob([value]).size <= MAX_SYNC_VALUE_BYTES) {
+          storage[key] = value;
         }
       }
 
@@ -302,10 +328,6 @@ let previewsStore: PreviewsStore | null = null;
 
 export function usePreviewStore() {
   if (!previewsStore) {
-    /*
-     * Initialize with a Promise that resolves to WebContainer
-     * This should match how you're initializing WebContainer elsewhere
-     */
     previewsStore = new PreviewsStore(Promise.resolve({} as WebContainer));
   }
 

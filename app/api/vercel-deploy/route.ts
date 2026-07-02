@@ -1,4 +1,8 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
+import { getUserId } from '~/lib/auth';
+import { db } from '~/lib/db';
+import { users } from '~/lib/db/schema';
+import { eq } from 'drizzle-orm';
 const json = NextResponse.json;
 import type { VercelProjectInfo } from '~/types/vercel';
 
@@ -251,6 +255,14 @@ export async function POST(request: Request, { params }: any) {
       return json({ error: 'Not connected to Vercel' }, { status: 401 });
     }
 
+    const userId = await getUserId(request as unknown as Request);
+    if (userId) {
+      const userRows = await db.select({ subscriptionTier: users.subscriptionTier }).from(users).where(eq(users.id, userId));
+      if (userRows.length > 0 && userRows[0].subscriptionTier === 'free') {
+        return json({ error: 'Vercel deployments are a Pro feature. Please upgrade your subscription.' }, { status: 403 });
+      }
+    }
+
     let targetProjectId = projectId;
     let projectInfo: VercelProjectInfo | undefined;
 
@@ -264,7 +276,7 @@ export async function POST(request: Request, { params }: any) {
 
     // If no projectId provided, create a new project
     if (!targetProjectId) {
-      const projectName = `bolt-diy-${chatId}-${Date.now()}`;
+      const projectName = `falbor-diy-${chatId}-${Date.now()}`;
       const createProjectResponse = await fetch('https://api.vercel.com/v9/projects', {
         method: 'POST',
         headers: {
@@ -311,7 +323,7 @@ export async function POST(request: Request, { params }: any) {
         };
       } else {
         // If project doesn't exist, create a new one
-        const projectName = `bolt-diy-${chatId}-${Date.now()}`;
+        const projectName = `falbor-diy-${chatId}-${Date.now()}`;
         const createProjectResponse = await fetch('https://api.vercel.com/v9/projects', {
           method: 'POST',
           headers: {

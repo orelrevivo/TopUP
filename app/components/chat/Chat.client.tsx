@@ -3,10 +3,10 @@ import { useStore } from '@nanostores/react';
 import type { Message } from 'ai';
 import { useChat } from '@ai-sdk/react';
 import { useAnimate } from 'framer-motion';
-import { memo, useCallback, useEffect, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
-import { description, useChatHistory } from '~/lib/persistence';
+import { description, useChatHistory, chatId } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROMPT_COOKIE_KEY, PROVIDER_LIST } from '~/utils/constants';
@@ -67,7 +67,7 @@ const processSampledMessages = createSampler(
     const { messages, initialMessages, isLoading, parseMessages, storeMessageHistory } = options;
     parseMessages(messages, isLoading);
 
-    if (messages.length > initialMessages.length) {
+    if (messages.length > initialMessages.length && !isLoading) {
       storeMessageHistory(messages).catch((error) => toast.error(error.message));
     }
   },
@@ -113,6 +113,68 @@ export const ChatImpl = memo(
     const [chatMode, setChatMode] = useState<'discuss' | 'build'>('build');
     const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
     const mcpSettings = useMCPStore((state) => state.settings);
+    const currentChatId = useStore(chatId);
+    const [localChatId] = useState(() => 
+      typeof crypto !== 'undefined' && crypto.randomUUID 
+        ? crypto.randomUUID() 
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    );
+
+    const chatBody = useMemo(() => ({
+      apiKeys,
+      files,
+      promptId,
+      contextOptimization: contextOptimizationEnabled,
+      chatMode,
+      designScheme,
+      supabase: {
+        isConnected: supabaseConn.isConnected,
+        hasSelectedProject: !!selectedProject,
+        credentials: {
+          supabaseUrl: supabaseConn?.credentials?.supabaseUrl,
+          anonKey: supabaseConn?.credentials?.anonKey,
+        },
+      },
+      maxLLMSteps: mcpSettings.maxLLMSteps,
+      mcpEnabled: mcpSettings.mcpEnabled,
+      chatId: currentChatId || (initialMessages.length > 0 ? initialMessages[0].id : localChatId),
+    }), [
+      apiKeys,
+      files,
+      promptId,
+      contextOptimizationEnabled,
+      chatMode,
+      designScheme,
+      supabaseConn.isConnected,
+      selectedProject,
+      supabaseConn?.credentials?.supabaseUrl,
+      supabaseConn?.credentials?.anonKey,
+      mcpSettings.maxLLMSteps,
+      mcpSettings.mcpEnabled,
+      currentChatId,
+      initialMessages,
+      localChatId
+    ]);
+
+    const handleChatError = useCallback((error: any) => handleError(error, 'chat'), []);
+    const handleChatFinish = useCallback((message: Message, response: { usage?: any }) => {
+        const usage = response.usage;
+        setData(undefined);
+
+        if (usage) {
+          console.log('Token usage:', usage);
+          logStore.logProvider('Chat response completed', {
+            component: 'Chat',
+            action: 'response',
+            model,
+            provider: provider.name,
+            usage,
+            messageLength: message.content.length,
+          });
+        }
+
+        logger.debug('Finished streaming');
+    }, [model, provider.name]);
 
     const {
       messages,
@@ -130,47 +192,11 @@ export const ChatImpl = memo(
       addToolResult,
     } = useChat({
       api: '/api/chat',
-      body: {
-        apiKeys,
-        files,
-        promptId,
-        contextOptimization: contextOptimizationEnabled,
-        chatMode,
-        designScheme,
-        supabase: {
-          isConnected: supabaseConn.isConnected,
-          hasSelectedProject: !!selectedProject,
-          credentials: {
-            supabaseUrl: supabaseConn?.credentials?.supabaseUrl,
-            anonKey: supabaseConn?.credentials?.anonKey,
-          },
-        },
-        maxLLMSteps: mcpSettings.maxLLMSteps,
-      },
+      body: chatBody,
       experimental_throttle: 50,
       sendExtraMessageFields: true,
-      onError: (e) => {
-        setFakeLoading(false);
-        handleError(e, 'chat');
-      },
-      onFinish: (message, response) => {
-        const usage = response.usage;
-        setData(undefined);
-
-        if (usage) {
-          console.log('Token usage:', usage);
-          logStore.logProvider('Chat response completed', {
-            component: 'Chat',
-            action: 'response',
-            model,
-            provider: provider.name,
-            usage,
-            messageLength: message.content.length,
-          });
-        }
-
-        logger.debug('Finished streaming');
-      },
+      onError: handleChatError,
+      onFinish: handleChatFinish,
       initialMessages,
       initialInput: Cookies.get(PROMPT_COOKIE_KEY) || '',
     });
@@ -321,10 +347,17 @@ export const ChatImpl = memo(
         return;
       }
 
-      await Promise.all([
-        animate('#examples', { opacity: 0, display: 'none' }, { duration: 0.1 }),
-        animate('#intro', { opacity: 0, flex: 1 }, { duration: 0.2, ease: cubicEasingFn }),
-      ]);
+      const animations: any[] = [];
+
+      if (document.querySelector('#examples')) {
+        animations.push(animate('#examples', { opacity: 0, display: 'none' }, { duration: 0.1 }));
+      }
+
+      if (document.querySelector('#intro')) {
+        animations.push(animate('#intro', { opacity: 0, flex: 1 }, { duration: 0.2, ease: cubicEasingFn }));
+      }
+
+      await Promise.all(animations);
 
       chatStore.setKey('started', true);
 
@@ -401,7 +434,7 @@ export const ChatImpl = memo(
       if (selectedElement) {
         console.log('Selected Element:', selectedElement);
 
-        const elementInfo = `<div class=\"__boltSelectedElement__\" data-element='${JSON.stringify(selectedElement)}'>${JSON.stringify(`${selectedElement.displayText}`)}</div>`;
+        const elementInfo = `<div class=\"__falborSelectedElement__\" data-element='${JSON.stringify(selectedElement)}'>${JSON.stringify(`${selectedElement.displayText}`)}</div>`;
         finalMessageContent = messageContent + elementInfo;
       }
 
@@ -409,6 +442,9 @@ export const ChatImpl = memo(
 
       if (!chatStarted) {
         setFakeLoading(true);
+        if (!currentChatId) {
+          chatId.set(localChatId);
+        }
 
         if (autoSelectTemplate) {
           const { template, title } = await selectStarterTemplate({

@@ -5,9 +5,14 @@ import BackgroundRays from '~/components/ui/BackgroundRays';
 import { ClientOnly } from '~/components/ui/ClientOnly';
 import { Chat } from '~/components/chat/Chat.client';
 import { useAuth } from '~/hooks/useAuth';
-import { Button } from '~/components/ui/Button';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '~/components/ui/Card';
 import { useRouter } from 'next/navigation';
+import DefaultDemo from "~/components/landing/Navbar"
+import { LandingScrollHandler } from "~/components/landing/landing-scroll-handler"
+import { ThemeHandler } from "~/components/landing/ThemeHandler"
+import AgentPaceSection from "~/components/landing/AgentPaceSection"
+import StartFreeSection from "~/components/landing/StartFreeSection"
+import FalborRoadSection from "~/components/landing/FalborRoadSection"
+import TestimonialsSection from "~/components/landing/TestimonialsSection"
 
 export default function Page() {
   const { user, loading } = useAuth();
@@ -15,7 +20,7 @@ export default function Page() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full w-full bg-bolt-elements-background-depth-1">
+      <div className="flex flex-col h-full w-full bg-falbor-elements-background-depth-1">
         <BackgroundRays />
         <Header />
       </div>
@@ -24,38 +29,56 @@ export default function Page() {
 
   if (!user) {
     return (
-      <div className="flex flex-col h-full w-full bg-bolt-elements-background-depth-1">
-        <BackgroundRays />
-        <Header />
-        <div className="flex-1 flex items-center justify-center">
-          <Card className="w-full max-w-md mx-4">
-            <CardHeader className="text-center">
-              <div className="flex justify-center mb-4">
-                <img src="/logo-light-styled.png" alt="Bolt" className="w-32 inline-block dark:hidden" />
-                <img src="/logo-dark-styled.png" alt="Bolt" className="w-32 inline-block hidden dark:block" />
-              </div>
-              <CardTitle>Welcome to Bolt</CardTitle>
-              <CardDescription>Log in or create an account to start building with AI</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col gap-3">
-              <Button
-                className="w-full bg-accent-500 text-white hover:bg-accent-600"
-                onClick={() => router.push('/signup')}
-              >
-                Create account
-              </Button>
-              <Button variant="outline" className="w-full" onClick={() => router.push('/login')}>
-                Log in
-              </Button>
-            </CardContent>
-          </Card>
+      <div className="w-full flex flex-col relative">
+        <ThemeHandler force="light" />
+        <LandingScrollHandler />
+
+        {/* Global Sticky Navbar */}
+        <div className="sticky top-0 left-0 right-0 w-full z-[100] bg-white/80 backdrop-blur-md">
+          <DefaultDemo />
         </div>
+
+        {/* Hero Section */}
+        <div className="sticky top-0 w-full h-screen flex flex-col items-center justify-center z-10 overflow-hidden">
+
+          <div className="relative z-10 w-full max-w-5xl px-4 flex flex-col items-center justify-center border-l border-r border-zinc-200 h-full">
+            {/* Background Video (Muted, Looped, Behind elements, Constrained to this column) */}
+
+            <div
+              className="pointer-events-none absolute inset-0 w-full h-full z-0"
+              style={{
+                backgroundImage: "url('/bg__.png')",
+                backgroundRepeat: "no-repeat",
+                backgroundPosition: "center",
+                backgroundSize: "cover",
+              }}
+            />
+            <div className="w-full flex flex-col items-center mt-[-400px] z-10 relative">
+              <div className="w-full flex justify-center mt-6">
+                <ClientOnly fallback={<BaseChat />}>
+                  {() => <Chat />}
+                </ClientOnly>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ✅ Section 2: Agent Pace Section */}
+        <div className="relative w-full flex flex-col items-center z-20 bg-white">
+          <div className="w-full max-w-5xl border-l border-r border-zinc-200 flex flex-col">
+            <AgentPaceSection />
+            <FalborRoadSection />
+            <TestimonialsSection />
+            <StartFreeSection />
+          </div>
+        </div>
+
       </div>
     );
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-bolt-elements-background-depth-1">
+    <div className="flex flex-col h-full w-full bg-falbor-elements-background-depth-1">
       <BackgroundRays />
       <Header />
       <ClientOnly fallback={<BaseChat />}>

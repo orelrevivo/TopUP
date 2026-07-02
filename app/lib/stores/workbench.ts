@@ -33,7 +33,7 @@ export type ArtifactUpdateState = Pick<ArtifactState, 'title' | 'closed'>;
 
 type Artifacts = MapStore<Record<string, ArtifactState>>;
 
-export type WorkbenchViewType = 'code' | 'diff' | 'preview';
+export type WorkbenchViewType = 'code' | 'diff' | 'preview' | 'database';
 
 export class WorkbenchStore {
   #previewsStore = new PreviewsStore(webcontainer);
@@ -110,8 +110,8 @@ export class WorkbenchStore {
   get showTerminal() {
     return this.#terminalStore.showTerminal;
   }
-  get boltTerminal() {
-    return this.#terminalStore.boltTerminal;
+  get falborTerminal() {
+    return this.#terminalStore.falborTerminal;
   }
   get alert() {
     return this.actionAlert;
@@ -143,8 +143,8 @@ export class WorkbenchStore {
   attachTerminal(terminal: ITerminal) {
     this.#terminalStore.attachTerminal(terminal);
   }
-  attachBoltTerminal(terminal: ITerminal) {
-    this.#terminalStore.attachBoltTerminal(terminal);
+  attachFalborTerminal(terminal: ITerminal) {
+    this.#terminalStore.attachFalborTerminal(terminal);
   }
 
   detachTerminal(terminal: ITerminal) {
@@ -483,7 +483,7 @@ export class WorkbenchStore {
       type,
       runner: new ActionRunner(
         webcontainer,
-        () => this.boltTerminal,
+        () => this.falborTerminal,
         (alert) => {
           if (this.#reloadedMessages.has(messageId)) {
             return;

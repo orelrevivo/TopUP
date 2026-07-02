@@ -109,7 +109,7 @@ export function WebSearch({ onSearchResult, disabled = false }: WebSearchProps) 
         className="transition-all"
       >
         {isSearching ? (
-          <div className="i-svg-spinners:90-ring-with-bg text-bolt-elements-loader-progress text-xl animate-spin" />
+          <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin" />
         ) : (
           <div className="i-ph:globe text-xl" />
         )}
@@ -118,7 +118,7 @@ export function WebSearch({ onSearchResult, disabled = false }: WebSearchProps) 
         <div
           className={classNames(
             'absolute bottom-full left-0 mb-2 flex items-center gap-2',
-            'rounded-lg border border-bolt-elements-borderColor bg-bolt-elements-background-depth-2 p-2 shadow-lg',
+            'rounded-lg border border-falbor-elements-borderColor bg-falbor-elements-background-depth-2 p-2 shadow-lg',
           )}
         >
           <input
@@ -139,10 +139,10 @@ export function WebSearch({ onSearchResult, disabled = false }: WebSearchProps) 
             disabled={isSearching}
             className={classNames(
               'w-[300px] px-3 py-1.5 text-sm rounded-md',
-              'border border-bolt-elements-borderColor',
-              'bg-bolt-elements-background-depth-1 text-bolt-elements-textPrimary',
-              'placeholder-bolt-elements-textTertiary',
-              'focus:outline-none focus:ring-2 focus:ring-bolt-elements-focus',
+              'border border-falbor-elements-borderColor',
+              'bg-falbor-elements-background-depth-1 text-falbor-elements-textPrimary',
+              'placeholder-falbor-elements-textTertiary',
+              'focus:outline-none focus:ring-2 focus:ring-falbor-elements-focus',
             )}
           />
           <button
@@ -150,8 +150,8 @@ export function WebSearch({ onSearchResult, disabled = false }: WebSearchProps) 
             disabled={isSearching || !url.trim()}
             className={classNames(
               'px-3 py-1.5 rounded-md text-sm font-medium whitespace-nowrap',
-              'bg-bolt-elements-button-primary-background text-bolt-elements-button-primary-text',
-              'hover:bg-bolt-elements-button-primary-backgroundHover',
+              'bg-falbor-elements-button-primary-background text-falbor-elements-button-primary-text',
+              'hover:bg-falbor-elements-button-primary-backgroundHover',
               'disabled:opacity-50 disabled:cursor-not-allowed',
             )}
           >

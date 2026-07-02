@@ -84,7 +84,7 @@ class LogStore {
       return;
     }
 
-    const savedReadLogs = localStorage.getItem('bolt_read_logs');
+    const savedReadLogs = localStorage.getItem('falbor_read_logs');
 
     if (savedReadLogs) {
       try {
@@ -106,7 +106,7 @@ class LogStore {
       return;
     }
 
-    localStorage.setItem('bolt_read_logs', JSON.stringify(Array.from(this._readLogs)));
+    localStorage.setItem('falbor_read_logs', JSON.stringify(Array.from(this._readLogs)));
   }
 
   private _generateId(): string {

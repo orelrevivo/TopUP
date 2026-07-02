@@ -50,9 +50,9 @@ const messageParser = new EnhancedStreamingMessageParser({
   },
 });
 const extractTextContent = (message: Message) =>
-  Array.isArray(message.content)
+  (Array.isArray(message.content)
     ? (message.content.find((item) => item.type === 'text')?.text as string) || ''
-    : message.content;
+    : message.content) || '';
 
 export function useMessageParser() {
   const [parsedMessages, setParsedMessages] = useState<{ [key: number]: string }>({});
@@ -68,9 +68,14 @@ export function useMessageParser() {
     for (const [index, message] of messages.entries()) {
       if (message.role === 'assistant' || message.role === 'user') {
         const newParsedContent = messageParser.parse(message.id, extractTextContent(message));
+        
+        // If the parser had to reset internally (e.g. to wrap newly detected code blocks),
+        // it returns the FULL parsed string instead of just the diff. So we must replace instead of append.
+        const shouldReplace = reset || messageParser.wasReset;
+        
         setParsedMessages((prevParsed) => ({
           ...prevParsed,
-          [index]: !reset ? (prevParsed[index] || '') + newParsedContent : newParsedContent,
+          [index]: !shouldReplace ? (prevParsed[index] || '') + newParsedContent : newParsedContent,
         }));
       }
     }

@@ -108,6 +108,20 @@ async function handleProxyRequest(request: Request, path: string | undefined) {
     // Set the host header
     headers.set('Host', domain);
 
+    // Inject GitHub token server-side for github.com requests
+    if (domain === 'github.com' || domain.endsWith('.github.com')) {
+      const githubToken =
+        process.env.NEXT_PUBLIC_GITHUB_ACCESS_TOKEN ||
+        process.env.GITHUB_API_KEY ||
+        process.env.GITHUB_TOKEN;
+
+      if (githubToken && !githubToken.startsWith('your_') && !githubToken.startsWith('github_pat_your_')) {
+        // Only inject if the client didn't already send one
+        if (!headers.has('authorization')) {
+          headers.set('Authorization', `Bearer ${githubToken}`);
+        }
+      }
+    }
     // Set Git user agent if not already present
     if (!headers.has('user-agent') || !headers.get('user-agent')?.startsWith('git/')) {
       headers.set('User-Agent', 'git/@isomorphic-git/cors-proxy');

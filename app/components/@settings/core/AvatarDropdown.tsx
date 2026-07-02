@@ -52,6 +52,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
           sideOffset={5}
           align="end"
         >
+          {/* ── User info header ── */}
           <div
             className={classNames(
               'px-4 py-3 flex items-center gap-3',
@@ -81,6 +82,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             </div>
           </div>
 
+          {/* ── Navigation items ── */}
           <DropdownMenu.Item
             className={classNames(
               'flex items-center gap-2 px-4 py-2.5',
@@ -126,7 +128,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
               'group',
             )}
             onClick={() =>
-              window.open('https://github.com/stackblitz-labs/bolt.diy/issues/new?template=bug_report.yml', '_blank')
+              window.open('https://github.com/stackblitz-labs/falbor/issues/new?template=bug_report.yml', '_blank')
             }
           >
             <div className="i-ph:bug w-4 h-4 text-gray-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
@@ -166,10 +168,29 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
               'outline-none',
               'group',
             )}
-            onClick={() => window.open('https://stackblitz-labs.github.io/bolt.diy/', '_blank')}
+            onClick={() => window.open('https://stackblitz-labs.github.io/falbor/', '_blank')}
           >
             <div className="i-ph:question w-4 h-4 text-gray-400 group-hover:text-purple-500 dark:group-hover:text-purple-400 transition-colors" />
             Help & Documentation
+          </DropdownMenu.Item>
+
+          {/* ── Logout — destructive, visually separated ── */}
+          <div className="my-1 border-t border-gray-200/50 dark:border-gray-800/50" />
+
+          <DropdownMenu.Item
+            className={classNames(
+              'flex items-center gap-2 px-4 py-2.5',
+              'text-sm text-red-500 dark:text-red-400',
+              'hover:bg-red-50 dark:hover:bg-red-500/10',
+              'hover:text-red-600 dark:hover:text-red-300',
+              'cursor-pointer transition-all duration-200',
+              'outline-none',
+              'group',
+            )}
+            onClick={() => onSelectTab('logout')}
+          >
+            <div className="i-ph:sign-out w-4 h-4 transition-colors" />
+            Sign Out
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

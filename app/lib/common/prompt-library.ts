@@ -16,6 +16,7 @@ export interface PromptOptions {
       supabaseUrl?: string;
     };
   };
+  supabaseProjectData?: any;
 }
 
 export class PromptLibrary {
@@ -27,22 +28,22 @@ export class PromptLibrary {
       get: (options: PromptOptions) => string;
     }
   > = {
-    default: {
-      label: 'Default Prompt',
-      description: 'An fine tuned prompt for better results and less token usage',
-      get: (options) => getFineTunedPrompt(options.cwd, options.supabase, options.designScheme),
-    },
-    original: {
-      label: 'Old Default Prompt',
-      description: 'The OG battle tested default system Prompt',
-      get: (options) => getSystemPrompt(options.cwd, options.supabase, options.designScheme),
-    },
-    optimized: {
-      label: 'Optimized Prompt (experimental)',
-      description: 'An Experimental version of the prompt for lower token usage',
-      get: (options) => optimized(options),
-    },
-  };
+      default: {
+        label: 'Default Prompt',
+        description: 'An fine tuned prompt for better results and less token usage',
+        get: (options) => getFineTunedPrompt(options.cwd, options.supabase, options.designScheme, options.supabaseProjectData),
+      },
+      original: {
+        label: 'Old Default Prompt',
+        description: 'The OG battle tested default system Prompt',
+        get: (options) => getSystemPrompt(options.cwd, options.supabase, options.designScheme, options.supabaseProjectData),
+      },
+      optimized: {
+        label: 'Optimized Prompt (experimental)',
+        description: 'An Experimental version of the prompt for lower token usage',
+        get: (options) => optimized(options),
+      },
+    };
   static getList() {
     return Object.entries(this.library).map(([key, value]) => {
       const { label, description } = value;

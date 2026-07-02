@@ -63,6 +63,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(data.user ?? null);
       if (data.user) {
         loadProfileFromServer();
+        syncStorageFromServer();
       }
     } catch {
       setUser(null);

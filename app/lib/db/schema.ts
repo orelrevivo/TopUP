@@ -3,12 +3,31 @@ import { pgTable, text, timestamp, uuid, jsonb, boolean, integer } from "drizzle
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
   email: text("email").notNull().unique(),
-  passwordHash: text("password_hash").notNull(),
+  passwordHash: text("password_hash"),
   displayName: text("display_name"),
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
+  balance: integer("balance").default(100).notNull(),
+  subscriptionTier: text("subscription_tier").default("free").notNull(),
+  subscriptionExpiresAt: timestamp("subscription_expires_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const payments = pgTable("payments", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  orderId: text("order_id").notNull(),
+  amount: integer("amount").notNull(),
+  tier: text("tier"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const memories = pgTable("memories", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const sessions = pgTable("sessions", {
@@ -129,4 +148,21 @@ export const gitCredentials = pgTable("git_credentials", {
   token: text("token"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const neonDatabases = pgTable("neon_databases", {
+  chatId: text("chat_id").primaryKey(),
+  databaseUrl: text("database_url").notNull(),
+  projectId: text("project_id").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const supabaseDatabases = pgTable("supabase_databases", {
+  chatId: text("chat_id").primaryKey(),
+  supabaseUrl: text("supabase_url").notNull(),
+  supabaseAnonKey: text("supabase_anon_key").notNull(),
+  projectId: text("project_id").notNull(),
+  databasePassword: text("database_password").notNull(),
+  databaseUrl: text("database_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
 });

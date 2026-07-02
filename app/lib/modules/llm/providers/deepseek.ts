@@ -18,35 +18,35 @@ export default class DeepseekProvider extends BaseProvider {
       label: 'Deepseek-Coder',
       provider: 'Deepseek',
       maxTokenAllowed: 8000,
-      maxCompletionTokens: 8192,
+      maxCompletionTokens: 8000,
     },
     {
       name: 'deepseek-chat',
       label: 'Deepseek-Chat',
       provider: 'Deepseek',
       maxTokenAllowed: 8000,
-      maxCompletionTokens: 8192,
+      maxCompletionTokens: 8000,
     },
     {
       name: 'deepseek-reasoner',
       label: 'Deepseek-Reasoner',
       provider: 'Deepseek',
       maxTokenAllowed: 8000,
-      maxCompletionTokens: 8192,
+      maxCompletionTokens: 8000,
     },
     {
       name: 'deepseek-v3.2',
       label: 'DeepSeek V3.2 (Coding + Tool Use)',
       provider: 'Deepseek',
       maxTokenAllowed: 64000,
-      maxCompletionTokens: 8192,
+      maxCompletionTokens: 8000,
     },
     {
       name: 'deepseek-v3.2-speciale',
       label: 'DeepSeek V3.2 Speciale (High-Compute)',
       provider: 'Deepseek',
       maxTokenAllowed: 64000,
-      maxCompletionTokens: 8192,
+      maxCompletionTokens: 8000,
     },
   ];
 
@@ -92,7 +92,7 @@ export default class DeepseekProvider extends BaseProvider {
             label: `${m.id} (Dynamic)`,
             provider: this.name,
             maxTokenAllowed: 64000, // Default, adjust per model if available
-            maxCompletionTokens: 8192,
+            maxCompletionTokens: 8000,
           })) || [];
 
       return dynamicModels;

@@ -48,10 +48,10 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
             className="w-[90vw] md:w-[500px]"
           >
             <Dialog.Content
-              className="bg-white dark:bg-bolt-elements-background-depth-1 rounded-lg p-6 border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark shadow-xl"
+              className="bg-white dark:bg-falbor-elements-background-depth-1 rounded-lg p-6 border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark shadow-xl"
               aria-describedby="gitlab-auth-description"
             >
-              <Dialog.Title className="text-lg font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark mb-4">
+              <Dialog.Title className="text-lg font-medium text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary-dark mb-4">
                 Connect to GitLab
               </Dialog.Title>
 
@@ -65,12 +65,12 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                   </svg>
                 </div>
                 <div>
-                  <h3 className="text-base font-medium text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark">
+                  <h3 className="text-base font-medium text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary-dark">
                     GitLab Connection
                   </h3>
                   <p
                     id="gitlab-auth-description"
-                    className="text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark"
+                    className="text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary-dark"
                   >
                     Connect your GitLab account to deploy your projects
                   </p>
@@ -79,7 +79,7 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
 
               <form onSubmit={handleConnect} className="space-y-4">
                 <div>
-                  <label className="block text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark mb-2">
+                  <label className="block text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary-dark mb-2">
                     GitLab URL
                   </label>
                   <input
@@ -90,10 +90,10 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                     placeholder="https://gitlab.com"
                     className={classNames(
                       'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3',
-                      'border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark',
-                      'text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark',
-                      'placeholder-bolt-elements-textTertiary dark:placeholder-bolt-elements-textTertiary-dark',
+                      'bg-falbor-elements-background-depth-2 dark:bg-falbor-elements-background-depth-3',
+                      'border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark',
+                      'text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary-dark',
+                      'placeholder-falbor-elements-textTertiary dark:placeholder-falbor-elements-textTertiary-dark',
                       'focus:outline-none focus:ring-2 focus:ring-orange-500',
                       'disabled:opacity-50 disabled:cursor-not-allowed',
                     )}
@@ -101,7 +101,7 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                 </div>
 
                 <div>
-                  <label className="block text-sm text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark mb-2">
+                  <label className="block text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary-dark mb-2">
                     Access Token
                   </label>
                   <input
@@ -112,16 +112,16 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                     placeholder="Enter your GitLab access token"
                     className={classNames(
                       'w-full px-3 py-2 rounded-lg text-sm',
-                      'bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3',
-                      'border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark',
-                      'text-bolt-elements-textPrimary dark:text-bolt-elements-textPrimary-dark',
-                      'placeholder-bolt-elements-textTertiary dark:placeholder-bolt-elements-textTertiary-dark',
+                      'bg-falbor-elements-background-depth-2 dark:bg-falbor-elements-background-depth-3',
+                      'border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark',
+                      'text-falbor-elements-textPrimary dark:text-falbor-elements-textPrimary-dark',
+                      'placeholder-falbor-elements-textTertiary dark:placeholder-falbor-elements-textTertiary-dark',
                       'focus:outline-none focus:ring-2 focus:ring-orange-500',
                       'disabled:opacity-50 disabled:cursor-not-allowed',
                     )}
                     required
                   />
-                  <div className="mt-2 text-xs text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark">
+                  <div className="mt-2 text-xs text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary-dark">
                     <a
                       href={`${gitlabUrl}/-/user_settings/personal_access_tokens`}
                       target="_blank"
@@ -146,7 +146,7 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
                   <motion.button
                     type="button"
                     onClick={onClose}
-                    className="px-4 py-2 rounded-lg bg-bolt-elements-background-depth-2 dark:bg-bolt-elements-background-depth-3 text-bolt-elements-textSecondary dark:text-bolt-elements-textSecondary-dark hover:bg-bolt-elements-background-depth-3 dark:hover:bg-bolt-elements-background-depth-4 text-sm border border-bolt-elements-borderColor dark:border-bolt-elements-borderColor-dark"
+                    className="px-4 py-2 rounded-lg bg-falbor-elements-background-depth-2 dark:bg-falbor-elements-background-depth-3 text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary-dark hover:bg-falbor-elements-background-depth-3 dark:hover:bg-falbor-elements-background-depth-4 text-sm border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark"
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
                     disabled={isConnecting}

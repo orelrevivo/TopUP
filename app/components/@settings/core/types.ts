@@ -5,7 +5,10 @@ export type SettingCategory = 'profile' | 'file_sharing' | 'connectivity' | 'sys
 
 export type TabType =
   | 'profile'
+  | 'memories'
   | 'settings'
+  | 'pricing'
+  | 'billing'
   | 'notifications'
   | 'features'
   | 'data'
@@ -17,7 +20,8 @@ export type TabType =
   | 'vercel'
   | 'supabase'
   | 'event-logs'
-  | 'mcp';
+  | 'mcp'
+  | 'logout';
 
 export type WindowType = 'user' | 'developer';
 
@@ -68,7 +72,10 @@ export interface TabWindowConfig {
 
 export const TAB_LABELS: Record<TabType, string> = {
   profile: 'Profile',
+  memories: 'Memories',
   settings: 'Settings',
+  pricing: 'Pricing',
+  billing: 'Billing',
   notifications: 'Notifications',
   features: 'Features',
   data: 'Data Management',
@@ -81,6 +88,7 @@ export const TAB_LABELS: Record<TabType, string> = {
   supabase: 'Supabase',
   'event-logs': 'Event Logs',
   mcp: 'MCP Servers',
+  logout: 'Logout',
 };
 
 export const categoryLabels: Record<SettingCategory, string> = {

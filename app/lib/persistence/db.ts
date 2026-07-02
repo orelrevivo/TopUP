@@ -23,7 +23,7 @@ export async function getAll(_db: IDBDatabase): Promise<ChatHistoryItem[]> {
   return list.map((c) => ({
     id: c.id,
     urlId: c.urlId ?? c.id,
-    description: c.description,
+    description: c.description || 'New Chat',
     messages: c.messages as Message[],
     timestamp: c.timestamp ?? new Date().toISOString(),
     metadata: c.metadata as IChatMetadata | undefined,

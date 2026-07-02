@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
 const json = NextResponse.json;
+import { getUserId } from '~/lib/auth';
+import { db } from '~/lib/db';
+import { users } from '~/lib/db/schema';
+import { eq, sql } from 'drizzle-orm';
 import { createDataStream, generateId } from 'ai';
-import { MAX_RESPONSE_SEGMENTS, MAX_TOKENS, type FileMap } from '~/lib/.server/llm/constants';
-import { CONTINUE_PROMPT } from '~/lib/common/prompts/prompts';
+import { type FileMap } from '~/lib/.server/llm/constants';
 import { streamText, type Messages, type StreamingOptions } from '~/lib/.server/llm/stream-text';
 import SwitchableStream from '~/lib/.server/llm/switchable-stream';
 import type { IProviderSetting } from '~/types/model';
@@ -15,6 +18,7 @@ import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
+import { SupabaseService } from '~/lib/services/supabaseService';
 import type { RouteArgs } from '~/lib/security';
 
 export async function POST(request: Request) {
@@ -42,6 +46,17 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 }
 
 async function chatAction({ context, request }: RouteArgs) {
+  const userId = await getUserId(request as unknown as Request);
+  if (!userId) {
+    return new Response(JSON.stringify({ error: true, message: 'Unauthorized. Please log in.' }), { status: 401 });
+  }
+
+  // Check balance
+  const userRows = await db.select({ balance: users.balance }).from(users).where(eq(users.id, userId));
+  if (userRows.length === 0 || userRows[0].balance < 5) {
+    return new Response(JSON.stringify({ error: true, message: 'Insufficient credits. Please top up your balance.' }), { status: 402 });
+  }
+
   const streamRecovery = new StreamRecoveryManager({
     timeout: 45000,
     maxRetries: 2,
@@ -50,7 +65,7 @@ async function chatAction({ context, request }: RouteArgs) {
     },
   });
 
-  const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps } =
+  const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps, mcpEnabled, chatId } =
     (await request.json()) as {
       messages: Messages;
       files: any;
@@ -67,6 +82,8 @@ async function chatAction({ context, request }: RouteArgs) {
         };
       };
       maxLLMSteps: number;
+      mcpEnabled?: boolean;
+      chatId?: string;
     };
 
   const cookieHeader = request.headers.get('Cookie');
@@ -86,7 +103,7 @@ async function chatAction({ context, request }: RouteArgs) {
   let progressCounter: number = 1;
 
   try {
-    const mcpService = MCPService.getInstance();
+    const mcpService = mcpEnabled ? MCPService.getInstance() : null;
     const totalMessageContent = messages.reduce((acc, message) => acc + message.content, '');
     logger.debug(`Total message length: ${totalMessageContent.split(' ').length}, words`);
 
@@ -101,7 +118,7 @@ async function chatAction({ context, request }: RouteArgs) {
         let summary: string | undefined = undefined;
         let messageSliceId = 0;
 
-        const processedMessages = await mcpService.processToolInvocations(messages, dataStream);
+        const processedMessages = mcpService ? await mcpService.processToolInvocations(messages, dataStream) : messages as Messages;
 
         if (processedMessages.length > 3) {
           messageSliceId = processedMessages.length - 3;
@@ -209,13 +226,33 @@ async function chatAction({ context, request }: RouteArgs) {
           // logger.debug('Code Files Selected');
         }
 
+        const mcpTools = mcpEnabled && mcpService ? { toolChoice: 'auto' as const, tools: mcpService.toolsWithoutExecute } : {};
+        
+        let supabaseProjectData: any = undefined;
+        const liveDeductionState = { deductedCents: 0 };
+        
+        if (chatId) {
+          try {
+            supabaseProjectData = await SupabaseService.getOrCreateSupabaseProject(chatId);
+          } catch (e: any) {
+            logger.error("Supabase provisioning failed:", e);
+            dataStream.writeData({
+              type: 'progress',
+              label: 'database',
+              status: 'error',
+              order: progressCounter++,
+              message: e.message || 'Database provisioning failed',
+            } satisfies ProgressAnnotation);
+          }
+        }
+
         const options: StreamingOptions = {
           supabaseConnection: supabase,
-          toolChoice: 'auto',
-          tools: mcpService.toolsWithoutExecute,
+          ...mcpTools,
           maxSteps: maxLLMSteps,
+          experimental_continueSteps: true,
           onStepFinish: ({ toolCalls }) => {
-            // add tool call annotations for frontend processing
+            if (!mcpService) return;
             toolCalls.forEach((toolCall) => {
               mcpService.processToolCall(toolCall, dataStream);
             });
@@ -227,75 +264,38 @@ async function chatAction({ context, request }: RouteArgs) {
               cumulativeUsage.completionTokens += usage.completionTokens || 0;
               cumulativeUsage.promptTokens += usage.promptTokens || 0;
               cumulativeUsage.totalTokens += usage.totalTokens || 0;
-            }
-
-            if (finishReason !== 'length') {
-              dataStream.writeMessageAnnotation({
-                type: 'usage',
-                value: {
-                  completionTokens: cumulativeUsage.completionTokens,
-                  promptTokens: cumulativeUsage.promptTokens,
-                  totalTokens: cumulativeUsage.totalTokens,
-                },
-              });
-              dataStream.writeData({
-                type: 'progress',
-                label: 'response',
-                status: 'complete',
-                order: progressCounter++,
-                message: 'Response Generated',
-              } satisfies ProgressAnnotation);
-              await new Promise((resolve) => setTimeout(resolve, 0));
-
-              // stream.close();
-              return;
-            }
-
-            if (stream.switches >= MAX_RESPONSE_SEGMENTS) {
-              throw Error('Cannot continue message: Maximum segments reached');
-            }
-
-            const switchesLeft = MAX_RESPONSE_SEGMENTS - stream.switches;
-
-            logger.info(`Reached max token limit (${MAX_TOKENS}): Continuing message (${switchesLeft} switches left)`);
-
-            const lastUserMessage = processedMessages.filter((x) => x.role == 'user').slice(-1)[0];
-            const { model, provider } = extractPropertiesFromMessage(lastUserMessage);
-            processedMessages.push({ id: generateId(), role: 'assistant', content });
-            processedMessages.push({
-              id: generateId(),
-              role: 'user',
-              content: `[Model: ${model}]\n\n[Provider: ${provider}]\n\n${CONTINUE_PROMPT}`,
-            });
-
-            const result = await streamText({
-              messages: [...processedMessages],
-              env: context?.cloudflare?.env,
-              options,
-              apiKeys,
-              files,
-              providerSettings,
-              promptId,
-              contextOptimization,
-              contextFiles: filteredFiles,
-              chatMode,
-              designScheme,
-              summary,
-              messageSliceId,
-            });
-
-            result.mergeIntoDataStream(dataStream);
-
-            (async () => {
-              for await (const part of result.fullStream) {
-                if (part.type === 'error') {
-                  const error: any = part.error;
-                  logger.error(`${error}`);
-
-                  return;
+              
+              // Calculate cost in cents with markup
+              const inputTokens = usage.promptTokens || 0;
+              const outputTokens = usage.completionTokens || 0;
+              const costCents = Math.ceil((inputTokens * 0.002) + (outputTokens * 0.006));
+              const remainingCents = Math.max(0, costCents - liveDeductionState.deductedCents);
+              
+              if (remainingCents > 0) {
+                try {
+                  await db.update(users).set({ balance: sql`${users.balance} - ${remainingCents}` }).where(eq(users.id, userId));
+                } catch(e) {
+                  logger.error('Failed to deduct credits:', e);
                 }
               }
-            })();
+            }
+
+            dataStream.writeMessageAnnotation({
+              type: 'usage',
+              value: {
+                completionTokens: cumulativeUsage.completionTokens,
+                promptTokens: cumulativeUsage.promptTokens,
+                totalTokens: cumulativeUsage.totalTokens,
+              },
+            });
+            dataStream.writeData({
+              type: 'progress',
+              label: 'response',
+              status: 'complete',
+              order: progressCounter++,
+              message: 'Response Generated',
+            } satisfies ProgressAnnotation);
+            await new Promise((resolve) => setTimeout(resolve, 0));
 
             return;
           },
@@ -323,11 +323,42 @@ async function chatAction({ context, request }: RouteArgs) {
           designScheme,
           summary,
           messageSliceId,
+          supabaseProjectData,
         });
+
+        let generatedChars = 0;
+        let lastDeductedChars = 0;
+        const charsPerCent = 666; // approx 1 cent per 166 tokens (at 0.006 cents/token markup)
 
         (async () => {
           for await (const part of result.fullStream) {
             streamRecovery.updateActivity();
+
+            // Track generated characters for live deduction
+            if (part.type === 'text-delta' && typeof part.textDelta === 'string') {
+              generatedChars += part.textDelta.length;
+              
+              if (generatedChars >= lastDeductedChars + charsPerCent) {
+                lastDeductedChars = generatedChars;
+                liveDeductionState.deductedCents += 1;
+                
+                // Live deduct 1 cent
+                try {
+                  const dbRes = await db.update(users)
+                    .set({ balance: sql`${users.balance} - 1` })
+                    .where(eq(users.id, userId))
+                    .returning({ balance: users.balance });
+                  
+                  if (dbRes[0] && dbRes[0].balance <= 0) {
+                    logger.warn('User ran out of credits during stream');
+                    // We can't cleanly stop the AI stream from here without a complex abort controller,
+                    // but we can at least stop recording deductions, and the next request will be blocked.
+                  }
+                } catch(e) {
+                  // Ignore DB errors in rapid stream to avoid breaking
+                }
+              }
+            }
 
             if (part.type === 'error') {
               const error: any = part.error;
@@ -391,7 +422,7 @@ async function chatAction({ context, request }: RouteArgs) {
 
           if (typeof chunk === 'string') {
             if (chunk.startsWith('g') && !lastChunk.startsWith('g')) {
-              controller.enqueue(encoder.encode(`0: "<div class=\\"__boltThought__\\">"\n`));
+              controller.enqueue(encoder.encode(`0: "<div class=\\"__falborThought__\\">"\n`));
             }
 
             if (lastChunk.startsWith('g') && !chunk.startsWith('g')) {

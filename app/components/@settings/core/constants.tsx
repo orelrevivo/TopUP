@@ -1,5 +1,5 @@
 import type { TabType } from './types';
-import { User, Settings, Bell, Star, Database, Cloud, Laptop, Github, Wrench, List } from 'lucide-react';
+import { User, Settings, Bell, Star, Database, Cloud, Laptop, Github, Wrench, List, LogOut, Brain, CreditCard, Receipt } from 'lucide-react';
 
 // GitLab icon component
 const GitLabIcon = () => (
@@ -40,6 +40,9 @@ const SupabaseIcon = () => (
 
 export const TAB_ICONS: Record<TabType, React.ComponentType<{ className?: string }>> = {
   profile: User,
+  memories: Brain,
+  pricing: CreditCard,
+  billing: Receipt,
   settings: Settings,
   notifications: Bell,
   features: Star,
@@ -53,10 +56,14 @@ export const TAB_ICONS: Record<TabType, React.ComponentType<{ className?: string
   supabase: () => <SupabaseIcon />,
   'event-logs': List,
   mcp: Wrench,
+  logout: LogOut,
 };
 
 export const TAB_LABELS: Record<TabType, string> = {
   profile: 'Profile',
+  memories: 'Memories',
+  pricing: 'Pricing',
+  billing: 'Billing',
   settings: 'Settings',
   notifications: 'Notifications',
   features: 'Features',
@@ -70,10 +77,14 @@ export const TAB_LABELS: Record<TabType, string> = {
   supabase: 'Supabase',
   'event-logs': 'Event Logs',
   mcp: 'MCP Servers',
+  logout: 'Logout',
 };
 
 export const TAB_DESCRIPTIONS: Record<TabType, string> = {
   profile: 'Manage your profile and account settings',
+  memories: 'Manage AI memories and learning about you',
+  pricing: 'Upgrade plans and add balance',
+  billing: 'View billing history and purchases',
   settings: 'Configure application preferences',
   notifications: 'View and manage your notifications',
   features: 'Explore new and upcoming features',
@@ -87,10 +98,14 @@ export const TAB_DESCRIPTIONS: Record<TabType, string> = {
   supabase: 'Setup Supabase database connection',
   'event-logs': 'View system events and logs',
   mcp: 'Configure MCP (Model Context Protocol) servers',
+  logout: 'Sign out of your account',
 };
 
 export const DEFAULT_TAB_CONFIG = [
   // User Window Tabs (Always visible by default)
+  { id: 'pricing', visible: true, window: 'user' as const, order: -3 },
+  { id: 'billing', visible: true, window: 'user' as const, order: -2 },
+  { id: 'memories', visible: true, window: 'user' as const, order: -1 },
   { id: 'features', visible: true, window: 'user' as const, order: 0 },
   { id: 'data', visible: true, window: 'user' as const, order: 1 },
   { id: 'cloud-providers', visible: true, window: 'user' as const, order: 2 },

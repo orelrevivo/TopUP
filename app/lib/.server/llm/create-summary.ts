@@ -1,7 +1,7 @@
 import { generateText, type CoreTool, type GenerateTextResult, type Message } from 'ai';
 import type { IProviderSetting } from '~/types/model';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROVIDER_LIST } from '~/utils/constants';
-import { extractCurrentContext, extractPropertiesFromMessage, simplifyBoltActions } from './utils';
+import { extractCurrentContext, extractPropertiesFromMessage, simplifyFalborActions } from './utils';
 import { createScopedLogger } from '~/utils/logger';
 import { LLMManager } from '~/lib/modules/llm/manager';
 
@@ -29,8 +29,8 @@ export async function createSummary(props: {
     } else if (message.role == 'assistant') {
       let content = message.content;
 
-      content = simplifyBoltActions(content);
-      content = content.replace(/<div class=\\"__boltThought__\\">.*?<\/div>/s, '');
+      content = simplifyFalborActions(content);
+      content = content.replace(/<div class=\\"__falborThought__\\">.*?<\/div>/s, '');
       content = content.replace(/<think>.*?<\/think>/s, '');
 
       return { ...message, content };

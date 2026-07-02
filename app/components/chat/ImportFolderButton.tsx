@@ -122,12 +122,12 @@ export const ImportFolderButton: React.FC<ImportFolderButtonProps> = ({ classNam
         }}
         title="Import Folder"
         variant="default"
-        size="lg"
+        size="default"
         className={classNames(
-          'gap-2 bg-bolt-elements-background-depth-1',
-          'text-bolt-elements-textPrimary',
-          'hover:bg-bolt-elements-background-depth-2',
-          'border border-bolt-elements-borderColor',
+          'gap-2 bg-falbor-elements-background-depth-1 w-full',
+          'text-falbor-elements-textPrimary',
+          'hover:bg-falbor-elements-background-depth-2',
+          'border border-falbor-elements-borderColor',
           'h-10 px-4 py-2 min-w-[120px] justify-center',
           'transition-all duration-200 ease-in-out',
           className,

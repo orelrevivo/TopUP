@@ -72,10 +72,12 @@ export class EditorStore {
       return;
     }
 
-    this.documents.setKey(filePath, {
-      ...documentState,
-      scroll: position,
-    });
+    setTimeout(() => {
+      this.documents.setKey(filePath, {
+        ...documentState,
+        scroll: position,
+      });
+    }, 0);
   }
 
   updateFile(filePath: string, newContent: string) {
@@ -104,10 +106,13 @@ export class EditorStore {
     const contentChanged = currentContent !== newContent;
 
     if (contentChanged) {
-      this.documents.setKey(filePath, {
-        ...documentState,
-        value: newContent,
-      });
+      // Decouple from React's synchronous update queue to prevent 'Maximum update depth exceeded'
+      setTimeout(() => {
+        this.documents.setKey(filePath, {
+          ...documentState,
+          value: newContent,
+        });
+      }, 0);
     }
   }
 }

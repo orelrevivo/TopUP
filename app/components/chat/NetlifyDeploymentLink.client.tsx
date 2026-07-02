@@ -15,7 +15,7 @@ export function NetlifyDeploymentLink() {
     }
   }, [connection.token, currentChatId]);
 
-  const deployedSite = connection.stats?.sites?.find((site) => site.name.includes(`bolt-diy-${currentChatId}`));
+  const deployedSite = connection.stats?.sites?.find((site) => site.name.includes(`falbor-diy-${currentChatId}`));
 
   if (!deployedSite) {
     return null;
@@ -29,7 +29,7 @@ export function NetlifyDeploymentLink() {
             href={deployedSite.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-bolt-elements-item-backgroundActive text-bolt-elements-textSecondary hover:text-[#00AD9F] z-50"
+            className="inline-flex items-center justify-center w-8 h-8 rounded hover:bg-falbor-elements-item-backgroundActive text-falbor-elements-textSecondary hover:text-[#00AD9F] z-50"
             onClick={(e) => {
               e.stopPropagation(); // This is to prevent click from bubbling up
             }}
@@ -39,11 +39,11 @@ export function NetlifyDeploymentLink() {
         </Tooltip.Trigger>
         <Tooltip.Portal>
           <Tooltip.Content
-            className="px-3 py-2 rounded bg-bolt-elements-background-depth-3 text-bolt-elements-textPrimary text-xs z-50"
+            className="px-3 py-2 rounded bg-falbor-elements-background-depth-3 text-falbor-elements-textPrimary text-xs z-50"
             sideOffset={5}
           >
             {deployedSite.url}
-            <Tooltip.Arrow className="fill-bolt-elements-background-depth-3" />
+            <Tooltip.Arrow className="fill-falbor-elements-background-depth-3" />
           </Tooltip.Content>
         </Tooltip.Portal>
       </Tooltip.Root>
