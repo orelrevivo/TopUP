@@ -125,6 +125,8 @@ async function fetchRepoContentsCloudflare(repo: string, githubToken?: string) {
 async function fetchRepoContentsZip(repo: string, githubToken?: string) {
   const baseUrl = 'https://api.github.com';
 
+  let zipballUrl = `${baseUrl}/repos/${repo}/zipball`;
+  
   // Get the latest release
   const releaseResponse = await fetch(`${baseUrl}/repos/${repo}/releases/latest`, {
     headers: {
@@ -134,12 +136,12 @@ async function fetchRepoContentsZip(repo: string, githubToken?: string) {
     },
   });
 
-  if (!releaseResponse.ok) {
-    throw new Error(`GitHub API error: ${releaseResponse.status} - ${releaseResponse.statusText}`);
+  if (releaseResponse.ok) {
+    const releaseData = (await releaseResponse.json()) as any;
+    if (releaseData.zipball_url) {
+      zipballUrl = releaseData.zipball_url;
+    }
   }
-
-  const releaseData = (await releaseResponse.json()) as any;
-  const zipballUrl = releaseData.zipball_url;
 
   // Fetch the zipball
   const zipResponse = await fetch(zipballUrl, {
