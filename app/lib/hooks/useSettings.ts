@@ -15,6 +15,10 @@ import {
   updateContextOptimization,
   updateEventLogs,
   updatePromptId,
+  dynamicReasoningStore,
+  imageGenerationStore,
+  updateDynamicReasoning,
+  updateImageGeneration,
 } from '~/lib/stores/settings';
 import { useCallback, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
@@ -58,6 +62,10 @@ export interface UseSettingsReturn {
   setAutoSelectTemplate: (enabled: boolean) => void;
   contextOptimizationEnabled: boolean;
   enableContextOptimization: (enabled: boolean) => void;
+  dynamicReasoningEnabled: boolean;
+  enableDynamicReasoning: (enabled: boolean) => void;
+  imageGenerationEnabled: boolean;
+  enableImageGeneration: (enabled: boolean) => void;
 
   // Tab configuration
   tabConfiguration: TabWindowConfig;
@@ -78,6 +86,8 @@ export function useSettings(): UseSettingsReturn {
   const autoSelectTemplate = useStore(autoSelectStarterTemplate);
   const [activeProviders, setActiveProviders] = useState<ProviderInfo[]>([]);
   const contextOptimizationEnabled = useStore(enableContextOptimizationStore);
+  const dynamicReasoningEnabled = useStore(dynamicReasoningStore);
+  const imageGenerationEnabled = useStore(imageGenerationStore);
   const tabConfiguration = useStore(tabConfigurationStore);
   const [settings, setSettings] = useState<Settings>(() => {
     const storedSettings = getLocalStorage('settings');
@@ -143,6 +153,16 @@ export function useSettings(): UseSettingsReturn {
     logStore.logSystem(`Context optimization ${enabled ? 'enabled' : 'disabled'}`);
   }, []);
 
+  const enableDynamicReasoning = useCallback((enabled: boolean) => {
+    updateDynamicReasoning(enabled);
+    logStore.logSystem(`Dynamic reasoning ${enabled ? 'enabled' : 'disabled'}`);
+  }, []);
+
+  const enableImageGeneration = useCallback((enabled: boolean) => {
+    updateImageGeneration(enabled);
+    logStore.logSystem(`Image generation ${enabled ? 'enabled' : 'disabled'}`);
+  }, []);
+
   const setTheme = useCallback(
     (theme: Settings['theme']) => {
       saveSettings({ theme });
@@ -197,6 +217,10 @@ export function useSettings(): UseSettingsReturn {
     setAutoSelectTemplate,
     contextOptimizationEnabled,
     enableContextOptimization,
+    dynamicReasoningEnabled,
+    enableDynamicReasoning,
+    imageGenerationEnabled,
+    enableImageGeneration,
     setTheme,
     setLanguage,
     setNotifications,

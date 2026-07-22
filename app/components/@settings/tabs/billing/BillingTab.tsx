@@ -29,24 +29,24 @@ export default function BillingTab() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-2 h-full">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Receipt className="w-5 h-5 text-purple-500" />
           Billing History
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
           View your transaction history and current AI credit balance.
         </p>
       </div>
-
-      <div className="bg-purple-500/10 border border-purple-500/20 p-4 rounded-xl flex items-center justify-between">
-        <div>
-          <p className="text-sm text-purple-500 mb-1">Current Balance</p>
-          <p className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
-            <DollarSign className="w-6 h-6 text-purple-500" />
-            {(balance / 100).toFixed(2)}
-          </p>
+      <div className="p-1 bg-[#E5E5E5] dark:bg-[#262626] rounded-xl">
+        <div className="border border-gray-600 rounded-xl p-6 flex flex-col bg-white dark:bg-[#171717] shadow-[0_0_20px_rgba(168,85,247,0.25)] dark:shadow-none">
+          <div>
+            <p className="text-sm text-black dark:text-white mb-1">Current Balance</p>
+            <p className="text-3xl font-bold text-gray-900 dark:text-white flex items-center">
+              <DollarSign className="w-6 h-6 text-black dark:text-white" />
+              {(balance / 100).toFixed(2)}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -68,11 +68,11 @@ export default function BillingTab() {
             {payments.map((payment) => (
               <div
                 key={payment.id}
-                className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 hover:border-purple-500/30 transition-colors shadow-sm"
+                className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 transition-colors shadow-sm"
               >
                 <div className="flex items-center gap-4">
-                  <div className="bg-green-500/10 p-2 rounded-lg">
-                    <DollarSign className="w-5 h-5 text-green-500" />
+                  <div className="dark:bg-[#262626] p-2 rounded-lg">
+                    <DollarSign className="w-5 h-5 dark:text-white" />
                   </div>
                   <div>
                     <p className="text-sm font-medium text-gray-900 dark:text-white">

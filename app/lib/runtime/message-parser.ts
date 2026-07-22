@@ -336,6 +336,47 @@ export class StreamingMessageParser {
     this.#messages.clear();
   }
 
+  complete(messageId: string) {
+    const state = this.#messages.get(messageId);
+    if (!state) return;
+
+    if (state.insideAction && state.currentArtifact) {
+      const currentAction = state.currentAction;
+      let content = currentAction.content.trim();
+
+      if ('type' in currentAction && currentAction.type === 'file') {
+        if (!currentAction.filePath.endsWith('.md')) {
+          content = cleanoutMarkdownSyntax(content);
+          content = cleanEscapedTags(content);
+        }
+        content += '\n';
+      }
+
+      currentAction.content = content;
+
+      this._options.callbacks?.onActionClose?.({
+        artifactId: state.currentArtifact.id,
+        messageId,
+        actionId: String(state.actionId - 1),
+        action: currentAction as FalborAction,
+      });
+
+      state.insideAction = false;
+      state.currentAction = { content: '' };
+    }
+
+    if (state.insideArtifact && state.currentArtifact) {
+      this._options.callbacks?.onArtifactClose?.({
+        messageId,
+        artifactId: state.currentArtifact.id,
+        ...state.currentArtifact,
+      });
+
+      state.insideArtifact = false;
+      state.currentArtifact = undefined;
+    }
+  }
+
   #parseActionTag(input: string, actionOpenIndex: number, actionEndIndex: number) {
     const actionTag = input.slice(actionOpenIndex, actionEndIndex + 1);
 

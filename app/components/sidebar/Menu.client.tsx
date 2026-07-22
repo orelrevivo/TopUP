@@ -6,7 +6,7 @@ import { Dialog, DialogButton, DialogDescription, DialogRoot, DialogTitle } from
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
 import { ControlPanel } from '~/components/@settings/core/ControlPanel';
 import { TAB_ICONS, TAB_LABELS, DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
-import { tabConfigurationStore, resetTabConfiguration } from '~/lib/stores/settings';
+import { tabConfigurationStore, resetTabConfiguration, settingsOpenStore, settingsTabStore } from '~/lib/stores/settings';
 import type { TabType } from '~/components/@settings/core/types';
 import { SettingsButton, HelpButton } from '~/components/ui/SettingsButton';
 import { Button } from '~/components/ui/Button';
@@ -22,7 +22,24 @@ import { useAuth } from '~/hooks/useAuth';
 import { sidebarOpen, sidebarPinned } from '~/lib/stores/sidebar';
 import { chatStore } from '~/lib/stores/chat';
 
-const menuVariants = {
+const squareMenuVariants = {
+  closed: {
+    width: '70px',
+    transition: {
+      duration: 0.2,
+      ease: cubicEasingFn,
+    },
+  },
+  open: {
+    width: '340px',
+    transition: {
+      duration: 0.2,
+      ease: cubicEasingFn,
+    },
+  },
+} satisfies Variants;
+
+const fullMenuVariants = {
   closed: {
     opacity: 0,
     visibility: 'hidden',
@@ -70,7 +87,11 @@ function CurrentDateTime() {
   );
 }
 
-export const Menu = () => {
+interface MenuProps {
+  variant?: 'full' | 'square';
+}
+
+export const Menu = ({ variant = 'full' }: MenuProps) => {
   const { duplicateCurrentChat, exportChat } = useChatHistory();
   const menuRef = useRef<HTMLDivElement>(null);
   const [list, setList] = useState<ChatHistoryItem[]>([]);
@@ -78,8 +99,8 @@ export const Menu = () => {
   const isPinned = useStore(sidebarPinned);
   const chat = useStore(chatStore);
   const [dialogContent, setDialogContent] = useState<DialogContent>(null);
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [activeSettingsTab, setActiveSettingsTab] = useState<TabType>('profile');
+  const isSettingsOpen = useStore(settingsOpenStore);
+  const activeSettingsTab = useStore(settingsTabStore);
   const profile = useStore(profileStore) as any;
 
   const tabConfiguration = useStore(tabConfigurationStore);
@@ -288,19 +309,29 @@ export const Menu = () => {
     }
   }, [open, selectionMode]);
 
+  const prevVariant = useRef<string | null>(null);
+
   useEffect(() => {
-    if (!chat.started && isPinned) {
+    // If the layout is 'square' and we haven't seen it before (e.g. initial mount or transition to it), open it by default
+    if (variant === 'square' && prevVariant.current !== 'square') {
       sidebarOpen.set(true);
-    } else {
-      sidebarOpen.set(false);
+    } else if (variant !== 'square') {
+      // Old behavior for 'full' variant
+      if (!chat.started && isPinned) {
+        sidebarOpen.set(true);
+      } else {
+        sidebarOpen.set(false);
+      }
     }
-  }, [chat.started, isPinned]);
+    prevVariant.current = variant;
+  }, [chat.started, isPinned, variant]);
 
   useEffect(() => {
     const enterThreshold = 20;
     const exitThreshold = 20;
 
     function onMouseMove(event: MouseEvent) {
+      if (variant === 'square') return;
       if (isSettingsOpen) {
         return;
       }
@@ -323,7 +354,7 @@ export const Menu = () => {
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
     };
-  }, [isSettingsOpen, chat.started, isPinned]);
+  }, [variant, isSettingsOpen, chat.started, isPinned]);
 
   const handleDuplicate = async (id: string) => {
     await duplicateCurrentChat(id);
@@ -331,12 +362,12 @@ export const Menu = () => {
   };
 
   const handleSettingsClick = () => {
-    setIsSettingsOpen(true);
+    settingsOpenStore.set(true);
     sidebarOpen.set(true);
   };
 
   const handleSettingsClose = () => {
-    setIsSettingsOpen(false);
+    settingsOpenStore.set(false);
   };
 
   const setDialogContentWithLogging = useCallback((content: DialogContent) => {
@@ -346,28 +377,83 @@ export const Menu = () => {
 
   return (
     <>
+      {/* Mobile Backdrop for Square Layout */}
+      {open && variant === 'square' && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => sidebarOpen.set(false)}
+        />
+      )}
       <motion.div
         ref={menuRef}
-        initial="closed"
+        initial={variant === 'square' ? 'open' : 'closed'}
         animate={open ? 'open' : 'closed'}
-        variants={menuVariants}
-        style={{ width: '340px' }}
+        variants={variant === 'square' ? squareMenuVariants : fullMenuVariants}
+        style={variant === 'full' ? { width: '340px' } : {}}
         className={classNames(
-          'flex selection-accent flex-col side-menu fixed top-0 h-full',
-          'bg-white dark:bg-gray-950 border-r border-falbor-elements-borderColor',
-          'shadow-sm text-sm',
-          isSettingsOpen ? 'z-40' : 'z-sidebar',
+          variant === 'square'
+            ? classNames(
+              'flex selection-accent flex-col side-menu h-full overflow-hidden shrink-0 border-none text-sm',
+              'absolute md:relative left-0 top-0 bottom-0 bg-white dark:bg-[#111114] md:bg-transparent shadow-xl md:shadow-none z-50 md:z-sidebar',
+              !open && 'max-md:!w-0 max-md:!opacity-0 max-md:!p-0 pointer-events-none md:pointer-events-auto'
+            )
+            : 'flex selection-accent flex-col side-menu fixed top-0 h-full bg-white dark:bg-[#111114] border-r border-falbor-elements-borderColor shadow-sm text-sm',
+          variant === 'full' && isSettingsOpen ? 'z-40' : (variant === 'full' ? 'z-sidebar' : '')
         )}
       >
-        <div className="h-14 flex items-center justify-end px-4 gap-2 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50">
-          <ThemeSwitch />
-          <SettingsButton onClick={handleSettingsClick} />
-        </div>
-        <div className="flex-1 flex flex-col h-full w-full overflow-hidden">
+        {variant === 'square' ? (
+          <div className={classNames(
+            "h-14 flex items-center px-4 gap-2 border-b border-transparent bg-transparent transition-all",
+            open ? "justify-between" : "justify-center"
+          )}>
+            {open ? (
+              <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
+                <a href="/" className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <img src="/logo-light-styled.png" alt="logo" className="w-[130px] inline-block dark:hidden" />
+                  <img src="/logo-dark-styled.png" alt="logo" className="w-[130px] inline-block hidden dark:block" />
+                </a>
+              </div>
+            ) : (
+              <div className="flex items-center justify-center">
+                <div className="w-8 h-8 rounded-md bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold">L</div>
+              </div>
+            )}
+            <div className="flex items-center gap-1">
+              {open && (
+                <>
+                  <ThemeSwitch />
+                  <SettingsButton onClick={handleSettingsClick} />
+                </>
+              )}
+              <button
+                onClick={() => sidebarOpen.set(!open)}
+                className="p-1.5 rounded-md text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                title="Toggle Sidebar"
+              >
+                <div className="i-ph:sidebar w-5 h-5" />
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="h-14 flex items-center justify-end px-4 gap-2 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50">
+            <ThemeSwitch />
+            <SettingsButton onClick={handleSettingsClick} />
+          </div>
+        )}
+        <div className={classNames("flex-1 flex flex-col h-full w-full overflow-hidden", variant === 'square' ? "transition-opacity duration-200" : "", variant === 'square' && !open ? "opacity-0 pointer-events-none" : "opacity-100")}>
           {isSettingsOpen ? (
             <div className="flex-1 overflow-y-auto px-3 py-4 space-y-1 modern-scrollbar">
-              <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3 px-3">
-                Settings
+              <div className="flex items-center justify-between mb-3 px-3">
+                <div className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Settings
+                </div>
+                <button
+                  onClick={handleSettingsClose}
+                  className="text-xs font-medium text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary flex items-center gap-1 transition-colors"
+                >
+                  <div className="i-ph:arrow-left w-3 h-3" />
+                  Back to Chats
+                </button>
               </div>
               {visibleTabs.map((tab) => {
                 const Icon = TAB_ICONS[tab.id as TabType];
@@ -375,7 +461,7 @@ export const Menu = () => {
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveSettingsTab(tab.id as TabType)}
+                    onClick={() => settingsTabStore.set(tab.id as TabType)}
                     className={classNames(
                       'flex items-center gap-3 w-full px-3 py-1.5 rounded-md text-sm font-medium text-left',
                       isSelected
@@ -535,8 +621,6 @@ export const Menu = () => {
           )}
         </div>
       </motion.div>
-
-      <ControlPanel open={isSettingsOpen} onClose={handleSettingsClose} activeTab={activeSettingsTab} />
     </>
   );
 };

@@ -16,6 +16,20 @@
 
 .Chat {
   opacity: 1;
+
+  /* Hide the scrollbar in the main messages scroll container */
+  [data-scrollable="true"],
+  [data-scrollable="true"] * {
+    -ms-overflow-style: none !important;
+    /* IE and Edge */
+    scrollbar-width: none !important;
+    /* Firefox */
+
+    &::-webkit-scrollbar {
+      display: none !important;
+      /* Chrome, Safari and Opera */
+    }
+  }
 }
 
 .PromptEffectContainer {

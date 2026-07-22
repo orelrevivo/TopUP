@@ -50,51 +50,44 @@ function bootWebContainer(): Promise<WebContainer> {
   });
 }
 
-function initWebContainer(): Promise<WebContainer> {
-  const existing = (window as any)[BOOT_GUARD_KEY];
-  if (existing) {
-    return existing;
-  }
+let resolveWebContainer: (wc: WebContainer) => void;
+let rejectWebContainer: (err: any) => void;
 
-  /*
-   * PRODUCTION FIX: Delay WebContainer.boot() until after Next.js hydration completes.
-   *
-   * Problem: In production builds, Next.js SSR renders the page on the server, then the
-   * client-side JS hydrates the existing DOM. WebContainer.boot() creates a hidden <iframe>
-   * and appends it to document.body. If boot() runs *before* hydration finishes, Next.js
-   * sees the unexpected iframe in document.body and removes it during reconciliation.
-   * This leaves the boot promise permanently pending — causing file actions to show
-   * "loading" forever and the file tree to remain empty.
-   *
-   * Fix: Wrap the boot call in a promise that only resolves after the window 'load' event
-   * fires (or immediately if document.readyState is already 'complete'). The 'load' event
-   * fires after all resources and scripts have loaded, by which time hydration is finished.
-   */
-  const promise = new Promise<WebContainer>((resolve, reject) => {
-    const doBoot = () => {
-      bootWebContainer().then(resolve).catch(reject);
-    };
-
-    if (document.readyState === 'complete') {
-      // Hydration already done — boot immediately but on next tick to be safe
-      setTimeout(doBoot, 0);
-    } else {
-      window.addEventListener('load', doBoot, { once: true });
-    }
-  });
-
-  (window as any)[BOOT_GUARD_KEY] = promise;
-  if (import.meta.hot) {
-    import.meta.hot.data.webcontainer = promise;
-  }
-
-  return promise;
-}
-
-export let webcontainer: Promise<WebContainer> = new Promise(() => {
-  // noop for ssr
-});
+let webcontainerPromise: Promise<WebContainer> | undefined = undefined;
 
 if (typeof window !== 'undefined') {
-  webcontainer = import.meta.hot?.data.webcontainer ?? initWebContainer();
+  if (import.meta.hot && import.meta.hot.data.webcontainer) {
+    webcontainerPromise = import.meta.hot.data.webcontainer;
+  } else if ((window as any)[BOOT_GUARD_KEY]) {
+    webcontainerPromise = (window as any)[BOOT_GUARD_KEY];
+  } else {
+    webcontainerPromise = new Promise<WebContainer>((resolve, reject) => {
+      resolveWebContainer = resolve;
+      rejectWebContainer = reject;
+    });
+    (window as any)[BOOT_GUARD_KEY] = webcontainerPromise;
+    if (import.meta.hot) {
+      import.meta.hot.data.webcontainer = webcontainerPromise;
+    }
+  }
+} else {
+  // SSR fallback
+  webcontainerPromise = new Promise(() => {});
+}
+
+export const webcontainer = webcontainerPromise as Promise<WebContainer>;
+
+export function startWebContainer() {
+  if (typeof window === 'undefined') return;
+  if ((window as any).__webcontainer_started__) return;
+  (window as any).__webcontainer_started__ = true;
+
+  bootWebContainer()
+    .then((wc) => {
+      if (resolveWebContainer) resolveWebContainer(wc);
+    })
+    .catch((err) => {
+      if (rejectWebContainer) rejectWebContainer(err);
+      else console.error('WebContainer boot failed:', err);
+    });
 }

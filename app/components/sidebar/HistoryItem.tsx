@@ -15,6 +15,7 @@ interface HistoryItemProps {
   selectionMode?: boolean;
   isSelected?: boolean;
   onToggleSelection?: (id: string) => void;
+  basePath?: string;
 }
 
 export function HistoryItem({
@@ -25,6 +26,7 @@ export function HistoryItem({
   selectionMode = false,
   isSelected = false,
   onToggleSelection,
+  basePath = '/chat',
 }: HistoryItemProps) {
   const { id: urlId } = useParams();
   const isActiveChat = urlId === item.urlId;
@@ -41,7 +43,6 @@ export function HistoryItem({
       if (selectionMode) {
         e.preventDefault();
         e.stopPropagation();
-        console.log('Item clicked in selection mode:', item.id);
         onToggleSelection?.(item.id);
       }
     },
@@ -49,7 +50,6 @@ export function HistoryItem({
   );
 
   const handleCheckboxChange = useCallback(() => {
-    console.log('Checkbox changed for item:', item.id);
     onToggleSelection?.(item.id);
   }, [item.id, onToggleSelection]);
 
@@ -57,7 +57,6 @@ export function HistoryItem({
     (event: React.MouseEvent<HTMLButtonElement, MouseEvent>) => {
       event.preventDefault();
       event.stopPropagation();
-      console.log('Delete button clicked for item:', item.id);
 
       if (onDelete) {
         onDelete(event as unknown as React.UIEvent);
@@ -97,18 +96,17 @@ export function HistoryItem({
             onBlur={handleBlur}
             onKeyDown={handleKeyDown}
           />
-          <button
-            type="submit"
-            className="i-ph:check h-4 w-4 text-gray-500 hover:text-purple-500 transition-colors"
-            onMouseDown={handleSubmit}
-          />
+          <button type="submit" onMouseDown={handleSubmit} className="text-gray-500 hover:text-purple-500 transition-colors">
+            <i className="i-ph:check h-4 w-4 block" />
+          </button>
         </form>
       ) : (
         <a
-          href={`/chat/${item.urlId}`}
+          href={`${basePath}/${item.urlId}`}
           className="flex w-full relative truncate block"
           onClick={selectionMode ? handleItemClick : undefined}
         >
+          <i className="i-falbor:chat h-4 w-4 mr-2 shrink-0" />
           <WithTooltip tooltip={currentDescription}>
             <span className="truncate pr-24">{currentDescription}</span>
           </WithTooltip>
@@ -120,16 +118,17 @@ export function HistoryItem({
             <div className="flex items-center gap-2.5 text-gray-400 dark:text-gray-500 opacity-0 group-hover:opacity-100 transition-opacity">
               <ChatActionButton
                 toolTipContent="Export"
-                icon="i-ph:download-simple h-4 w-4"
+                icon="i-falbor:download-simple"
                 onClick={(event) => {
                   event.preventDefault();
                   exportChat(item.id);
                 }}
               />
+
               {onDuplicate && (
                 <ChatActionButton
                   toolTipContent="Duplicate"
-                  icon="i-ph:copy h-4 w-4"
+                  icon="i-falbor:copy"
                   onClick={(event) => {
                     event.preventDefault();
                     onDuplicate?.(item.id);
@@ -138,7 +137,7 @@ export function HistoryItem({
               )}
               <ChatActionButton
                 toolTipContent="Rename"
-                icon="i-ph:pencil-fill h-4 w-4"
+                icon="i-falbor:pencil-fill"
                 onClick={(event) => {
                   event.preventDefault();
                   toggleEditMode();
@@ -146,7 +145,7 @@ export function HistoryItem({
               />
               <ChatActionButton
                 toolTipContent="Delete"
-                icon="i-ph:trash h-4 w-4"
+                icon="i-falbor:trash"
                 className="hover:text-red-500 dark:hover:text-red-400"
                 onClick={handleDeleteClick}
               />
@@ -179,9 +178,11 @@ const ChatActionButton = forwardRef(
         <button
           ref={ref}
           type="button"
-          className={`text-gray-400 dark:text-gray-500 hover:text-purple-500 dark:hover:text-purple-400 transition-colors ${icon} ${className ? className : ''}`}
+          className={`text-gray-400 dark:text-gray-500 hover:text-purple-500 dark:hover:text-purple-400 transition-colors ${className ? className : ''}`}
           onClick={onClick}
-        />
+        >
+          <i className={`${icon} h-4 w-4 block`} />
+        </button>
       </WithTooltip>
     );
   },

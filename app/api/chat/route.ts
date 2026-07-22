@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 const json = NextResponse.json;
+
 import { getUserId } from '~/lib/auth';
 import { db } from '~/lib/db';
 import { users } from '~/lib/db/schema';
@@ -119,6 +120,191 @@ async function chatAction({ context, request }: RouteArgs) {
         let messageSliceId = 0;
 
         const processedMessages = mcpService ? await mcpService.processToolInvocations(messages, dataStream) : messages as Messages;
+
+        let cloneUrlMatch = null;
+        const lastMessage = processedMessages[processedMessages.length - 1];
+        if (lastMessage && lastMessage.role === 'user' && typeof lastMessage.content === 'string') {
+          const match = lastMessage.content.match(/\[Clone Website:\s*([^\]]+)\]/);
+          if (match) {
+            cloneUrlMatch = match[1].trim();
+            const finalUrl = cloneUrlMatch.startsWith('http') ? cloneUrlMatch : `https://${cloneUrlMatch}`;
+            const domain = new URL(finalUrl).hostname;
+
+            dataStream.writeData({
+              type: 'progress',
+              label: 'scraping',
+              status: 'in-progress',
+              order: progressCounter++,
+              message: `Launching visual agent on ${domain}...`,
+            } satisfies ProgressAnnotation);
+
+            try {
+              // ─── STEP 1: Parallel fetch — full-page screenshot + content ─────────────
+              // thum.io renders full JS pages and returns a real screenshot image
+              const screenshotServiceUrl = `https://image.thum.io/get/width/1440/crop/900/noanimate/${finalUrl}`;
+
+              const [screenshotResponse, jinaResponse] = await Promise.all([
+                fetch(screenshotServiceUrl).catch(() => null),
+                fetch(`https://r.jina.ai/${finalUrl}`, {
+                  headers: { 'Accept': 'application/json', 'X-Return-Format': 'markdown' }
+                }).catch(() => null),
+              ]);
+
+              dataStream.writeData({
+                type: 'progress',
+                label: 'scraping',
+                status: 'in-progress',
+                order: progressCounter++,
+                message: 'Capturing high-resolution viewport screenshot...',
+              } satisfies ProgressAnnotation);
+
+              // ─── STEP 2: Convert screenshot to base64 so the AI can actually SEE it ──
+              let screenshotBase64: string | null = null;
+              let screenshotMimeType = 'image/jpeg';
+              if (screenshotResponse && screenshotResponse.ok) {
+                const contentType = screenshotResponse.headers.get('content-type') || 'image/jpeg';
+                screenshotMimeType = contentType.split(';')[0].trim();
+                const arrayBuffer = await screenshotResponse.arrayBuffer();
+                const bytes = new Uint8Array(arrayBuffer);
+                let binary = '';
+                bytes.forEach(b => { binary += String.fromCharCode(b); });
+                screenshotBase64 = btoa(binary);
+              }
+
+              dataStream.writeData({
+                type: 'progress',
+                label: 'scraping',
+                status: 'in-progress',
+                order: progressCounter++,
+                message: 'Extracting text content, images, and links...',
+              } satisfies ProgressAnnotation);
+
+              // ─── STEP 3: Parse Jina content (clean markdown with image URLs) ─────────
+              let scrapedMarkdown = '';
+              if (jinaResponse && jinaResponse.ok) {
+                try {
+                  const jinaJson = await jinaResponse.json();
+                  scrapedMarkdown = jinaJson.data?.content || '';
+                } catch {
+                  scrapedMarkdown = await jinaResponse.text().catch(() => '');
+                }
+              }
+
+              // ─── STEP 4: Extract all image URLs from the Jina markdown ────────────
+              // Jina already converts all images to clean markdown ![alt](url) format
+              const mdImageMatches = [...scrapedMarkdown.matchAll(/!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g)];
+              const extractedImages = mdImageMatches.map(m => ({ alt: m[1], url: m[2] }));
+              
+              // Also catch raw URLs that look like images
+              const rawImageMatches = [...scrapedMarkdown.matchAll(/https?:\/\/[^\s"'<>)]+\.(?:png|jpg|jpeg|gif|webp|svg|ico)(?:\?[^\s"'<>)]*)?/gi)];
+              rawImageMatches.forEach(m => {
+                if (!extractedImages.some(img => img.url === m[0])) {
+                  extractedImages.push({ alt: '', url: m[0] });
+                }
+              });
+
+              dataStream.writeData({
+                type: 'progress',
+                label: 'scraping',
+                status: 'in-progress',
+                order: progressCounter++,
+                message: `Found ${extractedImages.length} image assets. Handing to vision AI...`,
+              } satisfies ProgressAnnotation);
+
+              // ─── STEP 5: Build the ultra-rich clone instruction ────────────────────
+              const imageInventory = extractedImages.length > 0
+                ? extractedImages.map((img, i) => `  ${i + 1}. ${img.alt ? `"${img.alt}" → ` : ''}${img.url}`).join('\n')
+                : '  (None found — extract visually from the screenshot)';
+
+              const cloneInstruction = `[CLONE WEBSITE TASK]
+
+Target URL: ${finalUrl}
+Domain: ${domain}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+👁️ VISION INPUT: You have been given a HIGH-RESOLUTION SCREENSHOT of the actual rendered website as an image attachment. This is a real pixel-perfect capture of the live site. USE IT to extract:
+  • Exact background colors, text colors, accent/brand colors
+  • Font sizes, font weights, letter-spacing, line-heights
+  • Exact button styles (border-radius, padding, colors, border)
+  • Layout structure: columns, grid, flexbox alignment
+  • Spacing and padding between sections
+  • Navigation bar height and style
+  • Card styles, shadows, borders
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🖼️ EXTRACTED IMAGE ASSETS (use these EXACT URLs in <img> tags):
+${imageInventory}
+
+📋 SITE CONTENT (from content scanner):
+${scrapedMarkdown.slice(0, 8000)}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🚨 ABSOLUTE RULES — ZERO TOLERANCE:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. COLORS: Read every color DIRECTLY from the screenshot. Do NOT invent or approximate. If the background is #0F0F0F, write #0F0F0F.
+2. IMAGES: Use ONLY the URLs from the image list above. Do NOT use placeholder images, unsplash, or Lorem Picsum.
+3. ICONS: Do NOT use lucide-react or react-icons. Use the actual SVG image URLs from the list, or inline SVG paths you can see in the screenshot.
+4. LAYOUT: Match the screenshot EXACTLY — column structure, hero section layout, navbar items, card arrangement.
+5. SCOPE: Build ONLY this landing page. No routing, no secondary pages.
+6. INTERACTIVITY: All buttons must have hover effects that match the site's design.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📤 REQUIRED RESPONSE FORMAT:
+Before generating code, output your agent analysis:
+
+**🎨 Color Palette Identified:**
+(list background, primary text, accent/brand, button colors with exact hex values)
+
+**📐 Layout Breakdown:**
+(describe each section: Navbar → Hero → Stats/Features → etc.)
+
+**🖼️ Images Being Used:**
+(list which image URLs you are using and where)
+
+**💬 Builder Handoff Prompt:**
+> (the exact concise instruction you are passing to yourself as the code generator)
+
+THEN build the pixel-perfect clone.`;
+
+              if (typeof lastMessage.content === 'string') {
+                lastMessage.content = lastMessage.content.replace(/\[Clone Website:\s*([^\]]+)\]/, cloneInstruction);
+              }
+
+              // ─── STEP 6: Inject the REAL screenshot bytes into the message ─────────
+              // This sends the actual image data (not a URL) so any vision model can read it
+              if (screenshotBase64) {
+                const dataUrl = `data:${screenshotMimeType};base64,${screenshotBase64}`;
+                lastMessage.experimental_attachments = [
+                  ...(lastMessage.experimental_attachments || []),
+                  { url: dataUrl, contentType: screenshotMimeType }
+                ];
+              }
+
+              dataStream.writeData({
+                type: 'progress',
+                label: 'scraping',
+                status: 'complete',
+                order: progressCounter++,
+                message: screenshotBase64
+                  ? `Visual scan complete — screenshot captured + ${extractedImages.length} assets. AI is analyzing...`
+                  : `Content extracted (${extractedImages.length} assets). AI is building...`,
+              } satisfies ProgressAnnotation);
+
+            } catch (error: any) {
+              logger.error('Failed to scrape clone website:', error);
+              if (typeof lastMessage.content === 'string') {
+                lastMessage.content = lastMessage.content.replace(/\[Clone Website:\s*([^\]]+)\]/, `\n\n[CLONE INSTRUCTION]\n(Failed to fetch website content: ${error.message}. Please check the URL and try again.)`);
+              }
+              dataStream.writeData({
+                type: 'progress',
+                label: 'scraping',
+                status: 'complete',
+                order: progressCounter++,
+                message: 'Visual scan failed — check URL and try again.',
+              } satisfies ProgressAnnotation);
+            }
+          }
+        }
 
         if (processedMessages.length > 3) {
           messageSliceId = processedMessages.length - 3;

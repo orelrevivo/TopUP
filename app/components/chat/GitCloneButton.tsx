@@ -171,8 +171,8 @@ ${escapeFalborTags(file.content)}
         variant="default"
         size="default"
         className={classNames(
-          'gap-2 bg-falbor-elements-background-depth-1 w-full',
-          'text-falbor-elements-textPrimary',
+          'gap-2 bg-falbor-elements-background-depth-1 w-fit',
+          'text-[#444444] dark:text-falbor-elements-textPrimary',
           'hover:bg-falbor-elements-background-depth-2',
           'border border-falbor-elements-borderColor',
           'h-10 px-4 py-2 min-w-[120px] justify-center',
@@ -181,10 +181,9 @@ ${escapeFalborTags(file.content)}
         )}
         disabled={!ready || loading}
       >
-        Clone a repo
-        <div className="flex items-center gap-1 ml-2">
-          <Github className="w-4 h-4" />
-          <GitBranch className="w-4 h-4" />
+        Import from github
+        <div className="flex items-center gap-1">
+          <img className='w-7 h-7' src="/icons/github.svg" alt="" />
         </div>
       </Button>
 

@@ -858,7 +858,7 @@ export function EventLogsTab() {
   };
 
   return (
-    <div className="flex h-full flex-col gap-6">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
         <DropdownMenu.Root open={showLevelFilter} onOpenChange={setShowLevelFilter}>
           <DropdownMenu.Trigger asChild>

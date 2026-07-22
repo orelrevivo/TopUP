@@ -41,6 +41,7 @@ export function useChatHistory() {
 
   useEffect(() => {
     if (mixedId) {
+      if (mixedId.startsWith('hacking-')) return;
       let cancelled = false;
 
       const load = () =>

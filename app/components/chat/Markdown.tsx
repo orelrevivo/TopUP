@@ -45,7 +45,7 @@ export const Markdown = memo(
               logger.error(`Invalid artifact id ${artifactId}`);
             }
 
-            return <Artifact messageId={messageId} artifactId={artifactId} />;
+            return <Artifact messageId={messageId} artifactId={artifactId} append={append} />;
           }
 
           if (className?.includes('__falborSelectedElement__')) {

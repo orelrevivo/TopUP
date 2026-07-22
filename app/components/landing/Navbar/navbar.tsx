@@ -213,6 +213,9 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                         <Link href="/pricing">
                             <span className="text-black/80 hover:text-black/70 text-sm font-semibold">{appName}</span>
                         </Link>
+                        <Link href="/privacy">
+                            <span className="text-black/80 hover:text-black/70 text-sm font-semibold">Legal & Privacy</span>
+                        </Link>
                         {menus.map((menu) => (
                             <span
                                 key={menu.label}

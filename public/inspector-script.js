@@ -8,8 +8,9 @@
     const computedStyles = window.getComputedStyle(element);
     const relevantProps = [
       'display', 'position', 'width', 'height', 'margin', 'padding',
-      'border', 'background', 'color', 'font-size', 'font-family',
-      'text-align', 'flex-direction', 'justify-content', 'align-items'
+      'border', 'border-radius', 'background', 'background-color', 'color', 
+      'font-size', 'font-family', 'font-weight', 'text-align', 
+      'flex-direction', 'justify-content', 'align-items', 'object-fit'
     ];
 
     const styles = {};
@@ -128,8 +129,70 @@
       // Add new readable formats
       selector: createReadableSelector(element),
       displayText: createElementDisplayText(element),
-      elementPath: getElementPath(element)
+      elementPath: getElementPath(element),
+      source: getFiberSource(element)
     };
+  }
+
+  // Function to extract React Fiber source map
+  function getFiberSource(element) {
+    try {
+      // Find the react fiber property key
+      let fiberKey = Object.keys(element).find(key => key.startsWith('__reactFiber$'));
+      if (!fiberKey) {
+        fiberKey = Object.getOwnPropertyNames(element).find(key => key.startsWith('__reactFiber$'));
+      }
+
+      // Check props directly on the DOM element as well
+      let propsKey = Object.keys(element).find(key => key.startsWith('__reactProps$'));
+      if (!propsKey) {
+        propsKey = Object.getOwnPropertyNames(element).find(key => key.startsWith('__reactProps$'));
+      }
+
+      if (propsKey && element[propsKey]) {
+        const source = element[propsKey].__source;
+        if (source && source.fileName && source.lineNumber && !source.fileName.includes('node_modules')) {
+          return {
+            fileName: source.fileName,
+            lineNumber: source.lineNumber,
+            columnNumber: source.columnNumber
+          };
+        }
+      }
+
+      if (!fiberKey) return null;
+
+      let fiber = element[fiberKey];
+      
+      // Traverse up the fiber tree until we find a debugSource or __source
+      while (fiber) {
+        let source = fiber._debugSource;
+        
+        // Next.js / Babel fallback: check memoizedProps.__source
+        if (!source && fiber.memoizedProps && fiber.memoizedProps.__source) {
+          source = fiber.memoizedProps.__source;
+        }
+        
+        if (!source && fiber.pendingProps && fiber.pendingProps.__source) {
+          source = fiber.pendingProps.__source;
+        }
+
+        if (source && source.fileName && source.lineNumber) {
+          // Filter out internal Next.js/React files just in case
+          if (!source.fileName.includes('node_modules')) {
+            return {
+              fileName: source.fileName,
+              lineNumber: source.lineNumber,
+              columnNumber: source.columnNumber
+            };
+          }
+        }
+        fiber = fiber.return;
+      }
+    } catch (e) {
+      console.warn('Failed to extract React source:', e);
+    }
+    return null;
   }
 
   // Helper function to get element class name consistently
@@ -206,6 +269,8 @@
 
     const target = e.target;
     if (!target || target === document.body || target === document.documentElement) return;
+
+    window._lastClickedElement = target; // Save reference for live updates
 
     const elementInfo = createElementInfo(target);
 
@@ -284,6 +349,23 @@
   window.addEventListener('message', function (event) {
     if (event.data.type === 'INSPECTOR_ACTIVATE') {
       setInspectorActive(event.data.active);
+    } else if (event.data.type === 'INSPECTOR_APPLY_STYLE') {
+      // Apply styles to the last clicked element, or current highlight
+      const target = currentHighlight; // We should probably store clickedElement if needed, but for now we can just use the DOM selector or pass it down. 
+      // Wait, actually, let's look up the element by selector or if we have a saved reference.
+      // Since it's live preview, the element is still in the DOM.
+      if (window._lastClickedElement) {
+        const { styles } = event.data;
+        if (styles) {
+          Object.keys(styles).forEach(key => {
+            if (key === 'src' && window._lastClickedElement.tagName.toLowerCase() === 'img') {
+              window._lastClickedElement.src = styles[key];
+            } else {
+              window._lastClickedElement.style[key] = styles[key];
+            }
+          });
+        }
+      }
     }
   });
 

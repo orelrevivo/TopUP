@@ -49,49 +49,66 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
       }
     };
 
+    const groupedMessages: Message[] = [];
+
+    for (const msg of messages) {
+      if (msg.annotations?.includes('hidden') || (typeof msg.content === 'string' && msg.content.includes('[AUTOMATED SYSTEM CHECK]'))) continue;
+
+      const lastGroup = groupedMessages[groupedMessages.length - 1];
+      if (lastGroup && lastGroup.role === 'assistant' && msg.role === 'assistant') {
+        lastGroup.content = (lastGroup.content ? lastGroup.content + '\n\n' : '') + msg.content;
+        lastGroup.parts = [...(lastGroup.parts || []), ...(msg.parts || [])];
+        if (msg.annotations) {
+          lastGroup.annotations = [...(lastGroup.annotations || []), ...msg.annotations];
+        }
+        lastGroup.id = msg.id;
+      } else {
+        groupedMessages.push({
+          ...msg,
+          parts: msg.parts ? [...msg.parts] : undefined,
+          annotations: msg.annotations ? [...msg.annotations] : undefined
+        });
+      }
+    }
+
     return (
       <div id={id} className={props.className} ref={ref}>
-        {messages.length > 0
-          ? messages.map((message, index) => {
-              const { role, content, id: messageId, annotations, parts } = message;
-              const isUserMessage = role === 'user';
-              const isFirst = index === 0;
-              const isHidden = annotations?.includes('hidden');
+        {groupedMessages.length > 0
+          ? groupedMessages.map((message, index) => {
+            const { role, content, id: messageId, annotations, parts } = message;
+            const isUserMessage = role === 'user';
+            const isFirst = index === 0;
 
-              if (isHidden) {
-                return <Fragment key={index} />;
-              }
-
-              return (
-                <div
-                  key={index}
-                  className={classNames('flex gap-4 py-3 w-full rounded-lg', {
-                    'mt-4': !isFirst,
-                  })}
-                >
-                  <div className="grid grid-col-1 w-full">
-                    {isUserMessage ? (
-                      <UserMessage content={content} parts={parts} />
-                    ) : (
-                      <AssistantMessage
-                        content={content}
-                        annotations={message.annotations}
-                        messageId={messageId}
-                        onRewind={handleRewind}
-                        onFork={handleFork}
-                        append={props.append}
-                        chatMode={props.chatMode}
-                        setChatMode={props.setChatMode}
-                        model={props.model}
-                        provider={props.provider}
-                        parts={parts}
-                        addToolResult={props.addToolResult}
-                      />
-                    )}
-                  </div>
+            return (
+              <div
+                key={index}
+                className={classNames('flex w-full min-w-0 rounded-lg justify-center', {
+                  'mt-2': !isFirst,
+                })}
+              >
+                <div className="grid grid-col-1 w-full min-w-0 max-w-[var(--chat-max-width,45rem)] break-words">
+                  {isUserMessage ? (
+                    <UserMessage content={content} parts={parts} />
+                  ) : (
+                    <AssistantMessage
+                      content={content}
+                      annotations={message.annotations}
+                      messageId={messageId}
+                      onRewind={handleRewind}
+                      onFork={handleFork}
+                      append={props.append}
+                      chatMode={props.chatMode}
+                      setChatMode={props.setChatMode}
+                      model={props.model}
+                      provider={props.provider}
+                      parts={parts}
+                      addToolResult={props.addToolResult}
+                    />
+                  )}
                 </div>
-              );
-            })
+              </div>
+            );
+          })
           : null}
         {isStreaming && (
           <div className="text-center w-full  text-falbor-elements-item-contentAccent i-svg-spinners:3-dots-fade text-4xl mt-4"></div>

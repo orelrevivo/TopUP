@@ -1,5 +1,5 @@
 import { globSync } from 'fast-glob';
-import fs from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import { basename } from 'node:path';
 import { defineConfig, presetIcons, presetUno, transformerDirectives } from 'unocss';
 
@@ -12,7 +12,7 @@ const customIconCollection = iconPaths.reduce(
     const [iconName] = basename(iconPath).split('.');
 
     acc[collectionName] ??= {};
-    acc[collectionName][iconName] = async () => fs.readFile(iconPath, 'utf8');
+    acc[collectionName][iconName] = async () => readFileSync(iconPath, 'utf8');
 
     return acc;
   },
@@ -110,7 +110,70 @@ const COLOR_PRIMITIVES = {
   },
 };
 
+/**
+ * Explicit spacing scale (Tailwind-equivalent, rem-based assuming a 16px root).
+ *
+ * UnoCSS's presetUno generates spacing utilities dynamically instead of from a
+ * static theme.spacing map, so calls like `theme('spacing.4')` inside CSS
+ * (via transformerDirectives) have nothing concrete to resolve against and
+ * throw "theme of spacing.X did not found". Defining this map explicitly
+ * fixes that, and also keeps regular utility classes (p-4, gap-2, etc.)
+ * consistent with the values below.
+ */
+const SPACING = {
+  '0': '0px',
+  px: '1px',
+  '0.5': '0.125rem',
+  '1': '0.25rem',
+  '1.5': '0.375rem',
+  '2': '0.5rem',
+  '2.5': '0.625rem',
+  '3': '0.75rem',
+  '3.5': '0.875rem',
+  '4': '1rem',
+  '5': '1.25rem',
+  '6': '1.5rem',
+  '7': '1.75rem',
+  '8': '2rem',
+  '9': '2.25rem',
+  '10': '2.5rem',
+  '11': '2.75rem',
+  '12': '3rem',
+  '14': '3.5rem',
+  '16': '4rem',
+  '20': '5rem',
+  '24': '6rem',
+  '28': '7rem',
+  '32': '8rem',
+  '36': '9rem',
+  '40': '10rem',
+  '44': '11rem',
+  '48': '12rem',
+  '52': '13rem',
+  '56': '14rem',
+  '60': '15rem',
+  '64': '16rem',
+  '72': '18rem',
+  '80': '20rem',
+  '96': '24rem',
+};
+
 export default defineConfig({
+  content: {
+    filesystem: [
+      'app/**/*.{js,ts,jsx,tsx}',
+    ],
+    pipeline: {
+      include: [
+        'app/**/*.{js,ts,jsx,tsx}',
+      ],
+      exclude: [
+        /public[\\/]site/,
+        /node_modules/,
+        /\.next/
+      ]
+    }
+  },
   safelist: [...Object.keys(customIconCollection[collectionName] || {}).map((x) => `i-falbor:${x}`)],
   shortcuts: {
     'falbor-ease-cubic-bezier': 'ease-[cubic-bezier(0.4,0,0.2,1)]',
@@ -126,6 +189,7 @@ export default defineConfig({
     ['b', {}],
   ],
   theme: {
+    spacing: SPACING,
     colors: {
       ...COLOR_PRIMITIVES,
       falbor: {

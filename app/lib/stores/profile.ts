@@ -1,9 +1,32 @@
 import { atom } from 'nanostores';
 
+export interface CustomLink {
+  title: string;
+  url: string;
+  description?: string;
+}
+
 export interface Profile {
   username: string;
   bio: string;
   avatar: string;
+  cover: string;
+  timezone: string;
+  displayEmail: boolean;
+  instagram: string;
+  linkedin: string;
+  twitter: string;
+  customLinks: CustomLink[];
+  location?: string;
+  statusMessage?: string;
+  skills?: string[];
+  badges?: any[];
+  stats?: {
+    followers: number;
+    following: number;
+    views: number;
+  };
+  profileApps?: any[];
 }
 
 const storedProfile = typeof window !== 'undefined' ? localStorage.getItem('falbor_profile') : null;
@@ -13,6 +36,18 @@ const initialProfile: Profile = storedProfile
       username: '',
       bio: '',
       avatar: '',
+      cover: '',
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      displayEmail: false,
+      instagram: '',
+      linkedin: '',
+      twitter: '',
+      customLinks: [],
+      location: '',
+      statusMessage: '',
+      skills: [],
+      badges: [],
+      stats: { followers: 0, following: 0, views: 0 },
     };
 
 export const profileStore = atom<Profile>(initialProfile);
@@ -36,7 +71,7 @@ export const loadProfileFromServer = async () => {
     const res = await fetch('/api/profile', { headers: authHeaders() });
     if (!res.ok) return;
     const serverProfile = (await res.json()) as Profile;
-    if (serverProfile.username || serverProfile.avatar || serverProfile.bio) {
+    if (serverProfile.username || serverProfile.avatar || serverProfile.bio || serverProfile.cover || serverProfile.timezone) {
       profileStore.set(serverProfile);
       if (typeof window !== 'undefined') {
         localStorage.setItem('falbor_profile', JSON.stringify(serverProfile));

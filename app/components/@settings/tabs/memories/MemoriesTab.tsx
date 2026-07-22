@@ -41,14 +41,13 @@ export default function MemoriesTab() {
   };
 
   return (
-    <div className="flex flex-col gap-6 p-2 h-full">
+    <div className="max-w-2xl mx-auto space-y-6">
       <div className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
-          <Brain className="w-5 h-5 text-purple-500" />
           AI Memories
         </h2>
         <p className="text-sm text-gray-600 dark:text-gray-400">
-          The AI learns about your preferences, habits, and friction points as you use the platform. 
+          The AI learns about your preferences, habits, and friction points as you use the platform.
           It uses these memories to automatically tailor future websites and solutions directly to you.
         </p>
       </div>
@@ -69,25 +68,27 @@ export default function MemoriesTab() {
         ) : (
           <div className="grid gap-3">
             {memories.map((memory) => (
-              <div 
-                key={memory.id} 
-                className="flex items-start justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-950 hover:border-purple-500/30 transition-colors shadow-sm"
-              >
-                <div className="flex-1 pr-4">
-                  <p className="text-sm text-gray-900 dark:text-white leading-relaxed">
-                    {memory.content}
-                  </p>
-                  <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-2 font-mono uppercase tracking-wider">
-                    Learned on {new Date(memory.createdAt).toLocaleDateString()}
-                  </p>
-                </div>
-                <button
-                  onClick={() => deleteMemory(memory.id)}
-                  className="p-2 rounded-lg text-gray-500 dark:text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
-                  title="Forget this memory"
+              <div className="p-1 bg-[#E5E5E5] dark:bg-[#262626] rounded-xl">
+                <div
+                  key={memory.id}
+                  className="flex items-start justify-between p-4 border border-gray-600 rounded-xl bg-white dark:bg-[#171717] shadow-[0_0_20px_rgba(168,85,247,0.25)] dark:shadow-none"
                 >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                  <div className="flex-1 pr-4">
+                    <p className="text-sm text-gray-900 dark:text-white leading-relaxed">
+                      {memory.content}
+                    </p>
+                    <p className="text-[12px] text-gray-500 dark:text-gray-500 mt-2 font-mono">
+                      Created on {new Date(memory.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => deleteMemory(memory.id)}
+                    className="p-2 rounded-lg text-gray-500 dark:text-gray-500 hover:bg-red-500/10 hover:text-red-500 transition-colors"
+                    title="Forget this memory"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             ))}
           </div>

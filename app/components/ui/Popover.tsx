@@ -19,10 +19,10 @@ export default ({
         sideOffset={10}
         side={side}
         align={align}
-        className="bg-falbor-elements-background-depth-2 text-falbor-elements-item-contentAccent p-2 rounded-md shadow-xl z-workbench"
+        className="bg-[#F9F6F9] text-falbor-elements-item-contentAccent rounded-md border z-workbench overflow-hidden"
       >
         {children}
-        <Popover.Arrow className="bg-falbor-elements-item-background-depth-2" />
+        <Popover.Arrow className="fill-[#F9F6F9]" />
       </Popover.Content>
     </Popover.Portal>
   </Popover.Root>

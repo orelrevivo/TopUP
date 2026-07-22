@@ -43,17 +43,18 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
     <AnimatePresence>
       <div
         className={classNames(
-          'shadow-lg rounded-t-lg relative w-full max-w-[90%] mx-auto z-prompt',
+          'shadow-xl rounded-t-xl relative w-full mx-auto z-prompt mb-[-8px]',
         )}
+        onClick={() => setExpanded((v) => !v)}
       >
         <div
           className={classNames(
-            'bg-[#EBEBEB] dark:bg-[#1F1F1F]',
-            'px-2 py-1 rounded-t-lg text-[#545454]',
+            'bg-[#E6E6E6] dark:bg-[#1F1F1F] pb-3',
+            'px-2 py-1 rounded-t-xl text-[#545454]',
             'flex ',
           )}
         >
-          <div className="flex-1">
+          <div className="flex-1 mt-0.5">
             <AnimatePresence>
               {expanded ? (
                 <motion.div
@@ -72,16 +73,6 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
               )}
             </AnimatePresence>
           </div>
-          <motion.button
-            initial={{ width: 0 }}
-            animate={{ width: 'auto' }}
-            exit={{ width: 0 }}
-            transition={{ duration: 0.15, ease: cubicEasingFn }}
-            className=" p-1 rounded-lg bg-white border border-gray-400 hover:bg-falbor-elements-artifacts-backgroundHover"
-            onClick={() => setExpanded((v) => !v)}
-          >
-            <div className={expanded ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'}></div>
-          </motion.button>
         </div>
       </div>
     </AnimatePresence>

@@ -4,6 +4,7 @@ import './styles/index.scss';
 import { AuthProvider } from '~/hooks/useAuth';
 import { StorageSync } from '~/lib/auth/StorageSync';
 import { ThemeSync } from '~/components/ui/ThemeSync.client';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 export const metadata = {
   title: 'Falbor',
@@ -35,10 +36,12 @@ export default function RootLayout({
       </head>
       <body>
         <ThemeSync />
-        <AuthProvider>
-          <StorageSync />
-          {children}
-        </AuthProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || ""}>
+          <AuthProvider>
+            <StorageSync />
+            {children}
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

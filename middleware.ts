@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET
   ? new TextEncoder().encode(process.env.JWT_SECRET)
   : null;
 const COOKIE_NAME = "session";
-const PUBLIC_ROUTES = ["/login", "/signup", "/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/health"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/privacy", "/api/auth/login", "/api/auth/register", "/api/auth/logout", "/api/health"];
 const STATIC_PREFIXES = ["/_next", "/favicon", "/icons", "/logo", "/apple-touch-icon", "/social_preview", "/landing"];
 
 export async function middleware(request: NextRequest) {
@@ -21,6 +21,11 @@ export async function middleware(request: NextRequest) {
       STATIC_PREFIXES.some((p) => pathname.startsWith(p))
     ) {
       return NextResponse.next();
+    }
+
+    // Serve index.html implicitly for deployed sites
+    if (pathname.startsWith('/site/')) {
+      return NextResponse.rewrite(new URL(`${pathname === '/site/' ? pathname : pathname.replace(/\/$/, '')}/index.html`, request.url));
     }
 
     if (pathname === "/api/auth/me") {

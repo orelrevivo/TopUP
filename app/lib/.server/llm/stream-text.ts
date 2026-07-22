@@ -43,12 +43,116 @@ function getCompletionTokenLimit(modelDetails: any): number {
   return Math.min(MAX_TOKENS, 16384);
 }
 
-function sanitizeText(text: string): string {
-  let sanitized = text.replace(/<div class=\\"__falborThought__\\">.*?<\/div>/s, '');
-  sanitized = sanitized.replace(/<think>.*?<\/think>/s, '');
-  sanitized = sanitized.replace(/<falborAction type="file" filePath="package-lock\.json">[\s\S]*?<\/falborAction>/g, '');
+function sanitizeText(text: string | any[] | undefined | null): any {
+  if (!text) return text || '';
+  if (Array.isArray(text)) {
+    return text.map((item) => {
+      if (item.type === 'text' && typeof item.text === 'string') {
+        return { ...item, text: sanitizeText(item.text) };
+      }
+      return item;
+    });
+  }
+  if (typeof text !== 'string') return text;
+
+  let sanitized = text;
+  if (typeof text === 'string') {
+    sanitized = text.replace(/<falborAction type="file" filePath="package-lock\.json">[\s\S]*?<\/falborAction>/g, '');
+  }
 
   return sanitized.trim();
+}
+
+/**
+ * Known vision-capable model name patterns.
+ * Any model whose name matches one of these patterns supports image inputs.
+ */
+const VISION_MODEL_PATTERNS = [
+  // OpenAI
+  /^gpt-4o/i,
+  /^gpt-4-turbo/i,
+  /^gpt-4-vision/i,
+  /^o1/i,
+  /^o3/i,
+  /^o4/i,
+  // Anthropic — Claude 3+ all support vision
+  /^claude-3/i,
+  /^claude-4/i,
+  /^claude-opus-4/i,
+  /^claude-sonnet-4/i,
+  // Google
+  /^gemini/i,
+  // xAI
+  /^grok/i,
+  // Moonshot vision models
+  /vision/i,
+];
+
+/**
+ * Returns true if the given model name is known to support image/vision inputs.
+ * Uses both the ModelInfo.vision flag (if set) and a name-based pattern check
+ * so that dynamically fetched models are also covered.
+ */
+function modelSupportsVision(modelDetails: any): boolean {
+  // Explicit flag takes precedence when set
+  if (typeof modelDetails?.vision === 'boolean') {
+    return modelDetails.vision;
+  }
+
+  const name: string = modelDetails?.name || '';
+
+  return VISION_MODEL_PATTERNS.some((pattern) => pattern.test(name));
+}
+
+/**
+ * Strips image/file parts from message content when the model doesn't support vision.
+ *
+ * This prevents the "unknown variant `image_url`" deserialization error that occurs
+ * when sending messages with image content to non-vision APIs (e.g. DeepSeek, Mistral).
+ * The AI SDK's convertToCoreMessages() converts FileUIPart { type: 'file' } into
+ * image_url content blocks, which non-vision APIs reject.
+ */
+function stripImagesFromMessages(messages: Omit<Message, 'id'>[], modelDetails: any): Omit<Message, 'id'>[] {
+  if (modelSupportsVision(modelDetails)) {
+    // Model supports images — pass through unchanged
+    return messages;
+  }
+
+  logger.debug(`Model "${modelDetails?.name}" does not support vision — stripping image parts from messages`);
+
+  return messages.map((message) => {
+    // Strip file/image parts from the parts array
+    let newParts = message.parts;
+
+    if (Array.isArray(message.parts) && message.parts.length > 0) {
+      newParts = message.parts.filter((part: any) => part.type !== 'file' && part.type !== 'image');
+    }
+
+    // Also strip from content if it's an array (AI SDK CoreMessage format)
+    let newContent = message.content;
+
+    if (Array.isArray(message.content)) {
+      newContent = (message.content as any[]).filter(
+        (item: any) => item.type !== 'image_url' && item.type !== 'image',
+      ) as any;
+    }
+
+    // Strip from experimental_attachments
+    let newAttachments = message.experimental_attachments;
+    if (Array.isArray(message.experimental_attachments)) {
+      newAttachments = message.experimental_attachments.filter(
+        (attachment: any) => !attachment.contentType?.startsWith('image/')
+      );
+      if (newAttachments.length === 0) newAttachments = undefined;
+    }
+
+    return {
+      ...message,
+      content: newContent,
+      parts: newParts,
+      experimental_attachments: newAttachments,
+    };
+  });
 }
 
 export async function streamText(props: {
@@ -98,9 +202,11 @@ export async function streamText(props: {
 
     // Sanitize all text parts in parts array, if present
     if (Array.isArray(message.parts)) {
-      newMessage.parts = message.parts.map((part) =>
-        part.type === 'text' ? { ...part, text: sanitizeText(part.text) } : part,
-      );
+      newMessage.parts = message.parts
+        .filter((part: any) => !['reasoning', 'source', 'step-start'].includes(part.type))
+        .map((part) =>
+          part.type === 'text' ? { ...part, text: sanitizeText(part.text) } : part,
+        );
     }
 
     return newMessage;
@@ -276,6 +382,10 @@ export async function streamText(props: {
     ),
   );
 
+  // Strip image/file parts from messages for models that don't support vision.
+  // This prevents the "unknown variant `image_url`" error from non-vision APIs like DeepSeek.
+  const visionSafeMessages = stripImagesFromMessages(processedMessages, modelDetails);
+
   const streamParams = {
     model: provider.getModelInstance({
       model: modelDetails.name,
@@ -285,7 +395,7 @@ export async function streamText(props: {
     }),
     system: chatMode === 'build' ? systemPrompt : discussPrompt(),
     ...tokenParams,
-    messages: convertToCoreMessages(processedMessages as any),
+    messages: convertToCoreMessages(visionSafeMessages as any),
     ...filteredOptions,
 
     // Set temperature to 1 for reasoning models (required by OpenAI API)

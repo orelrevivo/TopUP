@@ -77,6 +77,10 @@ export function useMessageParser() {
           ...prevParsed,
           [index]: !shouldReplace ? (prevParsed[index] || '') + newParsedContent : newParsedContent,
         }));
+
+        if (!isLoading) {
+          messageParser.complete(message.id);
+        }
       }
     }
   }, []);

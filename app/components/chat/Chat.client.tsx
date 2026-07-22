@@ -3,13 +3,13 @@ import { useStore } from '@nanostores/react';
 import type { Message } from 'ai';
 import { useChat } from '@ai-sdk/react';
 import { useAnimate } from 'framer-motion';
-import { memo, useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
 import { description, useChatHistory, chatId } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
-import { DEFAULT_MODEL, DEFAULT_PROVIDER, PROMPT_COOKIE_KEY, PROVIDER_LIST } from '~/utils/constants';
+import { DEFAULT_MODEL, DEFAULT_PROVIDER, MODEL_REGEX, PROMPT_COOKIE_KEY, PROVIDER_LIST, PROVIDER_REGEX } from '~/utils/constants';
 import { cubicEasingFn } from '~/utils/easings';
 import { createScopedLogger, renderLogger } from '~/utils/logger';
 import { BaseChat } from './BaseChat';
@@ -29,6 +29,7 @@ import type { ElementInfo } from '~/components/workbench/Inspector';
 import type { TextUIPart, FileUIPart, Attachment } from '@ai-sdk/ui-utils';
 import { useMCPStore } from '~/lib/stores/mcp';
 import type { LlmErrorAlertType } from '~/types/actions';
+import { skillsStore } from '~/lib/stores/skills';
 
 const logger = createScopedLogger('Chat');
 
@@ -90,6 +91,7 @@ export const ChatImpl = memo(
     const [chatStarted, setChatStarted] = useState(initialMessages.length > 0);
     const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
     const [imageDataList, setImageDataList] = useState<string[]>([]);
+    const [cloneUrl, setCloneUrl] = useState<string | null>(null);
     const searchParams = useSearchParams();
     const [fakeLoading, setFakeLoading] = useState(false);
     const files = useStore(workbenchStore.files);
@@ -103,22 +105,116 @@ export const ChatImpl = memo(
     const supabaseAlert = useStore(workbenchStore.supabaseAlert);
     const { activeProviders, promptId, autoSelectTemplate, contextOptimizationEnabled } = useSettings();
     const [llmErrorAlert, setLlmErrorAlert] = useState<LlmErrorAlertType | undefined>(undefined);
-    const [model, setModel] = useState('deepseek-chat');
-    const [provider, setProvider] = useState(() => {
-      return (PROVIDER_LIST.find((p) => p.name === 'Deepseek') || DEFAULT_PROVIDER) as ProviderInfo;
+    const currentChatId = useStore(chatId);
+    const [localChatId] = useState(() =>
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
+    );
+    const activeChatId = currentChatId || (initialMessages.length > 0 ? initialMessages[0].id : localChatId);
+
+    const [provider, setProvider] = useState<ProviderInfo>(() => {
+      let extractedProvider: ProviderInfo | undefined;
+      let extractedModel: string | undefined;
+
+      if (initialMessages && initialMessages.length > 0) {
+        const lastUserMsg = [...initialMessages].reverse().find(m => m.role === 'user');
+        if (lastUserMsg && typeof lastUserMsg.content === 'string') {
+          const providerMatch = lastUserMsg.content.match(PROVIDER_REGEX);
+          const modelMatch = lastUserMsg.content.match(MODEL_REGEX);
+
+          extractedModel = modelMatch?.[1];
+          extractedProvider = PROVIDER_LIST.find((p) => p.name === providerMatch?.[1]) as ProviderInfo | undefined;
+
+          // Validation: Ensure the extracted provider actually supports the extracted model
+          if (extractedModel && extractedProvider) {
+            const providerHasModel = extractedProvider.staticModels?.some(m => m.name === extractedModel);
+            if (!providerHasModel) {
+              // Mismatch! Let's find the correct provider for this model
+              const correctProvider = PROVIDER_LIST.find((p) => p.staticModels?.some(m => m.name === extractedModel));
+              if (correctProvider) {
+                extractedProvider = correctProvider as ProviderInfo;
+              } else {
+                extractedModel = undefined; // Model doesn't exist, ignore it
+              }
+            }
+          } else if (extractedModel && !extractedProvider) {
+            // No provider, but we have a model. Deduce provider.
+            extractedProvider = PROVIDER_LIST.find((p) => p.staticModels?.some(m => m.name === extractedModel)) as ProviderInfo | undefined;
+          }
+        }
+      }
+
+      if (extractedProvider) return extractedProvider as ProviderInfo;
+
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('chat_model_' + activeChatId);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            const p = PROVIDER_LIST.find((p) => p.name === parsed.provider);
+            if (p) return p as ProviderInfo;
+          } catch(e) {}
+        }
+      }
+
+      const defaultProviderName = Cookies.get('lastSelectedProvider') || Cookies.get('defaultProvider') || DEFAULT_PROVIDER.name;
+      return (PROVIDER_LIST.find((p) => p.name === defaultProviderName) || DEFAULT_PROVIDER) as ProviderInfo;
     });
+
+    const [model, setModel] = useState<string>(() => {
+      if (initialMessages && initialMessages.length > 0) {
+        const lastUserMsg = [...initialMessages].reverse().find(m => m.role === 'user');
+        if (lastUserMsg && typeof lastUserMsg.content === 'string') {
+          const modelMatch = lastUserMsg.content.match(MODEL_REGEX);
+          const providerMatch = lastUserMsg.content.match(PROVIDER_REGEX);
+          
+          let extractedModel = modelMatch?.[1];
+          const extractedProvider = PROVIDER_LIST.find((p) => p.name === providerMatch?.[1]);
+
+          if (extractedModel && extractedProvider) {
+            const providerHasModel = extractedProvider.staticModels?.some(m => m.name === extractedModel);
+            if (!providerHasModel) {
+              const correctProvider = PROVIDER_LIST.find((p) => p.staticModels?.some(m => m.name === extractedModel));
+              // If we couldn't find a correct provider for the model, we shouldn't use this model.
+              if (!correctProvider) extractedModel = undefined;
+            }
+          }
+          if (extractedModel) return extractedModel;
+        }
+      }
+
+      if (typeof window !== 'undefined') {
+        const saved = localStorage.getItem('chat_model_' + activeChatId);
+        if (saved) {
+          try {
+            const parsed = JSON.parse(saved);
+            if (parsed.model) return parsed.model;
+          } catch(e) {}
+        }
+      }
+      
+      let providerInfo = DEFAULT_PROVIDER as ProviderInfo;
+      const defaultProviderName = Cookies.get('lastSelectedProvider') || Cookies.get('defaultProvider') || DEFAULT_PROVIDER.name;
+      providerInfo = (PROVIDER_LIST.find((p) => p.name === defaultProviderName) || DEFAULT_PROVIDER) as ProviderInfo;
+      
+      return Cookies.get('lastSelectedModel') || providerInfo.staticModels?.[0]?.name || DEFAULT_MODEL;
+    });
+
+    useEffect(() => {
+      if (provider && model && typeof window !== 'undefined') {
+        localStorage.setItem('chat_model_' + activeChatId, JSON.stringify({ provider: provider.name, model }));
+        Cookies.set('lastSelectedProvider', provider.name, { expires: 365 });
+        Cookies.set('lastSelectedModel', model, { expires: 365 });
+      }
+    }, [provider, model, activeChatId]);
+
     const { showChat } = useStore(chatStore);
     const [animationScope, animate] = useAnimate();
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
     const [chatMode, setChatMode] = useState<'discuss' | 'build'>('build');
     const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
     const mcpSettings = useMCPStore((state) => state.settings);
-    const currentChatId = useStore(chatId);
-    const [localChatId] = useState(() => 
-      typeof crypto !== 'undefined' && crypto.randomUUID 
-        ? crypto.randomUUID() 
-        : `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`
-    );
 
     const chatBody = useMemo(() => ({
       apiKeys,
@@ -158,22 +254,22 @@ export const ChatImpl = memo(
 
     const handleChatError = useCallback((error: any) => handleError(error, 'chat'), []);
     const handleChatFinish = useCallback((message: Message, response: { usage?: any }) => {
-        const usage = response.usage;
-        setData(undefined);
+      const usage = response.usage;
+      setData(undefined);
 
-        if (usage) {
-          console.log('Token usage:', usage);
-          logStore.logProvider('Chat response completed', {
-            component: 'Chat',
-            action: 'response',
-            model,
-            provider: provider.name,
-            usage,
-            messageLength: message.content.length,
-          });
-        }
+      if (usage) {
+        console.log('Token usage:', usage);
+        logStore.logProvider('Chat response completed', {
+          component: 'Chat',
+          action: 'response',
+          model,
+          provider: provider.name,
+          usage,
+          messageLength: message.content.length,
+        });
+      }
 
-        logger.debug('Finished streaming');
+      logger.debug('Finished streaming');
     }, [model, provider.name]);
 
     const {
@@ -197,9 +293,42 @@ export const ChatImpl = memo(
       sendExtraMessageFields: true,
       onError: handleChatError,
       onFinish: handleChatFinish,
-      initialMessages,
+      // DO NOT pass initialMessages here — @ai-sdk/react v1.x will auto-send to the API
+      // if initialMessages ends with a user message ("resumable streams" feature).
+      // We inject messages manually via setMessages() in a useEffect below.
       initialInput: Cookies.get(PROMPT_COOKIE_KEY) || '',
     });
+
+    // Manually inject the conversation history after mount, WITHOUT triggering auto-resume.
+    // Strip any trailing user message to prevent the SDK from trying to "complete" it.
+    const _messagesInjected = useRef(false);
+    useEffect(() => {
+      if (_messagesInjected.current) return;
+      _messagesInjected.current = true;
+
+      const msgs = [...initialMessages];
+      let inputFromLastMsg = '';
+
+      if (msgs.length > 0) {
+        const lastMsg = msgs[msgs.length - 1];
+        if (lastMsg.role === 'user') {
+          msgs.pop();
+          if (typeof lastMsg.content === 'string' && !lastMsg.annotations?.includes('hidden')) {
+            const cleaned = lastMsg.content.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '').trim();
+            if (cleaned) inputFromLastMsg = cleaned;
+          }
+        }
+      }
+
+      if (msgs.length > 0) {
+        setMessages(msgs);
+      }
+      if (inputFromLastMsg) {
+        setInput(inputFromLastMsg);
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // run exactly once on mount
+
     useEffect(() => {
       const prompt = searchParams.get('prompt');
 
@@ -431,6 +560,10 @@ export const ChatImpl = memo(
 
       let finalMessageContent = messageContent;
 
+      if (cloneUrl) {
+        finalMessageContent = `[Clone Website: ${cloneUrl}]\n\n${finalMessageContent}`;
+      }
+
       if (selectedElement) {
         console.log('Selected Element:', selectedElement);
 
@@ -468,12 +601,14 @@ export const ChatImpl = memo(
               const { assistantMessage, userMessage } = temResp;
               const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
 
+              const attachments = uploadedFiles.length > 0 ? await filesToAttachments(uploadedFiles) : undefined;
               setMessages([
                 {
                   id: `1-${new Date().getTime()}`,
                   role: 'user',
                   content: userMessageText,
                   parts: createMessageParts(userMessageText, imageDataList),
+                  experimental_attachments: attachments,
                 },
                 {
                   id: `2-${new Date().getTime()}`,
@@ -495,6 +630,7 @@ export const ChatImpl = memo(
 
               reload(reloadOptions);
               setInput('');
+              setCloneUrl(null);
               Cookies.remove(PROMPT_COOKIE_KEY);
 
               setUploadedFiles([]);
@@ -526,6 +662,7 @@ export const ChatImpl = memo(
         reload(attachments ? { experimental_attachments: attachments } : undefined);
         setFakeLoading(false);
         setInput('');
+        setCloneUrl(null);
         Cookies.remove(PROMPT_COOKIE_KEY);
 
         setUploadedFiles([]);
@@ -546,9 +683,17 @@ export const ChatImpl = memo(
 
       chatStore.setKey('aborted', false);
 
+      const activeSkills = skillsStore.get().filter(s => s.isActive);
+      let skillsContext = '';
+      if (activeSkills.length > 0) {
+        skillsContext = "\n\n[ACTIVE SKILLS - The following instructions MUST be followed for this request]:\n" +
+          activeSkills.map(s => `=== Skill: ${s.name} ===\n${s.content}\n`).join('\n') +
+          "\n[CRITICAL INSTRUCTION: You MUST start your final text response (AFTER any <think> or reasoning blocks) with a <skill_usage name=\"SkillName\">Brief confirmation that you are applying this skill</skill_usage> tag for EACH active skill. Do NOT place this inside your thinking block. The UI requires these exact XML tags to activate the skill features.]\n[END ACTIVE SKILLS]\n\n";
+      }
+
       if (modifiedFiles !== undefined) {
         const userUpdateArtifact = filesToArtifacts(modifiedFiles, `${Date.now()}`);
-        const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userUpdateArtifact}${finalMessageContent}`;
+        const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userUpdateArtifact}${skillsContext}${finalMessageContent}`;
 
         const attachmentOptions =
           uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
@@ -564,7 +709,7 @@ export const ChatImpl = memo(
 
         workbenchStore.resetAllFileModifications();
       } else {
-        const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${finalMessageContent}`;
+        const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]${skillsContext}\n\n${finalMessageContent}`;
 
         const attachmentOptions =
           uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
@@ -580,6 +725,7 @@ export const ChatImpl = memo(
       }
 
       setInput('');
+      setCloneUrl(null);
       Cookies.remove(PROMPT_COOKIE_KEY);
 
       setUploadedFiles([]);
@@ -670,12 +816,16 @@ export const ChatImpl = memo(
         importChat={importChat}
         exportChat={exportChat}
         messages={messages.map((message, i) => {
+          const initMsg = initialMessages.find(m => m.id === message.id);
+          const annotations = message.annotations || initMsg?.annotations;
+
           if (message.role === 'user') {
-            return message;
+            return { ...message, annotations };
           }
 
           return {
             ...message,
+            annotations,
             content: parsedMessages[i] || '',
           };
         })}
@@ -711,6 +861,8 @@ export const ChatImpl = memo(
         setDesignScheme={setDesignScheme}
         selectedElement={selectedElement}
         setSelectedElement={setSelectedElement}
+        cloneUrl={cloneUrl}
+        setCloneUrl={setCloneUrl}
         addToolResult={addToolResult}
         onWebSearchResult={handleWebSearchResult}
       />

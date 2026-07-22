@@ -13,6 +13,9 @@ export default class OpenAIProvider extends BaseProvider {
   };
 
   staticModels: ModelInfo[] = [
+    // GPT-5.6 Models
+    { name: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 8192 },
+
     /*
      * Essential fallback models - only the most stable/reliable ones
      * GPT-4o: 128k context, 4k standard output (64k with long output mode)

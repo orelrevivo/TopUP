@@ -27,11 +27,23 @@ export async function createSummary(props: {
 
       return { ...message, content };
     } else if (message.role == 'assistant') {
-      let content = message.content;
+      let content = message.content as any;
 
-      content = simplifyFalborActions(content);
-      content = content.replace(/<div class=\\"__falborThought__\\">.*?<\/div>/s, '');
-      content = content.replace(/<think>.*?<\/think>/s, '');
+      if (typeof content === 'string') {
+        content = simplifyFalborActions(content);
+        content = content.replace(/<div class=\\"__falborThought__\\">.*?<\/div>/s, '');
+        content = content.replace(/<think>.*?<\/think>/s, '');
+      } else if (Array.isArray(content)) {
+        content = content.map((item: any) => {
+          if (item.type === 'text' && typeof item.text === 'string') {
+            let text = simplifyFalborActions(item.text);
+            text = text.replace(/<div class=\\"__falborThought__\\">.*?<\/div>/s, '');
+            text = text.replace(/<think>.*?<\/think>/s, '');
+            return { ...item, text };
+          }
+          return item;
+        });
+      }
 
       return { ...message, content };
     }
@@ -170,10 +182,10 @@ Below is the chat after that:
 ---
 <new_chats>
 ${slicedMessages
-  .map((x) => {
-    return `---\n[${x.role}] ${extractTextContent(x)}\n---`;
-  })
-  .join('\n')}
+        .map((x) => {
+          return `---\n[${x.role}] ${extractTextContent(x)}\n---`;
+        })
+        .join('\n')}
 </new_chats>
 ---
 

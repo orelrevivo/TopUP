@@ -11,9 +11,10 @@ import { classNames } from '~/utils/classNames';
 interface ImportFolderButtonProps {
   className?: string;
   importChat?: (description: string, messages: Message[]) => Promise<void>;
+  asMenuItem?: boolean;
 }
 
-export const ImportFolderButton: React.FC<ImportFolderButtonProps> = ({ className, importChat }) => {
+export const ImportFolderButton: React.FC<ImportFolderButtonProps> = ({ className, importChat, asMenuItem }) => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -104,39 +105,57 @@ export const ImportFolderButton: React.FC<ImportFolderButtonProps> = ({ classNam
     }
   };
 
+  const inputId = 'folder-import';
+
   return (
     <>
       <input
         type="file"
-        id="folder-import"
+        id={inputId}
         className="hidden"
         webkitdirectory=""
         directory=""
         onChange={handleFileChange}
         {...({} as any)}
       />
-      <Button
-        onClick={() => {
-          const input = document.getElementById('folder-import');
-          input?.click();
-        }}
-        title="Import Folder"
-        variant="default"
-        size="default"
-        className={classNames(
-          'gap-2 bg-falbor-elements-background-depth-1 w-full',
-          'text-falbor-elements-textPrimary',
-          'hover:bg-falbor-elements-background-depth-2',
-          'border border-falbor-elements-borderColor',
-          'h-10 px-4 py-2 min-w-[120px] justify-center',
-          'transition-all duration-200 ease-in-out',
-          className,
-        )}
-        disabled={isLoading}
-      >
-        <span className="i-ph:upload-simple w-4 h-4" />
-        {isLoading ? 'Importing...' : 'Import Folder'}
-      </Button>
+
+      {asMenuItem ? (
+        <button
+          onClick={() => document.getElementById(inputId)?.click()}
+          disabled={isLoading}
+          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors disabled:opacity-50 text-falbor-elements-textPrimary"
+        >
+          {isLoading ? (
+            <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
+          ) : (
+            <div className="i-ph:upload-simple text-xl text-falbor-elements-textSecondary"></div>
+          )}
+          <span>{isLoading ? 'Importing...' : 'Import Folder'}</span>
+        </button>
+      ) : (
+        <Button
+          onClick={() => {
+            const input = document.getElementById(inputId);
+            input?.click();
+          }}
+          title="Import Folder"
+          variant="default"
+          size="default"
+          className={classNames(
+            'gap-2 bg-falbor-elements-background-depth-1 w-full',
+            'text-falbor-elements-textPrimary',
+            'hover:bg-falbor-elements-background-depth-2',
+            'border border-falbor-elements-borderColor',
+            'h-10 px-4 py-2 min-w-[120px] justify-center',
+            'transition-all duration-200 ease-in-out',
+            className,
+          )}
+          disabled={isLoading}
+        >
+          <span className="i-ph:upload-simple w-4 h-4" />
+          {isLoading ? 'Importing...' : 'Import Folder'}
+        </Button>
+      )}
     </>
   );
 };

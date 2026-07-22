@@ -1,9 +1,9 @@
 'use client';
 import type { Message } from 'ai';
 import { toast } from 'react-toastify';
+import * as Popover from '@radix-ui/react-popover';
+import { IconButton } from '~/components/ui/IconButton';
 import { ImportFolderButton } from '~/components/chat/ImportFolderButton';
-import { Button } from '~/components/ui/Button';
-import { classNames } from '~/utils/classNames';
 
 type ChatData = {
   messages?: Message[]; // Standard Falbor format
@@ -12,7 +12,7 @@ type ChatData = {
 
 export function ImportButtons(importChat: ((description: string, messages: Message[]) => Promise<void>) | undefined) {
   return (
-    <div className="flex flex-col items-center justify-center w-auto">
+    <>
       <input
         type="file"
         id="chat-import"
@@ -58,40 +58,38 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
           }
         }}
       />
-      <div className="flex flex-col items-center gap-4 max-w-2xl text-center">
-        <div className="flex gap-2">
-          <Button
-            onClick={() => {
-              const input = document.getElementById('chat-import');
-              input?.click();
-            }}
-            variant="default"
-            size="default"
-            className={classNames(
-              'gap-2 bg-falbor-elements-background-depth-1 w-full',
-              'text-falbor-elements-textPrimary',
-              'hover:bg-falbor-elements-background-depth-2',
-              'border border-falbor-elements-borderColor',
-              'h-10 px-4 py-2 min-w-[120px] justify-center',
-              'transition-all duration-200 ease-in-out',
-            )}
+
+      <Popover.Root>
+        <Popover.Trigger asChild>
+          <IconButton
+            title="More Options"
+            className="transition-all border border-falbor-elements-borderColor !bg-white dark:!bg-falbor-elements-background-depth-2"
           >
-            <span className="i-ph:upload-simple w-4 h-4" />
-            Import Chat
-          </Button>
-          <ImportFolderButton
-            importChat={importChat}
-            className={classNames(
-              'gap-2 bg-falbor-elements-background-depth-1',
-              'text-falbor-elements-textPrimary',
-              'hover:bg-falbor-elements-background-depth-2',
-              'border border-[rgba(0,0,0,0.08)] dark:border-[rgba(255,255,255,0.08)]',
-              'h-10 px-4 py-2 min-w-[120px] justify-center',
-              'transition-all duration-200 ease-in-out rounded-lg',
-            )}
-          />
-        </div>
-      </div>
-    </div>
+            <div className="i-ph:dots-three-vertical text-xl" />
+          </IconButton>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content
+            sideOffset={10}
+            side="bottom"
+            align="end"
+            className="bg-falbor-elements-background-depth-2 text-falbor-elements-item-contentAccent rounded-md border border-falbor-elements-borderColor shadow-lg z-[100] overflow-hidden flex flex-col py-1 w-48"
+          >
+            <button
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors text-falbor-elements-textPrimary"
+              onClick={() => {
+                const input = document.getElementById('chat-import');
+                input?.click();
+              }}
+            >
+              <div className="i-falbor:chat text-xl text-falbor-elements-textSecondary"></div>
+              <span>Import Chat</span>
+            </button>
+
+            <ImportFolderButton importChat={importChat} asMenuItem />
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+    </>
   );
 }

@@ -5,6 +5,10 @@ import type { TabVisibilityConfig, TabWindowConfig, UserTabConfig } from '~/comp
 import { DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
 import { toggleTheme } from './theme';
 import { create } from 'zustand';
+import type { TabType } from '~/components/@settings/core/types';
+
+export const settingsOpenStore = atom(false);
+export const settingsTabStore = atom<TabType>('settings');
 
 export interface Shortcut {
   key: string;
@@ -258,6 +262,8 @@ const SETTINGS_KEYS = {
   EVENT_LOGS: 'isEventLogsEnabled',
   PROMPT_ID: 'promptId',
   DEVELOPER_MODE: 'isDeveloperMode',
+  DYNAMIC_REASONING: 'isDynamicReasoningEnabled',
+  IMAGE_GENERATION: 'isImageGenerationEnabled',
 } as const;
 
 // Initialize settings from localStorage or defaults
@@ -287,6 +293,8 @@ const getInitialSettings = () => {
     eventLogs: getStoredBoolean(SETTINGS_KEYS.EVENT_LOGS, true),
     promptId: isBrowser ? localStorage.getItem(SETTINGS_KEYS.PROMPT_ID) || 'default' : 'default',
     developerMode: getStoredBoolean(SETTINGS_KEYS.DEVELOPER_MODE, false),
+    dynamicReasoning: getStoredBoolean(SETTINGS_KEYS.DYNAMIC_REASONING, false),
+    imageGeneration: getStoredBoolean(SETTINGS_KEYS.IMAGE_GENERATION, false),
   };
 };
 
@@ -298,6 +306,8 @@ export const autoSelectStarterTemplate = atom<boolean>(initialSettings.autoSelec
 export const enableContextOptimizationStore = atom<boolean>(initialSettings.contextOptimization);
 export const isEventLogsEnabled = atom<boolean>(initialSettings.eventLogs);
 export const promptStore = atom<string>(initialSettings.promptId);
+export const dynamicReasoningStore = atom<boolean>(initialSettings.dynamicReasoning);
+export const imageGenerationStore = atom<boolean>(initialSettings.imageGeneration);
 
 // Helper functions to update settings with persistence
 export const updateLatestBranch = (enabled: boolean) => {
@@ -325,6 +335,16 @@ export const updatePromptId = (id: string) => {
   localStorage.setItem(SETTINGS_KEYS.PROMPT_ID, id);
 };
 
+export const updateDynamicReasoning = (enabled: boolean) => {
+  dynamicReasoningStore.set(enabled);
+  localStorage.setItem(SETTINGS_KEYS.DYNAMIC_REASONING, JSON.stringify(enabled));
+};
+
+export const updateImageGeneration = (enabled: boolean) => {
+  imageGenerationStore.set(enabled);
+  localStorage.setItem(SETTINGS_KEYS.IMAGE_GENERATION, JSON.stringify(enabled));
+};
+
 // Initialize tab configuration from localStorage or defaults
 const getInitialTabConfiguration = (): TabWindowConfig => {
   const defaultConfig: TabWindowConfig = {
@@ -348,9 +368,15 @@ const getInitialTabConfiguration = (): TabWindowConfig => {
       return defaultConfig;
     }
 
-    // Ensure proper typing of loaded configuration
+    // Merge parsed tabs with any new defaults that might be missing
+    const parsedUserTabs = parsed.userTabs.filter((tab: TabVisibilityConfig): tab is UserTabConfig => tab.window === 'user');
+    
+    // Find missing tabs from default config
+    const parsedIds = new Set(parsedUserTabs.map((t: UserTabConfig) => t.id));
+    const missingDefaults = defaultConfig.userTabs.filter(t => !parsedIds.has(t.id));
+
     return {
-      userTabs: parsed.userTabs.filter((tab: TabVisibilityConfig): tab is UserTabConfig => tab.window === 'user'),
+      userTabs: [...missingDefaults, ...parsedUserTabs],
     };
   } catch (error) {
     console.warn('Failed to parse tab configuration:', error);

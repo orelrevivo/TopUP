@@ -6,6 +6,8 @@ import { classNames } from '~/utils/classNames';
 import { Switch } from '~/components/ui/Switch';
 import type { UserProfile } from '~/components/@settings/core/types';
 import { isMac } from '~/utils/os';
+import { useTranslation } from '~/lib/i18n/useTranslation';
+import { setLanguage } from '~/lib/stores/language';
 
 // Helper to get modifier key symbols/text
 const getModifierSymbol = (modifier: string): string => {
@@ -22,21 +24,16 @@ const getModifierSymbol = (modifier: string): string => {
 };
 
 export default function SettingsTab() {
-  const [currentTimezone, setCurrentTimezone] = useState('');
+  const { t, currentLanguage } = useTranslation();
   const [settings, setSettings] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('falbor_user_profile');
     return saved
       ? JSON.parse(saved)
       : {
-          notifications: true,
-          language: 'en',
-          timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        };
+        notifications: true,
+        language: 'en',
+      };
   });
-
-  useEffect(() => {
-    setCurrentTimezone(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  }, []);
 
   // Save settings automatically when they change
   useEffect(() => {
@@ -49,7 +46,6 @@ export default function SettingsTab() {
         ...existingProfile,
         notifications: settings.notifications,
         language: settings.language,
-        timezone: settings.timezone,
       };
 
       localStorage.setItem('falbor_user_profile', JSON.stringify(updatedProfile));
@@ -61,7 +57,7 @@ export default function SettingsTab() {
   }, [settings]);
 
   return (
-    <div className="space-y-4">
+    <div className="max-w-2xl mx-auto pb-12">
       {/* Language & Notifications */}
       <motion.div
         className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4 space-y-4"
@@ -71,17 +67,21 @@ export default function SettingsTab() {
       >
         <div className="flex items-center gap-2 mb-4">
           <div className="i-ph:palette-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-falbor-elements-textPrimary">Preferences</span>
+          <span className="text-sm font-medium text-falbor-elements-textPrimary">{t('preferences')}</span>
         </div>
 
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="i-ph:translate-fill w-4 h-4 text-falbor-elements-textSecondary" />
-            <label className="block text-sm text-falbor-elements-textSecondary">Language</label>
+            <label className="block text-sm text-falbor-elements-textSecondary">{t('language')}</label>
           </div>
           <select
-            value={settings.language}
-            onChange={(e) => setSettings((prev) => ({ ...prev, language: e.target.value }))}
+            value={currentLanguage}
+            onChange={(e) => {
+              const newLang = e.target.value;
+              setSettings((prev) => ({ ...prev, language: newLang }));
+              setLanguage(newLang);
+            }}
             className={classNames(
               'w-full px-3 py-2 rounded-lg text-sm',
               'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
@@ -107,11 +107,11 @@ export default function SettingsTab() {
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="i-ph:bell-fill w-4 h-4 text-falbor-elements-textSecondary" />
-            <label className="block text-sm text-falbor-elements-textSecondary">Notifications</label>
+            <label className="block text-sm text-falbor-elements-textSecondary">{t('notifications')}</label>
           </div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-falbor-elements-textSecondary">
-              {settings.notifications ? 'Notifications are enabled' : 'Notifications are disabled'}
+              {settings.notifications ? t('notifications_enabled') : t('notifications_disabled')}
             </span>
             <Switch
               checked={settings.notifications}
@@ -138,76 +138,6 @@ export default function SettingsTab() {
                 toast.success(`Notifications ${checked ? 'enabled' : 'disabled'}`);
               }}
             />
-          </div>
-        </div>
-      </motion.div>
-
-      {/* Timezone */}
-      <motion.div
-        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="i-ph:clock-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-falbor-elements-textPrimary">Time Settings</span>
-        </div>
-
-        <div>
-          <div className="flex items-center gap-2 mb-2">
-            <div className="i-ph:globe-fill w-4 h-4 text-falbor-elements-textSecondary" />
-            <label className="block text-sm text-falbor-elements-textSecondary">Timezone</label>
-          </div>
-          <select
-            value={settings.timezone}
-            onChange={(e) => setSettings((prev) => ({ ...prev, timezone: e.target.value }))}
-            className={classNames(
-              'w-full px-3 py-2 rounded-lg text-sm',
-              'bg-[#FAFAFA] dark:bg-[#0A0A0A]',
-              'border border-[#E5E5E5] dark:border-[#1A1A1A]',
-              'text-falbor-elements-textPrimary',
-              'focus:outline-none focus:ring-2 focus:ring-purple-500/30',
-              'transition-all duration-200',
-            )}
-          >
-            <option value={currentTimezone}>{currentTimezone}</option>
-          </select>
-        </div>
-      </motion.div>
-
-      {/* Simplified Keyboard Shortcuts */}
-      <motion.div
-        className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="flex items-center gap-2 mb-4">
-          <div className="i-ph:keyboard-fill w-4 h-4 text-purple-500" />
-          <span className="text-sm font-medium text-falbor-elements-textPrimary">Keyboard Shortcuts</span>
-        </div>
-
-        <div className="space-y-2">
-          <div className="flex items-center justify-between p-2 rounded-lg bg-[#FAFAFA] dark:bg-[#1A1A1A]">
-            <div className="flex flex-col">
-              <span className="text-sm text-falbor-elements-textPrimary">Toggle Theme</span>
-              <span className="text-xs text-falbor-elements-textSecondary">Switch between light and dark mode</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <kbd className="px-2 py-1 text-xs font-semibold text-falbor-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">
-                {getModifierSymbol('meta')}
-              </kbd>
-              <kbd className="px-2 py-1 text-xs font-semibold text-falbor-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">
-                {getModifierSymbol('alt')}
-              </kbd>
-              <kbd className="px-2 py-1 text-xs font-semibold text-falbor-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">
-                {getModifierSymbol('shift')}
-              </kbd>
-              <kbd className="px-2 py-1 text-xs font-semibold text-falbor-elements-textSecondary bg-white dark:bg-[#0A0A0A] border border-[#E5E5E5] dark:border-[#1A1A1A] rounded shadow-sm">
-                D
-              </kbd>
-            </div>
           </div>
         </div>
       </motion.div>

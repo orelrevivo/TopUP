@@ -6,7 +6,7 @@
 import type { JSONValue, Message } from 'ai';
 import React, { type RefCallback, useEffect, useState } from 'react';
 import { ClientOnly } from '~/components/ui/ClientOnly';
-import { Menu } from '~/components/sidebar/Menu.client';
+
 import { Workbench } from '~/components/workbench/Workbench.client';
 import { classNames } from '~/utils/classNames';
 import { PROVIDER_LIST } from '~/utils/constants';
@@ -14,6 +14,7 @@ import { Messages } from './Messages.client';
 import { getApiKeysFromCookies } from './APIKeyManager';
 import Cookies from 'js-cookie';
 import * as Tooltip from '@radix-ui/react-tooltip';
+import * as Popover from '@radix-ui/react-popover';
 import styles from './BaseChat.module.scss';
 import { ImportButtons } from '~/components/chat/chatExportAndImport/ImportButtons';
 import { ExamplePrompts } from '~/components/chat/ExamplePrompts';
@@ -23,6 +24,7 @@ import StarterTemplates from './StarterTemplates';
 import type { ActionAlert, SupabaseAlert, DeployAlert, LlmErrorAlertType } from '~/types/actions';
 import DeployChatAlert from '~/components/deploy/DeployAlert';
 import ChatAlert from './ChatAlert';
+import { Button } from '~/components/ui/Button';
 import type { ModelInfo } from '~/lib/modules/llm/types';
 import ProgressCompilation from './ProgressCompilation';
 import type { ProgressAnnotation } from '~/types/context';
@@ -35,6 +37,12 @@ import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
 import LlmErrorAlert from './LLMApiAlert';
 import ViewErrorAlert from './ViewErrorAlert';
+import { DesignSystemPanel } from './DesignSystemPanel';
+import { useDesignSystem } from '~/lib/hooks/useDesignSystem';
+import { workbenchStore } from '~/lib/stores/workbench';
+import { RainbowTextEffect } from '../ui/textUIrgb';
+import { TextShimmer } from '../ui/text-shimmer';
+import { FeedbackWidget } from '~/components/ui/FeedbackWidget';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -82,6 +90,8 @@ interface BaseChatProps {
   setDesignScheme?: (scheme: DesignScheme) => void;
   selectedElement?: ElementInfo | null;
   setSelectedElement?: (element: ElementInfo | null) => void;
+  cloneUrl?: string | null;
+  setCloneUrl?: (url: string | null) => void;
   addToolResult?: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;
   onWebSearchResult?: (result: string) => void;
 }
@@ -130,6 +140,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       setDesignScheme,
       selectedElement,
       setSelectedElement,
+      cloneUrl,
+      setCloneUrl,
       addToolResult = () => {
         throw new Error('addToolResult not implemented');
       },
@@ -148,13 +160,22 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
     const expoUrl = useStore(expoUrlAtom);
     const [qrModalOpen, setQrModalOpen] = useState(false);
+    const [showTemplates, setShowTemplates] = useState(false);
     const showMainChatBox = !chatStarted;
+    const { handleDesignSystemSave, handleLiveUpdate } = useDesignSystem();
+    const isDesignSystemMode = useStore(workbenchStore.isDesignSystemMode);
 
     useEffect(() => {
       if (expoUrl) {
         setQrModalOpen(true);
       }
     }, [expoUrl]);
+
+    useEffect(() => {
+      import('~/lib/webcontainer').then(({ startWebContainer }) => {
+        startWebContainer();
+      });
+    }, []);
 
     useEffect(() => {
       if (data) {
@@ -347,27 +368,26 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const baseChat = (
       <div
         ref={ref}
-        className={classNames(styles.BaseChat, 'relative flex h-full w-full overflow-hidden')}
+        className={classNames(styles.BaseChat, 'relative flex flex-1 min-h-0 h-full w-full overflow-hidden')}
         data-chat-visible={showChat}
       >
-        <ClientOnly>{() => <Menu />}</ClientOnly>
-        <div className="flex flex-col lg:flex-row overflow-y-auto w-full h-full">
-          <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full')}>
+        <div className="flex flex-col lg:flex-row overflow-hidden w-full h-full">
+          <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full relative')}>
             {!chatStarted && (
               <div id="intro" className="mt-[23vh] max-w-sm mx-auto text-center px-4 lg:px-0">
-                <h1 className="text-falbor-elements-textPrimary text-5xl lg:text-4xl animate-fade-in">
-                  Stop <span className='text-[#B12B06]'>prompting,</span> start <span className='underline decoration-[#B12B06]'>sharing</span>.
+                <h1 className="text-falbor-elements-textPrimary text-5xl lg:text-3xl animate-fade-in">
+                  Start creating your own creative
                 </h1>
+                <FeedbackWidget />
               </div>
             )}
             <StickToBottom
+              data-scrollable="true"
               className={classNames('pt-2 px-2 sm:px-6 relative mr-10', {
-                'h-full flex flex-col modern-scrollbar': chatStarted,
+                'h-full flex flex-col': chatStarted,
               })}
-              resize="smooth"
-              initial="smooth"
             >
-              <StickToBottom.Content className="flex flex-col gap-4 relative ">
+              <StickToBottom.Content className="flex flex-col gap-4 relative">
                 <ClientOnly>
                   {() => {
                     return chatStarted ? (
@@ -473,6 +493,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     setDesignScheme={setDesignScheme}
                     selectedElement={selectedElement}
                     setSelectedElement={setSelectedElement}
+                    cloneUrl={cloneUrl}
+                    setCloneUrl={setCloneUrl}
                     onWebSearchResult={onWebSearchResult}
                   />
                   <div
@@ -482,10 +504,47 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     })}
                   >
                     {!chatStarted && (
-                      <div className="flex justify-center gap-2">
-                        {ImportButtons(importChat)}
-                        <GitCloneButton importChat={importChat} />
-                      </div>
+                      <>
+                        <div className="flex justify-center gap-2">
+                          {ImportButtons(importChat)}
+                          <GitCloneButton importChat={importChat} />
+                          <Button
+                            title="Starter Templates"
+                            variant="default"
+                            size="default"
+                            onClick={() => setShowTemplates(!showTemplates)}
+                            className={classNames(
+                              'gap-2 bg-falbor-elements-background-depth-1 w-fit rounded-md',
+                              'text-[#444444] dark:text-falbor-elements-textPrimary',
+                              'border border-falbor-elements-borderColor',
+                              'h-10 px-4 py-2 min-w-[120px] justify-center',
+                              'transition-all duration-200 ease-in-out font-medium',
+                              showTemplates && 'bg-falbor-elements-background-depth-2'
+                            )}
+                          >
+                            <div className="i-ph:files text-lg"></div>
+                            Templates
+                          </Button>
+                          <Button
+                            disabled
+                            title="This feature is currently in building"
+                            variant="default"
+                            size="default"
+                            className={classNames(
+                              'gap-2 bg-falbor-elements-background-depth-1 w-fit rounded-md',
+                              'text-[#444444] dark:text-falbor-elements-textPrimary',
+                              'border border-falbor-elements-borderColor',
+                              'h-10 px-4 py-2 min-w-[120px] justify-center',
+                              'transition-all duration-200 ease-in-out opacity-50 cursor-not-allowed font-medium'
+                            )}
+                          >
+                            <div className="i-ph:copy text-lg"></div>
+                            Clone website
+                            <span className="text-[10px] bg-falbor-elements-background-depth-3 text-falbor-elements-textSecondary px-1.5 py-0.5 rounded-full font-medium ml-1">Soon</span>
+                          </Button>
+                        </div>
+                        {showTemplates && <StarterTemplates />}
+                      </>
                     )}
                     <div className="flex flex-col gap-5">
                       {/* {!chatStarted &&
@@ -497,7 +556,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
 
                     handleSendMessage?.(event, messageInput);
                   })} */}
-                      {/* {!chatStarted && <StarterTemplates />} */}
                     </div>
                   </div>
                 </div>
@@ -528,8 +586,8 @@ function ScrollToBottom() {
           className="sticky z-50 bottom-0 left-0 right-0 text-4xl rounded-lg px-1.5 py-0.5 flex items-center justify-center mx-auto gap-2 bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor text-falbor-elements-textPrimary text-sm"
           onClick={() => scrollToBottom()}
         >
-          Go to last message
-          <span className="i-ph:arrow-down animate-bounce" />
+          Latest messages
+          <span className="i-ph:arrow-down-bold" />
         </button>
       </>
     )

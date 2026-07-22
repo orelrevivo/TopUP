@@ -118,7 +118,8 @@ const getGitHubRepoContent = async (repoName: string): Promise<{ name: string; p
     const response = await fetch(`/api/github-template?repo=${encodeURIComponent(repoName)}`);
 
     if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`HTTP error! status: ${response.status}. Details: ${errorData.details || 'Unknown error'}`);
     }
 
     // Our API will return the files in the format we need
@@ -183,7 +184,7 @@ export async function getTemplates(templateName: string, title?: string) {
     filesToImport.ignoreFile = ignoredFiles;
   }
 
-  const assistantMessage = `
+  let assistantMessage = `
 Falbor is initializing your project with the required files using the ${template.name} template.
 <falborArtifact id="imported-files" title="${title || 'Create initial files'}" type="bundled">
 ${filesToImport.files
@@ -237,13 +238,13 @@ If you need to make changes to functionality, create new files instead of modify
 `;
   }
 
-  userMessage += `
+  assistantMessage += `
 ---
-template import is done, and you can now use the imported files,
-edit only the files that need to be changed, and you can create new files as needed.
+Template import is done, and you can now use the imported files.
+I will edit only the files that need to be changed, and create new files as needed.
 NO NOT EDIT/WRITE ANY FILES THAT ALREADY EXIST IN THE PROJECT AND DOES NOT NEED TO BE MODIFIED
 ---
-Now that the Template is imported please continue with my original request
+Now that the Template is imported I will continue with your original request.
 
 IMPORTANT: Dont Forget to install the dependencies before running the app by using \`npm install && npm run dev\`
 `;

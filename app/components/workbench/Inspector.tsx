@@ -22,6 +22,11 @@ export interface ElementInfo {
     top: number;
     left: number;
   };
+  source?: {
+    fileName: string;
+    lineNumber: number;
+    columnNumber?: number;
+  };
 }
 
 export const Inspector = ({ isActive, iframeRef, onElementSelect }: InspectorProps) => {

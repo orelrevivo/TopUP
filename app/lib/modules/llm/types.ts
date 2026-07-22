@@ -11,6 +11,9 @@ export interface ModelInfo {
 
   /** Maximum completion/output tokens - how many tokens the model can generate. If not specified, falls back to provider defaults */
   maxCompletionTokens?: number;
+
+  /** Whether this model supports image/vision inputs. Defaults to false if not set. */
+  vision?: boolean;
 }
 
 export interface ProviderInfo {

@@ -7,6 +7,7 @@ import { toast } from 'react-toastify';
 interface ScreenRecorderButtonProps {
   onPromptGenerated: (prompt: string) => void;
   disabled?: boolean;
+  asMenuItem?: boolean;
 }
 
 const DURATIONS = [
@@ -19,7 +20,7 @@ const DURATIONS = [
   { label: '3h', value: 180 },
 ];
 
-export const ScreenRecorderButton: React.FC<ScreenRecorderButtonProps> = ({ onPromptGenerated, disabled }) => {
+export const ScreenRecorderButton: React.FC<ScreenRecorderButtonProps> = ({ onPromptGenerated, disabled, asMenuItem }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [tier, setTier] = useState('free');
   const { status, errorMsg, timeRemaining, startRecording, cancelRecording, dismissError } = useScreenRecorder();
@@ -58,29 +59,55 @@ export const ScreenRecorderButton: React.FC<ScreenRecorderButtonProps> = ({ onPr
 
   return (
     <div className="relative">
-      <IconButton
-        title="Screen Record for AI"
-        disabled={disabled || status === 'processing' || status === 'testing'}
-        className={classNames(
-          'transition-all relative',
-          (status === 'recording' || status === 'testing' || status === 'processing') ? 'text-red-500' : ''
-        )}
-        onClick={() => {
-          if (status === 'recording') {
-            cancelRecording();
-          } else {
-            setShowMenu(!showMenu);
-          }
-        }}
-      >
-        {status === 'testing' ? (
-          <div className="i-svg-spinners:90-ring-with-bg text-red-500 text-xl animate-spin" />
-        ) : status === 'processing' ? (
-          <div className="i-ph:brain text-xl text-purple-500 animate-pulse" />
-        ) : (
-          <div className={status === 'recording' ? "i-ph:stop-circle text-xl" : "i-ph:video-camera text-xl"} />
-        )}
-      </IconButton>
+      {asMenuItem ? (
+        <button
+          onClick={() => {
+            if (status === 'recording') {
+              cancelRecording();
+            } else {
+              setShowMenu(!showMenu);
+            }
+          }}
+          disabled={disabled || status === 'processing' || status === 'testing'}
+          className={classNames(
+            'flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors disabled:opacity-50 relative',
+            (status === 'recording' || status === 'testing' || status === 'processing') ? 'text-red-500' : 'text-falbor-elements-textPrimary'
+          )}
+        >
+          {status === 'testing' ? (
+            <div className="i-svg-spinners:90-ring-with-bg text-red-500 text-xl animate-spin" />
+          ) : status === 'processing' ? (
+            <div className="i-ph:brain text-xl text-purple-500 animate-pulse" />
+          ) : (
+            <div className={classNames(status === 'recording' ? "i-ph:stop-circle text-xl" : "i-ph:video-camera text-xl", (status !== 'recording') ? "text-falbor-elements-textSecondary" : "")} />
+          )}
+          <span>Screen Record</span>
+        </button>
+      ) : (
+        <IconButton
+          title="Screen Record for AI"
+          disabled={disabled || status === 'processing' || status === 'testing'}
+          className={classNames(
+            'transition-all relative',
+            (status === 'recording' || status === 'testing' || status === 'processing') ? 'text-red-500' : ''
+          )}
+          onClick={() => {
+            if (status === 'recording') {
+              cancelRecording();
+            } else {
+              setShowMenu(!showMenu);
+            }
+          }}
+        >
+          {status === 'testing' ? (
+            <div className="i-svg-spinners:90-ring-with-bg text-red-500 text-xl animate-spin" />
+          ) : status === 'processing' ? (
+            <div className="i-ph:brain text-xl text-purple-500 animate-pulse" />
+          ) : (
+            <div className={status === 'recording' ? "i-ph:stop-circle text-xl" : "i-ph:video-camera text-xl"} />
+          )}
+        </IconButton>
+      )}
 
       {status === 'recording' && (
         <span className="absolute -top-6 left-1/2 -translate-x-1/2 text-xs bg-red-500 text-white px-1.5 py-0.5 rounded whitespace-nowrap z-50">

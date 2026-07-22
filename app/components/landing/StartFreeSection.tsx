@@ -9,7 +9,7 @@ export default function StartFreeSection() {
                 {/* Left side: Text and Buttons */}
                 <div className="flex flex-col items-start justify-center pr-8">
                     <h2 className="leading-[1.2] font-semibold text-[#1a1a1a] mb-10 tracking-tight">
-                        <span className="text-[2rem]">Start with 1.5$ in credits</span>
+                        <span className="text-[2rem]">Start with 1$ in your balance</span>
                         <br /><span className="text-[1.5rem]"><TextShimmer>per month for free.</TextShimmer></span>
                     </h2>
 
@@ -26,7 +26,7 @@ export default function StartFreeSection() {
             You can also adjust the width/height classes as needed for your specific image.
           */}
                     <img
-                        src="/bg/Gradient3D.png"
+                        src="/landing/Gradient3D.png"
                         alt="Feature Graphic"
                         className="object-contain w-full max-w-[800px] opacity-90"
                         onError={(e) => {

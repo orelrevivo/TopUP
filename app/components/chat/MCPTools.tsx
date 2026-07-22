@@ -6,7 +6,7 @@ import { IconButton } from '~/components/ui/IconButton';
 import { useMCPStore } from '~/lib/stores/mcp';
 import McpServerList from '~/components/@settings/tabs/mcp/McpServerList';
 
-export function McpTools() {
+export function McpTools({ asMenuItem }: { asMenuItem?: boolean }) {
   const isInitialized = useMCPStore((state) => state.isInitialized);
   const serverTools = useMCPStore((state) => state.serverTools);
   const settings = useMCPStore((state) => state.settings);
@@ -51,21 +51,40 @@ export function McpTools() {
   return (
     <div className="relative">
       <div className="flex">
-        <IconButton
-          onClick={() => setIsDialogOpen(!isDialogOpen)}
-          title={settings.mcpEnabled ? 'MCP Tools Active' : 'MCP Tools Disabled'}
-          disabled={!isInitialized}
-          className={classNames(
-            'transition-all disabled:opacity-50 disabled:cursor-not-allowed',
-            settings.mcpEnabled && 'text-accent-500',
-          )}
-        >
-          {!isInitialized ? (
-            <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
-          ) : (
-            <div className="i-ph:graph text-xl"></div>
-          )}
-        </IconButton>
+        {asMenuItem ? (
+          <button
+            onClick={() => setIsDialogOpen(!isDialogOpen)}
+            title={settings.mcpEnabled ? 'MCP Tools Active' : 'MCP Tools Disabled'}
+            disabled={!isInitialized}
+            className={classNames(
+              'flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors disabled:opacity-50',
+              settings.mcpEnabled ? 'text-accent-500' : 'text-falbor-elements-textPrimary'
+            )}
+          >
+            {!isInitialized ? (
+              <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
+            ) : (
+              <div className={classNames("i-ph:graph text-xl", settings.mcpEnabled ? "text-accent-500" : "text-falbor-elements-textSecondary")}></div>
+            )}
+            <span>MCP Tools</span>
+          </button>
+        ) : (
+          <IconButton
+            onClick={() => setIsDialogOpen(!isDialogOpen)}
+            title={settings.mcpEnabled ? 'MCP Tools Active' : 'MCP Tools Disabled'}
+            disabled={!isInitialized}
+            className={classNames(
+              'transition-all disabled:opacity-50 disabled:cursor-not-allowed',
+              settings.mcpEnabled && 'text-accent-500',
+            )}
+          >
+            {!isInitialized ? (
+              <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
+            ) : (
+              <div className="i-ph:graph text-xl"></div>
+            )}
+          </IconButton>
+        )}
       </div>
 
       <DialogRoot open={isDialogOpen} onOpenChange={handleDialogOpen}>

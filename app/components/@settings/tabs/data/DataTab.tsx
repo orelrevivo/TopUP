@@ -34,7 +34,7 @@ function useFalborHistoryDB() {
     initDB();
 
     return () => {
-      if (db) {
+      if (db && typeof db.close === 'function') {
         db.close();
       }
     };
@@ -207,7 +207,7 @@ export function DataTab() {
   }, [handleResetChats]);
 
   return (
-    <div className="space-y-12">
+    <div className="max-w-2xl mx-auto space-y-6">
       {/* Hidden file inputs */}
       <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileInputChange} className="hidden" />
       <input

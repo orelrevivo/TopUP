@@ -24,15 +24,29 @@ export async function POST(request: Request) {
     const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
     if (existingUser.length > 0) {
-      return new Response(JSON.stringify({ error: "Email already registered" }), {
+      if (!existingUser[0].passwordHash) {
+        return new Response(JSON.stringify({ error: "This email is associated with a Google account. Please sign in with Google." }), {
+          status: 409,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ error: "An account with this email already exists. Please log in." }), {
         status: 409,
         headers: { "Content-Type": "application/json" },
       });
     }
 
     const passwordHash = await hashPassword(password);
+    
+    const baseUsername = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, '');
+    const uniqueUsername = `${baseUsername}${Math.floor(Math.random() * 10000)}`;
 
-    const [user] = await db.insert(users).values({ email, passwordHash }).returning();
+    const [user] = await db.insert(users).values({ 
+      email, 
+      passwordHash,
+      username: uniqueUsername,
+      displayName: email.split("@")[0]
+    }).returning();
 
     const token = await createToken(user.id);
     const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;

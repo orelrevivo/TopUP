@@ -178,6 +178,11 @@ export class ActionRunner {
           }
           break;
         }
+        case 'scan': {
+          // Just a visual action for the LLM to verify code. Wait a little so the user sees it.
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          break;
+        }
         case 'build': {
           const buildOutput = await this.#runBuildAction(action);
 
@@ -553,7 +558,7 @@ export class ActionRunner {
     details?: {
       url?: string;
       error?: string;
-      source?: 'netlify' | 'vercel' | 'github' | 'gitlab';
+      source?: 'falbor' | 'netlify' | 'vercel' | 'github' | 'gitlab';
     },
   ): void {
     if (!this.onDeployAlert) {

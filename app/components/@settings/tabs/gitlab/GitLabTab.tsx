@@ -70,7 +70,7 @@ export default function GitLabTab() {
   // Loading state for initial connection check
   if (isLoading) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-2">
           <GitLabLogo />
           <h2 className="text-lg font-medium text-falbor-elements-textPrimary">GitLab Integration</h2>
@@ -88,7 +88,7 @@ export default function GitLabTab() {
   // Error state for connection issues
   if (error && !connection) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-2">
           <GitLabLogo />
           <h2 className="text-lg font-medium text-falbor-elements-textPrimary">GitLab Integration</h2>
@@ -103,7 +103,7 @@ export default function GitLabTab() {
   // Not connected state
   if (!isConnected || !connection) {
     return (
-      <div className="space-y-6">
+      <div className="max-w-2xl mx-auto space-y-6">
         <div className="flex items-center gap-2">
           <GitLabLogo />
           <h2 className="text-lg font-medium text-falbor-elements-textPrimary">GitLab Integration</h2>
@@ -118,7 +118,7 @@ export default function GitLabTab() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-2xl mx-auto space-y-6">
       {/* Header */}
       <motion.div
         className="flex items-center justify-between gap-2"
@@ -151,23 +151,21 @@ export default function GitLabTab() {
       {/* Connection Test Results */}
       {connectionTest && (
         <div
-          className={`p-3 rounded-lg border ${
-            connectionTest.status === 'success'
-              ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
-              : connectionTest.status === 'error'
-                ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
-                : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
-          }`}
+          className={`p-3 rounded-lg border ${connectionTest.status === 'success'
+            ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800'
+            : connectionTest.status === 'error'
+              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+              : 'bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800'
+            }`}
         >
           <div className="flex items-center gap-2">
             <div
-              className={`w-4 h-4 ${
-                connectionTest.status === 'success'
-                  ? 'text-green-600'
-                  : connectionTest.status === 'error'
-                    ? 'text-red-600'
-                    : 'text-blue-600'
-              }`}
+              className={`w-4 h-4 ${connectionTest.status === 'success'
+                ? 'text-green-600'
+                : connectionTest.status === 'error'
+                  ? 'text-red-600'
+                  : 'text-blue-600'
+                }`}
             >
               {connectionTest.status === 'success' ? (
                 <div className="i-ph:check-circle" />
@@ -178,13 +176,12 @@ export default function GitLabTab() {
               )}
             </div>
             <span
-              className={`text-sm ${
-                connectionTest.status === 'success'
-                  ? 'text-green-800 dark:text-green-200'
-                  : connectionTest.status === 'error'
-                    ? 'text-red-800 dark:text-red-200'
-                    : 'text-blue-800 dark:text-blue-200'
-              }`}
+              className={`text-sm ${connectionTest.status === 'success'
+                ? 'text-green-800 dark:text-green-200'
+                : connectionTest.status === 'error'
+                  ? 'text-red-800 dark:text-red-200'
+                  : 'text-blue-800 dark:text-blue-200'
+                }`}
             >
               {connectionTest.message}
             </span>
@@ -206,8 +203,8 @@ export default function GitLabTab() {
           <div className="flex items-center gap-4 p-4 bg-falbor-elements-background-depth-1 rounded-lg">
             <div className="w-12 h-12 rounded-full border-2 border-falbor-elements-item-contentAccent flex items-center justify-center bg-falbor-elements-background-depth-2 overflow-hidden">
               {connection.user.avatar_url &&
-              connection.user.avatar_url !== 'null' &&
-              connection.user.avatar_url !== '' ? (
+                connection.user.avatar_url !== 'null' &&
+                connection.user.avatar_url !== '' ? (
                 <img
                   src={connection.user.avatar_url}
                   alt={connection.user.username}

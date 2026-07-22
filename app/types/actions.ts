@@ -1,6 +1,6 @@
 import type { Change } from 'diff';
 
-export type ActionType = 'file' | 'shell' | 'supabase';
+export type ActionType = 'file' | 'shell' | 'supabase' | 'scan';
 
 export interface BaseAction {
   content: string;
@@ -30,7 +30,11 @@ export interface SupabaseAction extends BaseAction {
   projectId?: string;
 }
 
-export type FalborAction = FileAction | ShellAction | StartAction | BuildAction | SupabaseAction;
+export interface ScanAction extends BaseAction {
+  type: 'scan';
+}
+
+export type FalborAction = FileAction | ShellAction | StartAction | BuildAction | SupabaseAction | ScanAction;
 
 export type FalborActionData = FalborAction | BaseAction;
 
@@ -59,7 +63,7 @@ export interface DeployAlert {
   stage?: 'building' | 'deploying' | 'complete';
   buildStatus?: 'pending' | 'running' | 'complete' | 'failed';
   deployStatus?: 'pending' | 'running' | 'complete' | 'failed';
-  source?: 'vercel' | 'netlify' | 'github' | 'gitlab';
+  source?: 'falbor' | 'vercel' | 'netlify' | 'github' | 'gitlab';
 }
 
 export interface LlmErrorAlertType {

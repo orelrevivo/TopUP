@@ -4,8 +4,8 @@ import type { Template } from '~/types/template';
 export const WORK_DIR_NAME = 'project';
 export const WORK_DIR = `/home/${WORK_DIR_NAME}`;
 export const MODIFICATIONS_TAG_NAME = 'falbor_file_modifications';
-export const MODEL_REGEX = /^\[Model: (.*?)\]\n\n/;
-export const PROVIDER_REGEX = /\[Provider: (.*?)\]\n\n/;
+export const MODEL_REGEX = /\[Model: (.*?)\]/;
+export const PROVIDER_REGEX = /\[Provider: (.*?)\]/;
 export const DEFAULT_MODEL = 'deepseek-reasoner';
 export const PROMPT_COOKIE_KEY = 'cachedPrompt';
 export const TOOL_EXECUTION_APPROVAL = {
@@ -44,7 +44,7 @@ export const STARTER_TEMPLATES: Template[] = [
     name: 'Vite Vue TS',
     label: 'Vue 3 + Vite + TS',
     description: 'Vue 3 with Vite and TypeScript — composition API and fast reloads',
-    githubRepo: 'unocss/unocss-vite-vue-ts',
+    githubRepo: 'DCLangX/vite-vue-ts-template',
     tags: ['vue', 'vite', 'typescript'],
     icon: 'i-falbor:vue',
   },
@@ -52,7 +52,7 @@ export const STARTER_TEMPLATES: Template[] = [
     name: 'Astro Minimal',
     label: 'Astro Minimal',
     description: 'Minimal Astro starter — ultra-fast static sites with zero JS by default',
-    githubRepo: 'withastro/astro-template-minimal',
+    githubRepo: 'astrostarters/astro-blank',
     tags: ['astro', 'performance', 'static'],
     icon: 'i-falbor:astro',
   },
@@ -60,7 +60,7 @@ export const STARTER_TEMPLATES: Template[] = [
     name: 'SvelteKit',
     label: 'SvelteKit',
     description: 'Official SvelteKit starter for building fast, server-rendered Svelte apps',
-    githubRepo: 'sveltejs/kit/packages/create-svelte/templates/default',
+    githubRepo: 'sveltejs/kit-template-default',
     tags: ['svelte', 'sveltekit', 'typescript'],
     icon: 'i-falbor:svelte',
   },
@@ -76,7 +76,7 @@ export const STARTER_TEMPLATES: Template[] = [
     name: 'Qwik',
     label: 'Qwik City',
     description: 'Qwik City starter for resumable, instant-load web applications',
-    githubRepo: 'QwikDev/qwik-react',
+    githubRepo: 'thejackshelton/qwik-react-astro-template',
     tags: ['qwik', 'typescript', 'performance'],
     icon: 'i-falbor:qwik',
   },
@@ -84,7 +84,7 @@ export const STARTER_TEMPLATES: Template[] = [
     name: 'SolidJS',
     label: 'SolidJS',
     description: 'SolidJS starter — fine-grained reactivity without a virtual DOM',
-    githubRepo: 'solidjs/templates/ts',
+    githubRepo: 'solidjs/templates',
     tags: ['solidjs', 'typescript'],
     icon: 'i-falbor:solidjs',
   },
@@ -92,7 +92,7 @@ export const STARTER_TEMPLATES: Template[] = [
     name: 'Angular',
     label: 'Angular',
     description: 'Angular standalone starter with TypeScript and modern best practices',
-    githubRepo: 'nickvdyck/webbundle-angular-standalone',
+    githubRepo: 'asadnobi/angular-17-standalone-example',
     tags: ['angular', 'typescript', 'spa'],
     icon: 'i-falbor:angular',
   },

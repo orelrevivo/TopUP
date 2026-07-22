@@ -9,15 +9,22 @@ import { classNames } from '~/utils/classNames';
 import { cubicEasingFn } from '~/utils/easings';
 import { WORK_DIR } from '~/utils/constants';
 
+import type { Message } from 'ai';
+
 interface ArtifactProps {
   messageId: string;
   artifactId: string;
+  append?: (message: Message) => void;
 }
 
-export const Artifact = memo(({ artifactId }: ArtifactProps) => {
+export const Artifact = memo(({ artifactId, messageId, append }: ArtifactProps) => {
   const userToggledActions = useRef(false);
   const [showActions, setShowActions] = useState(false);
   const [allActionFinished, setAllActionFinished] = useState(false);
+
+  // Whether this artifact is from history (loaded on page refresh, not generated in this session).
+  // If true, the auto-scan must NEVER fire — it already ran once when the AI originally wrote the code.
+  const isHistoricalArtifact = useRef(workbenchStore.isReloadedMessage(messageId));
 
   const artifacts = useStore(workbenchStore.artifacts);
   const artifact = artifacts[artifactId];
@@ -42,7 +49,7 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
       setShowActions(true);
     }
 
-    if (actions.length !== 0 && artifact.type === 'bundled') {
+    if (actions.length !== 0) {
       const finished = !actions.find(
         (action) => action.status !== 'complete' && !(action.type === 'start' && action.status === 'running'),
       );
@@ -51,7 +58,27 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
         setAllActionFinished(finished);
       }
     }
-  }, [actions, artifact.type, allActionFinished]);
+  }, [actions, allActionFinished]);
+
+  const hasAutoScanned = useRef(false);
+
+  useEffect(() => {
+    // NEVER auto-scan historical artifacts (loaded from history on page refresh).
+    // Only fire for artifacts that were generated live in this session.
+    if (isHistoricalArtifact.current) return;
+
+    if (allActionFinished && append && artifact.type !== 'bundled' && !hasAutoScanned.current) {
+      hasAutoScanned.current = true;
+      setTimeout(() => {
+        append({
+          role: 'user',
+          content: '[AUTOMATED SYSTEM CHECK] Code generation complete. Please verify your code line-by-line for any syntax errors, missing variables, or incomplete logic.\nCRITICAL RULE: If you find ANY errors, you MUST use the <falborAction type="file"> tags to rewrite the broken files entirely to fix them. DO NOT use shell commands like `ls` or `grep`. Just output the corrected files.\nIf there are NO errors, respond EXACTLY with "No errors found." and nothing else.',
+          id: Date.now().toString(),
+          annotations: ['hidden']
+        } as Message);
+      }, 1000);
+    }
+  }, [allActionFinished, append, artifact?.type]);
 
   // Determine the dynamic title based on state for bundled artifacts
   const dynamicTitle =
@@ -105,7 +132,7 @@ export const Artifact = memo(({ artifactId }: ArtifactProps) => {
           </AnimatePresence>
         </div>
         {artifact.type === 'bundled' && (
-          <div className="flex items-center gap-1.5 p-5 bg-falbor-elements-actions-background border-t border-falbor-elements-artifacts-borderColor">
+          <div className="flex items-center gap-1.5 p-5 bg-falbor-elements-actions-background border-t border-bolt-elements-artifacts-borderColor">
             <div className={classNames('text-lg', getIconColor(allActionFinished ? 'complete' : 'running'))}>
               {allActionFinished ? (
                 <div className="i-ph:check"></div>
@@ -190,6 +217,7 @@ const ActionList = memo(({ actions }: ActionListProps) => {
               key={index}
               variants={actionVariants}
               initial="hidden"
+              className='max-w-[445px]'
               animate="visible"
               transition={{
                 duration: 0.2,
@@ -228,6 +256,10 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                   <div className="flex items-center w-full min-h-[28px]">
                     <span className="flex-1">Run command</span>
                   </div>
+                ) : type === 'scan' ? (
+                  <div className="flex items-center w-full min-h-[28px]">
+                    <span className="flex-1 font-semibold text-[#8b5cf6]">Scanning codebase for errors...</span>
+                  </div>
                 ) : type === 'start' ? (
                   <a
                     onClick={(e) => {
@@ -236,11 +268,11 @@ const ActionList = memo(({ actions }: ActionListProps) => {
                     }}
                     className="flex items-center w-full min-h-[28px]"
                   >
-                    <span className="flex-1">Start Application</span>
+                    <span className="flex-1">Run Files</span>
                   </a>
                 ) : null}
               </div>
-              {(type === 'shell' || type === 'start') && (
+              {(type === 'shell' || type === 'start' || type === 'scan') && (
                 <ShellCodeBlock
                   classsName={classNames('mt-1', {
                     'mb-3.5': !isLast,

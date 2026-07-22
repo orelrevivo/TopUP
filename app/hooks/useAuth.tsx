@@ -19,6 +19,7 @@ interface AuthContextValue {
   register: (email: string, password: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
+  loginWithGoogle: (credential: string) => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -114,6 +115,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  const loginWithGoogle = useCallback(async (credential: string) => {
+    try {
+      const res = await fetch("/api/auth/google", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ credential }),
+      });
+      const data = (await res.json()) as { user?: any; token?: string; error?: string };
+      if (!res.ok) return { error: data.error ?? "Google login failed" };
+      if (data.token) setSessionCookie(data.token);
+      setUser(data.user);
+      syncStorageFromServer();
+      loadProfileFromServer();
+      return {};
+    } catch {
+      return { error: "Network error" };
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
@@ -124,7 +144,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   }, []);
 
-  const value: AuthContextValue = { user, loading, login, register, logout, refresh };
+  const value: AuthContextValue = { user, loading, login, register, logout, refresh, loginWithGoogle };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

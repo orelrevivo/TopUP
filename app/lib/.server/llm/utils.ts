@@ -3,48 +3,71 @@ import { DEFAULT_MODEL, DEFAULT_PROVIDER, MODEL_REGEX, PROVIDER_REGEX } from '~/
 import { IGNORE_PATTERNS, type FileMap } from './constants';
 import ignore from 'ignore';
 import type { ContextAnnotation } from '~/types/context';
+import { LLMManager } from '~/lib/modules/llm/manager';
 
-export function extractPropertiesFromMessage(message: Omit<Message, 'id'>): {
+export function extractPropertiesFromMessage(message: Omit<Message, 'id'> & { parts?: any[] }): {
   model: string;
   provider: string;
   content: string;
 } {
-  const textContent = Array.isArray(message.content)
-    ? message.content.find((item) => item.type === 'text')?.text || ''
-    : message.content;
+  let textContent = Array.isArray(message.content)
+    ? message.content.find((item: any) => item.type === 'text')?.text || ''
+    : message.content || '';
+
+  if (!textContent && message.parts && Array.isArray(message.parts)) {
+    textContent = (message.parts.find((item: any) => item.type === 'text') as any)?.text || '';
+  }
 
   const modelMatch = textContent.match(MODEL_REGEX);
   const providerMatch = textContent.match(PROVIDER_REGEX);
 
   /*
-   * Extract model
-   * const modelMatch = message.content.match(MODEL_REGEX);
-   */
-  const model = modelMatch ? modelMatch[1] : DEFAULT_MODEL;
-
-  /*
    * Extract provider
    * const providerMatch = message.content.match(PROVIDER_REGEX);
    */
-  const provider = providerMatch ? providerMatch[1] : DEFAULT_PROVIDER.name;
+  let model = modelMatch ? modelMatch[1] : DEFAULT_MODEL;
+  let provider = providerMatch ? providerMatch[1] : DEFAULT_PROVIDER.name;
+
+  const allProviders = LLMManager.getInstance().getAllProviders();
+
+  // Validate combination: does this provider have this model?
+  const selectedProvider = allProviders.find(p => p.name === provider);
+  const providerHasModel = selectedProvider?.staticModels?.some(m => m.name === model);
+
+  if (!providerHasModel) {
+    // Failsafe: The DB has an invalid combination. Let's fix it.
+    // Try to find if the model belongs to a different provider
+    const correctProvider = allProviders.find(p => p.staticModels?.some(m => m.name === model));
+    if (correctProvider) {
+      provider = correctProvider.name;
+    } else if (selectedProvider?.staticModels?.length) {
+      // Model doesn't exist anywhere known, fallback to the provider's default model
+      model = selectedProvider.staticModels[0].name;
+    } else {
+      model = DEFAULT_MODEL;
+      provider = DEFAULT_PROVIDER.name;
+    }
+  }
 
   const cleanedContent = Array.isArray(message.content)
     ? message.content.map((item) => {
-        if (item.type === 'text') {
-          return {
-            type: 'text',
-            text: item.text?.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, ''),
-          };
-        }
+      if (item.type === 'text') {
+        return {
+          type: 'text',
+          text: (item.text || '').replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, ''),
+        };
+      }
 
-        return item; // Preserve image_url and other types as is
-      })
-    : textContent.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '');
+      return item; // Preserve image_url and other types as is
+    })
+    : (textContent || '').replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '');
 
   return { model, provider, content: cleanedContent };
 }
 
-export function simplifyFalborActions(input: string): string {
+export function simplifyFalborActions(input: string | any[] | undefined | null): any {
+  if (typeof input !== 'string') return input || '';
+  
   // Using regex to match falborAction tags that have type="file"
   const regex = /(<falborAction[^>]*type="file"[^>]*>)([\s\S]*?)(<\/falborAction>)/g;
 

@@ -1,0 +1,1 @@
+uv run python FalborX/bridge.py

@@ -66,7 +66,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const [displayPath, setDisplayPath] = useState('/');
   const [iframeUrl, setIframeUrl] = useState<string | undefined>();
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [isInspectorMode, setIsInspectorMode] = useState(false);
+  const isInspectorMode = useStore(workbenchStore.isInspectorMode);
   const [isDeviceModeOn, setIsDeviceModeOn] = useState(false);
   const [widthPercent, setWidthPercent] = useState<number>(37.5);
   const [currentWidth, setCurrentWidth] = useState<number>(0);
@@ -646,20 +646,17 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     return () => window.removeEventListener('message', handleMessage);
   }, [isInspectorMode]);
 
-  const toggleInspectorMode = () => {
-    const newInspectorMode = !isInspectorMode;
-    setIsInspectorMode(newInspectorMode);
-
+  useEffect(() => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
         {
           type: 'INSPECTOR_ACTIVATE',
-          active: newInspectorMode,
+          active: isInspectorMode,
         },
         '*',
       );
     }
-  };
+  }, [isInspectorMode]);
 
   return (
     <div ref={containerRef} className={`w-full h-full flex flex-col relative`}>
@@ -669,11 +666,180 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       <div className="bg-falbor-elements-background-depth-2 p-2 flex items-center gap-2">
         <div className="flex items-center gap-2">
           <IconButton icon="i-ph:arrow-clockwise" onClick={reloadPreview} />
-          <IconButton
+          {/* <IconButton
             icon="i-ph:selection"
             onClick={() => setIsSelectionMode(!isSelectionMode)}
             className={isSelectionMode ? 'bg-falbor-elements-background-depth-3' : ''}
-          />
+          /> */}
+          <div className="flex items-center gap-2">
+            <IconButton
+              icon="i-ph:devices"
+              onClick={toggleDeviceMode}
+              title={isDeviceModeOn ? 'Switch to Responsive Mode' : 'Switch to Device Mode'}
+            />
+
+            {expoUrl && <IconButton icon="i-ph:qr-code" onClick={() => setIsExpoQrModalOpen(true)} title="Show QR" />}
+
+            <ExpoQrModal open={isExpoQrModalOpen} onClose={() => setIsExpoQrModalOpen(false)} />
+
+            {isDeviceModeOn && (
+              <>
+                <IconButton
+                  icon="i-ph:device-rotate"
+                  onClick={() => setIsLandscape(!isLandscape)}
+                  title={isLandscape ? 'Switch to Portrait' : 'Switch to Landscape'}
+                />
+                <IconButton
+                  icon={showDeviceFrameInPreview ? 'i-ph:device-mobile' : 'i-ph:device-mobile-slash'}
+                  onClick={() => setShowDeviceFrameInPreview(!showDeviceFrameInPreview)}
+                  title={showDeviceFrameInPreview ? 'Hide Device Frame' : 'Show Device Frame'}
+                />
+              </>
+            )}
+            <IconButton
+              icon={isFullscreen ? 'i-ph:arrows-in' : 'i-ph:arrows-out'}
+              onClick={toggleFullscreen}
+              title={isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
+            />
+
+            <div className="flex items-center relative">
+              {/* <IconButton
+              icon="i-ph:list"
+              onClick={() => setIsWindowSizeDropdownOpen(!isWindowSizeDropdownOpen)}
+              title="New Window Options"
+            /> */}
+
+              {isWindowSizeDropdownOpen && (
+                <>
+                  <div className="fixed inset-0 z-50" onClick={() => setIsWindowSizeDropdownOpen(false)} />
+                  <div className="absolute right-0 top-full mt-2 z-50 min-w-[240px] max-h-[400px] overflow-y-auto bg-white dark:bg-black rounded-xl shadow-2xl border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.1)] overflow-hidden">
+                    <div className="p-3 border-b border-[#E5E7EB] dark:border-[rgba(255,255,255,0.1)]">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium text-[#111827] dark:text-gray-300">Window Options</span>
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        <button
+                          className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-falbor-elements-textTertiary hover:text-falbor-elements-textPrimary`}
+                          onClick={() => {
+                            openInNewTab();
+                          }}
+                        >
+                          <span>Open in new tab</span>
+                          <div className="i-ph:arrow-square-out h-5 w-4" />
+                        </button>
+                        <button
+                          className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-falbor-elements-textTertiary hover:text-falbor-elements-textPrimary`}
+                          onClick={() => {
+                            if (!activePreview?.baseUrl) {
+                              console.warn('[Preview] No active preview available');
+                              return;
+                            }
+
+                            const match = activePreview.baseUrl.match(
+                              /^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/,
+                            );
+
+                            if (!match) {
+                              console.warn('[Preview] Invalid WebContainer URL:', activePreview.baseUrl);
+                              return;
+                            }
+
+                            const previewId = match[1];
+                            const previewUrl = `/webcontainer/preview/${previewId}`;
+
+                            // Open in a new window with simple parameters
+                            window.open(
+                              previewUrl,
+                              `preview-${previewId}`,
+                              'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes',
+                            );
+                          }}
+                        >
+                          <span>Open in new window</span>
+                          <div className="i-ph:browser h-5 w-4" />
+                        </button>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-falbor-elements-textTertiary">Show Device Frame</span>
+                          <button
+                            className={`w-10 h-5 rounded-full transition-colors duration-200 ${showDeviceFrame ? 'bg-[#E03602]' : 'bg-gray-300 dark:bg-gray-700'
+                              } relative`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShowDeviceFrame(!showDeviceFrame);
+                            }}
+                          >
+                            <span
+                              className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${showDeviceFrame ? 'transform translate-x-5' : ''
+                                }`}
+                            />
+                          </button>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs text-falbor-elements-textTertiary">Landscape Mode</span>
+                          <button
+                            className={`w-10 h-5 rounded-full transition-colors duration-200 ${isLandscape ? 'bg-[#E03602]' : 'bg-gray-300 dark:bg-gray-700'
+                              } relative`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setIsLandscape(!isLandscape);
+                            }}
+                          >
+                            <span
+                              className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${isLandscape ? 'transform translate-x-5' : ''
+                                }`}
+                            />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                    {WINDOW_SIZES.map((size) => (
+                      <button
+                        key={size.name}
+                        className="w-full px-4 py-3.5 text-left text-[#111827] dark:text-gray-300 text-sm whitespace-nowrap flex items-center gap-3 group hover:bg-accent-50 dark:hover:bg-gray-900 bg-white dark:bg-black"
+                        onClick={() => {
+                          setSelectedWindowSize(size);
+                          setIsWindowSizeDropdownOpen(false);
+                          openInNewWindow(size);
+                        }}
+                      >
+                        <div
+                          className={`${size.icon} w-5 h-5 text-[#6B7280] dark:text-gray-400 group-hover:text-[#E03602] dark:group-hover:text-[#E03602] transition-colors duration-200`}
+                        />
+                        <div className="flex-grow flex flex-col">
+                          <span className="font-medium group-hover:text-[#E03602] dark:group-hover:text-[#E03602] transition-colors duration-200">
+                            {size.name}
+                          </span>
+                          <span className="text-xs text-[#6B7280] dark:text-gray-400 group-hover:text-[#E03602] dark:group-hover:text-[#E03602] transition-colors duration-200">
+                            {isLandscape && (size.frameType === 'mobile' || size.frameType === 'tablet')
+                              ? `${size.height} × ${size.width}`
+                              : `${size.width} × ${size.height}`}
+                            {size.hasFrame && showDeviceFrame ? ' (with frame)' : ''}
+                          </span>
+                        </div>
+                        {selectedWindowSize.name === size.name && (
+                          <div className="text-[#E03602] dark:text-[#E03602]">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              width="16"
+                              height="16"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="flex-grow flex items-center gap-1 bg-falbor-elements-preview-addressBar-background border border-falbor-elements-borderColor text-falbor-elements-preview-addressBar-text rounded-full px-1 py-1 text-sm hover:bg-falbor-elements-preview-addressBar-backgroundHover hover:focus-within:bg-falbor-elements-preview-addressBar-backgroundActive focus-within:bg-falbor-elements-preview-addressBar-backgroundActive focus-within-border-falbor-elements-borderColorActive focus-within:text-falbor-elements-preview-addressBar-textActive">
@@ -715,187 +881,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           />
         </div>
 
-        <div className="flex items-center gap-2">
-          <IconButton
-            icon="i-ph:devices"
-            onClick={toggleDeviceMode}
-            title={isDeviceModeOn ? 'Switch to Responsive Mode' : 'Switch to Device Mode'}
-          />
 
-          {expoUrl && <IconButton icon="i-ph:qr-code" onClick={() => setIsExpoQrModalOpen(true)} title="Show QR" />}
-
-          <ExpoQrModal open={isExpoQrModalOpen} onClose={() => setIsExpoQrModalOpen(false)} />
-
-          {isDeviceModeOn && (
-            <>
-              <IconButton
-                icon="i-ph:device-rotate"
-                onClick={() => setIsLandscape(!isLandscape)}
-                title={isLandscape ? 'Switch to Portrait' : 'Switch to Landscape'}
-              />
-              <IconButton
-                icon={showDeviceFrameInPreview ? 'i-ph:device-mobile' : 'i-ph:device-mobile-slash'}
-                onClick={() => setShowDeviceFrameInPreview(!showDeviceFrameInPreview)}
-                title={showDeviceFrameInPreview ? 'Hide Device Frame' : 'Show Device Frame'}
-              />
-            </>
-          )}
-          <IconButton
-            icon="i-ph:cursor-click"
-            onClick={toggleInspectorMode}
-            className={
-              isInspectorMode ? 'bg-falbor-elements-background-depth-3 !text-falbor-elements-item-contentAccent' : ''
-            }
-            title={isInspectorMode ? 'Disable Element Inspector' : 'Enable Element Inspector'}
-          />
-          <IconButton
-            icon={isFullscreen ? 'i-ph:arrows-in' : 'i-ph:arrows-out'}
-            onClick={toggleFullscreen}
-            title={isFullscreen ? 'Exit Full Screen' : 'Full Screen'}
-          />
-
-          <div className="flex items-center relative">
-            <IconButton
-              icon="i-ph:list"
-              onClick={() => setIsWindowSizeDropdownOpen(!isWindowSizeDropdownOpen)}
-              title="New Window Options"
-            />
-
-            {isWindowSizeDropdownOpen && (
-              <>
-                <div className="fixed inset-0 z-50" onClick={() => setIsWindowSizeDropdownOpen(false)} />
-                <div className="absolute right-0 top-full mt-2 z-50 min-w-[240px] max-h-[400px] overflow-y-auto bg-white dark:bg-black rounded-xl shadow-2xl border border-[#E5E7EB] dark:border-[rgba(255,255,255,0.1)] overflow-hidden">
-                  <div className="p-3 border-b border-[#E5E7EB] dark:border-[rgba(255,255,255,0.1)]">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium text-[#111827] dark:text-gray-300">Window Options</span>
-                    </div>
-                    <div className="flex flex-col gap-2">
-                      <button
-                        className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-falbor-elements-textTertiary hover:text-falbor-elements-textPrimary`}
-                        onClick={() => {
-                          openInNewTab();
-                        }}
-                      >
-                        <span>Open in new tab</span>
-                        <div className="i-ph:arrow-square-out h-5 w-4" />
-                      </button>
-                      <button
-                        className={`flex w-full justify-between items-center text-start bg-transparent text-xs text-falbor-elements-textTertiary hover:text-falbor-elements-textPrimary`}
-                        onClick={() => {
-                          if (!activePreview?.baseUrl) {
-                            console.warn('[Preview] No active preview available');
-                            return;
-                          }
-
-                          const match = activePreview.baseUrl.match(
-                            /^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/,
-                          );
-
-                          if (!match) {
-                            console.warn('[Preview] Invalid WebContainer URL:', activePreview.baseUrl);
-                            return;
-                          }
-
-                          const previewId = match[1];
-                          const previewUrl = `/webcontainer/preview/${previewId}`;
-
-                          // Open in a new window with simple parameters
-                          window.open(
-                            previewUrl,
-                            `preview-${previewId}`,
-                            'width=1280,height=720,menubar=no,toolbar=no,location=no,status=no,resizable=yes',
-                          );
-                        }}
-                      >
-                        <span>Open in new window</span>
-                        <div className="i-ph:browser h-5 w-4" />
-                      </button>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-falbor-elements-textTertiary">Show Device Frame</span>
-                        <button
-                          className={`w-10 h-5 rounded-full transition-colors duration-200 ${
-                            showDeviceFrame ? 'bg-[#E03602]' : 'bg-gray-300 dark:bg-gray-700'
-                          } relative`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setShowDeviceFrame(!showDeviceFrame);
-                          }}
-                        >
-                          <span
-                            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
-                              showDeviceFrame ? 'transform translate-x-5' : ''
-                            }`}
-                          />
-                        </button>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-falbor-elements-textTertiary">Landscape Mode</span>
-                        <button
-                          className={`w-10 h-5 rounded-full transition-colors duration-200 ${
-                            isLandscape ? 'bg-[#E03602]' : 'bg-gray-300 dark:bg-gray-700'
-                          } relative`}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setIsLandscape(!isLandscape);
-                          }}
-                        >
-                          <span
-                            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform duration-200 ${
-                              isLandscape ? 'transform translate-x-5' : ''
-                            }`}
-                          />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                  {WINDOW_SIZES.map((size) => (
-                    <button
-                      key={size.name}
-                      className="w-full px-4 py-3.5 text-left text-[#111827] dark:text-gray-300 text-sm whitespace-nowrap flex items-center gap-3 group hover:bg-accent-50 dark:hover:bg-gray-900 bg-white dark:bg-black"
-                      onClick={() => {
-                        setSelectedWindowSize(size);
-                        setIsWindowSizeDropdownOpen(false);
-                        openInNewWindow(size);
-                      }}
-                    >
-                      <div
-                        className={`${size.icon} w-5 h-5 text-[#6B7280] dark:text-gray-400 group-hover:text-[#E03602] dark:group-hover:text-[#E03602] transition-colors duration-200`}
-                      />
-                      <div className="flex-grow flex flex-col">
-                        <span className="font-medium group-hover:text-[#E03602] dark:group-hover:text-[#E03602] transition-colors duration-200">
-                          {size.name}
-                        </span>
-                        <span className="text-xs text-[#6B7280] dark:text-gray-400 group-hover:text-[#E03602] dark:group-hover:text-[#E03602] transition-colors duration-200">
-                          {isLandscape && (size.frameType === 'mobile' || size.frameType === 'tablet')
-                            ? `${size.height} × ${size.width}`
-                            : `${size.width} × ${size.height}`}
-                          {size.hasFrame && showDeviceFrame ? ' (with frame)' : ''}
-                        </span>
-                      </div>
-                      {selectedWindowSize.name === size.name && (
-                        <div className="text-[#E03602] dark:text-[#E03602]">
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            width="16"
-                            height="16"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          >
-                            <polyline points="20 6 9 17 4 12"></polyline>
-                          </svg>
-                        </div>
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </>
-            )}
-          </div>
-        </div>
       </div>
 
       <div className="flex-1 border-t border-falbor-elements-borderColor flex justify-center items-center overflow-auto">

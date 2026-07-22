@@ -54,6 +54,10 @@ export class WorkbenchStore {
     import.meta.hot?.data.supabaseAlert ?? atom<SupabaseAlert | undefined>(undefined);
   deployAlert: WritableAtom<DeployAlert | undefined> =
     import.meta.hot?.data.deployAlert ?? atom<DeployAlert | undefined>(undefined);
+  
+  isInspectorMode: WritableAtom<boolean> = import.meta.hot?.data.isInspectorMode ?? atom(false);
+  isDesignSystemMode: WritableAtom<boolean> = import.meta.hot?.data.isDesignSystemMode ?? atom(false);
+
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
   #globalExecutionQueue = Promise.resolve();
@@ -66,6 +70,8 @@ export class WorkbenchStore {
       import.meta.hot.data.actionAlert = this.actionAlert;
       import.meta.hot.data.supabaseAlert = this.supabaseAlert;
       import.meta.hot.data.deployAlert = this.deployAlert;
+      import.meta.hot.data.isInspectorMode = this.isInspectorMode;
+      import.meta.hot.data.isDesignSystemMode = this.isDesignSystemMode;
 
       // Ensure binary files are properly preserved across hot reloads
       const filesMap = this.files.get();
@@ -463,6 +469,10 @@ export class WorkbenchStore {
 
   setReloadedMessages(messages: string[]) {
     this.#reloadedMessages = new Set(messages);
+  }
+
+  isReloadedMessage(messageId: string): boolean {
+    return this.#reloadedMessages.has(messageId);
   }
 
   addArtifact({ messageId, title, id, type }: ArtifactCallbackData) {

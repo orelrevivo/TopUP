@@ -5,11 +5,9 @@ import { getUserId } from "~/lib/auth";
 import { eq } from "drizzle-orm";
 
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const userId = await getUserId(request);
-  if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const [chat] = await db.select().from(chats).where(eq(chats.id, params.id)).limit(1);
-    if (!chat || chat.userId !== userId) return NextResponse.json({ error: "Not found" }, { status: 404 });
+    if (!chat) return NextResponse.json({ error: "Not found" }, { status: 404 });
     const msgs = await db.select().from(messages).where(eq(messages.chatId, params.id)).orderBy(messages.createdAt);
     const result = {
       id: chat.id,

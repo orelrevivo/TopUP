@@ -16,9 +16,16 @@ export async function POST(request: Request) {
 
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
-    if (!user || !user.passwordHash) {
+    if (!user) {
       return new Response(JSON.stringify({ error: "Invalid email or password" }), {
         status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    if (!user.passwordHash) {
+      return new Response(JSON.stringify({ error: "This account was created with Google. Please sign in with Google." }), {
+        status: 403,
         headers: { "Content-Type": "application/json" },
       });
     }

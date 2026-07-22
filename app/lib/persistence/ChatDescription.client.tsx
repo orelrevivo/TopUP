@@ -35,11 +35,9 @@ export function ChatDescription() {
           <TooltipProvider>
             <WithTooltip tooltip="Save title">
               <div className="flex justify-between items-center p-2 rounded-md bg-falbor-elements-item-backgroundAccent">
-                <button
-                  type="submit"
-                  className="i-ph:check-bold scale-110 hover:text-falbor-elements-item-contentAccent"
-                  onMouseDown={handleSubmit}
-                />
+                <button type="submit" onMouseDown={handleSubmit} className="hover:text-falbor-elements-item-contentAccent">
+                  <i className="i-ph:check-bold h-4 w-4 block scale-110" />
+                </button>
               </div>
             </WithTooltip>
           </TooltipProvider>
@@ -51,12 +49,14 @@ export function ChatDescription() {
             <WithTooltip tooltip="Rename chat">
               <button
                 type="button"
-                className="ml-2 i-ph:pencil-fill scale-110 hover:text-falbor-elements-item-contentAccent"
+                className="ml-2 hover:text-falbor-elements-item-contentAccent"
                 onClick={(event) => {
                   event.preventDefault();
                   toggleEditMode();
                 }}
-              />
+              >
+                <i className="i-ph:pencil-fill h-4 w-4 block scale-110" />
+              </button>
             </WithTooltip>
           </TooltipProvider>
         </>

@@ -7,6 +7,7 @@ import { classNames } from '~/utils/classNames';
 interface WebSearchProps {
   onSearchResult: (result: string) => void;
   disabled?: boolean;
+  asMenuItem?: boolean;
 }
 
 interface WebSearchData {
@@ -38,7 +39,7 @@ function formatSearchResult(data: WebSearchData): string {
   return parts.join('\n');
 }
 
-export function WebSearch({ onSearchResult, disabled = false }: WebSearchProps) {
+export function WebSearch({ onSearchResult, disabled = false, asMenuItem }: WebSearchProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [url, setUrl] = useState('');
@@ -102,18 +103,33 @@ export function WebSearch({ onSearchResult, disabled = false }: WebSearchProps) 
 
   return (
     <div ref={containerRef} className="relative">
-      <IconButton
-        title="Fetch URL content"
-        disabled={disabled || isSearching}
-        onClick={() => setIsOpen(!isOpen)}
-        className="transition-all"
-      >
-        {isSearching ? (
-          <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin" />
-        ) : (
-          <div className="i-ph:globe text-xl" />
-        )}
-      </IconButton>
+      {asMenuItem ? (
+        <button
+          disabled={disabled || isSearching}
+          onClick={() => setIsOpen(!isOpen)}
+          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors text-falbor-elements-textPrimary disabled:opacity-50"
+        >
+          {isSearching ? (
+            <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin" />
+          ) : (
+            <div className="i-ph:globe text-xl text-falbor-elements-textSecondary" />
+          )}
+          <span>Fetch URL</span>
+        </button>
+      ) : (
+        <IconButton
+          title="Fetch URL content"
+          disabled={disabled || isSearching}
+          onClick={() => setIsOpen(!isOpen)}
+          className="transition-all"
+        >
+          {isSearching ? (
+            <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin" />
+          ) : (
+            <div className="i-ph:globe text-xl" />
+          )}
+        </IconButton>
+      )}
       {isOpen && (
         <div
           className={classNames(

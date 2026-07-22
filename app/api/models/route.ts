@@ -11,32 +11,25 @@ interface ModelsResponse {
   defaultProvider: ProviderInfo;
 }
 
-let cachedProviders: ProviderInfo[] | null = null;
-let cachedDefaultProvider: ProviderInfo | null = null;
-
 function getProviderInfo(llmManager: LLMManager) {
-  if (!cachedProviders) {
-    cachedProviders = llmManager.getAllProviders().map((provider) => ({
-      name: provider.name,
-      staticModels: provider.staticModels,
-      getApiKeyLink: provider.getApiKeyLink,
-      labelForGetApiKey: provider.labelForGetApiKey,
-      icon: provider.icon,
-    }));
-  }
+  const providers = llmManager.getAllProviders().map((provider) => ({
+    name: provider.name,
+    staticModels: provider.staticModels,
+    getApiKeyLink: provider.getApiKeyLink,
+    labelForGetApiKey: provider.labelForGetApiKey,
+    icon: provider.icon,
+  }));
 
-  if (!cachedDefaultProvider) {
-    const defaultProvider = llmManager.getDefaultProvider();
-    cachedDefaultProvider = {
-      name: defaultProvider.name,
-      staticModels: defaultProvider.staticModels,
-      getApiKeyLink: defaultProvider.getApiKeyLink,
-      labelForGetApiKey: defaultProvider.labelForGetApiKey,
-      icon: defaultProvider.icon,
-    };
-  }
+  const defaultProvider = llmManager.getDefaultProvider();
+  const defaultProviderInfo = {
+    name: defaultProvider.name,
+    staticModels: defaultProvider.staticModels,
+    getApiKeyLink: defaultProvider.getApiKeyLink,
+    labelForGetApiKey: defaultProvider.labelForGetApiKey,
+    icon: defaultProvider.icon,
+  };
 
-  return { providers: cachedProviders, defaultProvider: cachedDefaultProvider };
+  return { providers, defaultProvider: defaultProviderInfo };
 }
 
 export async function GET(
