@@ -2,7 +2,7 @@ import { BaseProvider } from '~/lib/modules/llm/base-provider';
 import type { ModelInfo } from '~/lib/modules/llm/types';
 import type { IProviderSetting } from '~/types/model';
 import type { LanguageModelV1 } from 'ai';
-import { createDeepSeek } from '@ai-sdk/deepseek';
+import { createOpenAI } from '@ai-sdk/openai';
 
 export default class DeepseekProvider extends BaseProvider {
   name = 'Deepseek';
@@ -14,15 +14,15 @@ export default class DeepseekProvider extends BaseProvider {
 
   staticModels: ModelInfo[] = [
     {
-      name: 'deepseek-coder',
-      label: 'Deepseek-Coder',
+      name: 'deepseek-v4-pro',
+      label: 'Deepseek V4 Pro',
       provider: 'Deepseek',
       maxTokenAllowed: 8000,
       maxCompletionTokens: 8000,
     },
     {
-      name: 'deepseek-chat',
-      label: 'Deepseek-Chat',
+      name: 'deepseek-v4-flash',
+      label: 'Deepseek V4 Flash',
       provider: 'Deepseek',
       maxTokenAllowed: 8000,
       maxCompletionTokens: 8000,
@@ -122,7 +122,8 @@ export default class DeepseekProvider extends BaseProvider {
       throw new Error(`Missing API key for ${this.name} provider`);
     }
 
-    const deepseek = createDeepSeek({
+    const deepseek = createOpenAI({
+      baseURL: 'https://api.deepseek.com/v1',
       apiKey,
     });
 
