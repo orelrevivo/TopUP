@@ -9,7 +9,7 @@ const logger = createScopedLogger('EnhancedMessageParser');
  * Fixes issue #1797 where code outputs to chat instead of files.
  */
 export class EnhancedStreamingMessageParser extends StreamingMessageParser {
-  private _processedCodeBlocks = new Map<string, Set<string>>();
+  private _processedCodeBlocks = new Map<string, Map<string, string>>();
   private _artifactCounter = 0;
 
   // Optimized command pattern lookup
@@ -37,23 +37,14 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   parse(messageId: string, input: string): string {
     this.wasReset = false;
     input = input || '';
-    
-    // First try the normal parsing
-    let output = super.parse(messageId, input);
 
-    // If no artifacts were detected, check for code blocks that should be files
+    // If no explicit artifacts in the raw input, check if we should auto-wrap code blocks
     if (!this._hasDetectedArtifacts(input)) {
       const enhancedInput = this._detectAndWrapCodeBlocks(messageId, input);
-
-      if (enhancedInput !== input) {
-        // Reset and reparse with enhanced input
-        this.reset();
-        this.wasReset = true;
-        output = super.parse(messageId, enhancedInput);
-      }
+      return super.parse(messageId, enhancedInput);
     }
 
-    return output;
+    return super.parse(messageId, input);
   }
 
   private _hasDetectedArtifacts(input: string): boolean {
@@ -63,7 +54,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
   private _detectAndWrapCodeBlocks(messageId: string, input: string): string {
     // Initialize processed blocks for this message if not exists
     if (!this._processedCodeBlocks.has(messageId)) {
-      this._processedCodeBlocks.set(messageId, new Set());
+      this._processedCodeBlocks.set(messageId, new Map<string, string>());
     }
 
     const processed = this._processedCodeBlocks.get(messageId)!;
@@ -115,7 +106,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
         const blockHash = this._hashBlock(match);
 
         if (processed.has(blockHash)) {
-          return match;
+          return processed.get(blockHash)!;
         }
 
         let filePath: string;
@@ -136,10 +127,10 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
 
         // Check if this should be treated as a shell command instead of a file
         if (this._isShellCommand(content, language)) {
-          processed.add(blockHash);
           logger.debug(`Auto-wrapped code block as shell command instead of file`);
-
-          return this._wrapInShellAction(content, messageId);
+          const wrapped = this._wrapInShellAction(content, messageId);
+          processed.set(blockHash, wrapped);
+          return wrapped;
         }
 
         // Clean up the file path
@@ -161,14 +152,14 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
           }
         }
 
-        // Mark as processed
-        processed.add(blockHash);
-
         // Generate artifact wrapper
         const artifactId = `artifact-${messageId}-${this._artifactCounter++}`;
         const wrapped = this._wrapInArtifact(artifactId, filePath, content);
 
         logger.debug(`Auto-wrapped code block as file: ${filePath}`);
+        
+        // Mark as processed and store the generated wrapper
+        processed.set(blockHash, wrapped);
 
         return wrapped;
       });
@@ -182,7 +173,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
       const blockHash = this._hashBlock(match);
 
       if (processed.has(blockHash)) {
-        return match;
+        return processed.get(blockHash)!;
       }
 
       filePath = this._normalizeFilePath(filePath);
@@ -190,8 +181,6 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
       if (!this._isValidFilePath(filePath)) {
         return match;
       }
-
-      processed.add(blockHash);
 
       const artifactId = `artifact-${messageId}-${this._artifactCounter++}`;
 
@@ -201,6 +190,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
       const wrapped = this._wrapInArtifact(artifactId, filePath, content);
       logger.debug(`Auto-wrapped file operation: ${filePath}`);
 
+      processed.set(blockHash, wrapped);
       return wrapped;
     });
 
@@ -501,7 +491,7 @@ ${content.trim()}
     return false;
   }
 
-  private _detectAndWrapShellCommands(_messageId: string, input: string, processed: Set<string>): string {
+  private _detectAndWrapShellCommands(_messageId: string, input: string, processed: Map<string, string>): string {
     // Pattern to detect standalone shell code blocks that look like commands
     const shellCommandPattern = /```(bash|sh|shell|zsh|fish|powershell|ps1)\n([\s\S]*?)```/gi;
 
@@ -509,19 +499,23 @@ ${content.trim()}
       const blockHash = this._hashBlock(match);
 
       if (processed.has(blockHash)) {
+        return processed.get(blockHash)!;
+      }
+
+      // Check if it's actually a script instead of a command
+      if (this._isShellScript(content)) {
+        logger.debug(`Shell block detected as script, skipping command wrap`);
+        // If it looks like a script, let the file detection patterns handle it
         return match;
       }
 
-      // Check if this looks like commands to execute rather than a script file
-      if (this._isShellCommand(content, language)) {
-        processed.add(blockHash);
-        logger.debug(`Auto-wrapped shell code block as command: ${language}`);
+      const artifactId = `artifact-${_messageId}-${this._artifactCounter++}`;
+      const wrapped = this._wrapInShellAction(content, _messageId);
 
-        return this._wrapInShellAction(content, _messageId);
-      }
+      processed.set(blockHash, wrapped);
+      logger.debug(`Auto-wrapped standalone shell command`);
 
-      // If it looks like a script, let the file detection patterns handle it
-      return match;
+      return wrapped;
     });
   }
 

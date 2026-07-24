@@ -6,7 +6,7 @@ export const WORK_DIR = `/home/${WORK_DIR_NAME}`;
 export const MODIFICATIONS_TAG_NAME = 'falbor_file_modifications';
 export const MODEL_REGEX = /\[Model: (.*?)\]/;
 export const PROVIDER_REGEX = /\[Provider: (.*?)\]/;
-export const DEFAULT_MODEL = 'deepseek-reasoner';
+export const DEFAULT_MODEL = 'deepseek-v4-pro';
 export const PROMPT_COOKIE_KEY = 'cachedPrompt';
 export const TOOL_EXECUTION_APPROVAL = {
   APPROVE: 'Yes, approved.',

@@ -93,7 +93,7 @@ export const HackingChatImpl = memo(
     const [fakeLoading, setFakeLoading] = useState(false);
     const { activeProviders, promptId } = useSettings();
     const [llmErrorAlert, setLlmErrorAlert] = useState<LlmErrorAlertType | undefined>(undefined);
-    const [model, setModel] = useState('deepseek-chat');
+    const [model, setModel] = useState('deepseek-v4-pro');
     const [provider, setProvider] = useState(() => {
       return (PROVIDER_LIST.find((p) => p.name === 'Deepseek') || PROVIDER_LIST[0]) as ProviderInfo;
     });

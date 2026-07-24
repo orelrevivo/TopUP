@@ -96,7 +96,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const { imageGenerationEnabled } = useSettings();
 
   const claudeModel = props.modelList.find(m => m.name.toLowerCase().includes('sonnet') && m.provider === 'Anthropic');
-  const deepseekModel = props.modelList.find(m => (m.name === 'deepseek-reasoner' || m.name === 'deepseek-chat') && m.provider === 'Deepseek');
+  const deepseekModel = props.modelList.find(m => (m.name === 'deepseek-v4-pro' || m.name === 'deepseek-reasoner' || m.name === 'deepseek-chat') && m.provider === 'Deepseek');
   const gptSolModel = props.modelList.find(m => m.name === 'gpt-5.6-sol' && m.provider === 'OpenAI');
   const availableModels = [claudeModel, deepseekModel, gptSolModel].filter(Boolean);
   const selectedModelInfo = availableModels.find(m => m?.name === props.model);

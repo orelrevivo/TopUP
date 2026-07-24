@@ -58,20 +58,39 @@ export function useMessageParser() {
   const [parsedMessages, setParsedMessages] = useState<{ [key: number]: string }>({});
 
   const parseMessages = useCallback((messages: Message[], isLoading: boolean) => {
-    let reset = false;
+    let didGlobalReset = false;
 
     if ((process.env.NODE_ENV === 'development') && !isLoading) {
-      reset = true;
+      didGlobalReset = true;
       messageParser.reset();
+    }
+
+    if (didGlobalReset) {
+      // After a global reset, re-parse all messages from scratch and replace the entire state at once.
+      const newParsed: { [key: number]: string } = {};
+
+      for (const [index, message] of messages.entries()) {
+        if (message.role === 'assistant' || message.role === 'user') {
+          const content = messageParser.parse(message.id, extractTextContent(message));
+          newParsed[index] = content;
+
+          if (!isLoading) {
+            messageParser.complete(message.id);
+          }
+        }
+      }
+
+      setParsedMessages(newParsed);
+      return;
     }
 
     for (const [index, message] of messages.entries()) {
       if (message.role === 'assistant' || message.role === 'user') {
         const newParsedContent = messageParser.parse(message.id, extractTextContent(message));
         
-        // If the parser had to reset internally (e.g. to wrap newly detected code blocks),
-        // it returns the FULL parsed string instead of just the diff. So we must replace instead of append.
-        const shouldReplace = reset || messageParser.wasReset;
+        // wasReset is true when the enhanced parser detected code blocks and re-parsed from scratch.
+        // In that case, newParsedContent is the full output and we must replace, not append.
+        const shouldReplace = messageParser.wasReset;
         
         setParsedMessages((prevParsed) => ({
           ...prevParsed,

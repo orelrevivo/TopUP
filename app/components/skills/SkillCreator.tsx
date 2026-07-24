@@ -20,7 +20,7 @@ export const SkillCreator: React.FC<SkillCreatorProps> = ({ onBack, onSkillCreat
   const { messages, input, handleInputChange, handleSubmit, isLoading, data } = useChat({
     api: '/api/chat',
     body: {
-      model: 'deepseek-reasoner',
+      model: 'deepseek-v4-pro',
       provider: { name: 'Deepseek' },
     },
     initialMessages: [
