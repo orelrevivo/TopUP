@@ -7,11 +7,11 @@ const PRO_PRICE = 20;
 
 const features = {
   free: [
-    { text: "Website deployment to Netlify", included: true },
+    { text: "Website deployment to Falbor", included: true },
     { text: "Short Screen Recordings (up to 20 mins)", included: true },
     { text: "$1 initial AI credit balance", included: true },
     { text: "Custom Supabase Databases", included: false },
-    { text: "Website deployment to Vercel", included: false },
+    { text: "Website deployment to Netlify & Vercel", included: false },
   ],
   pro: [
     { text: "Website deployment to Netlify & Vercel", included: true },

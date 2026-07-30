@@ -1,16 +1,17 @@
 'use client';
 import { motion, type Variants } from 'framer-motion';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { Dialog, DialogButton, DialogDescription, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
-import { ControlPanel } from '~/components/@settings/core/ControlPanel';
 import { TAB_ICONS, TAB_LABELS, DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
-import { tabConfigurationStore, resetTabConfiguration, settingsOpenStore, settingsTabStore } from '~/lib/stores/settings';
+import { tabConfigurationStore, resetTabConfiguration, settingsOpenStore, settingsTabStore, blinkPricingStore } from '~/lib/stores/settings';
 import type { TabType } from '~/components/@settings/core/types';
-import { SettingsButton, HelpButton } from '~/components/ui/SettingsButton';
+import { SettingsButton } from '~/components/ui/SettingsButton';
 import { Button } from '~/components/ui/Button';
 import { db, deleteById, getAll, chatId, type ChatHistoryItem, useChatHistory } from '~/lib/persistence';
+import * as hackingChatApi from '~/lib/api/data/hacking-chat';
 import { cubicEasingFn } from '~/utils/easings';
 import { HistoryItem } from './HistoryItem';
 import { binDates } from './date-binning';
@@ -92,6 +93,12 @@ interface MenuProps {
 }
 
 export const Menu = ({ variant = 'full' }: MenuProps) => {
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  if (pathname?.startsWith('/docs')) return null;
+  const isHacking = pathname?.startsWith('/hacking');
+  const basePath = isHacking ? '/hacking' : '/chat';
   const { duplicateCurrentChat, exportChat } = useChatHistory();
   const menuRef = useRef<HTMLDivElement>(null);
   const [list, setList] = useState<ChatHistoryItem[]>([]);
@@ -101,6 +108,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const [dialogContent, setDialogContent] = useState<DialogContent>(null);
   const isSettingsOpen = useStore(settingsOpenStore);
   const activeSettingsTab = useStore(settingsTabStore);
+  const blinkPricing = useStore(blinkPricingStore);
   const profile = useStore(profileStore) as any;
 
   const tabConfiguration = useStore(tabConfigurationStore);
@@ -128,21 +136,46 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
 
-  const { filteredItems: filteredList, handleSearchChange } = useSearchFilter({
-    items: list,
-    searchFields: ['description'],
-  });
-
+  // Load from IndexedDB or Postgres depending on route
   const loadEntries = useCallback(() => {
-    if (db) {
+    if (isHacking) {
+      hackingChatApi.getAllChats()
+        .then((serverChats) => {
+          const mapped = serverChats.map(c => ({
+            id: c.id,
+            urlId: c.urlId || c.id,
+            description: c.description || 'New Hacking Chat',
+            messages: c.messages,
+            timestamp: c.timestamp || new Date().toISOString(),
+            metadata: { ...c.metadata, type: 'hacking' }
+          }));
+          setList(mapped as any);
+        })
+        .catch(console.error);
+    } else if (db) {
       getAll(db)
         .then(setList)
         .catch((error) => toast.error(error.message));
     }
-  }, []);
+  }, [isHacking]);
+
+  // We don't need to filter anymore since loadEntries is route-specific,
+  // but we can just map the list directly
+  const { filteredItems, handleSearchChange } = useSearchFilter({
+    items: list,
+    searchFields: ['description'],
+  });
+
+  const filteredList = filteredItems;
 
   const deleteChat = useCallback(
     async (id: string): Promise<void> => {
+      if (isHacking) {
+        // Assume hacking chat deletion is handled elsewhere or implement basic remove from list
+        setList(prev => prev.filter(c => c.id !== id));
+        return;
+      }
+
       if (!db) {
         throw new Error('Database not available');
       }
@@ -158,7 +191,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
       await deleteById(db, id);
       console.log('Successfully deleted chat:', id);
     },
-    [db],
+    [db, isHacking],
   );
 
   const deleteItem = useCallback(
@@ -179,7 +212,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
 
           if (chatId.get() === item.id) {
             console.log('Navigating away from deleted chat');
-            window.location.pathname = '/';
+            window.location.pathname = isHacking ? '/hacking' : '/';
           }
         })
         .catch((error) => {
@@ -238,7 +271,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
 
       if (shouldNavigate) {
         console.log('Navigating away from deleted chat');
-        window.location.pathname = '/';
+        window.location.pathname = isHacking ? '/hacking' : '/';
       }
     },
     [deleteChat, loadEntries, db],
@@ -302,6 +335,18 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
       loadEntries();
     }
   }, [open, loadEntries]);
+
+  // Sync tab state from URL
+  useEffect(() => {
+    if (searchParams) {
+      const tab = searchParams.get('tab');
+      if (tab) {
+        settingsOpenStore.set(true);
+        sidebarOpen.set(true);
+        settingsTabStore.set(tab as TabType);
+      }
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (!open && selectionMode) {
@@ -368,6 +413,13 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
 
   const handleSettingsClose = () => {
     settingsOpenStore.set(false);
+    
+    // Remove tab from URL
+    if (typeof window !== 'undefined') {
+      const newUrl = new URL(window.location.href);
+      newUrl.searchParams.delete('tab');
+      window.history.replaceState({}, '', newUrl.toString());
+    }
   };
 
   const setDialogContentWithLogging = useCallback((content: DialogContent) => {
@@ -408,9 +460,9 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
           )}>
             {open ? (
               <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-                <a href="/" className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
-                  <img src="/logo-light-styled.png" alt="logo" className="w-[130px] inline-block dark:hidden" />
-                  <img src="/logo-dark-styled.png" alt="logo" className="w-[130px] inline-block hidden dark:block" />
+                <a href={isHacking ? "/hacking" : "/"} className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <img src={isHacking ? "/hacking/logo-light-styled.png" : "/logo-light-styled.png"} alt="logo" className="w-[130px] inline-block dark:hidden" />
+                  <img src={isHacking ? "/hacking/logo-dark-styled.png" : "/logo-dark-styled.png"} alt="logo" className="w-[130px] inline-block hidden dark:block" />
                 </a>
               </div>
             ) : (
@@ -458,18 +510,27 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
               {visibleTabs.map((tab) => {
                 const Icon = TAB_ICONS[tab.id as TabType];
                 const isSelected = activeSettingsTab === tab.id;
+                const isBlinking = tab.id === 'pricing' && blinkPricing;
+                
                 return (
                   <button
                     key={tab.id}
-                    onClick={() => settingsTabStore.set(tab.id as TabType)}
+                    onClick={() => {
+                      settingsTabStore.set(tab.id as TabType);
+                      // Update URL without triggering a full page reload
+                      const newUrl = new URL(window.location.href);
+                      newUrl.searchParams.set('tab', tab.id);
+                      window.history.pushState({}, '', newUrl.toString());
+                    }}
                     className={classNames(
-                      'flex items-center gap-3 w-full px-3 py-1.5 rounded-md text-sm font-medium text-left',
+                      'flex items-center gap-3 w-full px-3 py-1.5 rounded-md text-sm font-medium text-left transition-all',
                       isSelected
                         ? 'bg-falbor-elements-background-depth-3 text-falbor-elements-textPrimary font-semibold'
                         : 'text-falbor-elements-textSecondary hover:bg-falbor-elements-background-depth-3 hover:text-falbor-elements-textPrimary',
+                      isBlinking ? 'animate-pulse bg-blue-500/20 text-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : ''
                     )}
                   >
-                    {Icon && <Icon className="w-4 h-4" />}
+                    {Icon && <Icon className={classNames("w-4 h-4", isBlinking ? "text-blue-500" : "")} />}
                     <span>{TAB_LABELS[tab.id as TabType]}</span>
                   </button>
                 );
@@ -538,6 +599,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                             selectionMode={selectionMode}
                             isSelected={selectedItems.includes(item.id)}
                             onToggleSelection={toggleItemSelection}
+                            basePath={basePath}
                           />
                         ))}
                       </div>

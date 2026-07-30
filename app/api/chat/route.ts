@@ -3,8 +3,10 @@ const json = NextResponse.json;
 
 import { getUserId } from '~/lib/auth';
 import { db } from '~/lib/db';
-import { users } from '~/lib/db/schema';
-import { eq, sql } from 'drizzle-orm';
+import { users, mcpConnections } from '~/lib/db/schema';
+import { eq, and, sql } from 'drizzle-orm';
+import { z } from 'zod';
+import { tool } from 'ai';
 import { createDataStream, generateId } from 'ai';
 import { type FileMap } from '~/lib/.server/llm/constants';
 import { streamText, type Messages, type StreamingOptions } from '~/lib/.server/llm/stream-text';
@@ -18,6 +20,7 @@ import { createSummary } from '~/lib/.server/llm/create-summary';
 import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
+import { NativeToolsService } from '~/lib/services/nativeToolsService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { SupabaseService } from '~/lib/services/supabaseService';
 import type { RouteArgs } from '~/lib/security';
@@ -66,13 +69,15 @@ async function chatAction({ context, request }: RouteArgs) {
     },
   });
 
-  const { messages, files, promptId, contextOptimization, supabase, chatMode, designScheme, maxLLMSteps, mcpEnabled, chatId } =
+  const { messages, files, promptId, contextOptimization, supabase, chatMode, isSlidesMode, isGameMode, designScheme, maxLLMSteps, mcpEnabled, selectedMCPs, chatId } =
     (await request.json()) as {
       messages: Messages;
       files: any;
       promptId?: string;
       contextOptimization: boolean;
       chatMode: 'discuss' | 'build';
+      isSlidesMode?: boolean;
+      isGameMode?: boolean;
       designScheme?: DesignScheme;
       supabase?: {
         isConnected: boolean;
@@ -84,8 +89,12 @@ async function chatAction({ context, request }: RouteArgs) {
       };
       maxLLMSteps: number;
       mcpEnabled?: boolean;
+      selectedMCPs?: string[];
       chatId?: string;
     };
+
+  console.log('[CHAT_ROUTE] Received body selectedMCPs:', selectedMCPs);
+  console.log('[CHAT_ROUTE] Received body mcpEnabled:', mcpEnabled);
 
   const cookieHeader = request.headers.get('Cookie');
   const apiKeys = JSON.parse(parseCookies(cookieHeader || '').apiKeys || '{}');
@@ -194,7 +203,7 @@ async function chatAction({ context, request }: RouteArgs) {
               // Jina already converts all images to clean markdown ![alt](url) format
               const mdImageMatches = [...scrapedMarkdown.matchAll(/!\[([^\]]*)\]\((https?:\/\/[^)]+)\)/g)];
               const extractedImages = mdImageMatches.map(m => ({ alt: m[1], url: m[2] }));
-              
+
               // Also catch raw URLs that look like images
               const rawImageMatches = [...scrapedMarkdown.matchAll(/https?:\/\/[^\s"'<>)]+\.(?:png|jpg|jpeg|gif|webp|svg|ico)(?:\?[^\s"'<>)]*)?/gi)];
               rawImageMatches.forEach(m => {
@@ -412,11 +421,48 @@ THEN build the pixel-perfect clone.`;
           // logger.debug('Code Files Selected');
         }
 
-        const mcpTools = mcpEnabled && mcpService ? { toolChoice: 'auto' as const, tools: mcpService.toolsWithoutExecute } : {};
-        
+        let baseTools: Record<string, any> = {};
+
+        // Determine which MCPs to activate.
+        // If selectedMCPs has explicit selections, use those.
+        // If the global MCP toggle is ON but nothing is explicitly selected,
+        // auto-load ALL active connectors for this user from the DB.
+        let effectiveMCPs = selectedMCPs || [];
+        if (mcpEnabled && effectiveMCPs.length === 0 && userId) {
+          try {
+            effectiveMCPs = await NativeToolsService.getAllConnectorIdsForUser(userId);
+            if (effectiveMCPs.length > 0) {
+              logger.debug(`Auto-loaded connected MCPs: ${effectiveMCPs.join(', ')}`);
+            }
+          } catch (err) {
+            logger.error('Failed to auto-load connector IDs:', err);
+          }
+        }
+
+        if (mcpEnabled && mcpService && effectiveMCPs.length > 0) {
+          baseTools = mcpService.getToolsForServers(effectiveMCPs);
+        }
+
+        // Native tools injection (Gmail, Slack, GitHub, Vercel, Telegram, Klipy, etc.)
+        if (effectiveMCPs.length > 0) {
+          try {
+            const nativeTools = await NativeToolsService.getToolsForConnectors(effectiveMCPs, userId);
+            Object.assign(baseTools, nativeTools);
+          } catch (error) {
+            logger.error('Failed to inject native tools:', error);
+          }
+        }
+
+
+        const mcpTools = Object.keys(baseTools).length > 0
+          ? { toolChoice: 'auto' as const, tools: baseTools }
+          : {};
+
+        console.log('[CHAT_ROUTE] Calculated tools:', Object.keys(baseTools));
+
         let supabaseProjectData: any = undefined;
         const liveDeductionState = { deductedCents: 0 };
-        
+
         if (chatId) {
           try {
             supabaseProjectData = await SupabaseService.getOrCreateSupabaseProject(chatId);
@@ -435,7 +481,7 @@ THEN build the pixel-perfect clone.`;
         const options: StreamingOptions = {
           supabaseConnection: supabase,
           ...mcpTools,
-          maxSteps: maxLLMSteps,
+          maxSteps: Math.max(maxLLMSteps || 1, 10),
           experimental_continueSteps: true,
           onStepFinish: ({ toolCalls }) => {
             if (!mcpService) return;
@@ -450,17 +496,17 @@ THEN build the pixel-perfect clone.`;
               cumulativeUsage.completionTokens += usage.completionTokens || 0;
               cumulativeUsage.promptTokens += usage.promptTokens || 0;
               cumulativeUsage.totalTokens += usage.totalTokens || 0;
-              
+
               // Calculate cost in cents with markup
               const inputTokens = usage.promptTokens || 0;
               const outputTokens = usage.completionTokens || 0;
               const costCents = Math.ceil((inputTokens * 0.002) + (outputTokens * 0.006));
               const remainingCents = Math.max(0, costCents - liveDeductionState.deductedCents);
-              
+
               if (remainingCents > 0) {
                 try {
                   await db.update(users).set({ balance: sql`${users.balance} - ${remainingCents}` }).where(eq(users.id, userId));
-                } catch(e) {
+                } catch (e) {
                   logger.error('Failed to deduct credits:', e);
                 }
               }
@@ -506,10 +552,19 @@ THEN build the pixel-perfect clone.`;
           contextOptimization,
           contextFiles: filteredFiles,
           chatMode,
+          isSlidesMode,
+          isGameMode,
           designScheme,
           summary,
           messageSliceId,
           supabaseProjectData,
+          onImageGenerated: (filePath, base64) => {
+            dataStream.writeData({
+              type: 'file-write',
+              filePath,
+              content: base64,
+            });
+          }
         });
 
         let generatedChars = 0;
@@ -523,24 +578,24 @@ THEN build the pixel-perfect clone.`;
             // Track generated characters for live deduction
             if (part.type === 'text-delta' && typeof part.textDelta === 'string') {
               generatedChars += part.textDelta.length;
-              
+
               if (generatedChars >= lastDeductedChars + charsPerCent) {
                 lastDeductedChars = generatedChars;
                 liveDeductionState.deductedCents += 1;
-                
+
                 // Live deduct 1 cent
                 try {
                   const dbRes = await db.update(users)
                     .set({ balance: sql`${users.balance} - 1` })
                     .where(eq(users.id, userId))
                     .returning({ balance: users.balance });
-                  
+
                   if (dbRes[0] && dbRes[0].balance <= 0) {
                     logger.warn('User ran out of credits during stream');
                     // We can't cleanly stop the AI stream from here without a complex abort controller,
                     // but we can at least stop recording deductions, and the next request will be blocked.
                   }
-                } catch(e) {
+                } catch (e) {
                   // Ignore DB errors in rapid stream to avoid breaking
                 }
               }
@@ -550,6 +605,14 @@ THEN build the pixel-perfect clone.`;
               const error: any = part.error;
               logger.error('Streaming error:', error);
               streamRecovery.stop();
+
+              dataStream.writeData({
+                type: 'progress',
+                label: 'response',
+                status: 'error',
+                order: progressCounter++,
+                message: `Error: ${error.message || 'Stream crashed'}`,
+              } as ProgressAnnotation);
 
               // Enhanced error handling for common streaming issues
               if (error.message?.includes('Invalid JSON response')) {

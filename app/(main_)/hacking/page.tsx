@@ -13,8 +13,7 @@ export default function HackingPage() {
 
   if (loading) {
     return (
-      <div className="flex flex-col h-full w-full bg-falbor-elements-background-depth-1">
-        <BackgroundRays />
+      <div className="flex flex-col h-full w-full bg-[#F7F6F2] dark:bg-[#0D0D0D]">
         <Header />
       </div>
     );
@@ -26,8 +25,7 @@ export default function HackingPage() {
   }
 
   return (
-    <div className="flex flex-col h-full w-full bg-falbor-elements-background-depth-1">
-      <BackgroundRays />
+    <div className="flex flex-col h-full w-full bg-[#F7F6F2]dark:bg-[#0D0D0D]">
       <Header />
       <ClientOnly fallback={<HackingBaseChat />}>
         {() => <HackingChat />}

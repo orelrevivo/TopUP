@@ -9,6 +9,7 @@ import type { TabType } from '~/components/@settings/core/types';
 
 export const settingsOpenStore = atom(false);
 export const settingsTabStore = atom<TabType>('settings');
+export const blinkPricingStore = atom(false);
 
 export interface Shortcut {
   key: string;
@@ -429,3 +430,14 @@ export const useSettingsStore = create<SettingsStore>((set) => ({
     set({ selectedTab: tab });
   },
 }));
+
+export const applyDesignSchemeStore = atom<boolean>(
+  typeof window !== 'undefined' ? localStorage.getItem('applyDesignScheme') === 'true' : false,
+);
+
+export const updateApplyDesignScheme = (enabled: boolean) => {
+  applyDesignSchemeStore.set(enabled);
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('applyDesignScheme', String(enabled));
+  }
+};

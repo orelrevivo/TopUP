@@ -4,6 +4,7 @@ import { toast } from 'react-toastify';
 import * as Popover from '@radix-ui/react-popover';
 import { IconButton } from '~/components/ui/IconButton';
 import { ImportFolderButton } from '~/components/chat/ImportFolderButton';
+import { workbenchStore } from '~/lib/stores/workbench';
 
 type ChatData = {
   messages?: Message[]; // Standard Falbor format
@@ -87,6 +88,29 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
             </button>
 
             <ImportFolderButton importChat={importChat} asMenuItem />
+
+            <button
+              disabled
+              className="flex items-center justify-between w-full px-3 py-2 text-sm text-left opacity-50 cursor-not-allowed"
+            >
+              <div className="flex items-center gap-2 text-falbor-elements-textPrimary">
+                <div className="i-ph:copy text-xl text-falbor-elements-textSecondary"></div>
+                <span>Clone website</span>
+              </div>
+              <span className="text-[10px] bg-falbor-elements-background-depth-3 text-falbor-elements-textSecondary px-1.5 py-0.5 rounded-full font-medium">Soon</span>
+            </button>
+
+            <button
+              className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors text-falbor-elements-textPrimary"
+              onClick={() => {
+                workbenchStore.isGameMode.set(true);
+                // Also focus the input if possible, but here we don't have textareaRef.
+                // It will just activate the mode.
+              }}
+            >
+              <div className="i-ph:game-controller text-xl text-falbor-elements-textSecondary"></div>
+              <span>2D Game</span>
+            </button>
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>

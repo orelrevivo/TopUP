@@ -5,38 +5,21 @@ const ThoughtBox = ({ title, children }: PropsWithChildren<{ title: string }>) =
   const [isExpanded, setIsExpanded] = useState(false);
 
   return (
-    <div
-      onClick={() => setIsExpanded(!isExpanded)}
-      className={`
-        bg-falbor-elements-background-depth-2
-        shadow-md 
-        rounded-lg 
-        cursor-pointer 
-        transition-all 
-        duration-300
-        ${isExpanded ? 'max-h-96' : 'max-h-13'}
-        overflow-auto
-        border border-falbor-elements-borderColor
-      `}
-    >
-      <div className="p-4 flex items-center gap-4 rounded-lg  text-falbor-elements-textSecondary font-medium leading-5 text-sm  border border-falbor-elements-borderColor">
-        <div className="i-ph:brain-thin text-2xl" />
-        <div className="div">
-          <span> {title}</span>{' '}
-          {!isExpanded && <span className="text-falbor-elements-textTertiary"> - Click to expand</span>}
-        </div>
-      </div>
-      <div
-        className={`
-        transition-opacity 
-        duration-300
-        p-4 
-        rounded-lg 
-        ${isExpanded ? 'opacity-100' : 'opacity-0'}
-      `}
+    <div className="mb-3 border border-falbor-elements-borderColor rounded-lg bg-falbor-elements-background-depth-2 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full p-3 flex items-center gap-3 text-left text-falbor-elements-textSecondary hover:bg-falbor-elements-background-depth-3 transition-colors duration-150"
       >
-        {children}
-      </div>
+        <div className="i-ph:brain-thin text-xl shrink-0" />
+        <span className="font-medium text-sm flex-1">{title}</span>
+        <div className={`i-ph:caret-down text-sm transition-transform duration-150 ${isExpanded ? 'rotate-180' : ''}`} />
+      </button>
+      {isExpanded && (
+        <div className="px-4 pb-4 pt-1 text-sm text-falbor-elements-textSecondary border-t border-falbor-elements-borderColor">
+          {children}
+        </div>
+      )}
     </div>
   );
 };

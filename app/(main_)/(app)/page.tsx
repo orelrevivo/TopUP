@@ -24,8 +24,8 @@ export default function Page() {
   if (loading) {
     return (
       <div
-        className="flex flex-col h-full w-full relative"
-        style={{ backgroundColor: isChatIdPage ? '#F7FAFB dark:bg-[#080808]' : undefined }}
+        className={`flex flex-col h-full w-full relative ${isChatIdPage ? 'bg-[#F7FAFB] dark:bg-[#080808]' : ''
+          }`}
       >
         {!isChatIdPage && <BackgroundRays key={pathname} />}
         <Header />
@@ -38,7 +38,6 @@ export default function Page() {
       <div className="absolute inset-0 overflow-y-auto overflow-x-hidden bg-white dark:bg-gray-950">
         <ThemeHandler force="light" />
         <LandingScrollHandler />
-
         {/* Global Sticky Navbar */}
         <div className="sticky top-0 left-0 right-0 w-full z-[100] bg-white/80 backdrop-blur-md">
           <DefaultDemo />
@@ -46,10 +45,8 @@ export default function Page() {
 
         {/* Hero Section */}
         <div className="sticky top-0 w-full h-screen flex flex-col items-center justify-center z-10 overflow-hidden">
-
           <div className="relative z-10 w-full max-w-5xl px-4 flex flex-col items-center justify-center border-l border-r border-zinc-200 h-full">
             {/* Background Video (Muted, Looped, Behind elements, Constrained to this column) */}
-
             <div
               className="pointer-events-none absolute inset-0 w-full h-full z-0"
               style={{
@@ -78,15 +75,14 @@ export default function Page() {
             <StartFreeSection />
           </div>
         </div>
-
       </div>
     );
   }
 
   return (
     <div
-      className="flex flex-col h-full w-full relative"
-      style={{ backgroundColor: isChatIdPage ? '#F7FAFB dark:bg-[#080808]' : undefined }}
+      className={`flex flex-col h-full w-full relative ${isChatIdPage ? 'bg-[#f0eded5c] dark:bg-[#080808]' : ''
+        }`}
     >
       {!isChatIdPage && <BackgroundRays key={pathname} />}
       <Header />

@@ -2,13 +2,14 @@ import React from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import { ClientOnly } from '~/components/ui/ClientOnly';
 import { classNames } from '~/utils/classNames';
-import { SendButton } from '~/components/chat/SendButton.client';
+import { SendButton } from './SendButton.client';
 import { IconButton } from '~/components/ui/IconButton';
 import { toast } from 'react-toastify';
 import { SpeechRecognitionButton } from '~/components/chat/SpeechRecognition';
 import { ScreenshotStateManager } from '~/components/chat/ScreenshotStateManager';
 import styles from '~/components/chat/BaseChat.module.scss';
 import { SkillsDialog } from '~/components/skills/SkillsDialog';
+import { workbenchStore } from '~/lib/stores/workbench';
 
 interface HackingChatBoxProps {
   isModelSettingsCollapsed: boolean;
@@ -33,7 +34,21 @@ interface HackingChatBoxProps {
   handleStop?: (() => void) | undefined;
   enhancingPrompt?: boolean | undefined;
   enhancePrompt?: (() => void) | undefined;
+  exportChat?: () => void;
+  qrModalOpen?: boolean;
+  setQrModalOpen?: (open: boolean) => void;
+  chatMode?: 'discuss' | 'build';
+  setChatMode?: (mode: 'discuss' | 'build') => void;
+  designScheme?: any;
+  setDesignScheme?: (scheme: any) => void;
+  selectedElement?: any;
+  setSelectedElement?: (element: any) => void;
+  cloneUrl?: string | null;
+  setCloneUrl?: (url: string | null) => void;
+  onWebSearchResult?: (result: string) => void;
 }
+
+export const ENABLE_SENDING = true; // Toggle this to true to enable sending for everyone
 
 export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
   const hasFiles = props.uploadedFiles.length > 0;
@@ -52,35 +67,43 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
         )}
       </ClientOnly>
 
-      {/* Outer wrapper — same as original ChatBox dark mode */}
-      <div className={classNames('rounded-lg', { 'p-1.5 bg-[#E3E3E3] dark:bg-[#171717]': !props.chatStarted })}>
-        <div className="relative bg-falbor-elements-background-depth-2 dark:bg-[#141414] backdrop-blur border border-[#BDBDBD] dark:border-[#353538] shadow-md rounded-lg">
-          <svg className={classNames(styles.PromptEffectContainer)}>
-            <defs>
-              <linearGradient
-                id="hacking-line-gradient"
-                x1="20%"
-                y1="0%"
-                x2="-14%"
-                y2="10%"
-                gradientUnits="userSpaceOnUse"
-                gradientTransform="rotate(-45)"
-              >
-                <stop offset="0%" stopColor="#B12B06" stopOpacity="0%"></stop>
-                <stop offset="40%" stopColor="#B12B06" stopOpacity="80%"></stop>
-                <stop offset="50%" stopColor="#B12B06" stopOpacity="80%"></stop>
-                <stop offset="100%" stopColor="#B12B06" stopOpacity="0%"></stop>
-              </linearGradient>
-              <linearGradient id="hacking-shine-gradient">
-                <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
-                <stop offset="40%" stopColor="#ffffff" stopOpacity="80%"></stop>
-                <stop offset="50%" stopColor="#ffffff" stopOpacity="80%"></stop>
-                <stop offset="100%" stopColor="white" stopOpacity="0%"></stop>
-              </linearGradient>
-            </defs>
-            <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
-            <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
-          </svg>
+      {/* Outer wrapper */}
+      <div className={classNames('rounded-xl transition-all', {
+        'p-2': !props.chatStarted,
+        'p-1.5 bg-[#E3E3E3] dark:bg-[#171717]': props.chatStarted
+      })}>
+        <div className={classNames("relative transition-all rounded-xl", {
+          "bg-white border border-[#E5E5E5] shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:bg-[#111114] dark:border-[#222222]": !props.chatStarted,
+          "bg-falbor-elements-background-depth-2 dark:bg-[#141414] backdrop-blur border border-[#BDBDBD] dark:border-[#353538] shadow-md": props.chatStarted
+        })}>
+          {props.chatStarted && (
+            <svg className={classNames(styles.PromptEffectContainer)}>
+              <defs>
+                <linearGradient
+                  id="hacking-line-gradient"
+                  x1="20%"
+                  y1="0%"
+                  x2="-14%"
+                  y2="10%"
+                  gradientUnits="userSpaceOnUse"
+                  gradientTransform="rotate(-45)"
+                >
+                  <stop offset="0%" stopColor="#B12B06" stopOpacity="0%"></stop>
+                  <stop offset="40%" stopColor="#B12B06" stopOpacity="80%"></stop>
+                  <stop offset="50%" stopColor="#B12B06" stopOpacity="80%"></stop>
+                  <stop offset="100%" stopColor="#B12B06" stopOpacity="0%"></stop>
+                </linearGradient>
+                <linearGradient id="hacking-shine-gradient">
+                  <stop offset="0%" stopColor="white" stopOpacity="0%"></stop>
+                  <stop offset="40%" stopColor="#ffffff" stopOpacity="80%"></stop>
+                  <stop offset="50%" stopColor="#ffffff" stopOpacity="80%"></stop>
+                  <stop offset="100%" stopColor="white" stopOpacity="0%"></stop>
+                </linearGradient>
+              </defs>
+              <rect className={classNames(styles.PromptEffectLine)} pathLength="100" strokeLinecap="round"></rect>
+              <rect className={classNames(styles.PromptShine)} x="48" y="24" width="70" height="1"></rect>
+            </svg>
+          )}
 
           {/* File previews */}
           {hasFiles && (
@@ -113,11 +136,11 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
           <textarea
             ref={props.textareaRef}
             className={classNames(
-              'w-full pl-4 pt-4 pr-16 outline-none resize-none',
+              'w-full pl-4 pt-4 pr-16 resize-none',
               'text-falbor-elements-textPrimary placeholder-falbor-elements-textTertiary',
               'bg-transparent text-sm',
               'transition-all duration-200',
-              'hover:border-falbor-elements-focus',
+              'border-none focus:border-transparent focus:ring-0 focus:outline-none !outline-none !ring-0 !shadow-none',
             )}
             onDragEnter={(e) => e.preventDefault()}
             onDragOver={(e) => e.preventDefault()}
@@ -145,8 +168,14 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
                   props.handleStop?.();
                   return;
                 }
-                if (event.nativeEvent.isComposing) return;
-                props.handleSendMessage?.(event);
+
+                if (!ENABLE_SENDING) {
+                  return;
+                }
+
+                if (props.input.trim().length > 0 || hasFiles) {
+                  props.handleSendMessage?.(event);
+                }
               }
             }}
             value={props.input}
@@ -156,7 +185,7 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
               minHeight: props.TEXTAREA_MIN_HEIGHT,
               maxHeight: props.TEXTAREA_MAX_HEIGHT,
             }}
-            placeholder="How can Falbor help you today?"
+            placeholder={props.chatStarted ? "How can Falbor help you today?" : "Give your Security agent a task to do..."}
             translate="no"
           />
 
@@ -164,9 +193,10 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
           <ClientOnly>
             {() => (
               <SendButton
-                show={props.input.length > 0 || props.isStreaming || props.uploadedFiles.length > 0}
+                show={props.input.length > 0 || props.isStreaming || hasFiles}
                 isStreaming={props.isStreaming}
-                disabled={false}
+                disabled={!props.input.length && !hasFiles}
+                isLimited={!ENABLE_SENDING}
                 onClick={(event) => {
                   if (props.isStreaming) {
                     props.handleStop?.();
@@ -188,9 +218,9 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
                 <Popover.Trigger asChild>
                   <IconButton
                     title="More actions"
-                    className="!rounded-full transition-all border border-falbor-elements-borderColor"
+                    className="!rounded-full transition-all border border-transparent hover:bg-black/5 dark:hover:bg-white/10"
                   >
-                    <div className="i-ph:plus text-xl" />
+                    <div className="i-ph:plus-bold text-xl text-black dark:text-white" />
                   </IconButton>
                 </Popover.Trigger>
                 <Popover.Portal>
@@ -244,6 +274,20 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
                 onStop={props.stopListening}
                 disabled={props.isStreaming}
               />
+
+              {/* Live Browser Toggle - ONLY show if chat has started */}
+              {props.chatStarted && (
+                <IconButton
+                  title="Live Browser View"
+                  className="transition-all"
+                  onClick={() => {
+                    workbenchStore.currentView.set('browser');
+                    workbenchStore.showWorkbench.set(true);
+                  }}
+                >
+                  <div className="i-ph:globe-hemisphere-west text-xl text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary" />
+                </IconButton>
+              )}
             </div>
 
             {/* Shift+Enter hint */}

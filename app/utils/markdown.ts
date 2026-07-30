@@ -27,6 +27,7 @@ export const allowedHTMLElements = [
   'h6',
   'hr',
   'i',
+  'img',
   'ins',
   'kbd',
   'li',
@@ -56,27 +57,12 @@ export const allowedHTMLElements = [
   'ul',
   'var',
   'think',
+  'plan',
   'header',
 ];
 
-// Add custom rehype plugin
-function remarkThinkRawContent() {
-  return (tree: any) => {
-    visit(tree, (node: any) => {
-      if (node.type === 'html' && node.value && node.value.startsWith('<think>')) {
-        const cleanedContent = node.value.slice(7);
-        node.value = `<div class="__falborThought__">${cleanedContent}`;
 
-        return;
-      }
 
-      if (node.type === 'html' && node.value && node.value.startsWith('</think>')) {
-        const cleanedContent = node.value.slice(8);
-        node.value = `</div>${cleanedContent}`;
-      }
-    });
-  };
-}
 
 const rehypeSanitizeOptions: RehypeSanitizeOptions = {
   ...defaultSchema,
@@ -86,9 +72,17 @@ const rehypeSanitizeOptions: RehypeSanitizeOptions = {
     div: [
       ...(defaultSchema.attributes?.div ?? []),
       'data*',
-      ['className', '__falborArtifact__', '__falborThought__', '__falborQuickAction', '__falborSelectedElement__'],
+      ['className', '__falborArtifact__', '__falborThought__', '__falborPlan__', '__falborQuickAction', '__falborSelectedElement__', '__falborScreenshot__'],
 
       // ['className', '__falborThought__']
+    ],
+    img: [
+      ...(defaultSchema.attributes?.img ?? []),
+      'src',
+      'alt',
+      'title',
+      'width',
+      'height'
     ],
     button: [
       ...(defaultSchema.attributes?.button ?? []),
@@ -98,6 +92,11 @@ const rehypeSanitizeOptions: RehypeSanitizeOptions = {
       'name',
       'value',
       ['className', '__falborArtifact__', '__falborThought__', '__falborQuickAction'],
+    ],
+    span: [
+      ...(defaultSchema.attributes?.span ?? []),
+      'data*',
+      ['className', '__falborConnector__'],
     ],
   },
   strip: [],
@@ -109,8 +108,6 @@ export function remarkPlugins(limitedMarkdown: boolean) {
   if (limitedMarkdown) {
     plugins.unshift(limitedMarkdownPlugin);
   }
-
-  plugins.unshift(remarkThinkRawContent);
 
   return plugins;
 }

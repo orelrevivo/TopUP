@@ -67,6 +67,10 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const [iframeUrl, setIframeUrl] = useState<string | undefined>();
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const isInspectorMode = useStore(workbenchStore.isInspectorMode);
+  const isSlidesMode = useStore(workbenchStore.isSlidesMode);
+  const [slidesState, setSlidesState] = useState({ currentSlide: 0, totalSlides: 0, slides: [] as {title: string}[] });
+  const [isGridMode, setIsGridMode] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDeviceModeOn, setIsDeviceModeOn] = useState(false);
   const [widthPercent, setWidthPercent] = useState<number>(37.5);
   const [currentWidth, setCurrentWidth] = useState<number>(0);
@@ -638,6 +642,12 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         navigator.clipboard.writeText(element.displayText).then(() => {
           setSelectedElement?.(element);
         });
+      } else if (event.data.type === 'SLIDES_STATE') {
+        setSlidesState({
+          currentSlide: event.data.currentSlide || 0,
+          totalSlides: event.data.totalSlides || 0,
+          slides: event.data.slides || [],
+        });
       }
     };
 
@@ -1028,6 +1038,68 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
               <ResizeHandle side="left" />
               <ResizeHandle side="right" />
             </>
+          )}
+
+          {isSlidesMode && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-falbor-elements-background-depth-2 px-6 py-3 rounded-full shadow-2xl border border-falbor-elements-borderColor z-[100] backdrop-blur-md bg-opacity-80">
+              <IconButton 
+                icon="i-ph:list" 
+                title="Toggle Sidebar" 
+                onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                className={isSidebarOpen ? 'text-falbor-elements-item-contentAccent' : ''}
+              />
+              <IconButton 
+                icon="i-ph:squares-four" 
+                title="Grid View" 
+                onClick={() => {
+                  setIsGridMode(!isGridMode);
+                  iframeRef.current?.contentWindow?.postMessage({ type: 'SLIDE_TOGGLE_GRID' }, '*');
+                }}
+                className={isGridMode ? 'text-falbor-elements-item-contentAccent' : ''}
+              />
+              
+              <div className="w-px h-6 bg-falbor-elements-borderColor mx-2" />
+              
+              <IconButton 
+                icon="i-ph:caret-left" 
+                title="Previous Slide" 
+                onClick={() => iframeRef.current?.contentWindow?.postMessage({ type: 'SLIDE_PREV' }, '*')}
+                disabled={slidesState.currentSlide <= 0}
+              />
+              
+              <div className="text-sm font-medium tabular-nums min-w-[3rem] text-center">
+                {slidesState.totalSlides > 0 ? `${slidesState.currentSlide + 1} / ${slidesState.totalSlides}` : '...'}
+              </div>
+              
+              <IconButton 
+                icon="i-ph:caret-right" 
+                title="Next Slide" 
+                onClick={() => iframeRef.current?.contentWindow?.postMessage({ type: 'SLIDE_NEXT' }, '*')}
+                disabled={slidesState.currentSlide >= slidesState.totalSlides - 1 && slidesState.totalSlides > 0}
+              />
+            </div>
+          )}
+
+          {isSlidesMode && isSidebarOpen && (
+            <div className="absolute left-0 top-0 bottom-0 w-64 bg-falbor-elements-background-depth-2 border-r border-falbor-elements-borderColor shadow-2xl z-[90] flex flex-col backdrop-blur-md bg-opacity-95 overflow-hidden">
+              <div className="p-4 border-b border-falbor-elements-borderColor font-medium flex justify-between items-center">
+                <span>Slides</span>
+                <IconButton icon="i-ph:x" onClick={() => setIsSidebarOpen(false)} />
+              </div>
+              <div className="flex-1 overflow-y-auto p-2">
+                {slidesState.slides.length > 0 ? slidesState.slides.map((slide, idx) => (
+                  <button
+                    key={idx}
+                    className={`w-full text-left px-3 py-2 text-sm rounded-md mb-1 transition-colors ${idx === slidesState.currentSlide ? 'bg-falbor-elements-item-backgroundAccent text-falbor-elements-item-contentAccent' : 'hover:bg-falbor-elements-background-depth-3'}`}
+                    onClick={() => iframeRef.current?.contentWindow?.postMessage({ type: 'SLIDE_GOTO', index: idx }, '*')}
+                  >
+                    {idx + 1}. {slide.title || `Slide ${idx + 1}`}
+                  </button>
+                )) : (
+                  <div className="text-sm text-falbor-elements-textTertiary text-center mt-4">Waiting for presentation...</div>
+                )}
+              </div>
+            </div>
           )}
         </div>
       </div>

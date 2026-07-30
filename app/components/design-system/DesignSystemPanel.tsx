@@ -6,6 +6,8 @@ import { TypographyTab } from './tabs/TypographyTab';
 import { LayoutTab } from './tabs/LayoutTab';
 import { DesignTab } from './tabs/DesignTab';
 import { ImageTab } from './tabs/ImageTab';
+import { Button, IconButton } from '../ui';
+import { classNames } from '~/utils/classNames';
 
 interface DesignSystemPanelProps {
   selectedElement: ElementInfo;
@@ -89,16 +91,16 @@ export const DesignSystemPanel: React.FC<DesignSystemPanelProps> = ({
       reader.onload = async (event) => {
         const wc = await webcontainer;
         const uploadDir = 'public/uploads';
-        
-        try { await wc.fs.mkdir('public'); } catch (e) {} 
-        try { await wc.fs.mkdir(uploadDir); } catch (e) {}
+
+        try { await wc.fs.mkdir('public'); } catch (e) { }
+        try { await wc.fs.mkdir(uploadDir); } catch (e) { }
 
         const fileName = `${Date.now()}_${file.name.replace(/\s+/g, '-')}`;
         const filePath = `${uploadDir}/${fileName}`;
-        
+
         const arrayBuffer = await file.arrayBuffer();
         await wc.fs.writeFile(filePath, new Uint8Array(arrayBuffer));
-        
+
         const publicPath = `/uploads/${fileName}`;
         handleSrcChange(publicPath);
         setIsUploading(false);
@@ -111,15 +113,20 @@ export const DesignSystemPanel: React.FC<DesignSystemPanelProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full w-full bg-falbor-elements-background-depth-1 dark:bg-[#1E1E21] text-falbor-elements-textPrimary rounded-lg overflow-hidden border border-[#BDBDBD] dark:border-[#353538] shadow-2xl">
-      <div className="flex items-center justify-between p-4 border-b border-falbor-elements-borderColor">
+    <div className="flex mb-2 flex-col h-[75.3vh]
+     w-full bg-falbor-elements-background-depth-1 
+     dark:bg-[#1E1E21] text-falbor-elements-textPrimary 
+     rounded-lg overflow-hidden border border-[#BDBDBD] 
+     dark:border-[#353538]">
+      <div className="flex items-center justify-between 
+      p-4 border-b border-falbor-elements-borderColor">
         <div className="flex items-center gap-3">
           <h2 className="text-lg font-semibold">Design System Editor</h2>
           <code className="bg-accent-500 rounded px-2 py-0.5 text-white text-xs lowercase">
             &lt;{selectedElement.tagName}&gt;
           </code>
         </div>
-        <button 
+        <button
           onClick={onClear}
           className="p-2 hover:bg-falbor-elements-background-depth-3 rounded-full transition-colors"
         >
@@ -152,7 +159,7 @@ export const DesignSystemPanel: React.FC<DesignSystemPanelProps> = ({
 
           {isImage && (
             <TabsContent value="image">
-              <ImageTab 
+              <ImageTab
                 src={src}
                 isUploading={isUploading}
                 styles={styles}
@@ -167,18 +174,22 @@ export const DesignSystemPanel: React.FC<DesignSystemPanelProps> = ({
       </div>
 
       <div className="p-4 border-t border-falbor-elements-borderColor flex justify-end gap-3 bg-falbor-elements-background-depth-2">
-        <button
+        <IconButton
           onClick={onClear}
-          className="px-6 py-2 rounded-lg font-medium text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 transition-colors"
+          className={classNames(
+            'px-3 text-sm bg-falbor-elements-item-backgroundDefault text-falbor-elements-item-contentDefault',
+          )}
         >
           Cancel
-        </button>
-        <button
+        </IconButton>
+        <IconButton
+          className={classNames(
+            'px-3 text-sm !bg-falbor-elements-item-backgroundAccent !text-falbor-elements-item-contentAccent',
+          )}
           onClick={handleSave}
-          className="px-6 py-2 rounded-lg font-medium bg-accent-500 text-white hover:bg-accent-600 transition-colors shadow-lg shadow-accent-500/20"
         >
           Save Changes
-        </button>
+        </IconButton>
       </div>
     </div>
   );

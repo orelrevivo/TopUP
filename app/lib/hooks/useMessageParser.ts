@@ -1,5 +1,5 @@
 import type { Message } from 'ai';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef } from 'react';
 import { EnhancedStreamingMessageParser } from '~/lib/runtime/enhanced-message-parser';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { createScopedLogger } from '~/utils/logger';
@@ -55,33 +55,39 @@ const extractTextContent = (message: Message) =>
     : message.content) || '';
 
 export function useMessageParser() {
-  const [parsedMessages, setParsedMessages] = useState<{ [key: number]: string }>({});
+  const [parsedMessages, setParsedMessages] = useState<{ [key: string]: string }>({});
+  const parsedMessagesRef = useRef<{ [key: string]: string }>({});
 
   const parseMessages = useCallback((messages: Message[], isLoading: boolean) => {
-    let reset = false;
+    let didGlobalReset = false;
 
-    if ((process.env.NODE_ENV === 'development') && !isLoading) {
-      reset = true;
-      messageParser.reset();
-    }
+    // Removed development-only global reset logic that was causing message truncation and flickering.
+    
+    let hasUpdates = false;
 
-    for (const [index, message] of messages.entries()) {
+    for (const message of messages) {
       if (message.role === 'assistant' || message.role === 'user') {
         const newParsedContent = messageParser.parse(message.id, extractTextContent(message));
-        
-        // If the parser had to reset internally (e.g. to wrap newly detected code blocks),
-        // it returns the FULL parsed string instead of just the diff. So we must replace instead of append.
-        const shouldReplace = reset || messageParser.wasReset;
-        
-        setParsedMessages((prevParsed) => ({
-          ...prevParsed,
-          [index]: !shouldReplace ? (prevParsed[index] || '') + newParsedContent : newParsedContent,
-        }));
+
+        // wasReset is true when the enhanced parser detected code blocks and re-parsed from scratch.
+        // In that case, newParsedContent is the full output and we must replace, not append.
+        const shouldReplace = messageParser.wasReset;
+
+        if (newParsedContent || shouldReplace) {
+          parsedMessagesRef.current[message.id] = !shouldReplace 
+            ? (parsedMessagesRef.current[message.id] || '') + newParsedContent 
+            : newParsedContent;
+          hasUpdates = true;
+        }
 
         if (!isLoading) {
           messageParser.complete(message.id);
         }
       }
+    }
+    
+    if (hasUpdates) {
+      setParsedMessages({ ...parsedMessagesRef.current });
     }
   }, []);
 

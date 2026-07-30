@@ -224,6 +224,14 @@ export const generatedImages = pgTable("generated_images", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const chatImages = pgTable("chat_images", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  chatId: text("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
+  filePath: text("file_path").notNull(),
+  base64Data: text("base64_data").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // ─── Hacking Section Tables ──────────────────────────────────────────────────
 // Mirrors chats / messages / chatSnapshots but stored in separate tables
 // so hacking history is completely isolated from the main website-builder chat.
@@ -257,3 +265,83 @@ export const hackingChatSnapshots = pgTable("hacking_chat_snapshots", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Stores screenshots taken by the AI browser agent in Neon.
+// Using text (base64) so no filesystem is needed — works in any deployment.
+export const hackingScreenshots = pgTable("hacking_screenshots", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  imageData: text("image_data").notNull(),  // base64-encoded PNG
+  sourceUrl: text("source_url"),            // the URL that was screenshotted
+  mimeType: text("mime_type").default("image/png").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// ─── Workflow Automation Tables ──────────────────────────────────────────────
+
+export const workflows = pgTable("workflows", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  chatId: text("chat_id").references(() => chats.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  status: text("status").default("draft").notNull(), // draft, published, archived
+  thumbnailUrl: text("thumbnail_url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const workflowVersions = pgTable("workflow_versions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workflowId: uuid("workflow_id").notNull().references(() => workflows.id, { onDelete: "cascade" }),
+  version: integer("version").notNull(),
+  nodes: jsonb("nodes").default("[]").notNull(),
+  edges: jsonb("edges").default("[]").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const workflowExecutions = pgTable("workflow_executions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workflowId: uuid("workflow_id").notNull().references(() => workflows.id, { onDelete: "cascade" }),
+  versionId: uuid("version_id").notNull().references(() => workflowVersions.id, { onDelete: "cascade" }),
+  status: text("status").notNull(), // pending, running, paused, completed, failed
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  errorLogs: text("error_logs"),
+  context: jsonb("context").default("{}"),
+  creditsUsed: integer("credits_used").default(0),
+});
+
+export const workflowExecutionLogs = pgTable("workflow_execution_logs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  executionId: uuid("execution_id").notNull().references(() => workflowExecutions.id, { onDelete: "cascade" }),
+  stepId: text("step_id").notNull(),
+  status: text("status").notNull(), // pending, success, failed
+  input: jsonb("input"),
+  output: jsonb("output"),
+  startedAt: timestamp("started_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+});
+
+export const workflowJobs = pgTable("workflow_jobs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  workflowId: uuid("workflow_id").notNull().references(() => workflows.id, { onDelete: "cascade" }),
+  executionId: uuid("execution_id").notNull().references(() => workflowExecutions.id, { onDelete: "cascade" }),
+  stepId: text("step_id").notNull(),
+  status: text("status").default("pending").notNull(), // pending, running, completed, failed
+  runAt: timestamp("run_at").defaultNow().notNull(),
+  retries: integer("retries").default(0).notNull(),
+  payload: jsonb("payload"),
+  error: text("error"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const mcpConnections = pgTable("mcp_connections", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  connectorId: text("connector_id").notNull(),
+  name: text("name").notNull(),
+  config: jsonb("config").default("{}"),
+  status: text("status").default("active"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});

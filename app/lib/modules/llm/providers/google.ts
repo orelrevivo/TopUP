@@ -33,6 +33,22 @@ export default class GoogleProvider extends BaseProvider {
       maxTokenAllowed: 1000000,
       maxCompletionTokens: 8192,
     },
+    // Gemini 3.6 Pro
+    {
+      name: 'gemini-3.6-pro',
+      label: 'Gemini 3.6 Pro',
+      provider: 'Google',
+      maxTokenAllowed: 2000000,
+      maxCompletionTokens: 8192,
+    },
+    // Gemini 3.6 Flash
+    {
+      name: 'gemini-3.6-flash',
+      label: 'Gemini 3.6 Flash',
+      provider: 'Google',
+      maxTokenAllowed: 1000000,
+      maxCompletionTokens: 8192,
+    },
   ];
 
   async getDynamicModels(

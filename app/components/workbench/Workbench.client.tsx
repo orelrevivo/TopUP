@@ -22,6 +22,7 @@ import { renderLogger } from '~/utils/logger';
 import { EditorPanel } from './EditorPanel';
 import { Preview } from './Preview';
 import { DatabaseView } from './DatabaseView';
+import { WorkflowView } from './workflows/WorkflowView';
 import useViewport from '~/lib/hooks';
 
 import { usePreviewStore } from '~/lib/stores/previews';
@@ -48,21 +49,30 @@ const sliderOptions: SliderOptions<WorkbenchViewType> = {
   left: {
     value: 'code',
     text: 'Code',
+    icon: 'i-ph:code',
   },
   middle: {
     value: 'diff',
     text: 'Diff',
+    icon: 'i-ph:git-diff',
   },
   right: {
     value: 'preview',
     text: 'Preview',
+    icon: 'i-ph:browser',
+  },
+  extra: {
+    value: 'workflow',
+    text: 'Workflow',
+    icon: 'i-ph:git-branch',
   },
   ...(hasSupabaseConfig && {
-    extra: {
+    extra2: {
       value: 'database',
       text: 'Database',
+      icon: 'i-ph:database',
     },
-  }),
+  } as any),
 };
 
 const workbenchVariants = {
@@ -310,7 +320,7 @@ export const Workbench = memo(
     const unsavedFiles = useStore(workbenchStore.unsavedFiles);
     const files = useStore(workbenchStore.files);
     const selectedView = useStore(workbenchStore.currentView);
-    const { showChat } = useStore(chatStore);
+    const { showChat, showHistory } = useStore(chatStore);
     const canHideChat = showWorkbench || !showChat;
 
     const isSmallViewport = useViewport(1024);
@@ -395,6 +405,11 @@ export const Workbench = memo(
                       }
                     }}
                   />
+                  <button
+                    className={`${showHistory ? 'i-ph:clock-counter-clockwise-fill' : 'i-ph:clock-counter-clockwise'} text-lg text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors mr-2`}
+                    onClick={() => chatStore.setKey('showHistory', !showHistory)}
+                    title="History"
+                  />
                   <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
                   <div className="ml-auto" />
                   {selectedView === 'code' && (
@@ -452,6 +467,12 @@ export const Workbench = memo(
                     animate={{ x: selectedView === 'database' ? '0%' : '100%' }}
                   >
                     <DatabaseView sendMessage={sendMessage} />
+                  </View>
+                  <View
+                    initial={{ x: '100%' }}
+                    animate={{ x: selectedView === 'workflow' ? '0%' : '100%' }}
+                  >
+                    <WorkflowView sendMessage={sendMessage} />
                   </View>
                 </div>
               </div>

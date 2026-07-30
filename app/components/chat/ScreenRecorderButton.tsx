@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IconButton } from '~/components/ui/IconButton';
+import { DropdownItem } from '~/components/ui/Dropdown';
 import { classNames } from '~/utils/classNames';
 import { useScreenRecorder } from '~/lib/hooks/useScreenRecorder';
 import { toast } from 'react-toastify';
@@ -58,19 +59,23 @@ export const ScreenRecorderButton: React.FC<ScreenRecorderButtonProps> = ({ onPr
   }, [errorMsg, dismissError]);
 
   return (
-    <div className="relative">
+    <>
       {asMenuItem ? (
-        <button
-          onClick={() => {
+        <DropdownItem
+          onSelect={(e) => {
+            if (disabled || status === 'processing' || status === 'testing') {
+              e.preventDefault();
+              return;
+            }
+            e.preventDefault();
             if (status === 'recording') {
               cancelRecording();
             } else {
               setShowMenu(!showMenu);
             }
           }}
-          disabled={disabled || status === 'processing' || status === 'testing'}
           className={classNames(
-            'flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors disabled:opacity-50 relative',
+            (disabled || status === 'processing' || status === 'testing') ? 'opacity-50' : '',
             (status === 'recording' || status === 'testing' || status === 'processing') ? 'text-red-500' : 'text-falbor-elements-textPrimary'
           )}
         >
@@ -82,7 +87,7 @@ export const ScreenRecorderButton: React.FC<ScreenRecorderButtonProps> = ({ onPr
             <div className={classNames(status === 'recording' ? "i-ph:stop-circle text-xl" : "i-ph:video-camera text-xl", (status !== 'recording') ? "text-falbor-elements-textSecondary" : "")} />
           )}
           <span>Screen Record</span>
-        </button>
+        </DropdownItem>
       ) : (
         <IconButton
           title="Screen Record for AI"
@@ -145,6 +150,6 @@ export const ScreenRecorderButton: React.FC<ScreenRecorderButtonProps> = ({ onPr
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 };

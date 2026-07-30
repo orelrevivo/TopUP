@@ -32,3 +32,4 @@ yarn-error.log*
 
 models/
 public/site/
+.env*

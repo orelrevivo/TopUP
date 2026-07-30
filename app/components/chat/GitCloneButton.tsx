@@ -181,10 +181,10 @@ ${escapeFalborTags(file.content)}
         )}
         disabled={!ready || loading}
       >
-        Import from github
         <div className="flex items-center gap-1">
-          <img className='w-7 h-7' src="/icons/github.svg" alt="" />
+          <img className='w-4 h-4 opacity-70' src="/icons/github-light.svg" alt="" />
         </div>
+        Import from github
       </Button>
 
       {/* Provider Selection Dialog */}

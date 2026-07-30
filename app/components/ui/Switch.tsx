@@ -6,11 +6,13 @@ interface SwitchProps {
   className?: string;
   checked?: boolean;
   onCheckedChange?: (event: boolean) => void;
+  disabled?: boolean;
 }
 
-export const Switch = memo(({ className, onCheckedChange, checked }: SwitchProps) => {
+export const Switch = memo(({ className, onCheckedChange, checked, disabled }: SwitchProps) => {
   return (
     <SwitchPrimitive.Root
+      disabled={disabled}
       className={classNames(
         'relative h-5 w-9 cursor-pointer rounded-full',
         'transition-colors duration-200 ease-in-out',

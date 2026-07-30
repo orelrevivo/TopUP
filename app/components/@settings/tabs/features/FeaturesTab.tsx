@@ -180,7 +180,16 @@ export default function FeaturesTab() {
         </div>
 
         <div className="bg-orange-50 dark:bg-orange-500/10 border-l-2 border-orange-500 p-4 rounded-sm text-sm text-orange-800 dark:text-orange-200">
-          Add-on features are only available on paid plans. <a href="#" className="text-blue-500 hover:underline">Upgrade</a> to a paid account to get access.
+          Some of the features available on paid plans.  <button 
+            className="text-blue-500 hover:underline"
+            onClick={() => {
+              import('~/lib/stores/settings').then(({ settingsTabStore, blinkPricingStore }) => {
+                settingsTabStore.set('pricing');
+                blinkPricingStore.set(true);
+                setTimeout(() => blinkPricingStore.set(false), 2000);
+              });
+            }}
+          >Upgrade</button> to a paid account to get access.
         </div>
 
         {/* Unified List Container */}
@@ -220,7 +229,7 @@ export default function FeaturesTab() {
               <div className="flex items-center gap-2">
                 <div className="i-ph:image text-xl text-purple-500" />
                 <h3 className="font-medium text-[15px]">Image Generation</h3>
-                <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium">Premium</span>
+                <span className="px-2 py-0.5 text-xs rounded-full bg-purple-500/10 text-purple-500 font-medium">Coming Soon</span>
               </div>
               <p className="text-sm text-falbor-elements-textSecondary leading-relaxed">
                 Generates images from text prompts within your conversation. Each image uses tokens from your allocation.{' '}
@@ -231,6 +240,7 @@ export default function FeaturesTab() {
               <Switch
                 checked={imageGenerationEnabled}
                 onCheckedChange={handleToggleImageGeneration}
+                disabled
               />
             </div>
           </div>

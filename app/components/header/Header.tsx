@@ -10,11 +10,12 @@ import { ChatDescription } from '~/lib/persistence/ChatDescription.client';
 import { AuthButtons } from '~/components/auth/AuthButtons';
 import { UserAvatar } from '~/components/auth/UserAvatar';
 import type { TabType } from '~/components/@settings/core/types';
-
 import { sidebarOpen, sidebarPinned } from '~/lib/stores/sidebar';
-
+import { usePathname } from 'next/navigation';
 import { useChatHistory } from '~/lib/persistence';
 import { ExportChatButton } from '~/components/chat/chatExportAndImport/ExportChatButton';
+import Link from 'next/link';
+import styles from './Header.module.scss';
 
 export function Header() {
   const { exportChat } = useChatHistory();
@@ -22,6 +23,9 @@ export function Header() {
 
   const isPinned = useStore(sidebarPinned);
   const isOpen = useStore(sidebarOpen);
+
+  const pathname = usePathname();
+  const isHacking = pathname?.startsWith('/hacking');
 
   const toggleSidebar = () => {
     if (chat.started) {
@@ -60,9 +64,9 @@ export function Header() {
             className="flex items-center gap-2 z-logo text-falbor-elements-textPrimary cursor-pointer"
             onClick={toggleSidebar}
           >
-            <a href="/" className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
-              <img src="/logo-light-styled.png" alt="logo" className="w-[130px] inline-block dark:hidden" />
-              <img src="/logo-dark-styled.png" alt="logo" className="w-[130px] inline-block hidden dark:block" />
+            <a href={isHacking ? "/hacking" : "/"} className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
+              <img src={isHacking ? "/hacking/logo-light-styled.png" : "/logo-light-styled.png"} alt="logo" className="w-[130px] inline-block dark:hidden" />
+              <img src={isHacking ? "/hacking/logo-dark-styled.png" : "/logo-dark-styled.png"} alt="logo" className="w-[130px] inline-block hidden dark:block" />
             </a>
           </div>
         )}
@@ -86,6 +90,9 @@ export function Header() {
           <ClientOnly>
             {() => (
               <div className="flex items-center gap-2">
+                <Link href="/hacking" className={styles.btn}>
+                  Agent <span className="text-xs opacity-70 border px-1 py-0 rounded-xl">soon</span>
+                </Link>
                 <AuthButtons />
                 <UserAvatar
                   onOpenProfile={() => handleOpenPanel('profile')}

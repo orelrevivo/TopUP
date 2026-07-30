@@ -19,6 +19,8 @@ import {
   imageGenerationStore,
   updateDynamicReasoning,
   updateImageGeneration,
+  applyDesignSchemeStore,
+  updateApplyDesignScheme,
 } from '~/lib/stores/settings';
 import { useCallback, useEffect, useState } from 'react';
 import Cookies from 'js-cookie';
@@ -70,6 +72,10 @@ export interface UseSettingsReturn {
   // Tab configuration
   tabConfiguration: TabWindowConfig;
   resetTabConfiguration: () => void;
+
+  // Design scheme
+  applyDesignScheme: boolean;
+  setApplyDesignScheme: (enabled: boolean) => void;
 }
 
 // Add interface to match ProviderSetting type
@@ -88,6 +94,7 @@ export function useSettings(): UseSettingsReturn {
   const contextOptimizationEnabled = useStore(enableContextOptimizationStore);
   const dynamicReasoningEnabled = useStore(dynamicReasoningStore);
   const imageGenerationEnabled = useStore(imageGenerationStore);
+  const applyDesignScheme = useStore(applyDesignSchemeStore);
   const tabConfiguration = useStore(tabConfigurationStore);
   const [settings, setSettings] = useState<Settings>(() => {
     const storedSettings = getLocalStorage('settings');
@@ -163,6 +170,11 @@ export function useSettings(): UseSettingsReturn {
     logStore.logSystem(`Image generation ${enabled ? 'enabled' : 'disabled'}`);
   }, []);
 
+  const setApplyDesignScheme = useCallback((enabled: boolean) => {
+    updateApplyDesignScheme(enabled);
+    logStore.logSystem(`Design Scheme ${enabled ? 'enabled' : 'disabled'}`);
+  }, []);
+
   const setTheme = useCallback(
     (theme: Settings['theme']) => {
       saveSettings({ theme });
@@ -228,5 +240,7 @@ export function useSettings(): UseSettingsReturn {
     settings,
     tabConfiguration,
     resetTabConfiguration: resetTabConfig,
+    applyDesignScheme,
+    setApplyDesignScheme,
   };
 }

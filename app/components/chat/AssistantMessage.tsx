@@ -84,6 +84,54 @@ function parseSkillUsages(content: string) {
     .replace(/<skill_usage\s+name="[^"]+"\s*\/>/g, '')
     .replace(/^\s+/, '');
 
+  // Strip leaked JSON tool calls at the beginning of the message (common with some models like DeepSeek)
+  let jsonStartIdx = -1;
+  let hasMarkdownCodeblock = false;
+  
+  if (cleanContent.startsWith('```json\n') || cleanContent.startsWith('```json\r\n') || cleanContent.startsWith('```\n') || cleanContent.startsWith('```\r\n')) {
+    jsonStartIdx = cleanContent.indexOf('{');
+    hasMarkdownCodeblock = true;
+  } else if (cleanContent.startsWith('{')) {
+    jsonStartIdx = 0;
+  }
+
+  if (jsonStartIdx !== -1 && jsonStartIdx < 20) {
+    let braceCount = 0;
+    let endIdx = -1;
+    for (let i = jsonStartIdx; i < cleanContent.length; i++) {
+      if (cleanContent[i] === '{') braceCount++;
+      if (cleanContent[i] === '}') braceCount--;
+      if (braceCount === 0) {
+        endIdx = i;
+        break;
+      }
+    }
+    
+    if (endIdx !== -1) {
+      let possibleJson = cleanContent.substring(jsonStartIdx, endIdx + 1);
+      try {
+        const parsed = JSON.parse(possibleJson);
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+          // If the JSON object contains typical tool arguments, strip it out to clean the UI
+          let isToolCallLeak = Object.keys(parsed).some(k => ['action', 'query', 'type', 'limit', 'mediaType', 'tool', 'args'].includes(k));
+          
+          if (isToolCallLeak) {
+            let fullMatchEnd = endIdx + 1;
+            if (hasMarkdownCodeblock) {
+              const codeblockEnd = cleanContent.indexOf('```', fullMatchEnd);
+              if (codeblockEnd !== -1) {
+                fullMatchEnd = codeblockEnd + 3;
+              }
+            }
+            cleanContent = cleanContent.substring(fullMatchEnd).replace(/^\s+/, '');
+          }
+        }
+      } catch (e) {
+        // Not valid JSON, ignore
+      }
+    }
+  }
+
   return { skills, cleanContent };
 }
 

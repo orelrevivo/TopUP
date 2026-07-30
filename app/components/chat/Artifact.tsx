@@ -60,25 +60,7 @@ export const Artifact = memo(({ artifactId, messageId, append }: ArtifactProps) 
     }
   }, [actions, allActionFinished]);
 
-  const hasAutoScanned = useRef(false);
-
-  useEffect(() => {
-    // NEVER auto-scan historical artifacts (loaded from history on page refresh).
-    // Only fire for artifacts that were generated live in this session.
-    if (isHistoricalArtifact.current) return;
-
-    if (allActionFinished && append && artifact.type !== 'bundled' && !hasAutoScanned.current) {
-      hasAutoScanned.current = true;
-      setTimeout(() => {
-        append({
-          role: 'user',
-          content: '[AUTOMATED SYSTEM CHECK] Code generation complete. Please verify your code line-by-line for any syntax errors, missing variables, or incomplete logic.\nCRITICAL RULE: If you find ANY errors, you MUST use the <falborAction type="file"> tags to rewrite the broken files entirely to fix them. DO NOT use shell commands like `ls` or `grep`. Just output the corrected files.\nIf there are NO errors, respond EXACTLY with "No errors found." and nothing else.',
-          id: Date.now().toString(),
-          annotations: ['hidden']
-        } as Message);
-      }, 1000);
-    }
-  }, [allActionFinished, append, artifact?.type]);
+  // The automated system check that caused infinite loops has been removed.
 
   // Determine the dynamic title based on state for bundled artifacts
   const dynamicTitle =

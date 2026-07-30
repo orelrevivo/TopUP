@@ -50,6 +50,16 @@ export default function NetlifyTab() {
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
   const [connectionTest, setConnectionTest] = useState<ConnectionTestResult | null>(null);
+  const [tier, setTier] = useState('free');
+
+  useEffect(() => {
+    fetch('/api/user/credits')
+      .then(r => r.ok ? r.json() : {})
+      .then((d: any) => {
+        if (d.subscriptionTier) setTier(d.subscriptionTier.toLowerCase());
+      })
+      .catch(() => { });
+  }, []);
 
   // Connection testing function
   const testConnection = async () => {
@@ -1309,8 +1319,11 @@ export default function NetlifyTab() {
               </div>
 
               <div>
-                <label className="block text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary mb-2">
+                <label className="flex items-center gap-2 text-sm text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary mb-2">
                   API Token
+                  {tier === 'free' && (
+                    <span className="px-2 py-0.5 text-[10px] rounded-full bg-purple-500/10 text-purple-500 font-medium">Premium</span>
+                  )}
                 </label>
                 <input
                   type="password"
@@ -1342,7 +1355,7 @@ export default function NetlifyTab() {
               <div className="flex items-center justify-between">
                 <button
                   onClick={handleConnect}
-                  disabled={isConnecting || !tokenInput}
+                  disabled={isConnecting || !tokenInput || tier === 'free'}
                   className={classNames(
                     'px-4 py-2 rounded-lg text-sm flex items-center gap-2',
                     'bg-[#303030] text-white',

@@ -130,7 +130,9 @@ export async function POST(request: Request, { params }: any) {
     for (const [filePath, content] of Object.entries(files)) {
       // Ensure file path starts with a forward slash
       const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
-      const hash = crypto.createHash('sha1').update(content).digest('hex');
+      const isBinary = /\.(png|jpg|jpeg|gif|webp|ico|bmp|mp3|mp4|wav|woff|woff2|ttf|eot)$/i.test(normalizedPath);
+      const contentToHash = isBinary ? Buffer.from(content as string, 'base64') : content;
+      const hash = crypto.createHash('sha1').update(contentToHash).digest('hex');
       fileDigests[normalizedPath] = hash;
     }
 
@@ -194,6 +196,9 @@ export async function POST(request: Request, { params }: any) {
           let uploadSuccess = false;
           let uploadRetries = 0;
 
+          const isBinary = /\.(png|jpg|jpeg|gif|webp|ico|bmp|mp3|mp4|wav|woff|woff2|ttf|eot)$/i.test(filePath);
+          const bodyContent = isBinary ? Buffer.from(content as string, 'base64') : content;
+
           while (!uploadSuccess && uploadRetries < 3) {
             try {
               const uploadResponse = await fetch(
@@ -204,7 +209,7 @@ export async function POST(request: Request, { params }: any) {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'application/octet-stream',
                   },
-                  body: content,
+                  body: bodyContent,
                 },
               );
 

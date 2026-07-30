@@ -40,9 +40,13 @@ import ViewErrorAlert from './ViewErrorAlert';
 import { DesignSystemPanel } from './DesignSystemPanel';
 import { useDesignSystem } from '~/lib/hooks/useDesignSystem';
 import { workbenchStore } from '~/lib/stores/workbench';
+import { useMCPStore } from '~/lib/stores/mcp';
 import { RainbowTextEffect } from '../ui/textUIrgb';
 import { TextShimmer } from '../ui/text-shimmer';
 import { FeedbackWidget } from '~/components/ui/FeedbackWidget';
+import { HistoryPanel } from './HistoryPanel';
+import { getImagesForChat, removeBackgroundFromBase64, saveImageToStore } from '~/lib/utils/imageStore';
+import { chatId } from '~/lib/persistence';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -158,6 +162,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const [transcript, setTranscript] = useState('');
     const [isModelLoading, setIsModelLoading] = useState<string | undefined>('all');
     const [progressAnnotations, setProgressAnnotations] = useState<ProgressAnnotation[]>([]);
+    const processedFiles = React.useRef(new Set<string>());
+    const currentChatId = useStore(chatId);
     const expoUrl = useStore(expoUrlAtom);
     const [qrModalOpen, setQrModalOpen] = useState(false);
     const [showTemplates, setShowTemplates] = useState(false);
@@ -172,10 +178,38 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     }, [expoUrl]);
 
     useEffect(() => {
-      import('~/lib/webcontainer').then(({ startWebContainer }) => {
+      import('~/lib/webcontainer').then(({ startWebContainer, webcontainer }) => {
         startWebContainer();
+        
+        // Restore persistent images on mount
+        if (currentChatId) {
+          getImagesForChat(currentChatId).then(images => {
+            if (images && images.length > 0) {
+              webcontainer.then(async (wc) => {
+                for (const img of images) {
+                  try {
+                    const pathParts = img.filePath.split('/');
+                    if (pathParts.length > 1) {
+                      pathParts.pop();
+                      const dir = pathParts.join('/');
+                      await wc.fs.mkdir(dir, { recursive: true });
+                    }
+                    const binaryString = atob(img.base64Data);
+                    const bytes = new Uint8Array(binaryString.length);
+                    for (let i = 0; i < binaryString.length; i++) {
+                        bytes[i] = binaryString.charCodeAt(i);
+                    }
+                    await wc.fs.writeFile(img.filePath, bytes);
+                  } catch (e) {
+                    console.error(`Failed to restore image ${img.filePath}`, e);
+                  }
+                }
+              });
+            }
+          });
+        }
       });
-    }, []);
+    }, [currentChatId]);
 
     useEffect(() => {
       if (data) {
@@ -183,6 +217,47 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           (x) => typeof x === 'object' && (x as any).type === 'progress',
         ) as ProgressAnnotation[];
         setProgressAnnotations(progressList);
+
+        const fileWrites = data.filter(
+          (x) => typeof x === 'object' && (x as any).type === 'file-write',
+        );
+        
+        fileWrites.forEach((item: any) => {
+          if (!processedFiles.current.has(item.filePath)) {
+            processedFiles.current.add(item.filePath);
+            import('~/lib/webcontainer').then(({ webcontainer }) => {
+              webcontainer.then(async (wc) => {
+                try {
+                  const pathParts = item.filePath.split('/');
+                  if (pathParts.length > 1) {
+                     pathParts.pop();
+                     const dir = pathParts.join('/');
+                     await wc.fs.mkdir(dir, { recursive: true });
+                  }
+                  
+                  const base64Data = item.content;
+                  // Remove background
+                  const processedBase64 = await removeBackgroundFromBase64(base64Data);
+
+                  const binaryString = atob(processedBase64);
+                  const bytes = new Uint8Array(binaryString.length);
+                  for (let i = 0; i < binaryString.length; i++) {
+                      bytes[i] = binaryString.charCodeAt(i);
+                  }
+                  await wc.fs.writeFile(item.filePath, bytes);
+                  console.log(`Successfully wrote generated image to ${item.filePath}`);
+
+                  // Save to indexedDB
+                  if (currentChatId) {
+                    await saveImageToStore(currentChatId, item.filePath, processedBase64);
+                  }
+                } catch (e) {
+                  console.error(`Failed to write image ${item.filePath}`, e);
+                }
+              });
+            });
+          }
+        });
       }
     }, [data]);
     useEffect(() => {
@@ -381,6 +456,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 <FeedbackWidget />
               </div>
             )}
+            <HistoryPanel messages={messages || []} />
             <StickToBottom
               data-scrollable="true"
               className={classNames('pt-2 px-2 sm:px-6 relative mr-10', {
@@ -526,21 +602,25 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                             Templates
                           </Button>
                           <Button
-                            disabled
-                            title="This feature is currently in building"
+                            title="Create a Presentation"
                             variant="default"
                             size="default"
+                            onClick={() => {
+                              workbenchStore.isSlidesMode.set(true);
+                              if (textareaRef?.current) {
+                                textareaRef.current.focus();
+                              }
+                            }}
                             className={classNames(
                               'gap-2 bg-falbor-elements-background-depth-1 w-fit rounded-md',
                               'text-[#444444] dark:text-falbor-elements-textPrimary',
                               'border border-falbor-elements-borderColor',
                               'h-10 px-4 py-2 min-w-[120px] justify-center',
-                              'transition-all duration-200 ease-in-out opacity-50 cursor-not-allowed font-medium'
+                              'transition-all duration-200 ease-in-out font-medium hover:bg-falbor-elements-background-depth-2'
                             )}
                           >
-                            <div className="i-ph:copy text-lg"></div>
-                            Clone website
-                            <span className="text-[10px] bg-falbor-elements-background-depth-3 text-falbor-elements-textSecondary px-1.5 py-0.5 rounded-full font-medium ml-1">Soon</span>
+                            <div className="i-ph:presentation-chart text-lg"></div>
+                            Slides
                           </Button>
                         </div>
                         {showTemplates && <StarterTemplates />}

@@ -120,7 +120,19 @@ export function useVercelDeploy() {
           const fullPath = path.join(dirPath, entry.name);
 
           if (entry.isFile()) {
-            const content = await container.fs.readFile(fullPath, 'utf-8');
+            const isBinary = /\.(png|jpg|jpeg|gif|webp|ico|bmp|mp3|mp4|wav|woff|woff2|ttf|eot)$/i.test(entry.name);
+            let content;
+            if (isBinary) {
+              const bytes = await container.fs.readFile(fullPath);
+              let binary = '';
+              const len = bytes.byteLength;
+              for (let i = 0; i < len; i++) {
+                  binary += String.fromCharCode(bytes[i]);
+              }
+              content = window.btoa(binary);
+            } else {
+              content = await container.fs.readFile(fullPath, 'utf-8');
+            }
 
             // Remove build path prefix from the path
             const deployPath = fullPath.replace(finalBuildPath, '');
@@ -147,7 +159,19 @@ export function useVercelDeploy() {
 
           if (entry.isFile()) {
             try {
-              const content = await container.fs.readFile(fullPath, 'utf-8');
+              const isBinary = /\.(png|jpg|jpeg|gif|webp|ico|bmp|mp3|mp4|wav|woff|woff2|ttf|eot)$/i.test(entry.name);
+              let content;
+              if (isBinary) {
+                const bytes = await container.fs.readFile(fullPath);
+                let binary = '';
+                const len = bytes.byteLength;
+                for (let i = 0; i < len; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                content = window.btoa(binary);
+              } else {
+                content = await container.fs.readFile(fullPath, 'utf-8');
+              }
 
               // Store with relative path from project root
               let relativePath = fullPath;

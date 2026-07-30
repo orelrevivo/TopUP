@@ -35,7 +35,7 @@ interface AssistantMessageProps {
   | (TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart | FileUIPart | StepStartUIPart)[]
   | undefined;
   addToolResult: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;
-  onNavigate?: (url: string) => void;
+  onNavigate?: (url: string, screenshot?: string) => void;
 }
 
 function openArtifactInWorkbench(filePath: string) {
@@ -116,6 +116,21 @@ function parseInternetSearches(content: string) {
   cleanContent = content.replace(/<internet_search\s+query="[^"]+">[\s\S]*?<\/internet_search>/g, '');
 
   return { searches, cleanContent };
+}
+
+function parseScreenshots(content: string) {
+  const screenshots: { url: string; title: string }[] = [];
+  let cleanContent = content;
+
+  const regex = /<screenshot\s+url="([^"]+)"\s*title="([^"]*)"\s*\/>/g;
+  let match: RegExpExecArray | null;
+  while ((match = regex.exec(content)) !== null) {
+    screenshots.push({ url: match[1], title: match[2] || 'Screenshot' });
+  }
+
+  cleanContent = content.replace(/<screenshot\s+url="[^"]+"\s*title="[^"]*"\s*\/>/g, '');
+
+  return { screenshots, cleanContent };
 }
 
 function InternetSearchInvocations({ searches }: { searches: { query: string, results: string }[] }) {
@@ -286,6 +301,113 @@ function SkillInvocations({ skills }: { skills: { name: string, text: string }[]
   );
 }
 
+function ScreenshotInvocations({ screenshots }: { screenshots: { url: string; title: string }[] }) {
+  const [showDetails, setShowDetails] = useState(false);
+  const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+
+  if (!screenshots || screenshots.length === 0) return null;
+
+  return (
+    <>
+      <div className="tool-invocation border border-falbor-elements-borderColor flex flex-col overflow-hidden rounded-lg w-full transition-border duration-150 mb-3 bg-falbor-elements-background-depth-1 mt-2">
+        <div className="flex">
+          <button
+            className="flex items-stretch bg-falbor-elements-background-depth-2 hover:bg-falbor-elements-artifacts-backgroundHover w-full overflow-hidden"
+            onClick={() => setShowDetails(!showDetails)}
+          >
+            <div className="p-2.5">
+              <div className="i-ph:camera text-xl text-falbor-elements-textSecondary"></div>
+            </div>
+            <div className="p-2.5 w-full text-left">
+              <div className="w-full text-falbor-elements-textPrimary font-medium leading-5 text-sm">
+                Screenshot Taken
+                <span className="w-full text-falbor-elements-textSecondary text-xs mt-0.5 block truncate">
+                  {screenshots.map(s => s.title).join(', ')}
+                </span>
+              </div>
+            </div>
+          </button>
+          <AnimatePresence>
+            <motion.button
+              initial={{ width: 0 }}
+              animate={{ width: 'auto' }}
+              exit={{ width: 0 }}
+              transition={{ duration: 0.15, ease: cubicEasingFn }}
+              className="bg-falbor-elements-artifacts-background hover:bg-falbor-elements-artifacts-backgroundHover"
+              onClick={() => setShowDetails(!showDetails)}
+            >
+              <div className="p-2">
+                <div
+                  className={`${showDetails ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'} text-xl text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors`}
+                ></div>
+              </div>
+            </motion.button>
+          </AnimatePresence>
+        </div>
+        <AnimatePresence>
+          {showDetails && (
+            <motion.div
+              className="details"
+              initial={{ height: 0 }}
+              animate={{ height: 'auto' }}
+              exit={{ height: '0px' }}
+              transition={{ duration: 0.15 }}
+            >
+              <div className="bg-falbor-elements-artifacts-borderColor h-[1px]" />
+              <div className="px-3 py-3 text-left bg-falbor-elements-background-depth-2 flex flex-col items-center">
+                {screenshots.map((s, index) => (
+                  <motion.div
+                    key={index}
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.2 }}
+                    className="w-full mb-3 last:mb-0"
+                  >
+                    <img 
+                      src={s.url} 
+                      alt={s.title} 
+                      className="w-full rounded-md cursor-pointer hover:opacity-90 transition-opacity border border-falbor-elements-borderColor shadow-sm"
+                      onClick={() => setFullscreenImage(s.url)}
+                    />
+                  </motion.div>
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      {/* Fullscreen Lightbox */}
+      <AnimatePresence>
+        {fullscreenImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 cursor-zoom-out"
+            onClick={() => setFullscreenImage(null)}
+          >
+            <motion.img
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+              src={fullscreenImage}
+              className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
+              onClick={(e) => e.stopPropagation()} // Let the user click the image itself without closing if they want to drag or just admire it
+            />
+            <button 
+              className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black transition-colors"
+              onClick={() => setFullscreenImage(null)}
+            >
+              <div className="i-ph:x-bold text-xl"></div>
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </>
+  );
+}
+
 export const HackingAssistantMessage = memo(
   ({
     content,
@@ -327,14 +449,16 @@ export const HackingAssistantMessage = memo(
     // NEW PARSER INTEGRATION
     const { navigations, cleanContent: contentWithoutNav } = parseBrowserNavigations(content);
     const { searches, cleanContent: contentWithoutSearches } = parseInternetSearches(contentWithoutNav);
-    const { skills, cleanContent } = parseSkillUsages(contentWithoutSearches);
+    const { skills, cleanContent: contentWithoutSkills } = parseSkillUsages(contentWithoutSearches);
+    const { screenshots, cleanContent } = parseScreenshots(contentWithoutSkills);
 
     // Notify parent about browser navigations
     useEffect(() => {
       if (navigations.length > 0 && onNavigate) {
-        onNavigate(navigations[navigations.length - 1]);
+        const lastScreenshot = screenshots.length > 0 ? screenshots[screenshots.length - 1].url : undefined;
+        onNavigate(navigations[navigations.length - 1], lastScreenshot);
       }
-    }, [navigations.join(','), onNavigate]);
+    }, [navigations.join(','), screenshots.map(s => s.url).join(','), onNavigate]);
 
     return (
       <div className="flex flex-col gap-3 items-center w-full">
@@ -385,6 +509,7 @@ export const HackingAssistantMessage = memo(
           
           {/* CUSTOM INTERNET SEARCH ACCORDION */}
           <InternetSearchInvocations searches={searches} />
+          <ScreenshotInvocations screenshots={screenshots} />
           
           <SkillInvocations skills={skills} />
           <Markdown append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html>

@@ -23,6 +23,17 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
+    const hostname = request.headers.get("host") || "";
+    const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
+
+    // Redirect falbor.xyz/hacking to hacking.falbor.xyz in production
+    if (!isLocalhost && pathname.startsWith("/hacking")) {
+      const newUrl = new URL(request.url);
+      newUrl.hostname = "hacking.falbor.xyz";
+      newUrl.pathname = pathname.replace(/^\/hacking/, "") || "/";
+      return NextResponse.redirect(newUrl);
+    }
+
     // Serve index.html implicitly for deployed sites
     if (pathname.startsWith('/site/')) {
       return NextResponse.rewrite(new URL(`${pathname === '/site/' ? pathname : pathname.replace(/\/$/, '')}/index.html`, request.url));
@@ -34,9 +45,20 @@ export async function middleware(request: NextRequest) {
 
     const sessionCookie = request.cookies.get(COOKIE_NAME);
 
+    const handleSuccess = () => {
+      const hostname = request.headers.get("host") || "";
+      const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
+
+      if (!isLocalhost && hostname === "hacking.falbor.xyz") {
+        const rewritePath = pathname === "/" ? "/hacking" : `/hacking${pathname}`;
+        return NextResponse.rewrite(new URL(rewritePath, request.url));
+      }
+      return NextResponse.next();
+    };
+
     if (!sessionCookie) {
       if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/")) {
-        return NextResponse.next();
+        return handleSuccess();
       }
       return NextResponse.redirect(new URL("/login", request.url));
     }
@@ -44,14 +66,14 @@ export async function middleware(request: NextRequest) {
     if (JWT_SECRET) {
       try {
         await jwtVerify(sessionCookie.value, JWT_SECRET);
-        return NextResponse.next();
+        return handleSuccess();
       } catch {
         // Token invalid — let API routes handle auth
       }
     }
 
     if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/")) {
-      return NextResponse.next();
+      return handleSuccess();
     }
     return NextResponse.redirect(new URL("/login", request.url));
   } catch {

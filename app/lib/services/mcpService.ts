@@ -454,4 +454,32 @@ export class MCPService {
   get toolsWithoutExecute() {
     return this._toolsWithoutExecute;
   }
+
+  getToolsForServers(serverNames: string[]): ToolSet {
+    if (!serverNames || serverNames.length === 0) {
+      return {};
+    }
+
+    const tools: ToolSet = {};
+    for (const [toolName, tool] of Object.entries(this._toolsWithoutExecute)) {
+      const serverName = this._toolNamesToServerNames.get(toolName);
+      if (serverName) {
+        // Allow exact matches or prefix matches (e.g. 'klipy' matches 'klipy-test')
+        const isMatch = serverNames.some(req => serverName === req || serverName.startsWith(`${req}-`));
+        if (isMatch) {
+          tools[toolName] = tool;
+        }
+      }
+    }
+
+    // Check if any requested servers had 0 tools
+    serverNames.forEach(reqServer => {
+      const hasTools = Object.keys(tools).some(t => this._toolNamesToServerNames.get(t) === reqServer);
+      if (!hasTools) {
+        console.error(`\n[MCP_ERROR] The AI requested tools for "${reqServer}", but no tools were found! Make sure the "${reqServer}" server is correctly configured in your MCP Settings (mcp.json) and is currently running.\n`);
+      }
+    });
+
+    return tools;
+  }
 }

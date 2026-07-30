@@ -8,6 +8,7 @@ type McpServerListProps = {
   checkingServers: boolean;
   onlyShowAvailableServers?: boolean;
   toggleServerExpanded: (serverName: string) => void;
+  renderAction?: (serverName: string, isAvailable: boolean) => React.ReactNode;
 };
 
 export default function McpServerList({
@@ -16,6 +17,7 @@ export default function McpServerList({
   checkingServers,
   onlyShowAvailableServers = false,
   toggleServerExpanded,
+  renderAction,
 }: McpServerListProps) {
   if (serverEntries.length === 0) {
     return <p className="text-sm text-falbor-elements-textSecondary">No MCP servers configured</p>;
@@ -58,7 +60,8 @@ export default function McpServerList({
                 </div>
               </div>
 
-              <div className="ml-2 flex-shrink-0">
+              <div className="ml-2 flex flex-shrink-0 items-center gap-2">
+                {renderAction && renderAction(serverName, isAvailable)}
                 {checkingServers ? (
                   <McpStatusBadge status="checking" />
                 ) : (

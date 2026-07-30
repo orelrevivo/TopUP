@@ -11,7 +11,7 @@ type MCPSettings = {
 };
 
 const defaultSettings = {
-  maxLLMSteps: 5,
+  maxLLMSteps: 10,
   mcpEnabled: false,
   mcpConfig: {
     mcpServers: {},
@@ -24,12 +24,15 @@ type Store = {
   serverTools: MCPServerTools;
   error: string | null;
   isUpdatingConfig: boolean;
+  selectedMCPs: string[];
 };
 
 type Actions = {
   initialize: () => Promise<void>;
   updateSettings: (settings: MCPSettings) => Promise<void>;
   checkServersAvailabilities: () => Promise<void>;
+  toggleSelectedMCP: (serverName: string) => void;
+  clearSelectedMCPs: () => void;
 };
 
 export const useMCPStore = create<Store & Actions>((set, get) => ({
@@ -38,6 +41,7 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
   serverTools: {},
   error: null,
   isUpdatingConfig: false,
+  selectedMCPs: [],
   initialize: async () => {
     if (get().isInitialized) {
       return;
@@ -97,6 +101,19 @@ export const useMCPStore = create<Store & Actions>((set, get) => ({
     const serverTools = (await response.json()) as MCPServerTools;
 
     set(() => ({ serverTools }));
+  },
+  toggleSelectedMCP: (serverName: string) => {
+    set((state) => {
+      const isSelected = state.selectedMCPs.includes(serverName);
+      if (isSelected) {
+        return { selectedMCPs: state.selectedMCPs.filter((name) => name !== serverName) };
+      } else {
+        return { selectedMCPs: [...state.selectedMCPs, serverName] };
+      }
+    });
+  },
+  clearSelectedMCPs: () => {
+    set({ selectedMCPs: [] });
   },
 }));
 

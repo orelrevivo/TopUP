@@ -1,4 +1,5 @@
-import { convertToCoreMessages, streamText as _streamText, type Message } from 'ai';
+import { convertToCoreMessages, streamText as _streamText, wrapLanguageModel, type Message, tool } from 'ai';
+import { z } from 'zod';
 import { MAX_TOKENS, PROVIDER_COMPLETION_LIMITS, isReasoningModel, type FileMap } from './constants';
 import { getSystemPrompt } from '~/lib/common/prompts/prompts';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, MODIFICATIONS_TAG_NAME, PROVIDER_LIST, WORK_DIR } from '~/utils/constants';
@@ -47,8 +48,14 @@ function sanitizeText(text: string | any[] | undefined | null): any {
   if (!text) return text || '';
   if (Array.isArray(text)) {
     return text.map((item) => {
-      if (item.type === 'text' && typeof item.text === 'string') {
-        return { ...item, text: sanitizeText(item.text) };
+      if (item && typeof item === 'object') {
+        // Fallback Guard Rail: if a part lacks a recognized type, stringify it
+        if (!item.type || typeof item.type !== 'string') {
+          return { type: 'text', text: JSON.stringify(item) };
+        }
+        if (item.type === 'text' && typeof item.text === 'string') {
+          return { ...item, text: sanitizeText(item.text) };
+        }
       }
       return item;
     });
@@ -93,54 +100,58 @@ const VISION_MODEL_PATTERNS = [
  * Uses both the ModelInfo.vision flag (if set) and a name-based pattern check
  * so that dynamically fetched models are also covered.
  */
-function modelSupportsVision(modelDetails: any): boolean {
-  // Explicit flag takes precedence when set
-  if (typeof modelDetails?.vision === 'boolean') {
-    return modelDetails.vision;
-  }
+function supportsVision(modelName: string, modelInfo?: any): boolean {
+  if (modelInfo?.vision === true) return true;
+  if (modelInfo?.vision === false) return false;
 
-  const name: string = modelDetails?.name || '';
-
-  return VISION_MODEL_PATTERNS.some((pattern) => pattern.test(name));
+  return VISION_MODEL_PATTERNS.some((pattern) => pattern.test(modelName));
 }
 
 /**
- * Strips image/file parts from message content when the model doesn't support vision.
- *
- * This prevents the "unknown variant `image_url`" deserialization error that occurs
- * when sending messages with image content to non-vision APIs (e.g. DeepSeek, Mistral).
- * The AI SDK's convertToCoreMessages() converts FileUIPart { type: 'file' } into
- * image_url content blocks, which non-vision APIs reject.
+ * Deeply strips `image` and `image_url` parts from the messages array
+ * and any `experimental_attachments` if the model is not vision-capable.
  */
-function stripImagesFromMessages(messages: Omit<Message, 'id'>[], modelDetails: any): Omit<Message, 'id'>[] {
-  if (modelSupportsVision(modelDetails)) {
-    // Model supports images — pass through unchanged
+function stripImagesFromMessages(messages: any[], modelDetails: any): any[] {
+  const isVisionCapable = supportsVision(modelDetails.name, modelDetails);
+
+  if (isVisionCapable) {
     return messages;
   }
 
-  logger.debug(`Model "${modelDetails?.name}" does not support vision — stripping image parts from messages`);
+  logger.info(`Model ${modelDetails.name} is not vision-capable. Stripping image parts.`);
 
   return messages.map((message) => {
-    // Strip file/image parts from the parts array
-    let newParts = message.parts;
-
-    if (Array.isArray(message.parts) && message.parts.length > 0) {
-      newParts = message.parts.filter((part: any) => part.type !== 'file' && part.type !== 'image');
-    }
-
-    // Also strip from content if it's an array (AI SDK CoreMessage format)
     let newContent = message.content;
+    let newParts = message.parts;
+    let newAttachments = message.experimental_attachments;
 
-    if (Array.isArray(message.content)) {
-      newContent = (message.content as any[]).filter(
-        (item: any) => item.type !== 'image_url' && item.type !== 'image',
-      ) as any;
+    // 1. Strip images from string/array content
+    if (Array.isArray(newContent)) {
+      newContent = newContent.filter(
+        (part: any) =>
+          part &&
+          typeof part === 'object' &&
+          part.type !== 'image' &&
+          part.type !== 'image_url'
+      );
+      if (newContent.length === 0) newContent = ''; // Prevent empty content array
     }
 
-    // Strip from experimental_attachments
-    let newAttachments = message.experimental_attachments;
-    if (Array.isArray(message.experimental_attachments)) {
-      newAttachments = message.experimental_attachments.filter(
+    // 2. Strip images from parts array
+    if (Array.isArray(newParts)) {
+      newParts = newParts.filter(
+        (part: any) =>
+          part &&
+          typeof part === 'object' &&
+          part.type !== 'image' &&
+          part.type !== 'image_url'
+      );
+      if (newParts.length === 0) newParts = undefined;
+    }
+
+    // 3. Strip image attachments
+    if (Array.isArray(newAttachments)) {
+      newAttachments = newAttachments.filter(
         (attachment: any) => !attachment.contentType?.startsWith('image/')
       );
       if (newAttachments.length === 0) newAttachments = undefined;
@@ -168,8 +179,11 @@ export async function streamText(props: {
   summary?: string;
   messageSliceId?: number;
   chatMode?: 'discuss' | 'build';
+  isSlidesMode?: boolean;
+  isGameMode?: boolean;
   designScheme?: DesignScheme;
   supabaseProjectData?: any;
+  onImageGenerated?: (filePath: string, base64: string) => void;
 }) {
   const {
     messages,
@@ -183,8 +197,11 @@ export async function streamText(props: {
     contextFiles,
     summary,
     chatMode,
+    isSlidesMode,
+    isGameMode,
     designScheme,
     supabaseProjectData,
+    onImageGenerated,
   } = props;
   let currentModel = DEFAULT_MODEL;
   let currentProvider = DEFAULT_PROVIDER.name;
@@ -203,10 +220,25 @@ export async function streamText(props: {
     // Sanitize all text parts in parts array, if present
     if (Array.isArray(message.parts)) {
       newMessage.parts = message.parts
-        .filter((part: any) => !['reasoning', 'source', 'step-start'].includes(part.type))
-        .map((part) =>
-          part.type === 'text' ? { ...part, text: sanitizeText(part.text) } : part,
-        );
+        .filter((part: any) => part && typeof part === 'object')
+        .map((part: any) => {
+          // Fallback Guard Rail: if a part lacks a recognized type, stringify it
+          if (!part.type || typeof part.type !== 'string') {
+            return { type: 'text', text: JSON.stringify(part) };
+          }
+          if (part.type === 'text') {
+            return { ...part, text: sanitizeText(part.text) };
+          }
+          return part;
+        })
+        .filter((part: any) => {
+          const supported = ['text', 'tool-invocation', 'file', 'reasoning'];
+          if (!supported.includes(part.type)) {
+            logger.warn(`Stripping unsupported UI part type: ${part.type}`);
+            return false;
+          }
+          return true;
+        });
     }
 
     return newMessage;
@@ -270,6 +302,48 @@ export async function streamText(props: {
       },
       supabaseProjectData,
     }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData);
+
+  if (isSlidesMode) {
+    systemPrompt += `
+
+================================================================================
+You are in SLIDES PRESENTATION MODE.
+The user wants you to generate a full-screen presentation using React and Tailwind CSS.
+IMPORTANT REQUIREMENTS FOR SLIDES MODE:
+1. ALWAYS start your verbal response with exactly: "I'm going to create a presentation for you..."
+2. Build a single-page React application that acts as a presentation with multiple slides.
+3. DO NOT include a visual navigation toolbar or UI controls in your code. The IDE environment will automatically overlay a native toolbar on top of your presentation.
+4. To integrate with the native toolbar, your React application MUST listen for window messages to navigate:
+   - \`window.addEventListener('message', (e) => { if (e.data.type === 'SLIDE_NEXT') { ... } else if (e.data.type === 'SLIDE_PREV') { ... } else if (e.data.type === 'SLIDE_GOTO') { ... } else if (e.data.type === 'SLIDE_TOGGLE_GRID') { ... } })\`
+5. You MUST send messages to the parent window whenever the slide changes so the native toolbar can update its state:
+   - \`window.parent.postMessage({ type: 'SLIDES_STATE', currentSlide: 0, totalSlides: 5, slides: [{title: 'Slide 1'}, {title: 'Slide 2'}] }, '*')\`
+6. Ensure the presentation is highly professional with modern typography, colors, and dynamic Canva-like animations.
+7. Support the 'SLIDE_TOGGLE_GRID' message by displaying all slides in a grid view when active.
+================================================================================
+`;
+  }
+
+  if (modelDetails.name === 'claude-haiku-4-5') {
+    systemPrompt = `CRITICAL RULES (MUST FOLLOW):
+1. Never output code or JSON directly in the chat response.
+2. ALWAYS use the <falborArtifact> format for writing code.
+3. NEVER use <function_calls>, <invoke>, or <parameter> tags. Output the <falborArtifact> DIRECTLY in your response.
+4. Separate every file using its own <falborAction type="file" filePath="path/to/file"> block. Do not combine multiple files into one.
+
+CORRECT EXAMPLE FORMAT:
+<falborArtifact id="my-project" title="My Project">
+  <falborAction type="file" filePath="package.json">
+{
+  "name": "my-project"
+}
+  </falborAction>
+  <falborAction type="file" filePath="src/index.js">
+console.log("Hello");
+  </falborAction>
+</falborArtifact>
+
+${systemPrompt}`;
+  }
 
   if (chatMode === 'build' && contextFiles && contextOptimization) {
     const codeContext = createFilesContext(contextFiles, true);
@@ -386,20 +460,174 @@ export async function streamText(props: {
   // This prevents the "unknown variant `image_url`" error from non-vision APIs like DeepSeek.
   const visionSafeMessages = stripImagesFromMessages(processedMessages, modelDetails);
 
+  /**
+   * Sanitize core messages before each step so the provider adapter never
+   * receives an unsupported part type (e.g. 'reasoning', 'step-start').
+   *
+   * Root cause: when `experimental_continueSteps` is true the AI SDK
+   * accumulates *all* parts produced by previous steps (including internal
+   * 'reasoning' and 'step-start' parts) and replays them to the model on
+   * every subsequent step.  The @ai-sdk/openai-compatible adapter used by
+   * DeepSeek only handles 'text' and 'tool-call' for assistant messages;
+   * everything else hits the `default:` branch and throws
+   * "Unsupported part: [object Object]".
+   */
+  function sanitizeCoreMessages(msgs: any[]): any[] {
+    return msgs.map((msg: any) => {
+      if (!msg || typeof msg !== 'object') return msg;
+
+      if (msg.role === 'assistant' && Array.isArray(msg.content)) {
+        return {
+          ...msg,
+          content: msg.content.filter((part: any) => {
+            // Only keep part types the openai-compatible adapter can handle
+            const supported = ['text', 'tool-call'];
+            return part && typeof part === 'object' && supported.includes(part.type);
+          }),
+        };
+      }
+
+      if (msg.role === 'user' && Array.isArray(msg.content)) {
+        return {
+          ...msg,
+          content: msg.content.filter((part: any) => {
+            const supported = ['text', 'image'];
+            return part && typeof part === 'object' && supported.includes(part.type);
+          }),
+        };
+      }
+
+      return msg;
+    });
+  }
+
   const streamParams = {
-    model: provider.getModelInstance({
-      model: modelDetails.name,
-      serverEnv,
-      apiKeys,
-      providerSettings,
+    // Sanitize accumulated step messages before each step executes.
+    // This is the definitive fix for "Unsupported part: [object Object]"
+    // which happens when experimental_continueSteps replays internal SDK
+    // message parts (reasoning, step-start, etc.) that providers like
+    // DeepSeek's openai-compatible adapter can't handle.
+    model: wrapLanguageModel({
+      model: provider.getModelInstance({
+        model: modelDetails.name,
+        serverEnv,
+        apiKeys,
+        providerSettings,
+      }),
+      middleware: {
+        wrapStream: async ({ doStream, params }) => {
+          params.prompt = params.prompt.map((msg) => {
+            if (msg.role === 'assistant' && Array.isArray(msg.content)) {
+              return {
+                ...msg,
+                content: msg.content.filter((part: any) => part.type === 'text' || part.type === 'tool-call'),
+              };
+            }
+            return msg;
+          });
+
+          // Detect continuation step: if the last message is an assistant message, 
+          // the AI SDK is trying to auto-continue. Many models (like DeepSeek) 
+          // will repeat themselves if they don't explicitly know they are continuing.
+          const lastMsg = params.prompt[params.prompt.length - 1];
+          if (lastMsg && lastMsg.role === 'assistant') {
+            params.prompt.push({
+              role: 'user',
+              content: [{ type: 'text', text: 'Please continue exactly from where you left off. Do not repeat anything you have already written. Start your response directly with the very next character.' }]
+            });
+          }
+
+          return doStream();
+        },
+        wrapGenerate: async ({ doGenerate, params }) => {
+          params.prompt = params.prompt.map((msg) => {
+            if (msg.role === 'assistant' && Array.isArray(msg.content)) {
+              return {
+                ...msg,
+                content: msg.content.filter((part: any) => part.type === 'text' || part.type === 'tool-call'),
+              };
+            }
+            return msg;
+          });
+          return doGenerate();
+        },
+      },
     }),
-    system: chatMode === 'build' ? systemPrompt : discussPrompt(),
+    system: isGameMode 
+      ? `${systemPrompt}\n\nAdditionally, you are an expert 2D Game Developer AI. Your goal is to build an entire fully-functional 2D web game based on the user's request.\nCRITICAL RULES:\n- You must create all graphical assets required for the game (characters, backgrounds, items, UI) using the \`generate_image_asset\` tool.\n- You must always request images with a transparent background where appropriate (e.g., characters, items).\n- Wait for the tool to return the success message before using the image path in your code.\n- Place all generated images inside the \`public/\` folder.\n- DO NOT use placeholders like "hero.png" unless you have explicitly generated them using the tool.\n- The game should be built using React (HTML5 Canvas or DOM elements) and standard web technologies.\n- Write a highly polished, fully complete game. It should be visually impressive and fun to play.`
+      : chatMode === 'build' ? systemPrompt : discussPrompt(),
     ...tokenParams,
-    messages: convertToCoreMessages(visionSafeMessages as any),
+    messages: sanitizeCoreMessages(convertToCoreMessages(visionSafeMessages as any)),
     ...filteredOptions,
 
     // Set temperature to 1 for reasoning models (required by OpenAI API)
     ...(isReasoning ? { temperature: 1 } : {}),
+
+    ...(isGameMode ? {
+      tools: {
+        generate_image_asset: tool({
+          description: 'Generate a 2D game asset image. Use this tool for all characters, items, and backgrounds.',
+          parameters: z.object({
+            prompt: z.string().describe('The detailed visual description of the game asset to generate. Always specify if it needs a transparent background (e.g., "A 16-bit pixel art sword, transparent background").'),
+            fileName: z.string().describe('The exact file name to save the image as, e.g., "hero.png".'),
+          }),
+          execute: async ({ prompt, fileName }) => {
+            try {
+              const openaiKey = apiKeys?.['OPENAI_API_KEY'] || process.env.OPENAI_API_KEY;
+              if (!openaiKey) {
+                return 'Failed: OpenAI API key is missing. Cannot generate image.';
+              }
+
+              const response = await fetch('https://api.openai.com/v1/images/generations', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'Authorization': `Bearer ${openaiKey}`,
+                },
+                body: JSON.stringify({
+                  model: 'gpt-image-2', // User's API key uses gpt-image-2
+                  prompt,
+                  n: 1,
+                  size: '1024x1024',
+                }),
+              });
+
+              if (!response.ok) {
+                const errText = await response.text();
+                return `Failed to generate image: ${response.statusText} - ${errText}`;
+              }
+
+              const data = await response.json();
+              const b64Json = data.data?.[0]?.b64_json;
+              let base64 = b64Json;
+
+              if (!base64) {
+                  const imageUrl = data.data?.[0]?.url;
+                  
+                  if (!imageUrl) {
+                    return 'Failed: No image url or b64_json returned from OpenAI.';
+                  }
+
+                  // Download the image and convert to base64
+                  const imageResponse = await fetch(imageUrl);
+                  if (!imageResponse.ok) {
+                    return `Failed to download generated image: ${imageResponse.statusText}`;
+                  }
+                  const imageBuffer = await imageResponse.arrayBuffer();
+                  base64 = Buffer.from(imageBuffer).toString('base64');
+              }
+
+              if (onImageGenerated) {
+                onImageGenerated(`public/${fileName}`, base64);
+                return `Successfully generated and saved image to public/${fileName}`;
+              }
+            } catch (err: any) {
+              return `Failed with error: ${err.message}`;
+            }
+          }
+        })
+      }
+    } : {}),
   };
 
   // DEBUG: Log final streaming parameters
@@ -420,5 +648,5 @@ export async function streamText(props: {
     ),
   );
 
-  return await _streamText(streamParams);
+  return await _streamText(streamParams as any);
 }

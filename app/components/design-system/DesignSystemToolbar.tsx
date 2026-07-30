@@ -3,7 +3,7 @@ import { classNames } from '~/utils/classNames';
 import Popover from '~/components/ui/Popover';
 import { Switch } from '~/components/ui/Switch';
 import { workbenchStore } from '~/lib/stores/workbench';
-import { Button } from '../ui';
+import { Button, IconButton } from '../ui';
 
 interface DesignSystemToolbarProps {
   isInspectorMode: boolean;
@@ -22,28 +22,25 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
     <div className="flex items-center ml-1">
       <div
         className={classNames(
-          "group flex items-center rounded-full overflow-hidden transition-all duration-300",
+          "group flex items-center overflow-hidden",
           isInspectorMode
-            ? "bg-[#0099ff]/20"
-            : "bg-falbor-elements-item-backgroundActive"
+            ? ""
+            : ""
         )}
       >
-        <Button
-          onClick={toggleInspectorMode}
+        <IconButton
+          title={isInspectorMode ? 'Disable Element Inspector' : 'Enable Element Inspector'}
           className={classNames(
-            "flex items-center gap-1 px-3 py-1 transition-all duration-300 hover:bg-transparent",
-            "group-hover:pr-1",
-            isInspectorMode ? "" : "hover:text-falbor-elements-item-contentActive"
-          )}
-          title={
+            'transition-all flex items-center gap-1 px-1.5',
             isInspectorMode
-              ? 'Disable Element Inspector'
-              : 'Enable Element Inspector'
-          }
+              ? '!bg-falbor-elements-item-backgroundAccent !text-falbor-elements-item-contentAccent'
+              : 'bg-falbor-elements-item-backgroundDefault text-falbor-elements-item-contentDefault',
+          )}
+          onClick={toggleInspectorMode}
         >
           <div className="i-ph:cursor-click text-lg" />
           <span className="text-xs font-medium">Select</span>
-        </Button>
+        </IconButton>
 
         <div
           className={classNames(

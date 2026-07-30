@@ -5,10 +5,11 @@ import { cubicEasingFn } from '~/utils/easings';
 import { genericMemo } from '~/utils/react';
 
 export type SliderOptions<T> = {
-  left: { value: T; text: string };
-  middle?: { value: T; text: string };
-  right: { value: T; text: string };
-  extra?: { value: T; text: string };
+  left: { value: T; text: string; icon?: string | JSX.Element };
+  middle?: { value: T; text: string; icon?: string | JSX.Element };
+  right: { value: T; text: string; icon?: string | JSX.Element };
+  extra?: { value: T; text: string; icon?: string | JSX.Element };
+  extra2?: { value: T; text: string; icon?: string | JSX.Element };
 };
 
 interface SliderProps<T> {
@@ -23,29 +24,37 @@ export const Slider = genericMemo(<T,>({ selected, options, setSelected }: Slide
   const isMiddleSelected = hasMiddle && options.middle ? selected === options.middle.value : false;
   const isRightSelected = selected === options.right.value;
   const isExtraSelected = options.extra ? selected === options.extra.value : false;
+  const isExtra2Selected = options.extra2 ? selected === options.extra2.value : false;
 
   return (
-    <div className="flex items-center flex-wrap shrink-0 gap-1 bg-falbor-elements-background-depth-1 overflow-hidden rounded-full p-1">
-      <SliderButton selected={isLeftSelected} setSelected={() => setSelected?.(options.left.value)}>
+    <div className="flex items-center flex-wrap shrink-0 gap-1 border dark:border-falbor-elements-borderColor overflow-hidden rounded-full p-1">
+      <SliderButton selected={isLeftSelected} icon={options.left.icon} setSelected={() => setSelected?.(options.left.value)}>
         {options.left.text}
       </SliderButton>
 
       {options.middle && (
-        <SliderButton selected={isMiddleSelected} setSelected={() => setSelected?.(options.middle!.value)}>
+        <SliderButton selected={isMiddleSelected} icon={options.middle.icon} setSelected={() => setSelected?.(options.middle!.value)}>
           {options.middle.text}
         </SliderButton>
       )}
 
       <SliderButton
         selected={isRightSelected}
+        icon={options.right.icon}
         setSelected={() => setSelected?.(options.right.value)}
       >
         {options.right.text}
       </SliderButton>
 
       {options.extra && (
-        <SliderButton selected={isExtraSelected} setSelected={() => setSelected?.(options.extra!.value)}>
+        <SliderButton selected={isExtraSelected} icon={options.extra.icon} setSelected={() => setSelected?.(options.extra!.value)}>
           {options.extra.text}
+        </SliderButton>
+      )}
+
+      {options.extra2 && (
+        <SliderButton selected={isExtra2Selected} icon={options.extra2.icon} setSelected={() => setSelected?.(options.extra2!.value)}>
+          {options.extra2.text}
         </SliderButton>
       )}
     </div>
@@ -55,10 +64,11 @@ export const Slider = genericMemo(<T,>({ selected, options, setSelected }: Slide
 interface SliderButtonProps {
   selected: boolean;
   children: string | JSX.Element | Array<JSX.Element | string>;
+  icon?: string | JSX.Element;
   setSelected: () => void;
 }
 
-const SliderButton = memo(({ selected, children, setSelected }: SliderButtonProps) => {
+const SliderButton = memo(({ selected, children, icon, setSelected }: SliderButtonProps) => {
   return (
     <button
       onClick={setSelected}
@@ -69,7 +79,10 @@ const SliderButton = memo(({ selected, children, setSelected }: SliderButtonProp
           : 'text-falbor-elements-item-contentDefault hover:text-falbor-elements-item-contentActive',
       )}
     >
-      <span className="relative z-10">{children}</span>
+      <span className="relative z-10 flex items-center gap-1">
+        {icon && (typeof icon === 'string' ? <div className={icon} /> : icon)}
+        {children}
+      </span>
       {selected && (
         <motion.span
           layoutId="pill-tab"

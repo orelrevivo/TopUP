@@ -371,9 +371,11 @@ export async function POST(request: Request, { params }: any) {
       for (const [filePath, content] of Object.entries(sourceFiles)) {
         // Ensure file path doesn't start with a slash for Vercel
         const normalizedPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+        const isBinary = /\.(png|jpg|jpeg|gif|webp|ico|bmp|mp3|mp4|wav|woff|woff2|ttf|eot)$/i.test(normalizedPath);
         deploymentFiles.push({
           file: normalizedPath,
           data: content,
+          ...(isBinary ? { encoding: 'base64' } : {})
         });
       }
     } else {
@@ -381,9 +383,11 @@ export async function POST(request: Request, { params }: any) {
       for (const [filePath, content] of Object.entries(files)) {
         // Ensure file path doesn't start with a slash for Vercel
         const normalizedPath = filePath.startsWith('/') ? filePath.substring(1) : filePath;
+        const isBinary = /\.(png|jpg|jpeg|gif|webp|ico|bmp|mp3|mp4|wav|woff|woff2|ttf|eot)$/i.test(normalizedPath);
         deploymentFiles.push({
           file: normalizedPath,
           data: content,
+          ...(isBinary ? { encoding: 'base64' } : {})
         });
       }
     }

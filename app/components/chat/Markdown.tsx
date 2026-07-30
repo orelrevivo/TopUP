@@ -9,6 +9,7 @@ import { CodeBlock } from './CodeBlock';
 import type { Message } from 'ai';
 import styles from './Markdown.module.scss';
 import ThoughtBox from './ThoughtBox';
+import { ScreenshotAccordion } from '../hacking/ScreenshotAccordion';
 import type { ProviderInfo } from '~/types/model';
 
 const logger = createScopedLogger('MarkdownComponent');
@@ -46,6 +47,12 @@ export const Markdown = memo(
             }
 
             return <Artifact messageId={messageId} artifactId={artifactId} append={append} />;
+          }
+
+          if (className?.includes('__falborScreenshot__')) {
+            const url = (dataProps['data-url'] || dataProps.dataUrl) as string;
+            const title = (dataProps['data-title'] || dataProps.dataTitle) as string;
+            return <ScreenshotAccordion url={url} title={title || "Screenshot"} />;
           }
 
           if (className?.includes('__falborSelectedElement__')) {
@@ -88,6 +95,10 @@ export const Markdown = memo(
             return <ThoughtBox title="Thought process">{children}</ThoughtBox>;
           }
 
+          if (className?.includes('__falborPlan__')) {
+            return <ThoughtBox title="Planning">{children}</ThoughtBox>;
+          }
+
           if (className?.includes('__falborQuickAction__') || dataProps?.dataFalborQuickAction) {
             return <div className="flex items-center gap-2 flex-wrap mt-3.5">{children}</div>;
           }
@@ -96,6 +107,22 @@ export const Markdown = memo(
             <div className={className} {...props}>
               {children}
             </div>
+          );
+        },
+        span: ({ className, children, node, ...props }) => {
+          if (className?.includes('__falborConnector__')) {
+            const dataProps = node?.properties as Record<string, unknown>;
+            const id = (dataProps['data-id'] || dataProps.dataId) as string;
+            return (
+              <span className="bg-[#0099ff]/20 text-[#0099ff] rounded-[4px] px-1 font-medium mx-1">
+                @{id}
+              </span>
+            );
+          }
+          return (
+            <span className={className} {...props}>
+              {children}
+            </span>
           );
         },
         pre: (props) => {

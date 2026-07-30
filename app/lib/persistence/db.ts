@@ -18,7 +18,7 @@ export async function openDatabase(): Promise<IDBDatabase> {
   return dummyDb;
 }
 
-export async function getAll(_db: IDBDatabase): Promise<ChatHistoryItem[]> {
+export async function getAll(_db?: IDBDatabase): Promise<ChatHistoryItem[]> {
   const list = await chatApi.getAllChats();
   return list.map((c) => ({
     id: c.id,

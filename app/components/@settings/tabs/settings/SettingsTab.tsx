@@ -69,7 +69,9 @@ export default function SettingsTab() {
           <div className="i-ph:palette-fill w-4 h-4 text-purple-500" />
           <span className="text-sm font-medium text-falbor-elements-textPrimary">{t('preferences')}</span>
         </div>
-
+        <div className="bg-white dark:bg-[#0A0A0A] rounded-lg shadow-sm dark:shadow-none p-4 space-y-4">
+          <span><span className='text-falbor-elements-textSecondary'>your sysytem</span> : {navigator.userAgent}</span>
+        </div>
         <div>
           <div className="flex items-center gap-2 mb-2">
             <div className="i-ph:translate-fill w-4 h-4 text-falbor-elements-textSecondary" />

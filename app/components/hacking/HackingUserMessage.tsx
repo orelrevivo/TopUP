@@ -63,7 +63,7 @@ export function HackingUserMessage({ content, parts }: UserMessageProps) {
             )}
           </div>
         </div>
-        <div className="flex flex-col gap-4 bg-accent-500/10 backdrop-blur-sm p-3 py-3 w-auto rounded-lg mr-auto">
+        <div className="flex flex-col gap-4 bg-accent-500/10 backdrop-blur-sm p-3 py-3 w-full rounded-lg">
           {textContent && <Markdown html>{textContent}</Markdown>}
           {images.map((item, index) => (
             <img
@@ -104,7 +104,7 @@ export function HackingUserMessage({ content, parts }: UserMessageProps) {
           )}
         </div>
       </div>
-      <div className="w-full flex flex-col bg-accent-500/10 dark:bg-[#252525] backdrop-blur-sm px-5 p-3.5 w-auto rounded-lg ml-auto">
+      <div className="w-full flex flex-col bg-accent-500/10 dark:bg-[#252525] backdrop-blur-sm px-5 p-3.5 rounded-lg">
         <Markdown html>{textContent}</Markdown>
       </div>
     </div>

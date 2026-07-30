@@ -23,7 +23,7 @@ interface MessagesProps {
   model?: string;
   provider?: ProviderInfo;
   addToolResult: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;
-  onNavigate?: (url: string) => void;
+  onNavigate?: (url: string, screenshotUrl?: string) => void;
 }
 
 export const HackingMessages = forwardRef<HTMLDivElement, MessagesProps>(

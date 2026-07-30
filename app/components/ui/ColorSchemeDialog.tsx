@@ -297,12 +297,12 @@ export const ColorSchemeDialog: React.FC<ColorSchemeDialogProps> = ({ setDesignS
   );
 
   return (
-    <div>
+    <>
       {asMenuItem ? (
         <button
           title="Design Palette"
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors text-falbor-elements-textPrimary"
-          onClick={() => setIsDialogOpen(!isDialogOpen)}
+          className="flex items-center gap-2 w-full text-left transition-colors text-falbor-elements-textPrimary outline-none"
+          onClick={(e) => { e.preventDefault(); setIsDialogOpen(true); }}
         >
           <div className="i-ph:palette text-xl text-falbor-elements-textSecondary"></div>
           <span>Design</span>
@@ -406,6 +406,6 @@ export const ColorSchemeDialog: React.FC<ColorSchemeDialogProps> = ({ setDesignS
           flex: 1;
         }
       `}</style>
-    </div>
+    </>
   );
 };

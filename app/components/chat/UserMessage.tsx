@@ -39,7 +39,7 @@ export function UserMessage({ content, parts }: UserMessageProps) {
     const textItem = content.find((item) => item.type === 'text');
     let rawText = textItem?.text || '';
     const { skills, cleanContent } = parseSkills(rawText);
-    const textContent = stripMetadata(cleanContent);
+    const textContent = parseConnectors(stripMetadata(cleanContent));
 
     return (
       <div className="overflow-hidden flex flex-col gap-3 items-center ">
@@ -80,7 +80,7 @@ export function UserMessage({ content, parts }: UserMessageProps) {
   }
 
   const { skills, cleanContent } = parseSkills(content as string);
-  const textContent = stripMetadata(cleanContent);
+  const textContent = parseConnectors(stripMetadata(cleanContent));
 
   return (
     <div className="overflow-hidden flex flex-col gap-3 items-center w-full">
@@ -127,6 +127,12 @@ export function UserMessage({ content, parts }: UserMessageProps) {
 function stripMetadata(content: string) {
   const artifactRegex = /<falborArtifact\s+[^>]*>[\s\S]*?<\/falborArtifact>/gm;
   return content.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '').replace(artifactRegex, '');
+}
+
+function parseConnectors(content: string) {
+  return content.replace(/@([a-zA-Z0-9_-]+)(?=\s|$)/g, (match, id) => {
+    return `<span class="__falborConnector__" data-id="${id}"></span>`;
+  });
 }
 
 function parseSkills(content: string) {

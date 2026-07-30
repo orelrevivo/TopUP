@@ -41,10 +41,12 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     return <div className="h-screen w-full bg-white dark:bg-[#111114]" />;
   }
 
+  const isHackingChatIdPage = pathname?.startsWith('/hacking/') && pathname !== '/hacking';
+
   return (
     <div className="flex h-screen w-full overflow-hidden bg-transparent dark:bg-[#111114]">
       {/* Sidebar handles its own transitions internally based on the variant prop */}
-      {user && !isProfilePage && (
+      {user && !isProfilePage && !isHackingChatIdPage && (
         <ClientOnly>{() => <Menu variant={layoutVariant} />}</ClientOnly>
       )}
 

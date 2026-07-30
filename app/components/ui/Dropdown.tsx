@@ -7,43 +7,48 @@ interface DropdownProps {
   children: ReactNode;
   align?: 'start' | 'center' | 'end';
   sideOffset?: number;
+  className?: string;
 }
 
 interface DropdownItemProps {
   children: ReactNode;
-  onSelect?: () => void;
+  onSelect?: (e: Event) => void;
   className?: string;
+  asChild?: boolean;
+  active?: boolean; // marks item as the currently selected option
 }
 
-export const DropdownItem = ({ children, onSelect, className }: DropdownItemProps) => (
+export const DropdownItem = ({ children, onSelect, className, asChild, active }: DropdownItemProps) => (
   <DropdownMenu.Item
     className={classNames(
-      'relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm',
-      'text-falbor-elements-textPrimary hover:text-falbor-elements-textPrimary',
-      'hover:bg-falbor-elements-background-depth-3',
-      'transition-colors cursor-pointer',
-      'outline-none',
+      'relative flex items-center gap-2 px-1.5 py-1 rounded-md text-sm',
+      'text-falbor-elements-textPrimary',
+      'focus:bg-[#E3E3E3] dark:focus:bg-[#2A2A2A] hover:bg-[#E3E3E3] dark:hover:bg-[#2A2A2A]',
+      'cursor-default',
+      active && 'bg-[#E3E3E3] dark:bg-[#2A2A2A]', // persistent highlight for selected item
       className,
     )}
     onSelect={onSelect}
+    asChild={asChild}
   >
     {children}
   </DropdownMenu.Item>
 );
 
-export const DropdownSeparator = () => <DropdownMenu.Separator className="h-px bg-falbor-elements-borderColor my-1" />;
+export const DropdownSeparator = () => <DropdownMenu.Separator className="h-px bg-[#D6D6D6] dark:bg-[#353538] my-1 mx-2" />;
 
-export const Dropdown = ({ trigger, children, align = 'end', sideOffset = 5 }: DropdownProps) => {
+export const Dropdown = ({ trigger, children, align = 'end', sideOffset = 5, className }: DropdownProps) => {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
 
       <DropdownMenu.Portal>
         <DropdownMenu.Content
+          style={{ boxShadow: '0px 0px 5px #b3b1b1ff' }}
           className={classNames(
-            'min-w-[220px] rounded-lg p-2',
-            'bg-falbor-elements-background-depth-2',
-            'border border-falbor-elements-borderColor',
+            'min-w-[160px] rounded-lg p-1',
+            'bg-white dark:bg-[#141414]',
+            'border border-[#D6D6D6] dark:border-[#353538]',
             'shadow-lg',
             'animate-in fade-in-80 zoom-in-95',
             'data-[side=bottom]:slide-in-from-top-2',
@@ -51,6 +56,7 @@ export const Dropdown = ({ trigger, children, align = 'end', sideOffset = 5 }: D
             'data-[side=right]:slide-in-from-left-2',
             'data-[side=top]:slide-in-from-bottom-2',
             'z-[1000]',
+            className,
           )}
           sideOffset={sideOffset}
           align={align}
@@ -61,3 +67,54 @@ export const Dropdown = ({ trigger, children, align = 'end', sideOffset = 5 }: D
     </DropdownMenu.Root>
   );
 };
+
+export const DropdownSub = DropdownMenu.Sub;
+
+interface DropdownSubTriggerProps {
+  children: ReactNode;
+  className?: string;
+}
+
+export const DropdownSubTrigger = ({ children, className }: DropdownSubTriggerProps) => (
+  <DropdownMenu.SubTrigger
+    className={classNames(
+      'relative flex items-center justify-between gap-2 px-1.5 py-1 rounded-md text-sm',
+      'text-falbor-elements-textPrimary',
+      'focus:bg-[#E3E3E3] dark:focus:bg-[#2A2A2A] data-[state=open]:bg-[#E3E3E3] dark:data-[state=open]:bg-[#2A2A2A] hover:bg-[#E3E3E3] dark:hover:bg-[#2A2A2A]',
+      'cursor-default outline-none',
+      className,
+    )}
+  >
+    <div className="flex items-center gap-2">{children}</div>
+    <div className="i-ph:caret-right text-xs text-falbor-elements-textSecondary ml-auto" />
+  </DropdownMenu.SubTrigger>
+);
+
+interface DropdownSubContentProps {
+  children: ReactNode;
+  className?: string;
+}
+
+export const DropdownSubContent = ({ children, className }: DropdownSubContentProps) => (
+  <DropdownMenu.Portal>
+    <DropdownMenu.SubContent
+      style={{ boxShadow: '0px 0px 5px #b3b1b1ff' }}
+      className={classNames(
+        'min-w-[160px] rounded-lg p-1',
+        'bg-white dark:bg-[#141414]',
+        'border border-[#D6D6D6] dark:border-[#353538]',
+        'shadow-lg',
+        'animate-in fade-in-80 zoom-in-95',
+        'data-[side=bottom]:slide-in-from-top-2',
+        'data-[side=left]:slide-in-from-right-2',
+        'data-[side=right]:slide-in-from-left-2',
+        'data-[side=top]:slide-in-from-bottom-2',
+        'z-[1000]',
+        className,
+      )}
+      sideOffset={5}
+    >
+      {children}
+    </DropdownMenu.SubContent>
+  </DropdownMenu.Portal>
+);

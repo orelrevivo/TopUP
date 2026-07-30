@@ -33,7 +33,7 @@ export type ArtifactUpdateState = Pick<ArtifactState, 'title' | 'closed'>;
 
 type Artifacts = MapStore<Record<string, ArtifactState>>;
 
-export type WorkbenchViewType = 'code' | 'diff' | 'preview' | 'database';
+export type WorkbenchViewType = 'code' | 'diff' | 'preview' | 'database' | 'browser' | 'workflow';
 
 export class WorkbenchStore {
   #previewsStore = new PreviewsStore(webcontainer);
@@ -57,6 +57,11 @@ export class WorkbenchStore {
   
   isInspectorMode: WritableAtom<boolean> = import.meta.hot?.data.isInspectorMode ?? atom(false);
   isDesignSystemMode: WritableAtom<boolean> = import.meta.hot?.data.isDesignSystemMode ?? atom(false);
+  isSlidesMode: WritableAtom<boolean> = import.meta.hot?.data.isSlidesMode ?? atom(false);
+  isGameMode: WritableAtom<boolean> = import.meta.hot?.data.isGameMode ?? atom(false);
+
+  currentAiUrl: WritableAtom<string> = import.meta.hot?.data.currentAiUrl ?? atom('');
+  currentAiScreenshot: WritableAtom<string | null> = import.meta.hot?.data.currentAiScreenshot ?? atom(null);
 
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
@@ -72,6 +77,9 @@ export class WorkbenchStore {
       import.meta.hot.data.deployAlert = this.deployAlert;
       import.meta.hot.data.isInspectorMode = this.isInspectorMode;
       import.meta.hot.data.isDesignSystemMode = this.isDesignSystemMode;
+      import.meta.hot.data.isSlidesMode = this.isSlidesMode;
+      import.meta.hot.data.currentAiUrl = this.currentAiUrl;
+      import.meta.hot.data.currentAiScreenshot = this.currentAiScreenshot;
 
       // Ensure binary files are properly preserved across hot reloads
       const filesMap = this.files.get();
@@ -546,6 +554,22 @@ export class WorkbenchStore {
       unreachable('Artifact not found');
     }
 
+    const actionId = data.actionId;
+    const existingAction = artifact.runner.actions.get()[actionId];
+
+    if (!existingAction && data.action.type === 'file') {
+      const wc = await webcontainer;
+      const fullPath = path.join(wc.workdir, data.action.filePath);
+
+      if (this.selectedFile.value !== fullPath) {
+        this.setSelectedFile(fullPath);
+      }
+
+      if (this.currentView.value !== 'code') {
+        this.currentView.set('code');
+      }
+    }
+
     return artifact.runner.addAction(data);
   }
 
@@ -556,6 +580,7 @@ export class WorkbenchStore {
       this.addToExecutionQueue(() => this._runAction(data, isStreaming));
     }
   }
+
   async _runAction(data: ActionCallbackData, isStreaming: boolean = false) {
     const { artifactId } = data;
 
@@ -580,14 +605,6 @@ export class WorkbenchStore {
        * to determine if the AI is modifying existing code or just adding new code
        * This is a more complex feature that would be implemented in a future update
        */
-
-      if (this.selectedFile.value !== fullPath) {
-        this.setSelectedFile(fullPath);
-      }
-
-      if (this.currentView.value !== 'code') {
-        this.currentView.set('code');
-      }
 
       const doc = this.#editorStore.documents.get()[fullPath];
 

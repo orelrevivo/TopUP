@@ -103,7 +103,7 @@ export const ChatImpl = memo(
       (project) => project.id === supabaseConn.selectedProjectId,
     );
     const supabaseAlert = useStore(workbenchStore.supabaseAlert);
-    const { activeProviders, promptId, autoSelectTemplate, contextOptimizationEnabled } = useSettings();
+    const { activeProviders, promptId, autoSelectTemplate, contextOptimizationEnabled, applyDesignScheme } = useSettings();
     const [llmErrorAlert, setLlmErrorAlert] = useState<LlmErrorAlertType | undefined>(undefined);
     const currentChatId = useStore(chatId);
     const [localChatId] = useState(() =>
@@ -215,6 +215,9 @@ export const ChatImpl = memo(
     const [chatMode, setChatMode] = useState<'discuss' | 'build'>('build');
     const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
     const mcpSettings = useMCPStore((state) => state.settings);
+    const selectedMCPs = useMCPStore((state) => state.selectedMCPs);
+    const isSlidesMode = useStore(workbenchStore.isSlidesMode);
+    const isGameMode = useStore(workbenchStore.isGameMode);
 
     const chatBody = useMemo(() => ({
       apiKeys,
@@ -222,7 +225,9 @@ export const ChatImpl = memo(
       promptId,
       contextOptimization: contextOptimizationEnabled,
       chatMode,
-      designScheme,
+      isSlidesMode,
+      isGameMode,
+      designScheme: applyDesignScheme ? designScheme : undefined,
       supabase: {
         isConnected: supabaseConn.isConnected,
         hasSelectedProject: !!selectedProject,
@@ -232,7 +237,8 @@ export const ChatImpl = memo(
         },
       },
       maxLLMSteps: mcpSettings.maxLLMSteps,
-      mcpEnabled: mcpSettings.mcpEnabled,
+      mcpEnabled: mcpSettings.mcpEnabled || selectedMCPs.length > 0,
+      selectedMCPs: selectedMCPs,
       chatId: currentChatId || (initialMessages.length > 0 ? initialMessages[0].id : localChatId),
     }), [
       apiKeys,
@@ -240,6 +246,9 @@ export const ChatImpl = memo(
       promptId,
       contextOptimizationEnabled,
       chatMode,
+      isSlidesMode,
+      isGameMode,
+      applyDesignScheme,
       designScheme,
       supabaseConn.isConnected,
       selectedProject,
@@ -247,6 +256,7 @@ export const ChatImpl = memo(
       supabaseConn?.credentials?.anonKey,
       mcpSettings.maxLLMSteps,
       mcpSettings.mcpEnabled,
+      selectedMCPs,
       currentChatId,
       initialMessages,
       localChatId
@@ -268,6 +278,8 @@ export const ChatImpl = memo(
           messageLength: message.content.length,
         });
       }
+      
+      useMCPStore.getState().clearSelectedMCPs();
 
       logger.debug('Finished streaming');
     }, [model, provider.name]);
@@ -623,10 +635,10 @@ export const ChatImpl = memo(
                 },
               ]);
 
-              const reloadOptions =
-                uploadedFiles.length > 0
-                  ? { experimental_attachments: await filesToAttachments(uploadedFiles) }
-                  : undefined;
+              const reloadOptions = {
+                ...(uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : {}),
+                body: chatBody
+              };
 
               reload(reloadOptions);
               setInput('');
@@ -659,7 +671,10 @@ export const ChatImpl = memo(
             experimental_attachments: attachments,
           },
         ]);
-        reload(attachments ? { experimental_attachments: attachments } : undefined);
+        reload({
+          ...(attachments ? { experimental_attachments: attachments } : {}),
+          body: chatBody
+        });
         setFakeLoading(false);
         setInput('');
         setCloneUrl(null);
@@ -696,7 +711,7 @@ export const ChatImpl = memo(
         const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${userUpdateArtifact}${skillsContext}${finalMessageContent}`;
 
         const attachmentOptions =
-          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
+          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : {};
 
         append(
           {
@@ -704,7 +719,10 @@ export const ChatImpl = memo(
             content: messageText,
             parts: createMessageParts(messageText, imageDataList),
           },
-          attachmentOptions,
+          {
+            ...attachmentOptions,
+            body: chatBody
+          },
         );
 
         workbenchStore.resetAllFileModifications();
@@ -712,7 +730,7 @@ export const ChatImpl = memo(
         const messageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]${skillsContext}\n\n${finalMessageContent}`;
 
         const attachmentOptions =
-          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : undefined;
+          uploadedFiles.length > 0 ? { experimental_attachments: await filesToAttachments(uploadedFiles) } : {};
 
         append(
           {
@@ -720,7 +738,10 @@ export const ChatImpl = memo(
             content: messageText,
             parts: createMessageParts(messageText, imageDataList),
           },
-          attachmentOptions,
+          {
+            ...attachmentOptions,
+            body: chatBody
+          },
         );
       }
 
@@ -826,7 +847,7 @@ export const ChatImpl = memo(
           return {
             ...message,
             annotations,
-            content: parsedMessages[i] || '',
+            content: parsedMessages[message.id] || '',
           };
         })}
         enhancePrompt={() => {

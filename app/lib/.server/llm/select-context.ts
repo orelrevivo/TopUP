@@ -235,10 +235,6 @@ export async function selectContext(props: {
   const totalFiles = Object.keys(filteredFiles).length;
   logger.info(`Total files: ${totalFiles}`);
 
-  if (totalFiles == 0) {
-    throw new Error(`Falbor failed to select files`);
-  }
-
   return filteredFiles;
 
   // generateText({

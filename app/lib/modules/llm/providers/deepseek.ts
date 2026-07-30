@@ -21,15 +21,29 @@ export default class DeepseekProvider extends BaseProvider {
       maxCompletionTokens: 8000,
     },
     {
+      name: 'deepseek-v4-pro',
+      label: 'Deepseek V4 Pro',
+      provider: 'Deepseek',
+      maxTokenAllowed: 8000,
+      maxCompletionTokens: 8000,
+    },
+    {
+      name: 'deepseek-v4-flash',
+      label: 'Deepseek V4 Flash',
+      provider: 'Deepseek',
+      maxTokenAllowed: 8000,
+      maxCompletionTokens: 8000,
+    },
+    {
       name: 'deepseek-chat',
-      label: 'Deepseek-Chat',
+      label: 'Deepseek V4 Pro',
       provider: 'Deepseek',
       maxTokenAllowed: 8000,
       maxCompletionTokens: 8000,
     },
     {
       name: 'deepseek-reasoner',
-      label: 'Deepseek-Reasoner',
+      label: 'Deepseek Reasoner (R1)',
       provider: 'Deepseek',
       maxTokenAllowed: 8000,
       maxCompletionTokens: 8000,
@@ -110,6 +124,13 @@ export default class DeepseekProvider extends BaseProvider {
   }): LanguageModelV1 {
     const { model, serverEnv, apiKeys, providerSettings } = options;
 
+    let actualModel = model;
+    if (actualModel === 'deepseek-chat') {
+      actualModel = 'deepseek-v4-flash';
+    } else if (actualModel === 'deepseek-reasoner') {
+      actualModel = 'deepseek-v4-pro';
+    }
+
     const { apiKey } = this.getProviderBaseUrlAndKey({
       apiKeys,
       providerSettings: providerSettings?.[this.name],
@@ -126,7 +147,7 @@ export default class DeepseekProvider extends BaseProvider {
       apiKey,
     });
 
-    return deepseek(model, {
+    return deepseek(actualModel, {
       // simulateStreaming: true,
     });
   }

@@ -107,6 +107,7 @@ export function useHackingChatHistory() {
         urlId,
         description: description.get(),
         timestamp: new Date().toISOString(),
+        metadata: { type: 'hacking' },
       });
     },
     [initialMessages.length, urlId]
@@ -139,7 +140,7 @@ export function useHackingChatHistory() {
   const importChat = useCallback(
     async (desc: string, messages: Message[]) => {
       try {
-        const newUrlId = await hackingChatApi.createChatFromMessages(desc, messages);
+        const newUrlId = await hackingChatApi.createChatFromMessages(desc, messages, { type: 'hacking' });
         window.location.href = `/hacking/${newUrlId}`;
         toast.success('Hacking chat imported successfully');
       } catch (error: any) {

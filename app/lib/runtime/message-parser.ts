@@ -55,6 +55,7 @@ interface MessageState {
   currentArtifact?: FalborArtifactData;
   currentAction: FalborActionData;
   actionId: number;
+  unclosedContent?: string;
 }
 
 function cleanoutMarkdownSyntax(content: string) {
@@ -77,7 +78,7 @@ export class StreamingMessageParser {
   #messages = new Map<string, MessageState>();
   #artifactCounter = 0;
 
-  constructor(private _options: StreamingMessageParserOptions = {}) {}
+  constructor(private _options: StreamingMessageParserOptions = {}) { }
 
   parse(messageId: string, input: string) {
     input = input || '';
@@ -188,6 +189,8 @@ export class StreamingMessageParser {
                 content = cleanEscapedTags(content);
               }
 
+              state.unclosedContent = content;
+
               this._options.callbacks?.onActionStream?.({
                 artifactId: currentArtifact.id,
                 messageId,
@@ -264,8 +267,11 @@ export class StreamingMessageParser {
               const artifactTitle = this.#extractAttribute(artifactTag, 'title') as string;
               const type = this.#extractAttribute(artifactTag, 'type') as string;
 
-              // const artifactId = this.#extractAttribute(artifactTag, 'id') as string;
-              const artifactId = `${messageId}-${state.artifactCounter++}`;
+              let artifactId = this.#extractAttribute(artifactTag, 'id') as string;
+
+              if (!artifactId) {
+                artifactId = `${messageId}-${state.artifactCounter++}`;
+              }
 
               if (!artifactTitle) {
                 logger.warn('Artifact title missing');
@@ -342,7 +348,13 @@ export class StreamingMessageParser {
 
     if (state.insideAction && state.currentArtifact) {
       const currentAction = state.currentAction;
-      let content = currentAction.content.trim();
+      let content = currentAction.content;
+      
+      if (state.unclosedContent) {
+        content += state.unclosedContent;
+      }
+      
+      content = content.trim();
 
       if ('type' in currentAction && currentAction.type === 'file') {
         if (!currentAction.filePath.endsWith('.md')) {
@@ -363,6 +375,7 @@ export class StreamingMessageParser {
 
       state.insideAction = false;
       state.currentAction = { content: '' };
+      state.unclosedContent = undefined;
     }
 
     if (state.insideArtifact && state.currentArtifact) {

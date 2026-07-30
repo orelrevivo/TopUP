@@ -43,14 +43,14 @@ export default function ProgressCompilation({ data }: { data?: ProgressAnnotatio
     <AnimatePresence>
       <div
         className={classNames(
-          'shadow-xl rounded-t-xl relative w-full mx-auto z-prompt mb-[-8px]',
+          'shadow-xl rounded-t-xl relative w-[90%] mx-auto z-prompt mb-[-8px]',
         )}
         onClick={() => setExpanded((v) => !v)}
       >
         <div
           className={classNames(
-            'bg-[#E6E6E6] dark:bg-[#1F1F1F] pb-3',
-            'px-2 py-1 rounded-t-xl text-[#545454]',
+            'bg-[#E3E3E3]/10 dark:bg-[#1F1F1F] border border-[#D6D6D6] pb-3',
+            'px-2 py-1 rounded-t-lg text-[#545454]',
             'flex ',
           )}
         >

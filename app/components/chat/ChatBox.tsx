@@ -1,6 +1,8 @@
 import React from 'react';
 import * as Popover from '@radix-ui/react-popover';
+import * as Switch from '@radix-ui/react-switch';
 import { ClientOnly } from '~/components/ui/ClientOnly';
+import { Dropdown, DropdownItem, DropdownSub, DropdownSubTrigger, DropdownSubContent, DropdownSeparator } from '~/components/ui/Dropdown';
 import { classNames } from '~/utils/classNames';
 import { PROVIDER_LIST } from '~/utils/constants';
 import { ModelSelector } from '~/components/chat/ModelSelector';
@@ -33,6 +35,10 @@ import { SkillsDialog } from '../skills/SkillsDialog';
 import StarterTemplates from './StarterTemplates';
 import { ImageGeneratorDialog } from './ImageGeneratorDialog';
 import { useSettings } from '~/lib/hooks/useSettings';
+import { Tooltip } from '~/components/ui/Tooltip';
+import { Badge } from '../ui';
+import { MCP_CONNECTORS } from '~/components/@settings/tabs/mcp/connectors';
+import { useMCPStore } from '~/lib/stores/mcp';
 
 interface ChatBoxProps {
   isModelSettingsCollapsed: boolean;
@@ -85,6 +91,8 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const showWorkbench = useStore(workbenchStore.showWorkbench);
   const isInspectorMode = useStore(workbenchStore.isInspectorMode);
   const isDesignSystemMode = useStore(workbenchStore.isDesignSystemMode);
+  const isSlidesMode = useStore(workbenchStore.isSlidesMode);
+  const isGameMode = useStore(workbenchStore.isGameMode);
   const { user } = useAuth();
 
   const { handleDesignSystemSave, handleLiveUpdate } = useDesignSystem();
@@ -93,12 +101,34 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const [cloneModalOpen, setCloneModalOpen] = React.useState(false);
   const [cloneUrlInput, setCloneUrlInput] = React.useState('');
   const [modelSelectorOpen, setModelSelectorOpen] = React.useState(false);
-  const { imageGenerationEnabled } = useSettings();
+  const { imageGenerationEnabled, applyDesignScheme, setApplyDesignScheme } = useSettings();
+
+  const selectedMCPs = useMCPStore((state) => state.selectedMCPs);
+  const toggleSelectedMCP = useMCPStore((state) => state.toggleSelectedMCP);
+  const [connections, setConnections] = React.useState<any[]>([]);
+
+  React.useEffect(() => {
+    fetch('/api/mcp/connections', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.connections)) {
+          setConnections(data.connections);
+        } else if (Array.isArray(data)) {
+          setConnections(data);
+        } else {
+          setConnections([]);
+        }
+      })
+      .catch((err) => console.error('Error fetching connections', err));
+  }, []);
 
   const claudeModel = props.modelList.find(m => m.name.toLowerCase().includes('sonnet') && m.provider === 'Anthropic');
-  const deepseekModel = props.modelList.find(m => (m.name === 'deepseek-reasoner' || m.name === 'deepseek-chat') && m.provider === 'Deepseek');
+  const haikuModel = props.modelList.find(m => m.name === 'claude-haiku-4-5' && m.provider === 'Anthropic');
+  const deepseekModel = props.modelList.find(m => (m.name === 'deepseek-v4-flash' || m.name === 'deepseek-v4-pro' || m.name === 'deepseek-reasoner' || m.name === 'deepseek-chat') && m.provider === 'Deepseek');
   const gptSolModel = props.modelList.find(m => m.name === 'gpt-5.6-sol' && m.provider === 'OpenAI');
-  const availableModels = [claudeModel, deepseekModel, gptSolModel].filter(Boolean);
+  const geminiProModel = props.modelList.find(m => m.name === 'gemini-3.6-pro' && m.provider === 'Google');
+  const geminiFlashModel = props.modelList.find(m => m.name === 'gemini-3.6-flash' && m.provider === 'Google');
+  const availableModels = [claudeModel, haikuModel, deepseekModel, gptSolModel, geminiProModel, geminiFlashModel].filter(Boolean);
   const selectedModelInfo = availableModels.find(m => m?.name === props.model);
 
   return (
@@ -156,7 +186,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         )
       )}
       <div className={classNames('rounded-lg', { 'p-1.5 bg-[#E3E3E3] dark:bg-transparent': !props.chatStarted })}>
-        <div className="relative bg-falbor-elements-background-depth-2 dark:bg-[#141414] backdrop-blur border border-[#BDBDBD] dark:border-[#353538] shadow-md rounded-lg">
+        <div className="relative bg-white dark:bg-[#141414] backdrop-blur border border-[#D6D6D6] dark:border-[#353538] rounded-lg">
           <svg className={classNames(styles.PromptEffectContainer)}>
             <defs>
               <linearGradient
@@ -186,7 +216,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           </svg>
 
           {/* File previews — inside the chat box, above the textarea, neat grid */}
-          {(hasFiles || props.cloneUrl) && (
+          {(hasFiles || !!props.cloneUrl) && (
             <div className="px-4 pt-3 pb-1">
               <div className="flex flex-wrap gap-2">
                 {props.cloneUrl && (
@@ -230,64 +260,124 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     </button>
                   </div>
                 ))}
+
               </div>
             </div>
           )}
 
-          <textarea
-            ref={props.textareaRef}
-            className={classNames(
-              'w-full pl-4 pt-4 pr-16 outline-none resize-none',
-              'text-falbor-elements-textPrimary placeholder-falbor-elements-textTertiary',
-              'bg-transparent text-sm',
-              'transition-all duration-200',
-              'hover:border-falbor-elements-focus',
-            )}
-            onDragEnter={(e) => e.preventDefault()}
-            onDragOver={(e) => e.preventDefault()}
-            onDragLeave={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              e.preventDefault();
-              const files = Array.from(e.dataTransfer.files);
-              files.forEach((file) => {
-                if (file.type.startsWith('image/')) {
-                  const reader = new FileReader();
-                  reader.onload = (e) => {
-                    const base64Image = e.target?.result as string;
-                    props.setUploadedFiles?.([...props.uploadedFiles, file]);
-                    props.setImageDataList?.([...props.imageDataList, base64Image]);
-                  };
-                  reader.readAsDataURL(file);
+          <div className="relative w-full">
+            <div
+              className={classNames(
+                'absolute inset-0 pl-4 pt-4 pr-16',
+                'text-sm font-sans whitespace-pre-wrap break-words pointer-events-none',
+                'overflow-hidden'
+              )}
+              aria-hidden="true"
+            >
+              {(() => {
+                if (!props.input) return null;
+                const parts = props.input.split(/(@\w+\s?)/g);
+                return parts.map((part, i) => {
+                  const mcpMatch = part.match(/^@(\w+)(\s?)$/);
+                  if (mcpMatch) {
+                    const isMcpToken = MCP_CONNECTORS.some(c => c.id === mcpMatch[1]);
+                    if (isMcpToken) {
+                      return (
+                        <span key={i}>
+                          <span className="bg-[#0099ff]/20 text-[#0099ff] rounded-[4px] px-1 font-medium">@{mcpMatch[1]}</span>
+                          {mcpMatch[2]}
+                        </span>
+                      );
+                    }
+                  }
+                  return <span key={i} className="text-falbor-elements-textPrimary">{part}</span>;
+                });
+              })()}
+              {props.input.endsWith('\n') ? <br /> : null}
+            </div>
+
+            <textarea
+              ref={props.textareaRef}
+              className={classNames(
+                'relative w-full pl-4 pt-4 pr-16 outline-none resize-none font-sans',
+                'placeholder-falbor-elements-textTertiary',
+                'bg-transparent text-transparent caret-falbor-elements-textPrimary text-sm',
+                'transition-all duration-200',
+                'border-none focus:border-none focus:outline-none focus:ring-0',
+              )}
+              onDragEnter={(e) => e.preventDefault()}
+              onDragOver={(e) => e.preventDefault()}
+              onDragLeave={(e) => e.preventDefault()}
+              onDrop={(e) => {
+                e.preventDefault();
+                const files = Array.from(e.dataTransfer.files);
+                files.forEach((file) => {
+                  if (file.type.startsWith('image/')) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                      const base64Image = e.target?.result as string;
+                      props.setUploadedFiles?.([...props.uploadedFiles, file]);
+                      props.setImageDataList?.([...props.imageDataList, base64Image]);
+                    };
+                    reader.readAsDataURL(file);
+                  }
+                });
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Backspace') {
+                  const textarea = event.currentTarget;
+                  const cursorPosition = textarea.selectionStart;
+                  const textBefore = props.input.substring(0, cursorPosition);
+                  // Regex matches an MCP token at the end of the current cursor position
+                  const mcpMatch = textBefore.match(/@(\w+)\s?$/);
+                  if (mcpMatch) {
+                    const connectorId = mcpMatch[1];
+                    const isMcpToken = MCP_CONNECTORS.some(c => c.id === connectorId);
+                    if (isMcpToken) {
+                      event.preventDefault();
+                      const textAfter = props.input.substring(cursorPosition);
+                      const newValue = textBefore.substring(0, cursorPosition - mcpMatch[0].length) + textAfter;
+                      if (props.handleInputChange) {
+                        props.handleInputChange({ target: { value: newValue } } as any);
+                      }
+                      setTimeout(() => {
+                        textarea.focus();
+                        textarea.setSelectionRange(cursorPosition - mcpMatch[0].length, cursorPosition - mcpMatch[0].length);
+                      }, 0);
+                      return;
+                    }
+                  }
                 }
-              });
-            }}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                if (event.shiftKey) return;
-                event.preventDefault();
-                if (!user) return;
-                if (props.isStreaming) {
-                  props.handleStop?.();
-                  return;
+
+                if (event.key === 'Enter') {
+                  if (event.shiftKey) return;
+                  event.preventDefault();
+                  if (!user) return;
+                  if (props.isStreaming) {
+                    props.handleStop?.();
+                    return;
+                  }
+                  if (event.nativeEvent.isComposing) return;
+                  props.handleSendMessage?.(event);
                 }
-                if (event.nativeEvent.isComposing) return;
-                props.handleSendMessage?.(event);
+              }}
+              value={props.input}
+              onChange={(event) => {
+                props.handleInputChange?.(event);
+              }}
+              onPaste={props.handlePaste}
+              style={{
+                minHeight: props.TEXTAREA_MIN_HEIGHT,
+                maxHeight: props.TEXTAREA_MAX_HEIGHT,
+              }}
+              placeholder={
+                props.chatMode === 'build'
+                  ? 'How can Falbor help you today?'
+                  : 'What would you like to discuss?'
               }
-            }}
-            value={props.input}
-            onChange={(event) => props.handleInputChange?.(event)}
-            onPaste={props.handlePaste}
-            style={{
-              minHeight: props.TEXTAREA_MIN_HEIGHT,
-              maxHeight: props.TEXTAREA_MAX_HEIGHT,
-            }}
-            placeholder={
-              props.chatMode === 'build'
-                ? 'How can Falbor help you today?'
-                : 'What would you like to discuss?'
-            }
-            translate="no"
-          />
+              translate="no"
+            />
+          </div>
 
           <ClientOnly>
             {() => (
@@ -311,91 +401,160 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
 
           <div className="flex justify-between items-center text-sm p-4 pt-2">
             <div className="flex gap-1 items-center">
-              <Popover.Root>
-                <Popover.Trigger asChild>
+              <Dropdown
+                sideOffset={10}
+                align="start"
+                trigger={
                   <IconButton
                     title="More actions"
                     className="!rounded-full transition-all border border-falbor-elements-borderColor"
                   >
                     <div className="i-ph:plus text-xl" />
                   </IconButton>
-                </Popover.Trigger>
-                <Popover.Portal>
-                  <Popover.Content
-                    sideOffset={10}
-                    side="top"
-                    align="start"
-                    className="bg-falbor-elements-background-depth-2 text-falbor-elements-item-contentAccent rounded-md border border-falbor-elements-borderColor shadow-lg z-[100] overflow-hidden flex flex-col py-1 w-48"
+                }
+              >
+                <DropdownItem onSelect={() => setSkillsDialogOpen(true)}>
+                  <div className="i-ph:puzzle-piece text-xl text-falbor-elements-textSecondary"></div>
+                  <span>Using the skill</span>
+                </DropdownItem>
+
+                <DropdownItem onSelect={() => props.handleFileUpload()}>
+                  <div className="i-ph:paperclip text-xl text-falbor-elements-textSecondary"></div>
+                  <span>Upload file</span>
+                </DropdownItem>
+
+                {imageGenerationEnabled && (
+                  <DropdownItem
+                    className="cursor-not-allowed opacity-50"
                   >
-                    <button
-                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors text-falbor-elements-textPrimary"
-                      onClick={() => setSkillsDialogOpen(true)}
-                    >
-                      <div className="i-ph:puzzle-piece text-xl text-falbor-elements-textSecondary"></div>
-                      <span>Using the skill</span>
-                    </button>
+                    <div className="i-ph:image text-xl text-falbor-elements-textSecondary"></div>
+                    <span>Image generator <span className="text-xs font-mono">(coming soon)</span></span>
+                  </DropdownItem>
+                )}
 
-                    <button
-                      className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors text-falbor-elements-textPrimary"
-                      onClick={() => props.handleFileUpload()}
-                    >
-                      <div className="i-ph:paperclip text-xl text-falbor-elements-textSecondary"></div>
-                      <span>Upload file</span>
-                    </button>
-
-
-                    {imageGenerationEnabled && (
-                      <button
-                        disabled
-                        className="cursor-not-allowed flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors text-falbor-elements-textPrimary"
-                        onClick={() => setImageGeneratorOpen(true)}
-                      >
-                        <div className="i-ph:image text-xl text-falbor-elements-textSecondary"></div>
-                        <span>Image generator <span className="text-xs font-mono">(coming soon)</span></span>
-                      </button>
-                    )}
-
+                <div className="relative flex items-center gap-2 px-1.5 py-1 rounded-md text-sm text-falbor-elements-textPrimary hover:bg-[#E3E3E3] dark:hover:bg-[#2A2A2A] cursor-pointer w-full">
+                  <div className="flex-1">
                     <ColorSchemeDialog designScheme={props.designScheme} setDesignScheme={props.setDesignScheme} asMenuItem={true} />
-                    <McpTools asMenuItem={true} />
-
-                    {/* <WebSearch
-                      onSearchResult={(result) => props.onWebSearchResult?.(result)}
-                      disabled={props.isStreaming}
-                      asMenuItem={true}
-                    /> */}
-
-                    <ScreenRecorderButton
-                      disabled={props.isStreaming}
-                      asMenuItem={true}
-                      onPromptGenerated={(prompt) => {
-                        if (props.handleInputChange) {
-                          const syntheticEvent = {
-                            target: { value: props.input + (props.input ? '\\n' : '') + prompt }
-                          } as React.ChangeEvent<HTMLTextAreaElement>;
-                          props.handleInputChange(syntheticEvent);
-                        }
-                      }}
-                    />
-                    <button
-                      disabled={props.input.length === 0 || props.enhancingPrompt}
-                      className={classNames(
-                        'flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors disabled:opacity-50 text-falbor-elements-textPrimary'
-                      )}
-                      onClick={() => {
-                        props.enhancePrompt?.();
-                        toast.success('Prompt enhanced!');
-                      }}
+                  </div>
+                  <div className="absolute right-3 flex items-center h-full pointer-events-auto">
+                    <Switch.Root
+                      checked={applyDesignScheme}
+                      onCheckedChange={setApplyDesignScheme}
+                      className="w-8 h-4 bg-falbor-elements-background-depth-4 border border-falbor-elements-borderColor rounded-full relative shadow-inner focus:outline-none data-[state=checked]:bg-green-500 data-[state=checked]:border-green-600 transition-colors"
                     >
-                      {props.enhancingPrompt ? (
-                        <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
-                      ) : (
-                        <div className="i-falbor:stars text-xl text-falbor-elements-textSecondary"></div>
-                      )}
-                      <span>Enhance prompt</span>
-                    </button>
-                  </Popover.Content>
-                </Popover.Portal>
-              </Popover.Root>
+                      <Switch.Thumb className="block w-3 h-3 bg-white rounded-full transition-transform transform translate-x-0.5 data-[state=checked]:translate-x-4.5 shadow-sm" />
+                    </Switch.Root>
+                  </div>
+                </div>
+
+                <DropdownSub>
+                  <DropdownSubTrigger>
+                    <div className="i-ph:graph text-xl text-falbor-elements-textSecondary"></div>
+                    <span>Connectors</span>
+                  </DropdownSubTrigger>
+                  <DropdownSubContent className="w-64 max-h-[300px] overflow-y-auto z-[1000]">
+                    {MCP_CONNECTORS.filter(c => c.id !== 'custom').map((connector) => {
+                      const hasDbConnection = Array.isArray(connections) && connections.some((c) => c.connectorId === connector.id || c.connector_id === connector.id);
+                      const hasLocalConnection = Object.keys(useMCPStore.getState().settings?.mcpConfig?.mcpServers || {}).some(key => key.startsWith(`${connector.id}-`));
+                      const isConnected = hasDbConnection || hasLocalConnection;
+                      const isSelected = selectedMCPs.includes(connector.id);
+
+                      return (
+                        <div key={connector.id} className="relative group w-full">
+                          <button
+                            onClick={() => {
+                              if (isConnected) {
+                                if (!isSelected) {
+                                  toggleSelectedMCP(connector.id);
+                                }
+                                const textarea = props.textareaRef?.current;
+                                if (textarea && props.handleInputChange) {
+                                  const cursorPosition = textarea.selectionStart;
+                                  const textBefore = props.input.substring(0, cursorPosition);
+                                  const textAfter = props.input.substring(cursorPosition);
+                                  const token = `@${connector.id} `;
+                                  const newValue = textBefore + token + textAfter;
+                                  props.handleInputChange({ target: { value: newValue } } as any);
+                                  setTimeout(() => {
+                                    textarea.focus();
+                                    textarea.setSelectionRange(cursorPosition + token.length, cursorPosition + token.length);
+                                  }, 10);
+                                }
+                              }
+                            }}
+                            disabled={!isConnected}
+                            className={classNames(
+                              'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm transition-colors text-left',
+                              isConnected
+                                ? 'text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 cursor-pointer'
+                                : 'text-falbor-elements-textTertiary opacity-60 cursor-not-allowed',
+                              isSelected && 'bg-falbor-elements-background-depth-3'
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              <img src={connector.logo} className="w-5 h-5 object-contain" alt={connector.name} />
+                              <span>{connector.name}</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              {isSelected && <div className="i-ph:check text-accent-500 text-sm" />}
+                              {!isConnected && (
+                                <div className="i-ph:warning-circle text-orange-500 text-sm opacity-80" />
+                              )}
+                            </div>
+                          </button>
+
+                          {!isConnected && (
+                            <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-falbor-elements-background-depth-4 text-falbor-elements-textPrimary text-xs rounded border border-falbor-elements-borderColor shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                              Needs to be connected in settings
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    <DropdownSeparator />
+                    <McpTools asMenuItem={true} />
+                  </DropdownSubContent>
+                </DropdownSub>
+
+                {/* <WebSearch
+                  onSearchResult={(result) => props.onWebSearchResult?.(result)}
+                  disabled={props.isStreaming}
+                  asMenuItem={true}
+                /> */}
+
+                <ScreenRecorderButton
+                  disabled={props.isStreaming}
+                  asMenuItem={true}
+                  onPromptGenerated={(prompt) => {
+                    if (props.handleInputChange) {
+                      const syntheticEvent = {
+                        target: { value: props.input + (props.input ? '\n' : '') + prompt }
+                      } as React.ChangeEvent<HTMLTextAreaElement>;
+                      props.handleInputChange(syntheticEvent);
+                    }
+                  }}
+                />
+
+                <DropdownItem
+                  className={classNames(props.input.length === 0 || props.enhancingPrompt ? 'opacity-50' : '')}
+                  onSelect={(e) => {
+                    if (props.input.length === 0 || props.enhancingPrompt) {
+                      e.preventDefault();
+                      return;
+                    }
+                    e.preventDefault();
+                    props.enhancePrompt?.();
+                    toast.success('Prompt enhanced!');
+                  }}
+                >
+                  {props.enhancingPrompt ? (
+                    <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
+                  ) : (
+                    <div className="i-falbor:stars text-xl text-falbor-elements-textSecondary"></div>
+                  )}
+                  <span>Enhance prompt</span>
+                </DropdownItem>
+              </Dropdown>
 
               <SpeechRecognitionButton
                 isListening={props.isListening}
@@ -404,6 +563,31 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 disabled={props.isStreaming}
               />
 
+              {isSlidesMode && (
+                <IconButton
+                  title="Disable Slides Mode"
+                  className="transition-all flex items-center gap-1 px-1.5 !bg-falbor-elements-item-backgroundAccent !text-falbor-elements-item-contentAccent"
+                  onClick={() => {
+                    workbenchStore.isSlidesMode.set(false);
+                  }}
+                >
+                  <div className="i-ph:presentation-chart text-xl" />
+                  <span>Slides</span>
+                </IconButton>
+              )}
+
+              {isGameMode && (
+                <IconButton
+                  title="Disable 2D Game Mode"
+                  className="transition-all flex items-center gap-1 px-1.5 !bg-falbor-elements-item-backgroundAccent !text-falbor-elements-item-contentAccent"
+                  onClick={() => {
+                    workbenchStore.isGameMode.set(false);
+                  }}
+                >
+                  <div className="i-ph:game-controller text-xl" />
+                  <span>2D Game</span>
+                </IconButton>
+              )}
 
               {/* Moved Select Primarch to the right */}
 
@@ -424,6 +608,12 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                   {props.chatMode === 'discuss' ? <span>Discuss</span> : <span />}
                 </IconButton>
               )}
+              {showWorkbench && (
+                <DesignSystemToolbar
+                  isInspectorMode={isInspectorMode}
+                  isDesignSystemMode={isDesignSystemMode}
+                />
+              )}
             </div>
 
             {props.input.length > 3 ? (
@@ -443,12 +633,14 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                         'transition-all flex items-center gap-1 px-1.5 text-[12px] !bg-[#EEEEEE] !dark:bg-falbor-elements-background-depth-2',
                       )}
                     >
-                      {props.model === claudeModel?.name ? (
+                      {props.model?.includes('claude') ? (
                         <img src="/icons/claude-color.svg" className="w-4 h-4" alt="Claude" />
                       ) : props.model === deepseekModel?.name ? (
                         <img src="/icons/deepseek-color.svg" className="w-4 h-4" alt="DeepSeek" />
                       ) : props.model?.includes('gpt') ? (
                         <div className="i-ph:open-ai-logo text-sm" />
+                      ) : props.model?.includes('gemini') ? (
+                        <img src="/icons/gemini.svg" className="w-4 h-4" alt="Gemini" />
                       ) : (
                         <div className="i-ph:cpu text-sm" />
                       )}
@@ -465,21 +657,19 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     >
                       {availableModels.map((m) => {
                         if (!m) return null;
-                        const isClaude = m.name.toLowerCase().includes('sonnet');
+                        const isClaude = m.name.toLowerCase().includes('sonnet') || m.name.toLowerCase().includes('haiku');
                         const isGpt = m.name.toLowerCase().includes('gpt');
-                        const displayName = m.label || m.name;
-                        const isComingSoon = isClaude || isGpt;
-                        return (
+                        const isGemini = m.name.toLowerCase().includes('gemini');
+                        let displayName = (m.label || m.name).replace(/\s\([^)]+\scontext\)/i, '');
+
+                        const buttonContent = (
                           <button
                             key={m.name}
-                            disabled={isComingSoon}
                             className={classNames(
-                              'flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors',
-                              isComingSoon ? 'opacity-50 cursor-not-allowed' : 'hover:bg-falbor-elements-background-depth-3',
+                              'flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-falbor-elements-background-depth-3',
                               props.model === m.name ? 'bg-falbor-elements-background-depth-3' : 'text-falbor-elements-textPrimary'
                             )}
                             onClick={() => {
-                              if (isComingSoon) return;
                               props.setModel?.(m.name);
                               const targetProvider = props.providerList?.find(p => p.name === m.provider);
                               if (targetProvider) {
@@ -493,32 +683,41 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                                 <img src="/icons/claude-color.svg" className="w-4 h-4" alt="Claude" />
                               ) : isGpt ? (
                                 <div className="i-ph:open-ai-logo text-lg" />
+                              ) : isGemini ? (
+                                <img src="/icons/gemini.svg" className="w-4 h-4" alt="Gemini" />
                               ) : (
                                 <img src="/icons/deepseek-color.svg" className="w-4 h-4" alt="DeepSeek" />
                               )}
-                              <span>
+                              <span className="flex items-center gap-2">
                                 {displayName}
-                                {isComingSoon && <span className="ml-2 text-xs font-mono text-falbor-elements-textSecondary">(coming soon)</span>}
+                                {m.name === 'claude-haiku-4-5' && (
+                                  <Badge size="sm" variant="destructive" className='!rounded-md'>
+                                    New
+                                  </Badge>
+                                )}
                               </span>
                             </span>
                             {props.model === m.name && <div className="i-ph:check text-sm" />}
                           </button>
                         );
+
+                        return buttonContent;
                       })}
-                      <div className="flex items-center justify-between w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors">
-                        more models available soon.
+                      <div className='p-2 mb-[-4px]'>
+                        <div className="border rounded-md flex flex-col items-center justify-between w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors">
+                          <span className="flex items-center">
+                            <div className="i-ph:info mr-1 w-7 h-7" />
+                            more models available soon.
+                          </span>
+                          <span className='bg-orange-300/20 border-l-2 border-orange px-2 '>We're using small models to keep your balance.</span>
+                          <span className='bg-[#0099ff]/10 border-l-2 border-[#0099ff] px-2 '>you can always use bigger models with a big cost.</span>
+                        </div>
                       </div>
                     </Popover.Content>
                   </Popover.Portal>
                 </Popover.Root>
               )}
 
-              {showWorkbench && (
-                <DesignSystemToolbar
-                  isInspectorMode={isInspectorMode}
-                  isDesignSystemMode={isDesignSystemMode}
-                />
-              )}
               {/* {typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_SUPABASE_ORG_ID && (
                 <SupabaseConnection />
               )} */}

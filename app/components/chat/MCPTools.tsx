@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { classNames } from '~/utils/classNames';
 import { Dialog, DialogRoot, DialogClose, DialogTitle, DialogButton } from '~/components/ui/Dialog';
 import { IconButton } from '~/components/ui/IconButton';
+import { DropdownItem } from '~/components/ui/Dropdown';
 import { useMCPStore } from '~/lib/stores/mcp';
 import McpServerList from '~/components/@settings/tabs/mcp/McpServerList';
 
@@ -49,43 +50,46 @@ export function McpTools({ asMenuItem }: { asMenuItem?: boolean }) {
   const serverEntries = useMemo(() => Object.entries(serverTools), [serverTools]);
 
   return (
-    <div className="relative">
-      <div className="flex">
-        {asMenuItem ? (
-          <button
-            onClick={() => setIsDialogOpen(!isDialogOpen)}
-            title={settings.mcpEnabled ? 'MCP Tools Active' : 'MCP Tools Disabled'}
-            disabled={!isInitialized}
-            className={classNames(
-              'flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors disabled:opacity-50',
-              settings.mcpEnabled ? 'text-accent-500' : 'text-falbor-elements-textPrimary'
-            )}
-          >
-            {!isInitialized ? (
-              <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
-            ) : (
-              <div className={classNames("i-ph:graph text-xl", settings.mcpEnabled ? "text-accent-500" : "text-falbor-elements-textSecondary")}></div>
-            )}
-            <span>MCP Tools</span>
-          </button>
-        ) : (
-          <IconButton
-            onClick={() => setIsDialogOpen(!isDialogOpen)}
-            title={settings.mcpEnabled ? 'MCP Tools Active' : 'MCP Tools Disabled'}
-            disabled={!isInitialized}
-            className={classNames(
-              'transition-all disabled:opacity-50 disabled:cursor-not-allowed',
-              settings.mcpEnabled && 'text-accent-500',
-            )}
-          >
-            {!isInitialized ? (
-              <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
-            ) : (
-              <div className="i-ph:graph text-xl"></div>
-            )}
-          </IconButton>
-        )}
-      </div>
+    <>
+      {asMenuItem ? (
+        <DropdownItem
+          onSelect={(e) => {
+            if (!isInitialized) {
+              e.preventDefault();
+              return;
+            }
+            e.preventDefault();
+            setIsDialogOpen(true);
+          }}
+          className={classNames(
+            !isInitialized ? 'opacity-50' : '',
+            settings.mcpEnabled ? 'text-accent-500' : 'text-falbor-elements-textPrimary'
+          )}
+        >
+          {!isInitialized ? (
+            <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
+          ) : (
+            <div className={classNames("i-ph:graph text-xl", settings.mcpEnabled ? "text-accent-500" : "text-falbor-elements-textSecondary")}></div>
+          )}
+          <span>Connectors</span>
+        </DropdownItem>
+      ) : (
+        <IconButton
+          onClick={() => setIsDialogOpen(!isDialogOpen)}
+          title={settings.mcpEnabled ? 'MCP Tools Active' : 'MCP Tools Disabled'}
+          disabled={!isInitialized}
+          className={classNames(
+            'transition-all disabled:opacity-50 disabled:cursor-not-allowed',
+            settings.mcpEnabled && 'text-accent-500',
+          )}
+        >
+          {!isInitialized ? (
+            <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
+          ) : (
+            <div className="i-ph:graph text-xl"></div>
+          )}
+        </IconButton>
+      )}
 
       <DialogRoot open={isDialogOpen} onOpenChange={handleDialogOpen}>
         {isDialogOpen && (
@@ -171,6 +175,6 @@ export function McpTools({ asMenuItem }: { asMenuItem?: boolean }) {
           </Dialog>
         )}
       </DialogRoot>
-    </div>
+    </>
   );
 }
