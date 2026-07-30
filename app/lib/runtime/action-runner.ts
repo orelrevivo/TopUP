@@ -336,46 +336,6 @@ export class ActionRunner {
     }
 
     try {
-      if (
-        action.content.includes('<<<<') &&
-        action.content.includes('====') &&
-        action.content.includes('>>>>')
-      ) {
-        let fileContent = '';
-        try {
-          fileContent = await webcontainer.fs.readFile(relativePath, 'utf-8');
-        } catch (e) {
-          logger.error('Tried to patch a file that does not exist:', relativePath);
-          // If the file doesn't exist, we can't patch it. Fall back to just writing the action content.
-        }
-
-        if (fileContent) {
-          // Use a robust regex to match the search and replace blocks
-          const diffBlockRegex = /<<<<(?:.*?)\n([\s\S]*?)\n====(?:.*?)\n([\s\S]*?)\n>>>>/g;
-          let match;
-          let patchedContent = fileContent;
-          let hasMatches = false;
-
-          while ((match = diffBlockRegex.exec(action.content)) !== null) {
-            hasMatches = true;
-            const search = match[1];
-            const replace = match[2];
-
-            if (patchedContent.includes(search)) {
-              patchedContent = patchedContent.replace(search, replace);
-            } else {
-              logger.warn(`Could not find search block in ${relativePath}`);
-            }
-          }
-
-          if (hasMatches) {
-            await webcontainer.fs.writeFile(relativePath, patchedContent);
-            logger.debug(`File patched ${relativePath}`);
-            return;
-          }
-        }
-      }
-
       await webcontainer.fs.writeFile(relativePath, action.content);
       logger.debug(`File written ${relativePath}`);
     } catch (error) {

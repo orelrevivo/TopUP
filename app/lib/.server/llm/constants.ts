@@ -15,7 +15,7 @@ export const PROVIDER_COMPLETION_LIMITS: Record<string, number> = {
   Anthropic: 64000, // Conservative limit for Claude 4 models (Opus: 32k, Sonnet: 64k)
   Google: 8192, // Gemini 1.5 Pro/Flash standard limit
   Cohere: 4000,
-  DeepSeek: 8192,
+  DeepSeek: 32000,
   Groq: 8192,
   HuggingFace: 4096,
   Mistral: 8192,

@@ -303,6 +303,17 @@ export async function streamText(props: {
       supabaseProjectData,
     }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData);
 
+  // Prepend critical file-writing rules to every system prompt.
+  const FILE_WRITING_ENFORCEMENT = `CRITICAL RULES (HIGHEST PRIORITY — OVERRIDE EVERYTHING):
+1. NEVER write code in the chat. ALL code goes inside <falborAction type="file" filePath="..."> inside a <falborArtifact>.
+2. When editing ANY file: write the COMPLETE file, first line to last line. NEVER partial snippets.
+3. FORBIDDEN: <<<< SEARCH / ==== REPLACE / >>>> END markers or any diff format.
+4. Every <falborAction type="file"> must contain the FULL final file. No "// rest of file". No truncation.
+
+`;
+  systemPrompt = FILE_WRITING_ENFORCEMENT + systemPrompt;
+
+
   if (isSlidesMode) {
     systemPrompt += `
 
@@ -553,7 +564,7 @@ ${systemPrompt}`;
         },
       },
     }),
-    system: isGameMode 
+    system: isGameMode
       ? `${systemPrompt}\n\nAdditionally, you are an expert 2D Game Developer AI. Your goal is to build an entire fully-functional 2D web game based on the user's request.\nCRITICAL RULES:\n- You must create all graphical assets required for the game (characters, backgrounds, items, UI) using the \`generate_image_asset\` tool.\n- You must always request images with a transparent background where appropriate (e.g., characters, items).\n- Wait for the tool to return the success message before using the image path in your code.\n- Place all generated images inside the \`public/\` folder.\n- DO NOT use placeholders like "hero.png" unless you have explicitly generated them using the tool.\n- The game should be built using React (HTML5 Canvas or DOM elements) and standard web technologies.\n- Write a highly polished, fully complete game. It should be visually impressive and fun to play.`
       : chatMode === 'build' ? systemPrompt : discussPrompt(),
     ...tokenParams,
@@ -602,19 +613,19 @@ ${systemPrompt}`;
               let base64 = b64Json;
 
               if (!base64) {
-                  const imageUrl = data.data?.[0]?.url;
-                  
-                  if (!imageUrl) {
-                    return 'Failed: No image url or b64_json returned from OpenAI.';
-                  }
+                const imageUrl = data.data?.[0]?.url;
 
-                  // Download the image and convert to base64
-                  const imageResponse = await fetch(imageUrl);
-                  if (!imageResponse.ok) {
-                    return `Failed to download generated image: ${imageResponse.statusText}`;
-                  }
-                  const imageBuffer = await imageResponse.arrayBuffer();
-                  base64 = Buffer.from(imageBuffer).toString('base64');
+                if (!imageUrl) {
+                  return 'Failed: No image url or b64_json returned from OpenAI.';
+                }
+
+                // Download the image and convert to base64
+                const imageResponse = await fetch(imageUrl);
+                if (!imageResponse.ok) {
+                  return `Failed to download generated image: ${imageResponse.statusText}`;
+                }
+                const imageBuffer = await imageResponse.arrayBuffer();
+                base64 = Buffer.from(imageBuffer).toString('base64');
               }
 
               if (onImageGenerated) {
@@ -650,3 +661,8 @@ ${systemPrompt}`;
 
   return await _streamText(streamParams as any);
 }
+
+
+
+
+

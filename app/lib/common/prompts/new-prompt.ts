@@ -203,12 +203,7 @@ The year is 2025.
     - Only include new/modified files
     - ALWAYS add contentType attribute
     - FORBIDDEN: Binary files, base64 assets
-    - CRITICAL: When updating an EXISTING file, NEVER rewrite the entire file. Use a Search-and-Replace block inside the falborAction:
-      Place the old lines after a line containing only four less-than signs and the word SEARCH (<<<< SEARCH),
-      then a line containing only four equals signs and REPLACE (==== REPLACE),
-      then the new replacement lines,
-      then a closing line of four greater-than signs (>>>> END).
-    - Full file rewrites are ONLY allowed for BRAND NEW files that do not yet exist.
+    - CRITICAL: When updating an EXISTING file, you MUST ALWAYS rewrite the ENTIRE file from start to finish with all changes incorporated. NEVER use partial updates, diffs, Search-and-Replace blocks, or any abbreviated format. Every file action must contain the complete, final file content — no exceptions. Do NOT use <<< SEARCH, ==== REPLACE, >>>> END markers or any similar diff syntax.
 
   Action Order:
     - Create files BEFORE shell commands that depend on them
