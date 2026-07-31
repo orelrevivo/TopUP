@@ -151,7 +151,7 @@ export function useNetlifyDeploy() {
       
       async function sha1(data: string | Uint8Array): Promise<string> {
         const buffer = typeof data === 'string' ? new TextEncoder().encode(data) : data;
-        const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
+        const hashBuffer = await crypto.subtle.digest('SHA-1', buffer as BufferSource);
         const hashArray = Array.from(new Uint8Array(hashBuffer));
         return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       }
@@ -260,7 +260,7 @@ export function useNetlifyDeploy() {
                       Authorization: `Bearer ${netlifyConn.token}`,
                       'Content-Type': 'application/octet-stream',
                     },
-                    body: content,
+                    body: content as BodyInit,
                   },
                 );
 
