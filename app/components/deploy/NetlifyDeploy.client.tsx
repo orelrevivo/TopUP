@@ -168,7 +168,15 @@ export function useNetlifyDeploy() {
         }),
       });
 
-      const data = (await response.json()) as any;
+      let data;
+      const contentType = response.headers.get('content-type');
+      if (contentType && contentType.includes('application/json')) {
+        data = await response.json();
+      } else {
+        const text = await response.text();
+        console.error('Non-JSON response from netlify-deploy API:', text.substring(0, 500));
+        throw new Error(`Deployment API returned non-JSON response (${response.status}): ${text.substring(0, 100)}`);
+      }
 
       if (!response.ok || !data.deploy || !data.site) {
         console.error('Invalid deploy response:', data);
