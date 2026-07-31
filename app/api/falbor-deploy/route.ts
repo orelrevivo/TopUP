@@ -9,13 +9,14 @@ interface DeployRequestBody {
   files: Record<string, string>;
   chatId: string;
   subdomain?: string;
+  isInitial?: boolean;
 }
 
 export async function POST(request: Request) {
   try {
-    const { files, chatId, subdomain: existingSubdomain } = (await request.json()) as DeployRequestBody;
+    const { files, chatId, subdomain: existingSubdomain, isInitial = true } = (await request.json()) as DeployRequestBody;
 
-    if (!files || Object.keys(files).length === 0) {
+    if (!files) {
       return json({ error: 'No files provided' }, { status: 400 });
     }
 
@@ -45,19 +46,32 @@ export async function POST(request: Request) {
       normalizedFiles[normalizedPath] = finalContent;
     }
 
+    let mergedFiles = normalizedFiles;
+
+    // If it's not the initial chunk, merge with existing files in the DB
+    if (!isInitial) {
+      const existing = await db.query.falborSiteFiles.findFirst({
+        where: eq(falborSiteFiles.subdomain, subdomain),
+      });
+
+      if (existing && existing.chatId === chatId) {
+        mergedFiles = { ...(existing.files as Record<string, string>), ...normalizedFiles };
+      }
+    }
+
     // Upsert site files into the database (no filesystem writes — works on Vercel)
     await db
       .insert(falborSiteFiles)
       .values({
         subdomain,
         chatId,
-        files: normalizedFiles as any,
+        files: mergedFiles as any,
       })
       .onConflictDoUpdate({
         target: falborSiteFiles.subdomain,
         set: {
           chatId,
-          files: normalizedFiles as any,
+          files: mergedFiles as any,
           updatedAt: new Date(),
         },
       });

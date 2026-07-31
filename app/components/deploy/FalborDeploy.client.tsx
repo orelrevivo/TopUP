@@ -52,7 +52,7 @@ export function useFalborDeploy() {
         artifactId: artifact.id,
         actionId,
         action: {
-          type: 'shell' as const,
+          type: 'build' as const,
           content: 'npm install && npm run build',
         },
       };
@@ -62,6 +62,17 @@ export function useFalborDeploy() {
 
       // Then run it
       await artifact.runner.runAction(actionData);
+      
+      const buildOutput = artifact.runner.buildOutput;
+
+      if (!buildOutput || buildOutput.exitCode !== 0) {
+        // Notify that build failed
+        deployArtifact.runner.handleDeployAction('building', 'failed', {
+          error: formatBuildFailureOutput(buildOutput?.output),
+          source: 'falbor',
+        });
+        throw new Error('Build failed');
+      }
 
       // Notify that build succeeded and deployment is starting
       deployArtifact.runner.handleDeployAction('deploying', 'running', { source: 'falbor' });
@@ -69,11 +80,14 @@ export function useFalborDeploy() {
       // Get the build files
       const container = await webcontainer;
 
+      // Remove /home/project from buildPath if it exists
+      const buildPath = buildOutput.path ? buildOutput.path.replace('/home/project', '') : '';
+
       // Check if the build path exists
       let finalBuildPath = '';
 
       // List of common output directories to check
-      const commonOutputDirs = ['/dist', '/build', '/out', '/output', '/.next', '/public'];
+      const commonOutputDirs = [buildPath, '/dist', '/build', '/out', '/output', '/.next', '/public'].filter(Boolean);
 
       // Verify the build path exists, or try to find an alternative
       let buildPathExists = false;
@@ -141,41 +155,75 @@ export function useFalborDeploy() {
         // Ignore errors importing store dynamically
       }
 
-      const response = await fetch('/api/falbor-deploy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          files: fileContents,
-          chatId: currentChatId,
-          subdomain: existingSubdomain,
-        }),
-      });
+      const fileEntries = Object.entries(fileContents);
+      const CHUNK_MAX_SIZE = 2 * 1024 * 1024; // 2MB
+      const chunks: Record<string, string>[] = [];
+      let currentChunk: Record<string, string> = {};
+      let currentSize = 0;
 
-      let data;
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-        console.error('Non-JSON response from deploy API:', text.substring(0, 500));
-        throw new Error(`Deployment API returned non-JSON response (${response.status}): ${text.substring(0, 100)}`);
+      for (const [filePath, content] of fileEntries) {
+        const size = content.length;
+        if (currentSize + size > CHUNK_MAX_SIZE && Object.keys(currentChunk).length > 0) {
+          chunks.push(currentChunk);
+          currentChunk = {};
+          currentSize = 0;
+        }
+        currentChunk[filePath] = content;
+        currentSize += size;
+      }
+      if (Object.keys(currentChunk).length > 0) {
+        chunks.push(currentChunk);
       }
 
-      if (!response.ok || !data.success) {
-        // Notify that deployment failed
-        deployArtifact.runner.handleDeployAction('deploying', 'failed', {
-          error: data.error || 'Invalid deployment response',
-          source: 'falbor',
+      let activeSubdomain = existingSubdomain;
+      let finalDeployUrl = '';
+      let activeSubdomainData = '';
+
+      for (let i = 0; i < chunks.length; i++) {
+        const chunk = chunks[i];
+        const isInitial = i === 0;
+
+        const response = await fetch('/api/falbor-deploy', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            files: chunk,
+            chatId: currentChatId,
+            subdomain: activeSubdomain,
+            isInitial,
+          }),
         });
-        throw new Error(data.error || 'Invalid deployment response');
+
+        let data;
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+          data = await response.json();
+        } else {
+          const text = await response.text();
+          console.error(`Non-JSON response from deploy API (chunk ${i}):`, text.substring(0, 500));
+          throw new Error(`Deployment API returned non-JSON response (${response.status}): ${text.substring(0, 100)}`);
+        }
+
+        if (!response.ok || !data.success) {
+          // Notify that deployment failed
+          deployArtifact.runner.handleDeployAction('deploying', 'failed', {
+            error: data.error || 'Invalid deployment response',
+            source: 'falbor',
+          });
+          throw new Error(data.error || 'Invalid deployment response');
+        }
+
+        if (isInitial && data.subdomain) {
+          activeSubdomain = data.subdomain;
+        }
+        finalDeployUrl = data.url;
+        activeSubdomainData = data.subdomain;
       }
 
-      const deployUrl = data.url;
-
-      if (deployUrl) {
-        localStorage.setItem(`deploy-url-${currentChatId}`, deployUrl);
+      if (finalDeployUrl) {
+        localStorage.setItem(`deploy-url-${currentChatId}`, finalDeployUrl);
         localStorage.setItem(`deploy-source-${currentChatId}`, 'falbor');
 
         // Persist to server
@@ -185,9 +233,9 @@ export function useFalborDeploy() {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               chatId: currentChatId,
-              url: deployUrl,
+              url: finalDeployUrl,
               provider: 'falbor',
-              subdomain: data.subdomain,
+              subdomain: activeSubdomainData,
             }),
           });
           
@@ -201,7 +249,7 @@ export function useFalborDeploy() {
 
       // Notify that deployment completed successfully
       deployArtifact.runner.handleDeployAction('complete', 'complete', {
-        url: deployUrl,
+        url: finalDeployUrl,
         source: 'falbor',
       });
 

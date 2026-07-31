@@ -116,8 +116,8 @@ export function useNetlifyDeploy() {
         throw new Error('Could not find build output directory. Please check your build configuration.');
       }
 
-      async function getAllFiles(dirPath: string): Promise<Record<string, string>> {
-        const files: Record<string, string> = {};
+      async function getAllFiles(dirPath: string): Promise<Record<string, { content: string | Uint8Array, isBinary: boolean }>> {
+        const files: Record<string, { content: string | Uint8Array, isBinary: boolean }> = {};
         const entries = await container.fs.readdir(dirPath, { withFileTypes: true });
 
         for (const entry of entries) {
@@ -127,20 +127,14 @@ export function useNetlifyDeploy() {
             const isBinary = /\.(png|jpg|jpeg|gif|webp|ico|bmp|mp3|mp4|wav|woff|woff2|ttf|eot)$/i.test(entry.name);
             let content;
             if (isBinary) {
-              const bytes = await container.fs.readFile(fullPath);
-              let binary = '';
-              const len = bytes.byteLength;
-              for (let i = 0; i < len; i++) {
-                  binary += String.fromCharCode(bytes[i]);
-              }
-              content = window.btoa(binary);
+              content = await container.fs.readFile(fullPath);
             } else {
               content = await container.fs.readFile(fullPath, 'utf-8');
             }
 
             // Remove build path prefix from the path
             const deployPath = fullPath.replace(finalBuildPath, '');
-            files[deployPath] = content;
+            files[deployPath] = { content, isBinary };
           } else if (entry.isDirectory()) {
             const subFiles = await getAllFiles(fullPath);
             Object.assign(files, subFiles);
@@ -152,97 +146,150 @@ export function useNetlifyDeploy() {
 
       const fileContents = await getAllFiles(finalBuildPath);
 
-      // Use chatId instead of artifact.id
-      const existingSiteId = localStorage.getItem(`netlify-site-${currentChatId}`);
-
-      const response = await fetch('/api/netlify-deploy', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          siteId: existingSiteId || undefined,
-          files: fileContents,
-          token: netlifyConn.token,
-          chatId: currentChatId,
-        }),
-      });
-
-      let data;
-      const contentType = response.headers.get('content-type');
-      if (contentType && contentType.includes('application/json')) {
-        data = await response.json();
-      } else {
-        const text = await response.text();
-        console.error('Non-JSON response from netlify-deploy API:', text.substring(0, 500));
-        throw new Error(`Deployment API returned non-JSON response (${response.status}): ${text.substring(0, 100)}`);
+      // Create file digests
+      const fileDigests: Record<string, string> = {};
+      
+      async function sha1(data: string | Uint8Array): Promise<string> {
+        const buffer = typeof data === 'string' ? new TextEncoder().encode(data) : data;
+        const hashBuffer = await crypto.subtle.digest('SHA-1', buffer);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
       }
 
-      if (!response.ok || !data.deploy || !data.site) {
-        console.error('Invalid deploy response:', data);
+      for (const [filePath, { content }] of Object.entries(fileContents)) {
+        const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
+        const hash = await sha1(content);
+        fileDigests[normalizedPath] = hash;
+      }
 
-        // Notify that deployment failed
-        deployArtifact.runner.handleDeployAction('deploying', 'failed', {
-          error: data.error || 'Invalid deployment response',
-          source: 'netlify',
+      // Check existing site
+      let targetSiteId = localStorage.getItem(`netlify-site-${currentChatId}`);
+      let siteInfo;
+
+      if (targetSiteId) {
+        const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${targetSiteId}`, {
+          headers: { Authorization: `Bearer ${netlifyConn.token}` },
         });
-        throw new Error(data.error || 'Invalid deployment response');
-      }
-
-      const maxAttempts = 20; // 2 minutes timeout
-      let attempts = 0;
-      let deploymentStatus;
-
-      while (attempts < maxAttempts) {
-        try {
-          const statusResponse = await fetch(
-            `https://api.netlify.com/api/v1/sites/${data.site.id}/deploys/${data.deploy.id}`,
-            {
-              headers: {
-                Authorization: `Bearer ${netlifyConn.token}`,
-              },
-            },
-          );
-
-          deploymentStatus = (await statusResponse.json()) as any;
-
-          if (deploymentStatus.state === 'ready' || deploymentStatus.state === 'uploaded') {
-            break;
-          }
-
-          if (deploymentStatus.state === 'error') {
-            // Notify that deployment failed
-            deployArtifact.runner.handleDeployAction('deploying', 'failed', {
-              error: 'Deployment failed: ' + (deploymentStatus.error_message || 'Unknown error'),
-              source: 'netlify',
-            });
-            throw new Error('Deployment failed: ' + (deploymentStatus.error_message || 'Unknown error'));
-          }
-
-          attempts++;
-          await new Promise((resolve) => setTimeout(resolve, 1000));
-        } catch (error) {
-          console.error('Status check error:', error);
-          attempts++;
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+        if (siteResponse.ok) {
+          const existingSite = await siteResponse.json();
+          siteInfo = { id: existingSite.id, name: existingSite.name, url: existingSite.url };
+        } else {
+          targetSiteId = null;
         }
       }
 
-      if (attempts >= maxAttempts) {
-        // Notify that deployment timed out
-        deployArtifact.runner.handleDeployAction('deploying', 'failed', {
-          error: 'Deployment timed out',
-          source: 'netlify',
+      if (!targetSiteId) {
+        const siteName = `falbor-diy-${currentChatId}-${Date.now()}`;
+        const createSiteResponse = await fetch('https://api.netlify.com/api/v1/sites', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${netlifyConn.token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ name: siteName, custom_domain: null }),
         });
-        throw new Error('Deployment timed out');
+
+        if (!createSiteResponse.ok) {
+          throw new Error('Failed to create Netlify site');
+        }
+
+        const newSite = await createSiteResponse.json();
+        targetSiteId = newSite.id;
+        siteInfo = { id: newSite.id, name: newSite.name, url: newSite.url };
+        localStorage.setItem(`netlify-site-${currentChatId}`, newSite.id);
       }
 
-      // Store the site ID if it's a new site
-      if (data.site) {
-        localStorage.setItem(`netlify-site-${currentChatId}`, data.site.id);
+      // Create deploy
+      const deployResponse = await fetch(`https://api.netlify.com/api/v1/sites/${targetSiteId}/deploys`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${netlifyConn.token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          files: fileDigests,
+          async: true,
+          skip_processing: false,
+          draft: false,
+        }),
+      });
+
+      if (!deployResponse.ok) {
+        throw new Error('Failed to create deployment');
       }
 
-      const deployUrl = deploymentStatus.ssl_url || deploymentStatus.url;
+      const deploy = await deployResponse.json();
+
+      // Poll until prepared
+      const MAX_WAIT_MS = 20_000;
+      const POLL_INTERVAL_MS = 2_000;
+      const startTime = Date.now();
+      let filesUploaded = false;
+      let deploymentStatus;
+
+      while (Date.now() - startTime < MAX_WAIT_MS) {
+        const statusResponse = await fetch(`https://api.netlify.com/api/v1/sites/${targetSiteId}/deploys/${deploy.id}`, {
+          headers: { Authorization: `Bearer ${netlifyConn.token}` },
+        });
+
+        deploymentStatus = await statusResponse.json();
+
+        if (deploymentStatus.state === 'error') {
+            throw new Error('Deployment failed: ' + (deploymentStatus.error_message || 'Unknown error'));
+        }
+
+        if (!filesUploaded && (deploymentStatus.state === 'prepared' || deploymentStatus.state === 'uploaded')) {
+          // Upload all files
+          for (const [filePath, { content }] of Object.entries(fileContents)) {
+            const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
+            const encodedPath = normalizedPath
+              .split('/')
+              .map((segment) => encodeURIComponent(segment))
+              .join('/');
+
+            let uploadSuccess = false;
+            let uploadRetries = 0;
+
+            while (!uploadSuccess && uploadRetries < 3) {
+              try {
+                const uploadResponse = await fetch(
+                  `https://api.netlify.com/api/v1/deploys/${deploy.id}/files${encodedPath}`,
+                  {
+                    method: 'PUT',
+                    headers: {
+                      Authorization: `Bearer ${netlifyConn.token}`,
+                      'Content-Type': 'application/octet-stream',
+                    },
+                    body: content,
+                  },
+                );
+
+                uploadSuccess = uploadResponse.ok;
+                if (!uploadSuccess) {
+                  uploadRetries++;
+                  await new Promise((resolve) => setTimeout(resolve, 1000));
+                }
+              } catch (error) {
+                uploadRetries++;
+                await new Promise((resolve) => setTimeout(resolve, 1000));
+              }
+            }
+
+            if (!uploadSuccess) {
+              throw new Error(`Failed to upload file ${filePath}`);
+            }
+          }
+          filesUploaded = true;
+        }
+
+        if (deploymentStatus.state === 'ready') {
+          break;
+        }
+
+        await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
+      }
+
+      const deployUrl = deploymentStatus?.ssl_url || deploymentStatus?.url || siteInfo?.url;
 
       if (deployUrl) {
         localStorage.setItem(`deploy-url-${currentChatId}`, deployUrl);
