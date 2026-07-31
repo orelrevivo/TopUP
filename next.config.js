@@ -22,6 +22,15 @@ const nextConfig = {
           { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
         ],
       },
+      {
+        // Deployed user sites served from DB — must not inherit the app's COEP
+        source: '/api/site/:subdomain*',
+        headers: [
+          { key: 'Cross-Origin-Opener-Policy', value: 'unsafe-none' },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
+          { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
+        ],
+      },
 
     ];
   },

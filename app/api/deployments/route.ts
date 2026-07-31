@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '~/lib/db';
-import { deployments } from '~/lib/db/schema';
+import { deployments, falborSiteFiles } from '~/lib/db/schema';
 import { eq } from 'drizzle-orm';
-import fs from 'fs';
-import path from 'path';
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -104,31 +102,36 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: 'Invalid deployment state' }, { status: 400 });
     }
 
-    // Rename the directory in public/site/
-    const publicDir = path.join(process.cwd(), 'public', 'site');
-    const oldPath = path.join(publicDir, oldSubdomain);
-    const newPath = path.join(publicDir, newSubdomain);
-
-    if (fs.existsSync(oldPath)) {
-      if (fs.existsSync(newPath)) {
-        return NextResponse.json({ error: 'Subdomain already taken' }, { status: 400 });
-      }
-
-      // Read index.html and update the relative paths before renaming the folder
-      const indexPath = path.join(oldPath, 'index.html');
-      if (fs.existsSync(indexPath)) {
-        let content = fs.readFileSync(indexPath, 'utf-8');
-        // Replace /site/oldSubdomain/ with /site/newSubdomain/
-        content = content.replace(new RegExp(`/site/${oldSubdomain}/`, 'g'), `/site/${newSubdomain}/`);
-        fs.writeFileSync(indexPath, content);
-      }
-
-      fs.renameSync(oldPath, newPath);
+    // Check if new subdomain is already taken in the DB
+    const existingRow = await db.query.falborSiteFiles.findFirst({
+      where: eq(falborSiteFiles.subdomain, newSubdomain),
+    });
+    if (existingRow && existingRow.chatId !== chatId) {
+      return NextResponse.json({ error: 'Subdomain already taken' }, { status: 400 });
     }
 
-    const newUrl = `/site/${newSubdomain}`;
+    // Rename the subdomain in falborSiteFiles and rewrite asset paths in index.html
+    const siteRow = await db.query.falborSiteFiles.findFirst({
+      where: eq(falborSiteFiles.subdomain, oldSubdomain),
+    });
 
-    // Update DB
+    if (siteRow) {
+      const files = siteRow.files as Record<string, string>;
+      if (files['/index.html']) {
+        files['/index.html'] = files['/index.html'].replace(
+          new RegExp(`/api/site/${oldSubdomain}/`, 'g'),
+          `/api/site/${newSubdomain}/`,
+        );
+      }
+      await db
+        .update(falborSiteFiles)
+        .set({ subdomain: newSubdomain, files: files as any, updatedAt: new Date() })
+        .where(eq(falborSiteFiles.subdomain, oldSubdomain));
+    }
+
+    const newUrl = `/api/site/${newSubdomain}`;
+
+    // Update the deployments table
     const [updated] = await db
       .update(deployments)
       .set({

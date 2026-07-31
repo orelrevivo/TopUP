@@ -335,6 +335,15 @@ export const workflowJobs = pgTable("workflow_jobs", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const falborSiteFiles = pgTable("falbor_site_files", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  subdomain: text("subdomain").notNull().unique(),
+  chatId: text("chat_id").notNull(),
+  files: jsonb("files").notNull().default("{}"), // { "/index.html": "...", "/style.css": "..." }
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const mcpConnections = pgTable("mcp_connections", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
