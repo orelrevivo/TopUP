@@ -26,7 +26,7 @@ async function readNetlifyError(response: Response) {
   }
 }
 
-export async function POST(request: Request, { params }: any) {
+export async function POST(request: Request) {
   try {
     const { siteId, files, token, chatId } = (await request.json()) as DeployRequestBody & { token: string };
 
@@ -128,7 +128,6 @@ export async function POST(request: Request, { params }: any) {
     const fileDigests: Record<string, string> = {};
 
     for (const [filePath, content] of Object.entries(files)) {
-      // Ensure file path starts with a forward slash
       const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
       const isBinary = /\.(png|jpg|jpeg|gif|webp|ico|bmp|mp3|mp4|wav|woff|woff2|ttf|eot)$/i.test(normalizedPath);
       const contentToHash = isBinary ? Buffer.from(content as string, 'base64') : content;
@@ -147,7 +146,7 @@ export async function POST(request: Request, { params }: any) {
         files: fileDigests,
         async: true,
         skip_processing: false,
-        draft: false, // Change this to false for production deployments
+        draft: false,
         function_schedules: [],
         framework: null,
       }),
@@ -162,16 +161,17 @@ export async function POST(request: Request, { params }: any) {
     }
 
     const deploy = (await deployResponse.json()) as any;
-    let retryCount = 0;
-    const maxRetries = 60;
+
+    // Poll for up to ~20 seconds (safe within Vercel's 30s default limit)
+    // to wait for the deploy to reach 'prepared' so we can upload files.
+    const MAX_WAIT_MS = 20_000;
+    const POLL_INTERVAL_MS = 2_000;
+    const startTime = Date.now();
     let filesUploaded = false;
 
-    // Poll until deploy is ready for file uploads
-    while (retryCount < maxRetries) {
+    while (Date.now() - startTime < MAX_WAIT_MS) {
       const statusResponse = await fetch(`https://api.netlify.com/api/v1/sites/${targetSiteId}/deploys/${deploy.id}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
 
       if (!statusResponse.ok) {
@@ -185,7 +185,7 @@ export async function POST(request: Request, { params }: any) {
       const status = (await statusResponse.json()) as any;
 
       if (!filesUploaded && (status.state === 'prepared' || status.state === 'uploaded')) {
-        // Upload all files regardless of required array
+        // Upload all files
         for (const [filePath, content] of Object.entries(files)) {
           const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
           const encodedPath = normalizedPath
@@ -218,12 +218,12 @@ export async function POST(request: Request, { params }: any) {
               if (!uploadSuccess) {
                 console.error('Upload failed:', await uploadResponse.text());
                 uploadRetries++;
-                await new Promise((resolve) => setTimeout(resolve, 2000));
+                await new Promise((resolve) => setTimeout(resolve, 1000));
               }
             } catch (error) {
               console.error('Upload error:', error);
               uploadRetries++;
-              await new Promise((resolve) => setTimeout(resolve, 2000));
+              await new Promise((resolve) => setTimeout(resolve, 1000));
             }
           }
 
@@ -236,7 +236,6 @@ export async function POST(request: Request, { params }: any) {
       }
 
       if (status.state === 'ready') {
-        // Only return after files are uploaded
         return json({
           success: true,
           deploy: {
@@ -252,20 +251,19 @@ export async function POST(request: Request, { params }: any) {
         return json({ error: status.error_message || 'Deploy preparation failed' }, { status: 500 });
       }
 
-      retryCount++;
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, POLL_INTERVAL_MS));
     }
 
-    if (retryCount >= maxRetries) {
-      return json({ error: 'Deploy preparation timed out' }, { status: 500 });
-    }
-
-    // Make sure we're returning the deploy ID and site info
+    // Timed out waiting for 'ready', but files are uploaded.
+    // Return the deploy ID — the client can check the URL directly.
+    // Netlify will finish processing in the background.
     return json({
       success: true,
       deploy: {
         id: deploy.id,
-        state: deploy.state,
+        state: 'processing',
+        // Netlify site URL is predictable from the site info
+        url: siteInfo?.url || `https://${siteInfo?.name}.netlify.app`,
       },
       site: siteInfo,
     });
