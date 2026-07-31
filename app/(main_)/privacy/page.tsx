@@ -65,7 +65,7 @@ export default function PrivacyAndTerms() {
               <section>
                 <h2 className="text-2xl font-semibold text-zinc-900 mb-4">6. Contact & Support</h2>
                 <p>
-                  If you encounter any problems, need assistance, or have questions about these terms, please contact our support team at <a href="mailto:falbor@gmail.com" className="text-blue-600 hover:underline">falbor@gmail.com</a>.
+                  If you encounter any problems, need assistance, or have questions about these terms, please contact our support team at <a href="mailto:orelrevivo4000@gmail.com" className="text-blue-600 hover:underline">orelrevivo4000@gmail.com</a>.
                 </p>
               </section>
 
