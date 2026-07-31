@@ -53,7 +53,7 @@ export function useFalborDeploy() {
         actionId,
         action: {
           type: 'shell' as const,
-          content: 'npm run build',
+          content: 'npm install && npm run build',
         },
       };
 

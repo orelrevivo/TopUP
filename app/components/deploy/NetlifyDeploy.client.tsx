@@ -57,7 +57,7 @@ export function useNetlifyDeploy() {
         actionId,
         action: {
           type: 'build' as const,
-          content: 'npm run build',
+          content: 'npm install && npm run build',
         },
       };
 
