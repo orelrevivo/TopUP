@@ -30,6 +30,6 @@ yarn-error.log*
 # vercel
 .vercel
 
-models/
+/models/
 public/site/
 .env*
