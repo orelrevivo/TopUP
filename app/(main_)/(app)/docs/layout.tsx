@@ -11,13 +11,29 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
             Documentation
           </h2>
           <nav className="flex flex-col gap-2">
-            <Link 
-              href="/docs/workflow" 
-              className="px-3 py-2 text-sm font-medium rounded-md bg-accent-500/10 text-accent-500 hover:bg-accent-500/20 transition-colors"
-            >
-              Native AI Workflows
-            </Link>
-            {/* Future links can go here */}
+            <details className="group" open>
+              <summary className="flex items-center justify-between px-3 py-2 text-sm font-medium rounded-md bg-transparent text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 cursor-pointer select-none list-none [&::-webkit-details-marker]:hidden">
+                <span className="flex items-center gap-2">
+                  <div className="i-ph:book-open text-falbor-elements-textSecondary" />
+                  Guides
+                </span>
+                <div className="i-ph:caret-down text-xs text-falbor-elements-textSecondary transition-transform group-open:-rotate-180" />
+              </summary>
+              <div className="flex flex-col gap-1 mt-1 pl-4 relative before:absolute before:left-[17px] before:top-2 before:bottom-2 before:w-[1px] before:bg-falbor-elements-borderColor">
+                <Link 
+                  href="/docs/workflow" 
+                  className="px-3 py-1.5 text-sm font-medium rounded-md text-falbor-elements-textSecondary hover:bg-falbor-elements-background-depth-3 hover:text-falbor-elements-textPrimary transition-colors relative"
+                >
+                  Native AI Workflows
+                </Link>
+                <Link 
+                  href="/docs/models" 
+                  className="px-3 py-1.5 text-sm font-medium rounded-md text-falbor-elements-textSecondary hover:bg-falbor-elements-background-depth-3 hover:text-falbor-elements-textPrimary transition-colors relative"
+                >
+                  Models & Credits
+                </Link>
+              </div>
+            </details>
           </nav>
         </div>
       </aside>

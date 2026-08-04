@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useStore } from '@nanostores/react';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Dropdown, DropdownItem } from '~/components/ui/Dropdown';
 import * as Dialog from '@radix-ui/react-dialog';
 import { getAll, chatId as chatIdStore } from '~/lib/persistence';
 import { WorkflowTemplates, type TemplateType } from './WorkflowTemplates';
@@ -179,43 +179,38 @@ export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
                       <h3 onClick={() => onSelectWorkflow(wf.id)} className="font-semibold text-xl text-falbor-elements-textPrimary line-clamp-1 hover:underline">{wf.name}</h3>
 
                       <div className="relative z-10" onClick={(e) => e.stopPropagation()}>
-                        <DropdownMenu.Root modal={false}>
-                          <DropdownMenu.Trigger asChild>
+                        <Dropdown
+                          align="end"
+                          className="min-w-[160px]"
+                          trigger={
                             <button className="p-1 -mr-2 rounded-md hover:bg-falbor-elements-background-depth-2 text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors outline-none">
                               <div className="i-ph:dots-three-vertical text-xl" />
                             </button>
-                          </DropdownMenu.Trigger>
-
-                          <DropdownMenu.Portal>
-                            <DropdownMenu.Content
-                              align="end"
-                              className="z-50 min-w-[160px] bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor rounded-md p-1 shadow-lg animate-in fade-in zoom-in-95"
-                            >
-                              <DropdownMenu.Item
-                                className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 cursor-pointer outline-none"
-                                onClick={() => handleDuplicate(wf.id)}
-                              >
-                                <div className="i-ph:copy" />
-                                Duplicate
-                              </DropdownMenu.Item>
-                              <DropdownMenu.Item
-                                className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 cursor-pointer outline-none"
-                                onClick={() => openDuplicateToChat(wf)}
-                              >
-                                <div className="i-ph:share-network" />
-                                Duplicate to Chat...
-                              </DropdownMenu.Item>
-                              <DropdownMenu.Separator className="h-px bg-falbor-elements-borderColor my-1" />
-                              <DropdownMenu.Item
-                                className="flex items-center gap-2 px-2 py-1.5 text-sm rounded-sm text-red-500 hover:bg-red-500/10 cursor-pointer outline-none"
-                                onClick={() => handleDelete(wf.id)}
-                              >
-                                <div className="i-ph:trash" />
-                                Delete
-                              </DropdownMenu.Item>
-                            </DropdownMenu.Content>
-                          </DropdownMenu.Portal>
-                        </DropdownMenu.Root>
+                          }
+                        >
+                          <DropdownItem onSelect={() => handleDuplicate(wf.id)}>
+                            <div className="flex items-center gap-2 text-falbor-elements-textPrimary">
+                              <div className="i-ph:copy" />
+                              Duplicate
+                            </div>
+                          </DropdownItem>
+                          <DropdownItem onSelect={() => openDuplicateToChat(wf)}>
+                            <div className="flex items-center gap-2 text-falbor-elements-textPrimary">
+                              <div className="i-ph:share-network" />
+                              Duplicate to Chat...
+                            </div>
+                          </DropdownItem>
+                          <div className="h-px bg-falbor-elements-borderColor my-1" />
+                          <DropdownItem
+                            className="hover:!bg-red-500/10 hover:!text-red-500"
+                            onSelect={() => handleDelete(wf.id)}
+                          >
+                            <div className="flex items-center gap-2 text-red-500">
+                              <div className="i-ph:trash" />
+                              Delete
+                            </div>
+                          </DropdownItem>
+                        </Dropdown>
                       </div>
                     </div>
                     <p className="text-base text-falbor-elements-textSecondary line-clamp-2 mb-6 flex-1">

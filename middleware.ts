@@ -57,7 +57,7 @@ export async function middleware(request: NextRequest) {
     };
 
     if (!sessionCookie) {
-      if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/")) {
+      if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/")) {
         return handleSuccess();
       }
       return NextResponse.redirect(new URL("/login", request.url));
@@ -72,7 +72,7 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/")) {
+    if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/")) {
       return handleSuccess();
     }
     return NextResponse.redirect(new URL("/login", request.url));

@@ -191,7 +191,9 @@ export async function selectContext(props: {
   const updateContextBuffer = response.match(/<updateContextBuffer>([\s\S]*?)<\/updateContextBuffer>/);
 
   if (!updateContextBuffer) {
-    throw new Error('Invalid response. Please follow the response format');
+    logger.error('Failed to parse updateContextBuffer from response:', response);
+    // Graceful fallback: return empty FileMap instead of crashing the chat
+    return {};
   }
 
   const includeFiles =

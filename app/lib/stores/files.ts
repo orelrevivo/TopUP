@@ -125,6 +125,37 @@ export class FilesStore {
   }
 
   /**
+   * Synchronize the current files map with the DB snapshot.
+   * This is called on manual user edits to persist them.
+   */
+  async #syncSnapshotWithDB() {
+    try {
+      const currentChatId = getCurrentChatId();
+      if (!currentChatId) return;
+
+      const chatApi = await import('~/lib/api/data/chat');
+      const snapshot = await chatApi.getSnapshot(currentChatId);
+      
+      if (snapshot) {
+        await chatApi.setSnapshot(currentChatId, {
+          ...snapshot,
+          files: this.files.get()
+        });
+        logger.info('Snapshot synchronized with manual changes');
+      } else if (currentChatId !== 'default-session') {
+        // Create a new snapshot if it doesn't exist but we are in a valid chat
+        await chatApi.setSnapshot(currentChatId, {
+          chatIndex: currentChatId,
+          files: this.files.get()
+        });
+        logger.info('Created new snapshot with manual changes');
+      }
+    } catch (e) {
+      logger.error('Failed to sync snapshot', e);
+    }
+  }
+
+  /**
    * Load locked files and folders from localStorage and update the file objects
    * @param chatId Optional chat ID to load locks for (defaults to current chat)
    */
@@ -485,6 +516,7 @@ export class FilesStore {
         type: folder.type,
         isLocked: true,
       });
+      this.#syncSnapshotWithDB();
 
       return { isLocked: true, lockedBy: folderPath };
     }
@@ -582,6 +614,7 @@ export class FilesStore {
       });
 
       logger.info('File updated');
+      this.#syncSnapshotWithDB();
     } catch (error) {
       logger.error('Failed to update file content\n\n', error);
 
@@ -799,7 +832,9 @@ export class FilesStore {
         this.#modifiedFiles.set(filePath, base64Content);
       } else {
         const contentToWrite = (content as string).length === 0 ? ' ' : content;
-        await webcontainer.fs.writeFile(relativePath, contentToWrite);
+        await webcontainer.fs.writeFile(relativePath, contentToWrite, {
+          encoding: typeof content === 'string' ? 'utf8' : undefined,
+        });
 
         this.files.setKey(filePath, {
           type: 'file',
@@ -812,6 +847,7 @@ export class FilesStore {
       }
 
       logger.info(`File created: ${filePath}`);
+      this.#syncSnapshotWithDB();
 
       return true;
     } catch (error) {

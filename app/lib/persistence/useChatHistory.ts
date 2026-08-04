@@ -59,84 +59,22 @@ export function useChatHistory() {
                 : storedMessages.messages.length;
               const snapshotIndex = storedMessages.messages.findIndex((m) => m.id === validSnapshot.chatIndex);
 
-              if (snapshotIndex >= 0 && snapshotIndex < endingIdx) {
-                startingIdx = snapshotIndex;
-              }
-
-              if (snapshotIndex > 0 && storedMessages.messages[snapshotIndex].id == rewindId) {
-                startingIdx = -1;
-              }
-
-              let filteredMessages = storedMessages.messages.slice(startingIdx + 1, endingIdx);
+              // We no longer slice the messages to hide old ones, because the user wants to see the full chat history.
+              // Just load all messages up to endingIdx.
+              let filteredMessages = storedMessages.messages.slice(0, endingIdx);
               let archivedMessages: Message[] = [];
-
-              if (startingIdx >= 0) {
-                archivedMessages = storedMessages.messages.slice(0, startingIdx + 1);
-              }
 
               setArchivedMessages(archivedMessages);
 
-              if (startingIdx > 0) {
-                const files = Object.entries(validSnapshot?.files || {})
-                  .map(([key, value]) => {
-                    if (value?.type !== 'file') {
-                      return null;
-                    }
-                    return {
-                      content: value.content,
-                      path: key,
-                    };
-                  })
-                  .filter((x): x is { content: string; path: string } => !!x);
-                const projectCommands = await detectProjectCommands(files);
-                const commandActionsString = createCommandActionsString(projectCommands);
+              let hasSnapshot = false;
 
-                filteredMessages = [
-                  {
-                    id: generateId(),
-                    role: 'user',
-                    content: `Restore project from snapshot`,
-                    annotations: ['no-store', 'hidden'],
-                  },
-                  {
-                    id: storedMessages.messages[snapshotIndex].id,
-                    role: 'assistant',
-                    content: `Falbor Restored your chat from a snapshot. You can revert this message to load the full chat history.
-                  <falborArtifact id="restored-project-setup" title="Restored Project & Setup" type="bundled">
-                  ${Object.entries((snapshot?.files || {}) as FileMap)
-                    .map(([key, value]) => {
-                      if (value?.type === 'file') {
-                        return `
-                      <falborAction type="file" filePath="${key}">
-${(value as any).content}
-                      </falborAction>
-                      `;
-                      } else {
-                        return ``;
-                      }
-                    })
-                    .join('\n')}
-                  ${commandActionsString} 
-                  </falborArtifact>
-                  `,
-                  annotations: [
-                    'no-store',
-                    ...(summary
-                      ? [
-                          {
-                            chatId: storedMessages.messages[snapshotIndex].id,
-                            type: 'chatSummary',
-                            summary,
-                          } satisfies ContextAnnotation,
-                        ]
-                      : []),
-                  ],
-                },
-                ...filteredMessages,
-              ];
-              restoreSnapshot(mixedId);
-            }
+              if (validSnapshot && Object.keys(validSnapshot.files || {}).length > 0) {
+                restoreSnapshot(mixedId, validSnapshot);
+                hasSnapshot = true;
+              }
 
+              workbenchStore.setHasSnapshot(hasSnapshot);
+              workbenchStore.setReloadedMessages(filteredMessages.map((m) => m.id));
               setInitialMessages(filteredMessages);
               setUrlId(storedMessages.urlId ?? storedMessages.id);
               description.set(storedMessages.description);
@@ -196,22 +134,25 @@ ${(value as any).content}
 
     if (!validSnapshot?.files) return;
 
-    Object.entries(validSnapshot.files).forEach(async ([key, value]) => {
+    // Immediately populate the UI store so manual saves don't capture an incomplete file state
+    workbenchStore.files.set(validSnapshot.files);
+
+    await Promise.all(Object.entries(validSnapshot.files).map(async ([key, value]) => {
       if (key.startsWith(container.workdir)) {
         key = key.replace(container.workdir, '');
       }
       if (value?.type === 'folder') {
         await container.fs.mkdir(key, { recursive: true });
       }
-    });
-    Object.entries(validSnapshot.files).forEach(async ([key, value]) => {
+    }));
+    await Promise.all(Object.entries(validSnapshot.files).map(async ([key, value]) => {
       if (value?.type === 'file') {
         if (key.startsWith(container.workdir)) {
           key = key.replace(container.workdir, '');
         }
         await container.fs.writeFile(key, value.content, { encoding: value.isBinary ? undefined : 'utf8' });
       }
-    });
+    }));
   }, []);
 
   return {

@@ -17,7 +17,7 @@ import { extractRelativePath } from '~/utils/diff';
 import { description } from '~/lib/persistence';
 import Cookies from 'js-cookie';
 import { createSampler } from '~/utils/sampler';
-import type { ActionAlert, DeployAlert, SupabaseAlert } from '~/types/actions';
+import type { ActionAlert, DeployAlert, SupabaseAlert, FileHistory } from '~/types/actions';
 
 const { saveAs } = fileSaver;
 
@@ -33,7 +33,7 @@ export type ArtifactUpdateState = Pick<ArtifactState, 'title' | 'closed'>;
 
 type Artifacts = MapStore<Record<string, ArtifactState>>;
 
-export type WorkbenchViewType = 'code' | 'diff' | 'preview' | 'database' | 'browser' | 'workflow';
+export type WorkbenchViewType = 'code' | 'diff' | 'preview' | 'database' | 'browser' | 'workflow' | 'research' | 'resources';
 
 export class WorkbenchStore {
   #previewsStore = new PreviewsStore(webcontainer);
@@ -48,6 +48,7 @@ export class WorkbenchStore {
   showWorkbench: WritableAtom<boolean> = import.meta.hot?.data.showWorkbench ?? atom(false);
   currentView: WritableAtom<WorkbenchViewType> = import.meta.hot?.data.currentView ?? atom('code');
   unsavedFiles: WritableAtom<Set<string>> = import.meta.hot?.data.unsavedFiles ?? atom(new Set<string>());
+  fileHistory: WritableAtom<Record<string, FileHistory>> = import.meta.hot?.data.fileHistory ?? atom({});
   actionAlert: WritableAtom<ActionAlert | undefined> =
     import.meta.hot?.data.actionAlert ?? atom<ActionAlert | undefined>(undefined);
   supabaseAlert: WritableAtom<SupabaseAlert | undefined> =
@@ -62,6 +63,9 @@ export class WorkbenchStore {
 
   currentAiUrl: WritableAtom<string> = import.meta.hot?.data.currentAiUrl ?? atom('');
   currentAiScreenshot: WritableAtom<string | null> = import.meta.hot?.data.currentAiScreenshot ?? atom(null);
+
+  currentResearchData: WritableAtom<string> = import.meta.hot?.data.currentResearchData ?? atom('');
+  currentResourcesData: WritableAtom<string> = import.meta.hot?.data.currentResourcesData ?? atom('');
 
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
@@ -80,6 +84,9 @@ export class WorkbenchStore {
       import.meta.hot.data.isSlidesMode = this.isSlidesMode;
       import.meta.hot.data.currentAiUrl = this.currentAiUrl;
       import.meta.hot.data.currentAiScreenshot = this.currentAiScreenshot;
+      import.meta.hot.data.currentResearchData = this.currentResearchData;
+      import.meta.hot.data.currentResourcesData = this.currentResourcesData;
+      import.meta.hot.data.fileHistory = this.fileHistory;
 
       // Ensure binary files are properly preserved across hot reloads
       const filesMap = this.files.get();
@@ -475,6 +482,16 @@ export class WorkbenchStore {
     // TODO: what do we wanna do and how do we wanna recover from this?
   }
 
+  #hasSnapshot = false;
+
+  setHasSnapshot(hasSnapshot: boolean) {
+    this.#hasSnapshot = hasSnapshot;
+  }
+
+  get hasSnapshot() {
+    return this.#hasSnapshot;
+  }
+
   setReloadedMessages(messages: string[]) {
     this.#reloadedMessages = new Set(messages);
   }
@@ -582,7 +599,9 @@ export class WorkbenchStore {
   }
 
   async _runAction(data: ActionCallbackData, isStreaming: boolean = false) {
-    const { artifactId } = data;
+    const { artifactId, messageId } = data;
+    const isHistorical = this.isReloadedMessage(messageId);
+    const shouldSkipExecution = isHistorical && this.#hasSnapshot;
 
     const artifact = this.#getArtifact(artifactId);
 
@@ -600,27 +619,33 @@ export class WorkbenchStore {
       const wc = await webcontainer;
       const fullPath = path.join(wc.workdir, data.action.filePath);
 
-      /*
-       * For scoped locks, we would need to implement diff checking here
-       * to determine if the AI is modifying existing code or just adding new code
-       * This is a more complex feature that would be implemented in a future update
-       */
-
       const doc = this.#editorStore.documents.get()[fullPath];
 
-      if (!doc) {
+      if (!doc && !shouldSkipExecution) {
         await artifact.runner.runAction(data, isStreaming);
       }
 
-      this.#editorStore.updateFile(fullPath, data.action.content);
+      if (!shouldSkipExecution) {
+        this.#editorStore.updateFile(fullPath, data.action.content);
 
-      if (!isStreaming && data.action.content) {
-        await this.saveFile(fullPath);
+        if (!isStreaming && data.action.content) {
+          await this.saveFile(fullPath);
+        }
       }
 
       if (!isStreaming) {
-        await artifact.runner.runAction(data);
-        this.resetAllFileModifications();
+        if (shouldSkipExecution) {
+          // If we skipped execution due to snapshot, still update UI state with content
+          artifact.runner.actions.setKey(data.actionId, {
+            ...action,
+            ...data.action,
+            status: 'complete',
+            executed: true,
+          });
+        } else {
+          await artifact.runner.runAction(data);
+          this.resetAllFileModifications();
+        }
       }
     } else {
       await artifact.runner.runAction(data);

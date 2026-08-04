@@ -277,13 +277,15 @@ export const HackingChatImpl = memo(
           provider: provider.name,
         });
 
-        setLlmErrorAlert({
-          type: 'error',
-          title,
-          description: errorInfo.message,
-          provider: provider.name,
-          errorType,
-        });
+        if (!errorInfo.message?.toLowerCase().includes('terminated')) {
+          setLlmErrorAlert({
+            type: 'error',
+            title,
+            description: errorInfo.message,
+            provider: provider.name,
+            errorType,
+          });
+        }
         setData([]);
       },
       [provider.name, stop],

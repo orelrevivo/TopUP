@@ -1,5 +1,5 @@
 'use client';
-import * as DropdownMenu from '@radix-ui/react-dropdown-menu';
+import { Dropdown, DropdownItem } from '~/components/ui/Dropdown';
 import { useStore } from '@nanostores/react';
 import { netlifyConnection } from '~/lib/stores/netlify';
 import { vercelConnection } from '~/lib/stores/vercel';
@@ -183,67 +183,65 @@ export const DeployButton = ({
   return (
     <>
       <div className="flex rounded-md overflow-hidden text-sm">
-        <DropdownMenu.Root>
-          <DropdownMenu.Trigger
-            disabled={isDeploying || !activePreview || isStreaming}
-            className="bg-white dark:bg-[#252525] text-gray-900 dark:text-white border border-gray-200 dark:border-transparent rounded-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs hover:bg-gray-50 dark:hover:bg-[#333333] !outline-none appearance-none flex items-center gap-1.5 shadow-sm"
-          >
-            {isDeploying ? `Publishing to ${deployingTo}...` : 'Publish'}
-            <span className={classNames('i-ph:caret-down transition-transform')} />
-          </DropdownMenu.Trigger>
+        <Dropdown
+          className="p-2 w-[300px]"
+          trigger={
+            <button
+              disabled={isDeploying || !activePreview || isStreaming}
+              className="bg-white dark:bg-[#252525] text-gray-900 dark:text-white border border-gray-200 dark:border-transparent rounded-md items-center justify-center [&:is(:disabled,.disabled)]:cursor-not-allowed [&:is(:disabled,.disabled)]:opacity-60 px-3 py-1.5 text-xs hover:bg-gray-50 dark:hover:bg-[#333333] !outline-none appearance-none flex items-center gap-1.5 shadow-sm"
+            >
+              {isDeploying ? `Publishing to ${deployingTo}...` : 'Publish'}
+              <span className={classNames('i-ph:caret-down transition-transform')} />
+            </button>
+          }
+        >
+          {deployment && (
+            <DeploymentCard deployment={deployment} onEditSave={handleEditSave} />
+          )}
 
-          <DropdownMenu.Content
-            className={classNames(
-              'z-[250]',
-              'bg-falbor-elements-background-depth-2',
-              'rounded-lg shadow-lg',
-              'border border-falbor-elements-borderColor',
-              'animate-in fade-in-0 zoom-in-95',
-              'p-2 w-[300px]',
-            )}
-            sideOffset={5}
-            align="end"
-          >
-            {deployment && (
-              <DeploymentCard deployment={deployment} onEditSave={handleEditSave} />
-            )}
-
-            {deployment && currentProviderConfig && (
-              <div className="mb-2 pb-2 border-b border-falbor-elements-borderColor">
-                <DropdownMenu.Item
-                  className={classNames(
-                    'cursor-pointer flex items-center w-full px-3 py-2 text-sm text-falbor-elements-textPrimary hover:bg-falbor-elements-item-backgroundActive gap-2 rounded-md group relative',
-                    { 'opacity-60 cursor-not-allowed': isDeploying || !activePreview || currentProviderConfig.disabled }
-                  )}
-                  disabled={isDeploying || !activePreview || currentProviderConfig.disabled}
-                  onClick={currentProviderConfig.onClick}
-                >
+          {deployment && currentProviderConfig && (
+            <div className="mb-2 pb-2 border-b border-falbor-elements-borderColor">
+              <DropdownItem
+                className={isDeploying || !activePreview || currentProviderConfig.disabled ? 'opacity-60 cursor-not-allowed' : ''}
+                onSelect={(e) => {
+                  if (isDeploying || !activePreview || currentProviderConfig.disabled) {
+                    e.preventDefault();
+                    return;
+                  }
+                  currentProviderConfig.onClick();
+                }}
+              >
+                <div className="flex items-center gap-2">
                   <img className="w-4 h-4 dark:hidden" crossOrigin="anonymous" src={currentProviderConfig.imgSrc} />
                   <img className="w-4 h-4 hidden dark:block" crossOrigin="anonymous" src={currentProviderConfig.imgSrcDark || currentProviderConfig.imgSrc} />
                   <span className="font-medium text-accent-500">Update {currentProviderConfig.id.charAt(0).toUpperCase() + currentProviderConfig.id.slice(1)} Deployment</span>
-                </DropdownMenu.Item>
-              </div>
-            )}
+                </div>
+              </DropdownItem>
+            </div>
+          )}
 
-            <div className="flex flex-col gap-1">
-              {otherProviders.map((p) => (
-                <DropdownMenu.Item
-                  key={p.id}
-                  className={classNames(
-                    'cursor-pointer flex items-center w-full px-3 py-2 text-xs text-falbor-elements-textPrimary hover:bg-falbor-elements-item-backgroundActive gap-2 rounded-md group relative',
-                    { 'opacity-60 cursor-not-allowed': isDeploying || !activePreview || p.disabled }
-                  )}
-                  disabled={isDeploying || !activePreview || p.disabled}
-                  onClick={p.onClick}
-                >
+          <div className="flex flex-col gap-1">
+            {otherProviders.map((p) => (
+              <DropdownItem
+                key={p.id}
+                className={isDeploying || !activePreview || p.disabled ? 'opacity-60 cursor-not-allowed' : ''}
+                onSelect={(e) => {
+                  if (isDeploying || !activePreview || p.disabled) {
+                    e.preventDefault();
+                    return;
+                  }
+                  p.onClick();
+                }}
+              >
+                <div className="flex items-center gap-2">
                   <img className="w-4 h-4 opacity-70 group-hover:opacity-100 dark:hidden" crossOrigin="anonymous" src={p.imgSrc} />
                   <img className="w-4 h-4 opacity-70 group-hover:opacity-100 hidden dark:block" crossOrigin="anonymous" src={p.imgSrcDark || p.imgSrc} />
                   <span>{p.label}</span>
-                </DropdownMenu.Item>
-              ))}
-            </div>
-          </DropdownMenu.Content>
-        </DropdownMenu.Root>
+                </div>
+              </DropdownItem>
+            ))}
+          </div>
+        </Dropdown>
       </div>
 
       {showGitHubDeploymentDialog && githubDeploymentFiles && (

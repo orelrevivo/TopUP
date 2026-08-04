@@ -39,6 +39,7 @@ import { Tooltip } from '~/components/ui/Tooltip';
 import { Badge } from '../ui';
 import { MCP_CONNECTORS } from '~/components/@settings/tabs/mcp/connectors';
 import { useMCPStore } from '~/lib/stores/mcp';
+import Link from 'next/link';
 
 interface ChatBoxProps {
   isModelSettingsCollapsed: boolean;
@@ -128,7 +129,8 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const gptSolModel = props.modelList.find(m => m.name === 'gpt-5.6-sol' && m.provider === 'OpenAI');
   const geminiProModel = props.modelList.find(m => m.name === 'gemini-3.6-pro' && m.provider === 'Google');
   const geminiFlashModel = props.modelList.find(m => m.name === 'gemini-3.6-flash' && m.provider === 'Google');
-  const availableModels = [claudeModel, haikuModel, deepseekModel, gptSolModel, geminiProModel, geminiFlashModel].filter(Boolean);
+  const qwenModel = props.modelList.find(m => m.name === 'qwen3.7-flash' && m.provider === 'Qwen');
+  const availableModels = [claudeModel, haikuModel, geminiProModel, geminiFlashModel, gptSolModel, deepseekModel, qwenModel].filter(Boolean);
   const selectedModelInfo = availableModels.find(m => m?.name === props.model);
 
   return (
@@ -185,9 +187,22 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           </div>
         )
       )}
-      <div className={classNames('rounded-lg', { 'p-1.5 bg-[#E3E3E3] dark:bg-transparent': !props.chatStarted })}>
-        <div className="relative bg-white dark:bg-[#141414] backdrop-blur border border-[#D6D6D6] dark:border-[#353538] rounded-lg">
-          <svg className={classNames(styles.PromptEffectContainer)}>
+      <div className={classNames('rounded-xl relative transition-all duration-300', {
+        'p-[1.5px] dark:p-1.5 dark:bg-transparent shadow-sm': !props.chatStarted
+      })}>
+        {!props.chatStarted && (
+          <>
+            <div className="absolute inset-0 rounded-xl overflow-hidden dark:hidden pointer-events-none">
+              <div className="absolute inset-[-150%] animate-[spin_5s_linear_infinite]"
+                style={{
+                  background: 'conic-gradient(from 0deg, transparent 0%, transparent 60%, rgba(168, 85, 247, 1) 75%, rgba(59, 130, 246, 1) 85%, rgba(236, 72, 153, 1) 95%, transparent 100%)'
+                }}
+              />
+            </div>
+          </>
+        )}
+        <div className="relative bg-white dark:bg-[#141414] backdrop-blur border border-[#D6D6D6] dark:border-[#353538] rounded-[10.5px] dark:rounded-lg h-full z-10">
+          <svg className={classNames(styles.PromptEffectContainer, "hidden dark:block")}>
             <defs>
               <linearGradient
                 id="line-gradient"
@@ -431,7 +446,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     <span>Image generator <span className="text-xs font-mono">(coming soon)</span></span>
                   </DropdownItem>
                 )}
-
+                {/* 
                 <div className="relative flex items-center gap-2 px-1.5 py-1 rounded-md text-sm text-falbor-elements-textPrimary hover:bg-[#E3E3E3] dark:hover:bg-[#2A2A2A] cursor-pointer w-full">
                   <div className="flex-1">
                     <ColorSchemeDialog designScheme={props.designScheme} setDesignScheme={props.setDesignScheme} asMenuItem={true} />
@@ -445,7 +460,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       <Switch.Thumb className="block w-3 h-3 bg-white rounded-full transition-transform transform translate-x-0.5 data-[state=checked]:translate-x-4.5 shadow-sm" />
                     </Switch.Root>
                   </div>
-                </div>
+                </div> */}
 
                 <DropdownSub>
                   <DropdownSubTrigger>
@@ -522,7 +537,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                   asMenuItem={true}
                 /> */}
 
-                <ScreenRecorderButton
+                {/* <ScreenRecorderButton
                   disabled={props.isStreaming}
                   asMenuItem={true}
                   onPromptGenerated={(prompt) => {
@@ -533,7 +548,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       props.handleInputChange(syntheticEvent);
                     }
                   }}
-                />
+                /> */}
 
                 <DropdownItem
                   className={classNames(props.input.length === 0 || props.enhancingPrompt ? 'opacity-50' : '')}
@@ -625,8 +640,11 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             ) : null}
             <div className="flex items-center gap-1">
               {availableModels.length > 0 && (
-                <Popover.Root open={modelSelectorOpen} onOpenChange={setModelSelectorOpen}>
-                  <Popover.Trigger asChild>
+                <Dropdown
+                  sideOffset={8}
+                  align="start"
+                  className="w-56"
+                  trigger={
                     <IconButton
                       title="Choose model"
                       className={classNames(
@@ -634,93 +652,171 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       )}
                     >
                       {props.model?.includes('claude') ? (
-                        <img src="/icons/claude-color.svg" className="w-4 h-4" alt="Claude" />
+                        <>
+                          <img src="/icons/models/claude-light.svg" className="w-4 h-4 dark:hidden" alt="Claude" />
+                          <img src="/icons/models/claude-dark.svg" className="w-4 h-4 hidden dark:block" alt="Claude" />
+                        </>
                       ) : props.model === deepseekModel?.name ? (
-                        <img src="/icons/deepseek-color.svg" className="w-4 h-4" alt="DeepSeek" />
+                        <>
+                          <img src="/icons/models/deepseek-light.svg" className="w-4 h-4 dark:hidden" alt="DeepSeek" />
+                          <img src="/icons/models/deepseek-dark.svg" className="w-4 h-4 hidden dark:block" alt="DeepSeek" />
+                        </>
                       ) : props.model?.includes('gpt') ? (
-                        <div className="i-ph:open-ai-logo text-sm" />
+                        <>
+                          <img src="/icons/models/chatGPT-light.svg" className="w-3.5 h-3.5 dark:hidden" alt="ChatGPT" />
+                          <img src="/icons/models/chatGPT-dark.svg" className="w-3.5 h-3.5 hidden dark:block" alt="ChatGPT" />
+                        </>
                       ) : props.model?.includes('gemini') ? (
-                        <img src="/icons/gemini.svg" className="w-4 h-4" alt="Gemini" />
+                        <>
+                          <img src="/icons/models/Gemini-light.svg" className="w-4 h-4 dark:hidden" alt="Gemini" />
+                          <img src="/icons/models/Gemini-dark.svg" className="w-4 h-4 hidden dark:block" alt="Gemini" />
+                        </>
+                      ) : props.model?.includes('qwen') ? (
+                        <>
+                          <img src="/icons/models/qwen-light.svg" className="w-4 h-4 dark:hidden" alt="Qwen" />
+                          <img src="/icons/models/qwen-dark.svg" className="w-4 h-4 hidden dark:block" alt="Qwen" />
+                        </>
                       ) : (
                         <div className="i-ph:cpu text-sm" />
                       )}
-                      <span>{selectedModelInfo?.label || 'Choose models'}</span>
+                      <span className="dark:text-white text-[#27251E]">{selectedModelInfo?.label || 'Choose models'}</span>
                       <div className="i-ph:caret-down text-[10px] ml-0.5" />
                     </IconButton>
-                  </Popover.Trigger>
-                  <Popover.Portal>
-                    <Popover.Content
-                      sideOffset={8}
-                      side="top"
-                      align="start"
-                      className="bg-falbor-elements-background-depth-2 text-falbor-elements-textPrimary rounded-md border border-falbor-elements-borderColor shadow-lg z-[100] overflow-hidden flex flex-col py-1 w-48"
-                    >
-                      {availableModels.map((m) => {
-                        if (!m) return null;
-                        const isClaude = m.name.toLowerCase().includes('sonnet') || m.name.toLowerCase().includes('haiku');
-                        const isGpt = m.name.toLowerCase().includes('gpt');
-                        const isGemini = m.name.toLowerCase().includes('gemini');
-                        let displayName = (m.label || m.name).replace(/\s\([^)]+\scontext\)/i, '');
+                  }
+                >
+                  {availableModels.map((m) => {
+                    if (!m) return null;
+                    const isClaude = m.name.toLowerCase().includes('sonnet') || m.name.toLowerCase().includes('haiku');
+                    const isGpt = m.name.toLowerCase().includes('gpt');
+                    const isGemini = m.name.toLowerCase().includes('gemini');
+                    const isDeepSeek = m.name.toLowerCase().includes('deepseek');
+                    const isQwen = m.name.toLowerCase().includes('qwen');
+                    let displayName = (m.label || m.name).replace(/\s\([^)]+\scontext\)/i, '');
 
-                        const buttonContent = (
-                          <button
-                            key={m.name}
-                            className={classNames(
-                              'flex items-center justify-between w-full px-3 py-2 text-sm text-left transition-colors hover:bg-falbor-elements-background-depth-3',
-                              props.model === m.name ? 'bg-falbor-elements-background-depth-3' : 'text-falbor-elements-textPrimary'
+                    let vision = "Supports images";
+                    let bestFor = "General tasks";
+                    let speed = "Normal";
+                    let price = "$$";
+                    let providerName = "Unknown";
+                    let modelIcon = "Default";
+
+                    if (isDeepSeek) {
+                      vision = "No images";
+                      bestFor = "Coding & Logic";
+                      speed = "Fast";
+                      price = "$ (Cheapest)";
+                      providerName = "DeepSeek";
+                      modelIcon = "deepseek-color";
+                    } else if (isClaude) {
+                      bestFor = "Maximum intelligence for complex work";
+                      speed = "Heavy";
+                      price = "$$$ (Expensive)";
+                      providerName = "Anthropic";
+                      modelIcon = "claude-color";
+                    } else if (isGpt) {
+                      bestFor = "Maximum intelligence for complex work";
+                      speed = "Heavy";
+                      price = "$$$ (Expensive)";
+                      providerName = "OpenAI";
+                      modelIcon = "OpenAI";
+                    } else if (isGemini) {
+                      bestFor = "Speed & Efficiency";
+                      speed = "Fastest";
+                      price = "$$ (Medium)";
+                      providerName = "Google";
+                      modelIcon = "gemini";
+                    } else if (isQwen) {
+                      bestFor = "Lightweight efficiency";
+                      speed = "Fast";
+                      price = "$ (Cheapest)";
+                      providerName = "Qwen";
+                      modelIcon = "Default";
+                    }
+
+                    return (
+                      <DropdownItem
+                        key={m.name}
+                        className="group overflow-visible"
+                        active={props.model === m.name}
+                        onSelect={() => {
+                          props.setModel?.(m.name);
+                          const targetProvider = props.providerList?.find(p => p.name === m.provider);
+                          if (targetProvider) {
+                            props.setProvider?.(targetProvider);
+                          }
+                        }}
+                      >
+                        <span className="flex items-center gap-2 flex-1">
+                          {isClaude ? (
+                            <>
+                              <img src="/icons/models/claude-light.svg" className="w-4 h-4 dark:hidden" alt="Claude" />
+                              <img src="/icons/models/claude-dark.svg" className="w-4 h-4 hidden dark:block" alt="Claude" />
+                            </>
+                          ) : isGpt ? (
+                            <>
+                              <img src="/icons/models/chatGPT-light.svg" className="w-4 h-4 dark:hidden" alt="ChatGPT" />
+                              <img src="/icons/models/chatGPT-dark.svg" className="w-4 h-4 hidden dark:block scale-[1.2]" alt="ChatGPT" />
+                            </>
+                          ) : isGemini ? (
+                            <>
+                              <img src="/icons/models/Gemini-light.svg" className="w-4 h-4 dark:hidden" alt="Gemini" />
+                              <img src="/icons/models/Gemini-dark.svg" className="w-4 h-4 hidden dark:block" alt="Gemini" />
+                            </>
+                          ) : isQwen ? (
+                            <>
+                              <img src="/icons/models/qwen-light.svg" className="w-4 h-4 dark:hidden" alt="Qwen" />
+                              <img src="/icons/models/qwen-dark.svg" className="w-4 h-4 hidden dark:block" alt="Qwen" />
+                            </>
+                          ) : (
+                            <>
+                              <img src="/icons/models/deepseek-light.svg" className="w-4 h-4 dark:hidden" alt="DeepSeek" />
+                              <img src="/icons/models/deepseek-dark.svg" className="w-4 h-4 hidden dark:block" alt="DeepSeek" />
+                            </>
+                          )}
+                          <span className="flex items-center gap-2">
+                            {displayName}
+                            {(m.name === 'claude-haiku-4-5' || m.name === 'gpt-5.6-sol' || m.name === 'gemini-3.6-pro') && (
+                              <Badge size="sm" variant="destructive" className='!rounded-md'>
+                                New
+                              </Badge>
                             )}
-                            onClick={() => {
-                              props.setModel?.(m.name);
-                              const targetProvider = props.providerList?.find(p => p.name === m.provider);
-                              if (targetProvider) {
-                                props.setProvider?.(targetProvider);
-                              }
-                              setModelSelectorOpen(false);
-                            }}
-                          >
-                            <span className="flex items-center gap-2">
-                              {isClaude ? (
-                                <img src="/icons/claude-color.svg" className="w-4 h-4" alt="Claude" />
-                              ) : isGpt ? (
-                                <div className="i-ph:open-ai-logo text-lg" />
-                              ) : isGemini ? (
-                                <img src="/icons/gemini.svg" className="w-4 h-4" alt="Gemini" />
-                              ) : (
-                                <img src="/icons/deepseek-color.svg" className="w-4 h-4" alt="DeepSeek" />
-                              )}
-                              <span className="flex items-center gap-2">
-                                {displayName}
-                                {m.name === 'claude-haiku-4-5' && (
-                                  <Badge size="sm" variant="destructive" className='!rounded-md'>
-                                    New
-                                  </Badge>
-                                )}
-                              </span>
-                            </span>
-                            {props.model === m.name && <div className="i-ph:check text-sm" />}
-                          </button>
-                        );
-
-                        return buttonContent;
-                      })}
-                      <div className='p-2 mb-[-4px]'>
-                        <div className="border rounded-md flex flex-col items-center justify-between w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors">
-                          <span className="flex items-center">
-                            <div className="i-ph:info mr-1 w-7 h-7" />
-                            more models available soon.
                           </span>
-                          <span className='bg-orange-300/20 border-l-2 border-orange px-2 '>We're using small models to keep your balance.</span>
-                          <span className='bg-[#0099ff]/10 border-l-2 border-[#0099ff] px-2 '>you can always use bigger models with a big cost.</span>
+                        </span>
+                        {props.model === m.name && <div className="i-ph:check text-sm text-falbor-elements-textPrimary" />}
+
+                        <div className="absolute left-[calc(100%+8px)] top-0 hidden group-hover:flex flex-col w-[260px] p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5E5] dark:border-[#2C2C2E] shadow-xl z-[1001] animate-in fade-in zoom-in-95 cursor-default">
+                          <div className="text-[13px] font-medium text-[#11181C] dark:text-[#EDEDED] leading-snug">{bestFor}</div>
+                          <div className="flex items-center gap-1.5 mt-2 text-[12px] text-[#687076] dark:text-[#A0A0AB]">
+                            <img src={`/icons/${modelIcon}.svg`} className="w-3.5 h-3.5" alt={providerName} />
+                            <span>Powered by {displayName}</span>
+                          </div>
+
+                          <div className="h-px w-full bg-[#E5E5E5] dark:bg-[#2C2C2E] my-3" />
+
+                          <div className="flex flex-col gap-1.5">
+                            <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Vision:</span> <span className={vision.includes('No') ? 'text-red-500/80' : 'text-green-500/80'}>{vision}</span></div>
+                            <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Speed:</span> <span className="text-[#11181C] dark:text-[#EDEDED]">{speed}</span></div>
+                            <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Cost:</span> <span className="text-[#11181C] dark:text-[#EDEDED]">{price}</span></div>
+                          </div>
                         </div>
-                      </div>
-                    </Popover.Content>
-                  </Popover.Portal>
-                </Popover.Root>
+                      </DropdownItem>
+                    );
+                  })}
+                  <div className='p-1 mt-1'>
+                    <div className="border border-[#D6D6D6] dark:border-[#353538] rounded-md flex flex-col items-start w-full px-2 py-2 text-[10px] text-left gap-1">
+                      <span className="flex items-center text-xs text-falbor-elements-textPrimary font-medium">
+                        <div className="i-ph:info mr-1 w-4 h-4 text-falbor-elements-textSecondary" />
+                        more models available soon.
+                        <Link className='text-[#0099ff]' target="_blank" href="/docs/models">Learn more</Link>
+                      </span>
+                    </div>
+                  </div>
+                </Dropdown>
               )}
 
-              {/* {typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_SUPABASE_ORG_ID && (
-                <SupabaseConnection />
-              )} */}
+              {/* {typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_SUPABASE_ORG_ID && ( */}
+              <SupabaseConnection />
+              {/* )} */}
             </div>
             <ExpoQrModal open={props.qrModalOpen} onClose={() => props.setQrModalOpen(false)} />
             <SkillsDialog open={skillsDialogOpen} onOpenChange={setSkillsDialogOpen} />

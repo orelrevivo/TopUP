@@ -90,9 +90,9 @@ export function Header() {
           <ClientOnly>
             {() => (
               <div className="flex items-center gap-2">
-                <Link href="/hacking" className={styles.btn}>
+                {/* <Link href="/hacking" className={styles.btn}>
                   Agent <span className="text-xs opacity-70 border px-1 py-0 rounded-xl">soon</span>
-                </Link>
+                </Link> */}
                 <AuthButtons />
                 <UserAvatar
                   onOpenProfile={() => handleOpenPanel('profile')}

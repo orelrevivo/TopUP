@@ -183,6 +183,13 @@ export class ActionRunner {
           await new Promise(resolve => setTimeout(resolve, 1000));
           break;
         }
+        case 'analyzer':
+        case 'question':
+        case 'resources': {
+          // Just a visual data block in the UI. No backend execution required. Wait a little.
+          await new Promise(resolve => setTimeout(resolve, 500));
+          break;
+        }
         case 'build': {
           const buildOutput = await this.#runBuildAction(action);
 

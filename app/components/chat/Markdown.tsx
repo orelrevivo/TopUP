@@ -9,6 +9,7 @@ import { CodeBlock } from './CodeBlock';
 import type { Message } from 'ai';
 import styles from './Markdown.module.scss';
 import ThoughtBox from './ThoughtBox';
+import FunctionCallBox from './FunctionCallBox';
 import { ScreenshotAccordion } from '../hacking/ScreenshotAccordion';
 import type { ProviderInfo } from '~/types/model';
 
@@ -46,7 +47,7 @@ export const Markdown = memo(
               logger.error(`Invalid artifact id ${artifactId}`);
             }
 
-            return <Artifact messageId={messageId} artifactId={artifactId} append={append} />;
+            return <Artifact messageId={messageId} artifactId={artifactId} append={append} model={model} provider={provider?.name} />;
           }
 
           if (className?.includes('__falborScreenshot__')) {
@@ -101,6 +102,11 @@ export const Markdown = memo(
 
           if (className?.includes('__falborQuickAction__') || dataProps?.dataFalborQuickAction) {
             return <div className="flex items-center gap-2 flex-wrap mt-3.5">{children}</div>;
+          }
+
+          if (className?.includes('__falborFunctionCall__')) {
+            const content = (dataProps['data-content'] || dataProps.dataContent) as string;
+            return <FunctionCallBox>{decodeURIComponent(content || '')}</FunctionCallBox>;
           }
 
           return (
@@ -229,7 +235,12 @@ export const Markdown = memo(
         remarkPlugins={remarkPlugins(limitedMarkdown)}
         rehypePlugins={rehypePlugins(html)}
       >
-        {stripCodeFenceFromArtifact(children)}
+        {stripCodeFenceFromArtifact(children).replace(
+          /(?:<|&lt;)function_calls(?:>|&gt;)([\s\S]*?)(?:<|&lt;)\/function_calls(?:>|&gt;)/gi,
+          (match, p1) => {
+            return `<div class="__falborFunctionCall__" data-content="${encodeURIComponent(p1)}"></div>`;
+          }
+        )}
       </ReactMarkdown>
     );
   },

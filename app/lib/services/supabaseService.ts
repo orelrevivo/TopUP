@@ -14,11 +14,16 @@ export interface SupabaseProjectData {
 }
 
 export class SupabaseService {
+  private static failedProvisionChats = new Set<string>();
   /**
    * Retrieves an existing Supabase project for the chat, or creates a new one via the Supabase Management API.
    */
   static async getOrCreateSupabaseProject(chatId: string): Promise<SupabaseProjectData | null> {
     try {
+      if (this.failedProvisionChats.has(chatId)) {
+        throw new Error("Supabase provisioning previously failed for this chat (max projects reached). Skipping retry.");
+      }
+
       const [existing] = await db.select().from(supabaseDatabases).where(eq(supabaseDatabases.chatId, chatId)).limit(1);
 
       if (existing) {
@@ -59,6 +64,9 @@ export class SupabaseService {
 
       if (!res.ok) {
         const errorText = await res.text();
+        if (res.status === 400 && errorText.includes("maximum limits")) {
+          this.failedProvisionChats.add(chatId);
+        }
         throw new Error(`Supabase API error: ${res.status} - ${errorText}`);
       }
 

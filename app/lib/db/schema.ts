@@ -354,3 +354,27 @@ export const mcpConnections = pgTable("mcp_connections", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// ─── Analyzed Reports (Validation Pages) ────────────────────────────────────
+
+export const analyzedReports = pgTable("analyzed_reports", {
+  id: text("id").primaryKey(), // We can use short IDs for shareable links, e.g. "abc123"
+  userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+  chatId: text("chat_id").references(() => chats.id, { onDelete: "set null" }),
+  title: text("title").notNull(),
+  problem: text("problem"),
+  targetAudience: text("target_audience"),
+  isPublic: boolean("is_public").default(false).notNull(),
+  rawAnalysis: text("raw_analysis"),
+  rawResources: text("raw_resources"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const analyzedFeedbacks = pgTable("analyzed_feedbacks", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  reportId: text("report_id").notNull().references(() => analyzedReports.id, { onDelete: "cascade" }),
+  wouldUse: boolean("would_use").notNull(),
+  feedbackText: text("feedback_text"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

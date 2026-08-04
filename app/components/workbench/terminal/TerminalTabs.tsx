@@ -133,7 +133,7 @@ export const TerminalTabs = memo(() => {
     >
       <div className="h-full">
         <div className="bg-falbor-elements-terminals-background h-full flex flex-col">
-          <div className="flex items-center bg-falbor-elements-background-depth-2 border-y border-falbor-elements-borderColor gap-1.5 min-h-[34px] p-2">
+          <div className="flex items-center shrink-0 bg-falbor-elements-background-depth-2 border-y border-falbor-elements-borderColor gap-1.5 min-h-[34px] p-2">
             {Array.from({ length: terminalCount + 1 }, (_, index) => {
               const isActive = activeTerminal === index;
 

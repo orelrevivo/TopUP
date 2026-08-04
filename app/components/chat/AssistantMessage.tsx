@@ -87,7 +87,7 @@ function parseSkillUsages(content: string) {
   // Strip leaked JSON tool calls at the beginning of the message (common with some models like DeepSeek)
   let jsonStartIdx = -1;
   let hasMarkdownCodeblock = false;
-  
+
   if (cleanContent.startsWith('```json\n') || cleanContent.startsWith('```json\r\n') || cleanContent.startsWith('```\n') || cleanContent.startsWith('```\r\n')) {
     jsonStartIdx = cleanContent.indexOf('{');
     hasMarkdownCodeblock = true;
@@ -106,7 +106,7 @@ function parseSkillUsages(content: string) {
         break;
       }
     }
-    
+
     if (endIdx !== -1) {
       let possibleJson = cleanContent.substring(jsonStartIdx, endIdx + 1);
       try {
@@ -114,7 +114,7 @@ function parseSkillUsages(content: string) {
         if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
           // If the JSON object contains typical tool arguments, strip it out to clean the UI
           let isToolCallLeak = Object.keys(parsed).some(k => ['action', 'query', 'type', 'limit', 'mediaType', 'tool', 'args'].includes(k));
-          
+
           if (isToolCallLeak) {
             let fullMatchEnd = endIdx + 1;
             if (hasMarkdownCodeblock) {
@@ -280,7 +280,7 @@ export const AssistantMessage = memo(
             )}
           </div>
         </div> */}
-        <div className="relative flex flex-col bg-accent-500/10 dark:bg-[#252525] backdrop-blur-sm px-5 p-3.5 w-full rounded-lg break-words overflow-wrap-anywhere">
+        <div className="relative flex flex-col bg-[#EEEEEE] dark:bg-[#252525] backdrop-blur-sm px-5 p-3.5 w-full rounded-lg break-words overflow-wrap-anywhere">
           <>
             <div className=" flex gap-2 items-center text-sm text-falbor-elements-textSecondary mb-2">
               {(codeContext || chatSummary) && (
@@ -336,7 +336,7 @@ export const AssistantMessage = memo(
             />
           )}
           {(onRewind || onFork) && messageId && (
-            <div className="absolute -bottom-4 right-4 flex gap-1 flex-row justify-end bg-falbor-elements-artifacts-inlineCode-background dark:bg-[#252525] border border-falbor-elements-borderColor rounded-md p-1 shadow-sm z-10">
+            <div className="absolute -bottom-4 right-4 flex gap-1 flex-row justify-end bg-falbor-elements-artifacts-inlineCode-background dark:bg-[#252525] border border-falbor-elements-borderColor rounded-md p-1 shadow-sm z-40">
               {onRewind && (
                 <WithTooltip tooltip="Revert to this message">
                   <button

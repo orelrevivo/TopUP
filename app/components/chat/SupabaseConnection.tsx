@@ -72,19 +72,19 @@ export function SupabaseConnection() {
 
       for (const [path, file] of sqlFiles) {
         if (file?.type === 'file' && file.content) {
-           const res = await fetch('/api/database/execute', {
-             method: 'POST',
-             headers: { 'Content-Type': 'application/json' },
-             body: JSON.stringify({
-               chatId: currentChatId,
-               sql: file.content
-             })
-           });
+          const res = await fetch('/api/database/execute', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              chatId: currentChatId,
+              sql: file.content
+            })
+          });
 
-           if (!res.ok) {
-             const errorData = await res.json().catch(() => ({}));
-             throw new Error(`Failed to push ${path}: ${errorData.message || res.statusText}`);
-           }
+          if (!res.ok) {
+            const errorData = await res.json().catch(() => ({}));
+            throw new Error(`Failed to push ${path}: ${errorData.message || res.statusText}`);
+          }
         }
       }
       toast.success('Successfully pushed all migrations to Supabase!');
@@ -146,7 +146,7 @@ export function SupabaseConnection() {
 
   return (
     <div className="relative">
-      <div className="flex border border-falbor-elements-borderColor rounded-md overflow-hidden mr-2 text-sm">
+      {/* <div className="flex border border-falbor-elements-borderColor rounded-md overflow-hidden mr-2 text-sm">
         <Button
           active
           disabled={connecting}
@@ -164,7 +164,7 @@ export function SupabaseConnection() {
             <span className="ml-1 text-xs max-w-[100px] truncate">{supabaseConn.project.name}</span>
           )}
         </Button>
-      </div>
+      </div> */}
 
       <DialogRoot open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         {isDialogOpen && (
@@ -183,10 +183,10 @@ export function SupabaseConnection() {
                     Database Connected
                   </DialogTitle>
                 </div>
-                
+
                 <div className="bg-[#F8F8F8] dark:bg-[#1A1A1A] p-4 rounded-lg border border-[#E5E5E5] dark:border-[#333333]">
                   <p className="text-sm text-falbor-elements-textPrimary mb-2">This project is connected to Supabase via your <code className="bg-[#E5E5E5] dark:bg-[#333333] px-1 rounded">.env</code> file.</p>
-                  
+
                   <h4 className="text-xs font-semibold text-falbor-elements-textSecondary uppercase tracking-wider mb-2 mt-4">SQL Migrations</h4>
                   {sqlMigrationFiles.length > 0 ? (
                     <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">

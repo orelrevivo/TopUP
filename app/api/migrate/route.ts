@@ -31,13 +31,14 @@ export async function POST(request: NextRequest) {
             .onConflictDoNothing();
 
           if (Array.isArray(chat.messages)) {
+            const now = Date.now();
             const msgRows = chat.messages.map((m: any, idx: number) => ({
               id: m.id || `${chat.id}-msg-${idx}`,
               chatId: chat.id,
               role: m.role || "user",
               content: m.content || null,
               parts: m.parts ? JSON.stringify(m.parts) : null,
-              createdAt: new Date(),
+              createdAt: new Date(now + idx),
             }));
             await db.delete(messages).where(eq(messages.chatId, chat.id));
             if (msgRows.length) await db.insert(messages).values(msgRows);

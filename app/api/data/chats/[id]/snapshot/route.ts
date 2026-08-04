@@ -32,13 +32,13 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
     if (existing) {
       await db
         .update(chatSnapshots)
-        .set({ files: snapshot?.files ?? snapshot, summary: snapshot?.summary, createdAt: new Date() })
+        .set({ files: snapshot, summary: snapshot?.summary, createdAt: new Date() })
         .where(eq(chatSnapshots.id, existing.id));
     } else {
       await db.insert(chatSnapshots).values({
         chatId: params.id,
         userId,
-        files: snapshot?.files ?? snapshot,
+        files: snapshot,
         summary: snapshot?.summary,
       });
     }

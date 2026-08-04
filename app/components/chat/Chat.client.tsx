@@ -38,9 +38,7 @@ export function Chat() {
 
   const { ready, initialMessages, storeMessageHistory, importChat, exportChat } = useChatHistory();
   const title = useStore(description);
-  useEffect(() => {
-    workbenchStore.setReloadedMessages(initialMessages.map((m) => m.id));
-  }, [initialMessages]);
+
 
   return (
     <>
@@ -189,7 +187,10 @@ export const ChatImpl = memo(
         if (saved) {
           try {
             const parsed = JSON.parse(saved);
-            if (parsed.model) return parsed.model;
+            if (parsed.model) {
+              const isValidModel = PROVIDER_LIST.some((p) => p.staticModels?.some((m) => m.name === parsed.model));
+              if (isValidModel) return parsed.model;
+            }
           } catch(e) {}
         }
       }
@@ -198,7 +199,13 @@ export const ChatImpl = memo(
       const defaultProviderName = Cookies.get('lastSelectedProvider') || Cookies.get('defaultProvider') || DEFAULT_PROVIDER.name;
       providerInfo = (PROVIDER_LIST.find((p) => p.name === defaultProviderName) || DEFAULT_PROVIDER) as ProviderInfo;
       
-      return Cookies.get('lastSelectedModel') || providerInfo.staticModels?.[0]?.name || DEFAULT_MODEL;
+      const savedModel = Cookies.get('lastSelectedModel');
+      if (savedModel) {
+        const isValidModel = PROVIDER_LIST.some((p) => p.staticModels?.some((m) => m.name === savedModel));
+        if (isValidModel) return savedModel;
+      }
+      
+      return providerInfo.staticModels?.[0]?.name || DEFAULT_MODEL;
     });
 
     useEffect(() => {
@@ -454,13 +461,15 @@ export const ChatImpl = memo(
         });
 
         // Create API error alert
-        setLlmErrorAlert({
-          type: 'error',
-          title,
-          description: errorInfo.message,
-          provider: provider.name,
-          errorType,
-        });
+        if (!errorInfo.message?.toLowerCase().includes('terminated')) {
+          setLlmErrorAlert({
+            type: 'error',
+            title,
+            description: errorInfo.message,
+            provider: provider.name,
+            errorType,
+          });
+        }
         setData([]);
       },
       [provider.name, stop],

@@ -180,7 +180,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     useEffect(() => {
       import('~/lib/webcontainer').then(({ startWebContainer, webcontainer }) => {
         startWebContainer();
-        
+
         // Restore persistent images on mount
         if (currentChatId) {
           getImagesForChat(currentChatId).then(images => {
@@ -197,7 +197,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     const binaryString = atob(img.base64Data);
                     const bytes = new Uint8Array(binaryString.length);
                     for (let i = 0; i < binaryString.length; i++) {
-                        bytes[i] = binaryString.charCodeAt(i);
+                      bytes[i] = binaryString.charCodeAt(i);
                     }
                     await wc.fs.writeFile(img.filePath, bytes);
                   } catch (e) {
@@ -221,7 +221,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         const fileWrites = data.filter(
           (x) => typeof x === 'object' && (x as any).type === 'file-write',
         );
-        
+
         fileWrites.forEach((item: any) => {
           if (!processedFiles.current.has(item.filePath)) {
             processedFiles.current.add(item.filePath);
@@ -230,11 +230,11 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 try {
                   const pathParts = item.filePath.split('/');
                   if (pathParts.length > 1) {
-                     pathParts.pop();
-                     const dir = pathParts.join('/');
-                     await wc.fs.mkdir(dir, { recursive: true });
+                    pathParts.pop();
+                    const dir = pathParts.join('/');
+                    await wc.fs.mkdir(dir, { recursive: true });
                   }
-                  
+
                   const base64Data = item.content;
                   // Remove background
                   const processedBase64 = await removeBackgroundFromBase64(base64Data);
@@ -242,7 +242,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   const binaryString = atob(processedBase64);
                   const bytes = new Uint8Array(binaryString.length);
                   for (let i = 0; i < binaryString.length; i++) {
-                      bytes[i] = binaryString.charCodeAt(i);
+                    bytes[i] = binaryString.charCodeAt(i);
                   }
                   await wc.fs.writeFile(item.filePath, bytes);
                   console.log(`Successfully wrote generated image to ${item.filePath}`);
@@ -449,9 +449,15 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         <div className="flex flex-col lg:flex-row overflow-hidden w-full h-full">
           <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full relative')}>
             {!chatStarted && (
-              <div id="intro" className="mt-[23vh] max-w-sm mx-auto text-center px-4 lg:px-0">
-                <h1 className="text-falbor-elements-textPrimary text-5xl lg:text-3xl animate-fade-in">
-                  Start creating your own creative
+              <div id="intro" className="mt-[23vh] max-w-md mx-auto text-center px-4 lg:px-0">
+                <h1 className="text-falbor-elements-textPrimary ml-[-50px] text-5xl lg:text-3xl animate-fade-in flex items-center justify-center gap-2">
+                  Don’t just build.
+                  <img
+                    src="/icons/verified.png"
+                    alt="Verified"
+                    className="w-8 h-8 inline-block"
+                  />
+                  first.
                 </h1>
                 <FeedbackWidget />
               </div>
@@ -463,7 +469,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                 'h-full flex flex-col': chatStarted,
               })}
             >
-              <StickToBottom.Content className="flex flex-col gap-4 relative">
+              <StickToBottom.Content className="flex flex-col gap-4 mt-2.5 relative">
                 <ClientOnly>
                   {() => {
                     return chatStarted ? (
@@ -573,7 +579,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     setCloneUrl={setCloneUrl}
                     onWebSearchResult={onWebSearchResult}
                   />
-                  <div
+                  {/* <div
                     className={classNames({
                       'flex flex-col justify-center mb-2 mt-2': !chatStarted,
                       '': chatStarted,
@@ -627,7 +633,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       </>
                     )}
                     <div className="flex flex-col gap-5">
-                      {/* {!chatStarted &&
+                      {!chatStarted &&
                   ExamplePrompts((event, messageInput) => {
                     if (isStreaming) {
                       handleStop?.();
@@ -635,9 +641,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     }
 
                     handleSendMessage?.(event, messageInput);
-                  })} */}
+                  })}
                     </div>
-                  </div>
+                  </div> */}
                 </div>
               </div>
             </StickToBottom>

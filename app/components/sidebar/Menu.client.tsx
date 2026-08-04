@@ -413,7 +413,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
 
   const handleSettingsClose = () => {
     settingsOpenStore.set(false);
-    
+
     // Remove tab from URL
     if (typeof window !== 'undefined') {
       const newUrl = new URL(window.location.href);
@@ -511,7 +511,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                 const Icon = TAB_ICONS[tab.id as TabType];
                 const isSelected = activeSettingsTab === tab.id;
                 const isBlinking = tab.id === 'pricing' && blinkPricing;
-                
+
                 return (
                   <button
                     key={tab.id}

@@ -59,6 +59,7 @@ export const allowedHTMLElements = [
   'think',
   'plan',
   'header',
+  'function_calls',
 ];
 
 
@@ -72,9 +73,7 @@ const rehypeSanitizeOptions: RehypeSanitizeOptions = {
     div: [
       ...(defaultSchema.attributes?.div ?? []),
       'data*',
-      ['className', '__falborArtifact__', '__falborThought__', '__falborPlan__', '__falborQuickAction', '__falborSelectedElement__', '__falborScreenshot__'],
-
-      // ['className', '__falborThought__']
+      ['className', '__falborArtifact__', '__falborThought__', '__falborPlan__', '__falborQuickAction', '__falborSelectedElement__', '__falborScreenshot__', '__falborFunctionCall__'],
     ],
     img: [
       ...(defaultSchema.attributes?.img ?? []),

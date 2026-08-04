@@ -428,11 +428,14 @@ export class StreamingMessageParser {
       }
 
       (actionAttributes as FileAction).filePath = filePath;
-    } else if (!['shell', 'start'].includes(actionType)) {
+    } else if (actionType === 'analyzer' || actionType === 'question' || actionType === 'resources') {
+      const title = this.#extractAttribute(actionTag, 'title');
+      (actionAttributes as any).title = title;
+    } else if (!['shell', 'start', 'scan'].includes(actionType)) {
       logger.warn(`Unknown action type '${actionType}'`);
     }
 
-    return actionAttributes as FileAction | ShellAction;
+    return actionAttributes as unknown as any; // Cast as any because it's inferred as BaseAction elsewhere
   }
 
   #extractAttribute(tag: string, attributeName: string): string | undefined {

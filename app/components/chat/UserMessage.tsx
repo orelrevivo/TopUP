@@ -43,7 +43,7 @@ export function UserMessage({ content, parts }: UserMessageProps) {
 
     return (
       <div className="overflow-hidden flex flex-col gap-3 items-center ">
-        <div className="flex flex-row items-start justify-center overflow-hidden shrink-0 self-start">
+        {/* <div className="flex flex-row items-start justify-center overflow-hidden shrink-0 self-start">
           <div className="flex items-end gap-2">
             {profile?.avatar ? (
               <img
@@ -62,8 +62,8 @@ export function UserMessage({ content, parts }: UserMessageProps) {
               </span>
             )}
           </div>
-        </div>
-        <div className="flex flex-col gap-4 bg-accent-500/10 backdrop-blur-sm p-3 py-3 w-full overflow-hidden break-words rounded-lg">
+        </div> */}
+        <div className="flex flex-col gap-4 bg-[#EEEEEE] backdrop-blur-sm p-3 py-3 w-full overflow-hidden break-words rounded-lg">
           {textContent && <Markdown html>{textContent}</Markdown>}
           {images.map((item, index) => (
             <img
@@ -84,41 +84,38 @@ export function UserMessage({ content, parts }: UserMessageProps) {
 
   return (
     <div className="overflow-hidden flex flex-col gap-3 items-center w-full">
-      <div className="flex flex-row items-start justify-center overflow-hidden shrink-0 self-start">
-        <div className="flex items-end gap-2">
+      <div className="flex flex-col bg-[#EEEEEE] dark:bg-[#252525] backdrop-blur-sm px-5 py-3.5 w-full rounded-lg overflow-hidden break-words">
+        <div className="flex items-start gap-3">
           {profile?.avatar ? (
             <img
               src={profile.avatar}
-              alt={profile?.username || 'User'}
-              className="w-[25px] h-[25px] object-cover rounded-full"
+              alt={profile?.username || "User"}
+              className="w-[25px] h-[25px] object-cover rounded-full flex-shrink-0 mt-1"
               loading="eager"
               decoding="sync"
             />
           ) : (
-            <div className="i-ph:user-fill text-accent-500 text-2xl" />
+            <div className="i-ph:user-fill text-accent-500 text-2xl flex-shrink-0" />
           )}
-          {profile?.username && (
-            <span className="text-falbor-elements-textPrimary text-sm">
-              {profile.username}
-            </span>
-          )}
-        </div>
-      </div>
-      <div className="flex flex-col bg-accent-500/10 dark:bg-[#252525] backdrop-blur-sm px-5 p-3.5 w-full rounded-lg overflow-hidden break-words">
-        <Markdown html>{textContent}</Markdown>
-        {images.length > 0 && (
-          <div className="flex flex-col gap-4 mt-4">
-            {images.map((item, index) => (
-              <img
-                key={index}
-                src={`data:${item.mimeType};base64,${item.data}`}
-                alt={`Image ${index + 1}`}
-                className="max-w-full h-auto rounded-lg"
-                style={{ maxHeight: '512px', objectFit: 'contain' }}
-              />
-            ))}
+
+          <div className="flex-1 min-w-0">
+            <Markdown html>{textContent}</Markdown>
+
+            {images.length > 0 && (
+              <div className="flex flex-col gap-4 mt-4">
+                {images.map((item, index) => (
+                  <img
+                    key={index}
+                    src={`data:${item.mimeType};base64,${item.data}`}
+                    alt={`Image ${index + 1}`}
+                    className="max-w-full h-auto rounded-lg"
+                    style={{ maxHeight: "512px", objectFit: "contain" }}
+                  />
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

@@ -25,19 +25,24 @@ export const HistoryPanel = memo(({ messages, onRewind }: HistoryPanelProps) => 
           const match = msg.content.match(/<falborArtifact[^>]*title="([^"]+)"/);
           if (match && match[1]) {
             title = match[1];
+          } else {
+            // Fallback for older function_calls format:
+            const funcCallMatch = msg.content.match(/(?:<|&lt;)function_calls(?:>|&gt;)[\s\S]*?\n\s*([^\n<]+?)\s*(?:<|&lt;)\/function_calls(?:>|&gt;)/i);
+            if (funcCallMatch && funcCallMatch[1]) {
+              title = funcCallMatch[1].trim();
+            }
           }
         }
 
-        // Count number of code blocks or files modified
-        const codeBlocksCount = (msg.content.match(/```/g) || []).length / 2;
+        // Count number of files modified by looking at falborAction tags
+        const filesModifiedCount = (msg.content.match(/<falborAction[^>]*type="file"/g) || []).length;
 
         return {
           id: msg.id,
           title,
-          summary: `${Math.floor(codeBlocksCount)} file(s) modified`,
+          summary: `${filesModifiedCount} file(s) modified`,
         };
-      })
-      .reverse(); // Newest first
+      }); // Oldest first
   }, [messages]);
 
   const handleRewind = (id: string) => {
@@ -87,7 +92,7 @@ export const HistoryPanel = memo(({ messages, onRewind }: HistoryPanelProps) => 
                   key={version.id}
                   className={classNames(
                     "group flex flex-col p-4 rounded-lg border border-falbor-elements-borderColor transition-colors cursor-pointer",
-                    i === 0
+                    i === versions.length - 1
                       ? "bg-falbor-elements-background-depth-2 border-accent-500/30"
                       : "bg-falbor-elements-background-depth-1 hover:bg-falbor-elements-background-depth-2"
                   )}
@@ -95,7 +100,7 @@ export const HistoryPanel = memo(({ messages, onRewind }: HistoryPanelProps) => 
                 >
                   <div className="flex items-center justify-between mb-1">
                     <span className="font-medium text-falbor-elements-textPrimary">{version.title}</span>
-                    {i === 0 && (
+                    {i === versions.length - 1 && (
                       <span className="text-xs px-2 py-0.5 rounded-full bg-accent-500/20 text-accent-500">
                         Latest
                       </span>
@@ -104,7 +109,7 @@ export const HistoryPanel = memo(({ messages, onRewind }: HistoryPanelProps) => 
                   <div className="text-sm text-falbor-elements-textSecondary">
                     {version.summary}
                   </div>
-                  {i !== 0 && (
+                  {i !== versions.length - 1 && (
                     <div className="mt-3 text-xs font-medium text-blue-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                       <div className="i-ph:arrow-u-up-left" />
                       Restore this version

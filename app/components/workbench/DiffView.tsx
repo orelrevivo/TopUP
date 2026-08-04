@@ -535,7 +535,6 @@ const FileInfo = memo(
           ) : (
             <span className="text-green-700 dark:text-green-400">No Changes</span>
           )}
-          <FullscreenButton onClick={onToggleFullscreen} isFullscreen={isFullscreen} />
         </span>
       </div>
     );

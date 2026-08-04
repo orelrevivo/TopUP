@@ -67,7 +67,8 @@ function sanitizeText(text: string | any[] | undefined | null): any {
     sanitized = text.replace(/<falborAction type="file" filePath="package-lock\.json">[\s\S]*?<\/falborAction>/g, '');
   }
 
-  return sanitized.trim();
+  const result = sanitized.trim();
+  return result === '' ? ' ' : result;
 }
 
 /**
@@ -76,17 +77,12 @@ function sanitizeText(text: string | any[] | undefined | null): any {
  */
 const VISION_MODEL_PATTERNS = [
   // OpenAI
-  /^gpt-4o/i,
-  /^gpt-4-turbo/i,
-  /^gpt-4-vision/i,
+  /^gpt-4/i,
+  /^gpt-5/i,
   /^o1/i,
   /^o3/i,
-  /^o4/i,
-  // Anthropic — Claude 3+ all support vision
-  /^claude-3/i,
-  /^claude-4/i,
-  /^claude-opus-4/i,
-  /^claude-sonnet-4/i,
+  // Anthropic
+  /^claude-/i,
   // Google
   /^gemini/i,
   // xAI
@@ -548,7 +544,12 @@ ${systemPrompt}`;
             });
           }
 
-          return doStream();
+          try {
+            return await doStream();
+          } catch (e) {
+            console.error("doStream error:", e);
+            throw e;
+          }
         },
         wrapGenerate: async ({ doGenerate, params }) => {
           params.prompt = params.prompt.map((msg) => {
@@ -565,7 +566,16 @@ ${systemPrompt}`;
       },
     }),
     system: isGameMode
-      ? `${systemPrompt}\n\nAdditionally, you are an expert 2D Game Developer AI. Your goal is to build an entire fully-functional 2D web game based on the user's request.\nCRITICAL RULES:\n- You must create all graphical assets required for the game (characters, backgrounds, items, UI) using the \`generate_image_asset\` tool.\n- You must always request images with a transparent background where appropriate (e.g., characters, items).\n- Wait for the tool to return the success message before using the image path in your code.\n- Place all generated images inside the \`public/\` folder.\n- DO NOT use placeholders like "hero.png" unless you have explicitly generated them using the tool.\n- The game should be built using React (HTML5 Canvas or DOM elements) and standard web technologies.\n- Write a highly polished, fully complete game. It should be visually impressive and fun to play.`
+      ? `${systemPrompt}\n\nAdditionally, you are an expert 2D Game Developer AI. Your goal is to build an entire fully-functional 2D web game based on the user's request.
+CRITICAL RULES:
+- When building the game for the FIRST time, you must create all graphical assets required (characters, backgrounds, items, UI) using the \`generate_image_asset\` tool.
+- ONLY generate images during the initial game creation or if the user explicitly asks for new images/assets.
+- DO NOT generate or regenerate images when making code-only updates, fixing bugs, or modifying features.
+- If an image generation tool call fails, use a colored rectangle or basic shape placeholder in the game canvas instead, and DO NOT retry generating that image.
+- You must always request images with a transparent background where appropriate (e.g., characters, items) in the prompt.
+- Place all generated images inside the \`public/\` folder.
+- The game should be built using React (HTML5 Canvas or DOM elements) and standard web technologies.
+- Write a highly polished, fully complete game. It should be visually impressive and fun to play.`
       : chatMode === 'build' ? systemPrompt : discussPrompt(),
     ...tokenParams,
     messages: sanitizeCoreMessages(convertToCoreMessages(visionSafeMessages as any)),
@@ -583,58 +593,73 @@ ${systemPrompt}`;
             fileName: z.string().describe('The exact file name to save the image as, e.g., "hero.png".'),
           }),
           execute: async ({ prompt, fileName }) => {
-            try {
-              const openaiKey = apiKeys?.['OPENAI_API_KEY'] || process.env.OPENAI_API_KEY;
-              if (!openaiKey) {
-                return 'Failed: OpenAI API key is missing. Cannot generate image.';
-              }
-
-              const response = await fetch('https://api.openai.com/v1/images/generations', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Authorization': `Bearer ${openaiKey}`,
-                },
-                body: JSON.stringify({
-                  model: 'gpt-image-2', // User's API key uses gpt-image-2
-                  prompt,
-                  n: 1,
-                  size: '1024x1024',
-                }),
-              });
-
-              if (!response.ok) {
-                const errText = await response.text();
-                return `Failed to generate image: ${response.statusText} - ${errText}`;
-              }
-
-              const data = await response.json();
-              const b64Json = data.data?.[0]?.b64_json;
-              let base64 = b64Json;
-
-              if (!base64) {
-                const imageUrl = data.data?.[0]?.url;
-
-                if (!imageUrl) {
-                  return 'Failed: No image url or b64_json returned from OpenAI.';
+            let lastError = '';
+            for (let attempt = 1; attempt <= 3; attempt++) {
+              try {
+                const openaiKey = apiKeys?.['OPENAI_API_KEY'] || process.env.OPENAI_API_KEY;
+                if (!openaiKey) {
+                  return 'Failed: OpenAI API key is missing. Cannot generate image.';
                 }
 
-                // Download the image and convert to base64
-                const imageResponse = await fetch(imageUrl);
-                if (!imageResponse.ok) {
-                  return `Failed to download generated image: ${imageResponse.statusText}`;
-                }
-                const imageBuffer = await imageResponse.arrayBuffer();
-                base64 = Buffer.from(imageBuffer).toString('base64');
-              }
+                const response = await fetch('https://api.openai.com/v1/images/generations', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${openaiKey}`,
+                  },
+                  body: JSON.stringify({
+                    model: attempt > 1 && lastError.includes('model_not_found') ? 'dall-e-3' : 'gpt-image-2', // User's API key uses gpt-image-2
+                    prompt,
+                    n: 1,
+                    size: '1024x1024',
+                  }),
+                });
 
-              if (onImageGenerated) {
-                onImageGenerated(`public/${fileName}`, base64);
-                return `Successfully generated and saved image to public/${fileName}`;
+                if (!response.ok) {
+                  const errText = await response.text();
+                  lastError = `${response.statusText} - ${errText}`;
+                  
+                  if (response.status === 400 && errText.includes('content_policy_violation')) {
+                    return `Failed: The prompt violated safety policies. DO NOT RETRY. Use a placeholder instead.`;
+                  }
+                  
+                  await new Promise(r => setTimeout(r, 1500 * attempt));
+                  continue;
+                }
+
+                const data = await response.json();
+                const b64Json = data.data?.[0]?.b64_json;
+                let base64 = b64Json;
+
+                if (!base64) {
+                  const imageUrl = data.data?.[0]?.url;
+
+                  if (!imageUrl) {
+                    lastError = 'No image url or b64_json returned from OpenAI.';
+                    continue;
+                  }
+
+                  // Download the image and convert to base64
+                  const imageResponse = await fetch(imageUrl);
+                  if (!imageResponse.ok) {
+                    lastError = `Failed to download generated image: ${imageResponse.statusText}`;
+                    continue;
+                  }
+                  const imageBuffer = await imageResponse.arrayBuffer();
+                  base64 = Buffer.from(imageBuffer).toString('base64');
+                }
+
+                if (onImageGenerated) {
+                  onImageGenerated(`public/${fileName}`, base64);
+                  return `Successfully generated and saved image to public/${fileName}`;
+                }
+                return `Failed: onImageGenerated callback missing.`;
+              } catch (err: any) {
+                lastError = err.message;
+                await new Promise(r => setTimeout(r, 1500 * attempt));
               }
-            } catch (err: any) {
-              return `Failed with error: ${err.message}`;
             }
+            return `Failed to generate image after 3 attempts. Error: ${lastError}. DO NOT RETRY. Use a fallback placeholder in code instead.`;
           }
         })
       }

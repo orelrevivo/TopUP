@@ -6,6 +6,7 @@ import { MAX_FILES, isBinaryFile, shouldIncludeFile } from '~/utils/fileUtils';
 import { createChatFromFolder } from '~/utils/folderImport';
 import { logStore } from '~/lib/stores/logs'; // Assuming logStore is imported from this location
 import { Button } from '~/components/ui/Button';
+import { DropdownItem } from '~/components/ui/Dropdown';
 import { classNames } from '~/utils/classNames';
 
 interface ImportFolderButtonProps {
@@ -120,18 +121,25 @@ export const ImportFolderButton: React.FC<ImportFolderButtonProps> = ({ classNam
       />
 
       {asMenuItem ? (
-        <button
-          onClick={() => document.getElementById(inputId)?.click()}
-          disabled={isLoading}
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors disabled:opacity-50 text-falbor-elements-textPrimary"
+        <DropdownItem
+          onSelect={(e) => {
+            if (isLoading) {
+              e.preventDefault();
+              return;
+            }
+            document.getElementById(inputId)?.click();
+          }}
+          className={isLoading ? 'opacity-50 cursor-not-allowed' : ''}
         >
-          {isLoading ? (
-            <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin"></div>
-          ) : (
-            <div className="i-ph:upload-simple text-xl text-falbor-elements-textSecondary"></div>
-          )}
-          <span>{isLoading ? 'Importing...' : 'Import Folder'}</span>
-        </button>
+          <div className="flex items-center gap-2 w-full text-falbor-elements-textPrimary">
+            {isLoading ? (
+              <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-lg animate-spin"></div>
+            ) : (
+              <div className="i-ph:upload-simple text-lg text-falbor-elements-textSecondary"></div>
+            )}
+            <span>{isLoading ? 'Importing...' : 'Import Folder'}</span>
+          </div>
+        </DropdownItem>
       ) : (
         <Button
           onClick={() => {

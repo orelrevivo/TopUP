@@ -1,6 +1,6 @@
 import type { Change } from 'diff';
 
-export type ActionType = 'file' | 'shell' | 'supabase' | 'scan';
+export type ActionType = 'file' | 'shell' | 'supabase' | 'scan' | 'analyzer' | 'question' | 'resources';
 
 export interface BaseAction {
   content: string;
@@ -34,7 +34,22 @@ export interface ScanAction extends BaseAction {
   type: 'scan';
 }
 
-export type FalborAction = FileAction | ShellAction | StartAction | BuildAction | SupabaseAction | ScanAction;
+export interface AnalyzerAction extends BaseAction {
+  type: 'analyzer';
+  title?: string;
+}
+
+export interface QuestionAction extends BaseAction {
+  type: 'question';
+  title?: string;
+}
+
+export interface ResourcesAction extends BaseAction {
+  type: 'resources';
+  title?: string;
+}
+
+export type FalborAction = FileAction | ShellAction | StartAction | BuildAction | SupabaseAction | ScanAction | AnalyzerAction | QuestionAction | ResourcesAction;
 
 export type FalborActionData = FalborAction | BaseAction;
 

@@ -13,7 +13,8 @@
 
   :global(html[data-theme='light']) &,
   :global(html:not([data-theme='dark'])) & {
-    background: url('/background/forest_bg.png') center center / cover no-repeat;
+    background-color: #FAF9F9;
+    // background: url('/background/forest_bg.png') center center / cover no-repeat;
   }
 }
 

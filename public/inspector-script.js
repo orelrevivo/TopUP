@@ -317,14 +317,18 @@
         document.head.appendChild(inspectorStyle);
       }
 
-      document.body.classList.add('inspector-active');
+      if (document.body) {
+        document.body.classList.add('inspector-active');
+      }
 
       // Add event listeners
       document.addEventListener('mousemove', handleMouseMove, true);
       document.addEventListener('click', handleClick, true);
       document.addEventListener('mouseleave', handleMouseLeave, true);
     } else {
-      document.body.classList.remove('inspector-active');
+      if (document.body) {
+        document.body.classList.remove('inspector-active');
+      }
 
       // Remove highlight
       if (currentHighlight) {
@@ -370,5 +374,11 @@
   });
 
   // Auto-inject if inspector is already active
-  window.parent.postMessage({ type: 'INSPECTOR_READY' }, '*');
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function () {
+      window.parent.postMessage({ type: 'INSPECTOR_READY' }, '*');
+    });
+  } else {
+    window.parent.postMessage({ type: 'INSPECTOR_READY' }, '*');
+  }
 })();
