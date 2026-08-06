@@ -403,7 +403,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 onClick={(event) => {
                   if (!user) return;
                   
-                  if (user.balance !== undefined && user.balance !== null && user.balance <= 0) {
+                  if ('balance' in user && typeof (user as any).balance === 'number' && (user as any).balance <= 0) {
                     toast.error("Insufficient credits. Please top up your balance to continue.");
                     return;
                   }
