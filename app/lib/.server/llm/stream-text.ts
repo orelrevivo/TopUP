@@ -640,7 +640,7 @@ CRITICAL RULES:
           } else if (Array.isArray(msg.content)) {
             return {
               ...msg,
-              content: msg.content.map(part => {
+              content: msg.content.map((part: any) => {
                 if (part.type === 'text') {
                   let optimizedText = part.text
                     .replace(replacePatternArtifact, replaceFn)
