@@ -3,7 +3,7 @@ const nextConfig = {
   reactStrictMode: false,
 
   experimental: {
-    serverComponentsExternalPackages: ["shiki"],
+    serverComponentsExternalPackages: ["shiki", "playwright-core", "@browserbasehq/stagehand", "chromium-bidi"],
   },
 
   async headers() {
@@ -40,6 +40,10 @@ const nextConfig = {
       ...config.experiments,
       topLevelAwait: true,
     };
+
+    if (isServer) {
+      config.externals = [...(config.externals || []), 'playwright-core', '@browserbasehq/stagehand', 'chromium-bidi'];
+    }
 
     if (!isServer) {
       config.resolve.fallback = {

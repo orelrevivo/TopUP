@@ -15,8 +15,8 @@ interface User {
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<{ error?: string }>;
-  register: (email: string, password: string) => Promise<{ error?: string }>;
+  login: (email: string, password: string) => Promise<{ error?: string; requiresVerification?: boolean }>;
+  register: (email: string, password: string) => Promise<{ error?: string; requiresVerification?: boolean; email?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
   loginWithGoogle: (credential: string) => Promise<{ error?: string }>;

@@ -66,6 +66,7 @@ export class WorkbenchStore {
 
   currentResearchData: WritableAtom<string> = import.meta.hot?.data.currentResearchData ?? atom('');
   currentResourcesData: WritableAtom<string> = import.meta.hot?.data.currentResourcesData ?? atom('');
+  browserDebugUrl: WritableAtom<string> = import.meta.hot?.data.browserDebugUrl ?? atom('');
 
   modifiedFiles = new Set<string>();
   artifactIdList: string[] = [];
@@ -86,6 +87,7 @@ export class WorkbenchStore {
       import.meta.hot.data.currentAiScreenshot = this.currentAiScreenshot;
       import.meta.hot.data.currentResearchData = this.currentResearchData;
       import.meta.hot.data.currentResourcesData = this.currentResourcesData;
+      import.meta.hot.data.browserDebugUrl = this.browserDebugUrl;
       import.meta.hot.data.fileHistory = this.fileHistory;
 
       // Ensure binary files are properly preserved across hot reloads
