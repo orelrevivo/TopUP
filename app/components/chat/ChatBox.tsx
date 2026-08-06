@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import * as Popover from '@radix-ui/react-popover';
 import * as Switch from '@radix-ui/react-switch';
 import { ClientOnly } from '~/components/ui/ClientOnly';
@@ -130,7 +130,22 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const geminiProModel = props.modelList.find(m => m.name === 'gemini-3.6-pro' && m.provider === 'Google');
   const geminiFlashModel = props.modelList.find(m => m.name === 'gemini-3.6-flash' && m.provider === 'Google');
   const qwenModel = props.modelList.find(m => m.name === 'qwen3.7-flash' && m.provider === 'Qwen');
-  const availableModels = [claudeModel, haikuModel, geminiProModel, geminiFlashModel, gptSolModel, deepseekModel, qwenModel].filter(Boolean);
+  const gpt41MiniModel = props.modelList.find(m => m.name === 'gpt-4o-mini' && m.provider === 'OpenAI');
+  const isFreeTierUser = !(user as any)?.subscriptionTier || (user as any).subscriptionTier !== 'pro';
+  const rawAvailableModels = [claudeModel, haikuModel, geminiProModel, geminiFlashModel, gptSolModel, deepseekModel, qwenModel, gpt41MiniModel].filter(Boolean);
+
+  const availableModels = isFreeTierUser
+    ? [deepseekModel, gpt41MiniModel, qwenModel].filter(Boolean)
+    : rawAvailableModels;
+
+  useEffect(() => {
+    if (isFreeTierUser && props.model) {
+      const isCurrentlyPremium = ['claude', 'gpt-5.6', 'gemini'].some(key => props.model?.toLowerCase().includes(key));
+      if (isCurrentlyPremium && props.setModel && gpt41MiniModel) {
+        props.setModel(gpt41MiniModel.name);
+      }
+    }
+  }, [isFreeTierUser, props.model, props.setModel, gpt41MiniModel]);
   const selectedModelInfo = availableModels.find(m => m?.name === props.model);
 
   return (
@@ -402,7 +417,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 disabled={(!props.providerList || props.providerList.length === 0) || !user}
                 onClick={(event) => {
                   if (!user) return;
-                  
+
                   if ('balance' in user && typeof (user as any).balance === 'number' && (user as any).balance <= 0) {
                     toast.error("Insufficient credits. Please top up your balance to continue.");
                     return;
@@ -739,7 +754,12 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       modelIcon = "Default";
                     }
 
-                    const isDisabledModel = m.name === 'qwen3.7-flash' || m.name === 'deepseek-v4-pro';
+                    const isPremiumModel = isClaude || m.name === 'gpt-5.6-sol' || isGemini;
+                    const isFreeTier = !(user as any)?.subscriptionTier || (user as any).subscriptionTier !== 'pro';
+                    const premiumUsageCount = (user as any)?.stats?.premium_model_usage?.[m.name] || 0;
+                    const hasReachedLimit = isPremiumModel && isFreeTier && premiumUsageCount >= 1;
+
+                    const isDisabledModel = m.name === 'qwen3.7-flash' || hasReachedLimit;
 
                     return (
                       <DropdownItem
@@ -796,16 +816,30 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                         </span>
                         {props.model === m.name && <div className="i-ph:check text-sm text-falbor-elements-textPrimary" />}
 
-                        {isDisabledModel ? (
+                        {isDisabledModel && m.name === 'qwen3.7-flash' ? (
                           <div className="absolute left-[calc(100%+8px)] top-0 hidden group-hover:flex flex-col w-[260px] p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-red-500/50 shadow-xl z-[1001] animate-in fade-in zoom-in-95 cursor-default">
                             <div className="text-[13px] font-medium text-red-500/90 leading-snug">Currently Unavailable</div>
                             <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] mt-2">
                               These models are not working so well right now. They will arrive soon after addressing certain problems we have.
                             </div>
                           </div>
+                        ) : isDisabledModel && hasReachedLimit ? (
+                          <div className="absolute left-[calc(100%+8px)] top-0 hidden group-hover:flex flex-col w-[260px] p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-red-500/50 shadow-xl z-[1001] animate-in fade-in zoom-in-95 cursor-default">
+                            <div className="text-[13px] font-medium text-red-500/90 leading-snug">Limit Reached (1/1 uses)</div>
+                            <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] mt-2">
+                              You have used your free trial for this premium model. Please upgrade to Pro for unlimited access.
+                            </div>
+                          </div>
                         ) : (
                           <div className="absolute left-[calc(100%+8px)] top-0 hidden group-hover:flex flex-col w-[260px] p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5E5] dark:border-[#2C2C2E] shadow-xl z-[1001] animate-in fade-in zoom-in-95 cursor-default">
-                            <div className="text-[13px] font-medium text-[#11181C] dark:text-[#EDEDED] leading-snug">{bestFor}</div>
+                            <div className="flex justify-between items-start">
+                              <div className="text-[13px] font-medium text-[#11181C] dark:text-[#EDEDED] leading-snug">{bestFor}</div>
+                              {isPremiumModel && isFreeTier && (
+                                <Badge size="sm" variant="secondary" className="!text-[10px] bg-falbor-elements-background-depth-3 font-mono">
+                                  {premiumUsageCount}/1 uses
+                                </Badge>
+                              )}
+                            </div>
                             <div className="flex items-center gap-1.5 mt-2 text-[12px] text-[#687076] dark:text-[#A0A0AB]">
                               <img src={`/icons/${modelIcon}.svg`} className="w-3.5 h-3.5" alt={providerName} />
                               <span>Powered by {displayName}</span>

@@ -21,7 +21,14 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      user: { id: user.id, email: user.email, displayName: user.displayName },
+      user: { 
+        id: user.id, 
+        email: user.email, 
+        displayName: user.displayName,
+        subscriptionTier: user.subscriptionTier,
+        stats: user.stats,
+        balance: user.balance
+      },
     });
   } catch (error) {
     console.error("Me error:", error);

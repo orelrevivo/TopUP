@@ -459,9 +459,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   />
                   first.
                 </h1>
-                <FeedbackWidget />
               </div>
             )}
+            <FeedbackWidget hasMessages={(messages?.length || 0) > 1} />
             <HistoryPanel messages={messages || []} />
             <StickToBottom
               data-scrollable="true"

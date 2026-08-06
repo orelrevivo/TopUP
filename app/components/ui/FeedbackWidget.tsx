@@ -4,50 +4,58 @@ import { Card, CardContent, CardFooter, CardHeader, CardTitle } from './Card';
 import { Button } from './Button';
 import { classNames } from '~/utils/classNames';
 import { useAuth } from '~/hooks/useAuth';
-import { Frown, Annoyed, Meh, Smile, Laugh } from 'lucide-react';
 
-const STEPS = [
+type StepType = 'choice' | 'rating' | 'text' | 'boolean-email';
+
+const STEPS: { type: StepType; question: string; options: string[]; placeholder?: string }[] = [
   {
-    question: "Where did you hear about Falbor?",
-    options: ["Google", "ChatGPT", "Instagram", "YouTube", "Twitter/X", "Other"],
-    placeholder: "Tell us more (optional)..."
+    type: 'choice',
+    question: "After reading this analysis, what's the next thing you're going to do?",
+    options: ["Start building the MVP", "Talk to potential users", "Improve the idea", "Abandon this idea", "I'm still not sure"],
   },
   {
-    question: "What do you like most about the platform so far?",
-    options: ["UI/Design", "Features", "Speed/Performance", "Ease of use", "Other"],
-    placeholder: "Any specific details? (optional)"
+    type: 'rating',
+    question: "Did the analysis help you understand your idea?",
+    options: ["1", "2", "3", "4", "5"],
   },
   {
-    question: "What features or improvements would you like to see?",
-    options: ["More AI Models", "Better integrations", "Mobile App", "Collaboration tools", "Other"],
-    placeholder: "Please describe what you need... (optional)"
+    type: 'choice',
+    question: "What was the most helpful part?",
+    options: ["Understanding the problem", "Competitor research", "Target audience", "MVP Recommendation", "User interview questions", "Something else"],
   },
   {
-    question: "How easy was it to navigate and use the site?",
-    options: ["Very Easy", "Somewhat Easy", "Neutral", "Somewhat Difficult", "Very Difficult"],
-    placeholder: "What was confusing? (optional)"
+    type: 'choice',
+    question: "Did you learn anything new that you didn’t know before?",
+    options: ["Yes", "No"],
   },
   {
-    question: "What is your primary use case for Falbor?",
-    options: ["Personal projects", "Work/Professional", "Education", "Just exploring", "Other"],
-    placeholder: "Tell us more about your projects... (optional)"
+    type: 'choice',
+    question: "If this tool saved you hours of research on every new idea, would you consider paying for it?",
+    options: ["Yes", "Maybe", "No"],
   },
   {
-    question: "How would you rate your overall experience?",
-    options: [], // Handled uniquely
-    placeholder: "What are the main reasons for your rating? (optional)"
-  }
+    type: 'choice',
+    question: "If so, how much would you be willing to pay?",
+    options: ["$5/month", "$10/month", "$20/month", "More", "I wouldn’t pay"],
+  },
+  {
+    type: 'text',
+    question: "What’s missing to make this a product you would use again?",
+    options: [],
+    placeholder: "Free text field...",
+  },
+  {
+    type: 'boolean-email',
+    question: "Would you like us to keep you updated when the product improves?",
+    options: ["Yes", "No"],
+  },
 ];
 
-const RATING_ICONS = [
-  { value: 1, label: 'Terrible', icon: Frown },
-  { value: 2, label: 'Bad', icon: Annoyed },
-  { value: 3, label: 'Okay', icon: Meh },
-  { value: 4, label: 'Good', icon: Smile },
-  { value: 5, label: 'Amazing', icon: Laugh },
-];
+interface FeedbackWidgetProps {
+  hasMessages?: boolean;
+}
 
-export function FeedbackWidget() {
+export function FeedbackWidget({ hasMessages = false }: FeedbackWidgetProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -55,7 +63,7 @@ export function FeedbackWidget() {
   const [isMinimized, setIsMinimized] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
 
-  // Store answers for all steps. Each step has an { option, text }
+  // Store answers for all steps. text is for text inputs or the email field.
   const [answers, setAnswers] = useState<{ option: string; text: string }[]>(
     Array(STEPS.length).fill({ option: '', text: '' })
   );
@@ -64,18 +72,26 @@ export function FeedbackWidget() {
 
   useEffect(() => {
     if (!user) return;
-    fetch('/api/feedback')
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.hasSubmitted) {
-          setHasSubmitted(true);
-        } else {
-          setTimeout(() => setIsOpen(true), 2000);
-        }
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, [user]);
+    
+    // Check if the user has submitted feedback before, independent of hasMessages
+    if (loading) {
+      fetch('/api/feedback')
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.hasSubmitted) {
+            setHasSubmitted(true);
+          }
+          setLoading(false);
+        })
+        .catch(() => setLoading(false));
+    }
+
+    // Only open the widget automatically if they haven't submitted, it's not open yet, 
+    // and they have generated messages (analysis complete).
+    if (!loading && !hasSubmitted && !isOpen && hasMessages) {
+      setTimeout(() => setIsOpen(true), 1500); // Small delay after analysis
+    }
+  }, [user, hasMessages, loading, hasSubmitted, isOpen]);
 
   if (!user || loading || hasSubmitted) return null;
 
@@ -100,10 +116,7 @@ export function FeedbackWidget() {
       await fetch('/api/feedback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          answers: answers.slice(0, -1), // Everything except rating
-          rating: { value: parseInt(answers[STEPS.length - 1].option), reason: answers[STEPS.length - 1].text }
-        }),
+        body: JSON.stringify({ answers }),
       });
     } catch (e) {
       // ignore
@@ -118,6 +131,17 @@ export function FeedbackWidget() {
 
   const handleBack = () => {
     if (stepIndex > 0) setStepIndex(stepIndex - 1);
+  };
+
+  // Determine if next is disabled based on the step type
+  const isNextDisabled = () => {
+    if (currentStep.type === 'text') return currentAnswer.text.trim().length === 0;
+    if (currentStep.type === 'boolean-email') {
+      if (!currentAnswer.option) return true;
+      if (currentAnswer.option === 'Yes' && (!currentAnswer.text || !currentAnswer.text.includes('@'))) return true;
+      return false;
+    }
+    return !currentAnswer.option;
   };
 
   return (
@@ -172,9 +196,9 @@ export function FeedbackWidget() {
                     </CardHeader>
 
                     <CardContent className="flex flex-col gap-4">
-                      {/* Options Grid */}
-                      {!isLastStep ? (
-                        <div className="flex flex-wrap gap-2">
+                      
+                      {currentStep.type === 'choice' && (
+                        <div className="flex flex-col gap-2">
                           {currentStep.options.map((opt) => {
                             const isSelected = currentAnswer.option === opt;
                             return (
@@ -182,7 +206,7 @@ export function FeedbackWidget() {
                                 key={opt}
                                 onClick={() => updateAnswer('option', opt)}
                                 className={classNames(
-                                  "px-3 py-2 text-sm rounded-md border transition-all duration-200 font-medium",
+                                  "px-3 py-2.5 text-sm text-left rounded-md border transition-all duration-200 font-medium w-full",
                                   isSelected
                                     ? "border-purple-500 bg-purple-500/10 text-purple-500 shadow-sm"
                                     : "border-falbor-elements-borderColor text-falbor-elements-textSecondary hover:border-purple-500/40 hover:text-falbor-elements-textPrimary bg-falbor-elements-background"
@@ -193,36 +217,88 @@ export function FeedbackWidget() {
                             );
                           })}
                         </div>
-                      ) : (
-                        <div className="flex justify-between gap-2">
-                          {RATING_ICONS.map((opt) => {
-                            const isSelected = currentAnswer.option === opt.value.toString();
+                      )}
+
+                      {currentStep.type === 'rating' && (
+                        <div className="flex justify-center gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => {
+                            const selectedRating = parseInt(currentAnswer.option || '0');
+                            const isActive = star <= selectedRating;
                             return (
                               <button
-                                key={opt.value}
-                                onClick={() => updateAnswer('option', opt.value.toString())}
-                                className={classNames(
-                                  "flex flex-col items-center justify-center gap-2 p-3 flex-1 rounded-md border transition-all duration-200",
-                                  isSelected
-                                    ? "border-purple-500 bg-purple-500/10 text-purple-500 shadow-sm"
-                                    : "border-falbor-elements-borderColor text-falbor-elements-textSecondary hover:border-purple-500/40 hover:text-falbor-elements-textPrimary bg-falbor-elements-background"
-                                )}
+                                key={star}
+                                onClick={() => updateAnswer('option', star.toString())}
+                                className="p-1 focus:outline-none hover:scale-110 transition-transform"
                               >
-                                <opt.icon className="w-6 h-6 stroke-[1.5]" />
-                                <span className="text-xs font-medium">{opt.label}</span>
+                                <svg 
+                                  className={classNames("w-10 h-10 transition-colors", isActive ? "text-yellow-400 drop-shadow-sm" : "text-gray-300 dark:text-gray-600")}
+                                  fill="currentColor" 
+                                  viewBox="0 0 20 20" 
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"></path>
+                                </svg>
                               </button>
                             );
                           })}
                         </div>
                       )}
 
-                      {/* Optional Text Input */}
-                      <textarea
-                        className="flex min-h-[80px] w-full rounded-md border border-falbor-elements-borderColor bg-falbor-elements-background px-3 py-2 text-sm text-falbor-elements-textPrimary placeholder:text-falbor-elements-textSecondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-shadow"
-                        placeholder={currentStep.placeholder}
-                        value={currentAnswer.text}
-                        onChange={(e) => updateAnswer('text', e.target.value)}
-                      />
+                      {currentStep.type === 'text' && (
+                        <textarea
+                          className="flex min-h-[120px] w-full rounded-md border border-falbor-elements-borderColor bg-falbor-elements-background px-3 py-2 text-sm text-falbor-elements-textPrimary placeholder:text-falbor-elements-textSecondary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500 disabled:cursor-not-allowed disabled:opacity-50 resize-none transition-shadow"
+                          placeholder={currentStep.placeholder}
+                          value={currentAnswer.text}
+                          onChange={(e) => updateAnswer('text', e.target.value)}
+                        />
+                      )}
+
+                      {currentStep.type === 'boolean-email' && (
+                        <div className="flex flex-col gap-4">
+                          <div className="flex gap-2">
+                            {currentStep.options.map((opt) => {
+                              const isSelected = currentAnswer.option === opt;
+                              return (
+                                <button
+                                  key={opt}
+                                  onClick={() => updateAnswer('option', opt)}
+                                  className={classNames(
+                                    "flex-1 px-3 py-2.5 text-sm rounded-md border transition-all duration-200 font-medium",
+                                    isSelected
+                                      ? "border-purple-500 bg-purple-500/10 text-purple-500 shadow-sm"
+                                      : "border-falbor-elements-borderColor text-falbor-elements-textSecondary hover:border-purple-500/40 hover:text-falbor-elements-textPrimary bg-falbor-elements-background"
+                                  )}
+                                >
+                                  {opt}
+                                </button>
+                              );
+                            })}
+                          </div>
+                          
+                          <AnimatePresence>
+                            {currentAnswer.option === 'Yes' && (
+                              <motion.div
+                                initial={{ opacity: 0, height: 0, marginTop: 0 }}
+                                animate={{ opacity: 1, height: 'auto', marginTop: 8 }}
+                                exit={{ opacity: 0, height: 0, marginTop: 0 }}
+                                className="overflow-hidden"
+                              >
+                                <label className="block text-sm font-medium text-falbor-elements-textSecondary mb-1">
+                                  Your Email Address
+                                </label>
+                                <input
+                                  type="email"
+                                  placeholder="you@example.com"
+                                  value={currentAnswer.text}
+                                  onChange={(e) => updateAnswer('text', e.target.value)}
+                                  className="w-full rounded-md border border-falbor-elements-borderColor bg-falbor-elements-background px-3 py-2 text-sm text-falbor-elements-textPrimary focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-purple-500"
+                                />
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
+
                     </CardContent>
 
                     <CardFooter className="flex justify-between gap-3 pt-2 pb-6">
@@ -241,10 +317,10 @@ export function FeedbackWidget() {
                       </Button>
                       <Button
                         onClick={handleNext}
-                        disabled={!currentAnswer.option}
+                        disabled={isNextDisabled()}
                         className={classNames(
                           "px-6 py-2 transition-all duration-200",
-                          currentAnswer.option
+                          !isNextDisabled()
                             ? "bg-purple-500 hover:bg-purple-600 text-white shadow-sm"
                             : "bg-falbor-elements-background-depth-3 text-falbor-elements-textSecondary cursor-not-allowed"
                         )}

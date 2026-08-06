@@ -151,8 +151,18 @@ export class StreamingMessageParser {
             let content = currentAction.content.trim();
 
             if ('type' in currentAction && currentAction.type === 'file') {
+              // Try to infer filePath from the first line if missing (e.g. // filename.js)
+              if (!currentAction.filePath && content) {
+                const firstLine = content.split('\n')[0];
+                const match = firstLine.match(/(?:\/\/|#|<!--)\s*(?:file:?|filename:?)\s*([\/\w\-\.]+\.\w+)/i) || 
+                              firstLine.match(/(?:\/\/|#|<!--)\s*([\/\w\-\.]+\.\w+)/i);
+                if (match && match[1]) {
+                  currentAction.filePath = match[1];
+                }
+              }
+
               // Remove markdown code block syntax if present and file is not markdown
-              if (!currentAction.filePath.endsWith('.md')) {
+              if (!currentAction.filePath?.endsWith('.md')) {
                 content = cleanoutMarkdownSyntax(content);
                 content = cleanEscapedTags(content);
               }
@@ -184,7 +194,16 @@ export class StreamingMessageParser {
             if ('type' in currentAction && currentAction.type === 'file') {
               let content = input.slice(i);
 
-              if (!currentAction.filePath.endsWith('.md')) {
+              if (!currentAction.filePath && content) {
+                const firstLine = content.split('\n')[0];
+                const match = firstLine.match(/(?:\/\/|#|<!--)\s*(?:file:?|filename:?)\s*([\/\w\-\.]+\.\w+)/i) || 
+                              firstLine.match(/(?:\/\/|#|<!--)\s*([\/\w\-\.]+\.\w+)/i);
+                if (match && match[1]) {
+                  currentAction.filePath = match[1];
+                }
+              }
+
+              if (!currentAction.filePath?.endsWith('.md')) {
                 content = cleanoutMarkdownSyntax(content);
                 content = cleanEscapedTags(content);
               }
@@ -357,7 +376,16 @@ export class StreamingMessageParser {
       content = content.trim();
 
       if ('type' in currentAction && currentAction.type === 'file') {
-        if (!currentAction.filePath.endsWith('.md')) {
+        if (!currentAction.filePath && content) {
+          const firstLine = content.split('\n')[0];
+          const match = firstLine.match(/(?:\/\/|#|<!--)\s*(?:file:?|filename:?)\s*([\/\w\-\.]+\.\w+)/i) || 
+                        firstLine.match(/(?:\/\/|#|<!--)\s*([\/\w\-\.]+\.\w+)/i);
+          if (match && match[1]) {
+            currentAction.filePath = match[1];
+          }
+        }
+
+        if (!currentAction.filePath?.endsWith('.md')) {
           content = cleanoutMarkdownSyntax(content);
           content = cleanEscapedTags(content);
         }

@@ -325,50 +325,39 @@ export const AssistantMessage = memo(
             </div>
           </>
           <SkillInvocations skills={skills} />
+          {parts && parts.some(p => p.type === 'reasoning') && (
+            <div className="flex flex-col gap-2 mb-2 w-full">
+              {parts.filter(p => p.type === 'reasoning').map((part, index) => (
+                <div key={index} className="text-xs text-falbor-elements-textTertiary italic">
+                  Thinking: {(part as any).reasoning}
+                </div>
+              ))}
+            </div>
+          )}
+          
+          <Markdown append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html>
+            {cleanContent}
+          </Markdown>
+
           {parts ? (
-            parts.map((part, index) => {
-              if (part.type === 'text') {
-                return (
-                  <Markdown key={index} append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html>
-                    {part.text}
-                  </Markdown>
-                );
-              }
-
-              if (part.type === 'tool-invocation') {
-                return (
-                  <ToolInvocations
-                    key={index}
-                    toolInvocations={[part]}
-                    toolCallAnnotations={toolCallAnnotations}
-                    addToolResult={addToolResult}
-                  />
-                );
-              }
-
-              if (part.type === 'reasoning') {
-                return (
-                  <div key={index} className="text-xs text-falbor-elements-textTertiary italic mb-2">
-                    Thinking: {part.reasoning}
-                  </div>
-                );
-              }
-
-              return null;
-            })
-          ) : (
-            <>
-              <Markdown append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html>
-                {cleanContent}
-              </Markdown>
-              {toolInvocations && toolInvocations.length > 0 && (
+            <div className="flex flex-col gap-2 mt-4 w-full">
+              {parts.filter(p => p.type === 'tool-invocation').map((part, index) => (
                 <ToolInvocations
-                  toolInvocations={toolInvocations}
+                  key={index}
+                  toolInvocations={[part as any]}
                   toolCallAnnotations={toolCallAnnotations}
                   addToolResult={addToolResult}
                 />
-              )}
-            </>
+              ))}
+            </div>
+          ) : (
+            toolInvocations && toolInvocations.length > 0 && (
+              <ToolInvocations
+                toolInvocations={toolInvocations}
+                toolCallAnnotations={toolCallAnnotations}
+                addToolResult={addToolResult}
+              />
+            )
           )}
           {(onRewind || onFork) && messageId && (
             <div className="absolute -bottom-4 right-4 flex gap-1 flex-row justify-end bg-falbor-elements-artifacts-inlineCode-background dark:bg-[#252525] border border-falbor-elements-borderColor rounded-md p-1 shadow-sm z-40">

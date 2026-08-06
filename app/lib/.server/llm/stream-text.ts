@@ -523,11 +523,24 @@ ${systemPrompt}`;
       }),
       middleware: {
         wrapStream: async ({ doStream, params }) => {
+          // The set of tool names actually available to the model
+          const availableToolNames = new Set(Object.keys((params as any).tools || {}));
+
           params.prompt = params.prompt.map((msg) => {
             if (msg.role === 'assistant' && Array.isArray(msg.content)) {
               return {
                 ...msg,
-                content: msg.content.filter((part: any) => part.type === 'text' || part.type === 'tool-call'),
+                content: msg.content.filter((part: any) => {
+                  // Remove any tool-call parts that reference tools not in the available set
+                  // (e.g. DeepSeek hallucinates 'shell' as a callable tool)
+                  if (part.type === 'tool-call') {
+                    if (availableToolNames.size > 0 && !availableToolNames.has(part.toolName)) {
+                      console.warn(`[stream-text] Stripping hallucinated tool call: ${part.toolName}`);
+                      return false;
+                    }
+                  }
+                  return part.type === 'text' || part.type === 'tool-call';
+                }),
               };
             }
             return msg;
@@ -583,11 +596,65 @@ CRITICAL RULES:
         finalPrompt = `CRITICAL FOR QWEN MODEL: You MUST present all market research and validation reports inside a <falborArtifact id="validation" title="Market Research"><falborAction type="analyzer" title="Market Research & Validation">...</falborAction></falborArtifact> block. NEVER output plain text research directly in the chat. You MUST use these XML tags to open the side panel.\n\n${finalPrompt}`;
       }
 
+      if (modelDetails && modelDetails.name && modelDetails.name.toLowerCase().includes('gpt')) {
+        finalPrompt = `CRITICAL INSTRUCTIONS FOR OPENAI MODELS:
+1. NEVER output raw markdown code blocks like \`\`\`javascript\n...\`\`\` for source code files.
+2. ALL code files MUST be generated inside the exact XML format:
+<falborArtifact id="some-id" title="Some Title">
+  <falborAction type="file" filePath="path/to/file.js">
+    [CODE GOES HERE]
+  </falborAction>
+</falborArtifact>
+3. If you fail to use the XML tags, the UI will break and the code will leak into the chat. You MUST USE the XML format for EVERY code file you write.\n\n${finalPrompt}`;
+      }
+
       return finalPrompt;
     })(),
     ...tokenParams,
     messages: (() => {
-      const coreMsgs = sanitizeCoreMessages(convertToCoreMessages(visionSafeMessages as any));
+      let coreMsgs = sanitizeCoreMessages(convertToCoreMessages(visionSafeMessages as any));
+      
+      // Token optimization: replace large <falborArtifact> contents in past assistant messages with a placeholder.
+      // This prevents models from wasting completion tokens repeating the exact same file content on subsequent messages,
+      // and drastically reduces prompt tokens (e.g. from 12k to 1k).
+      coreMsgs = coreMsgs.map(msg => {
+        if (msg.role === 'assistant') {
+          // Match falborArtifact blocks, orphan falborAction blocks, and large markdown code blocks
+          // We make closing tags optional because the model might have hit the token limit
+          const replacePatternArtifact = /<falborArtifact[^>]*>[\s\S]*?(?:<\/falborArtifact>|$)/gi;
+          const replacePatternAction = /<falborAction[^>]*type="file"[^>]*>[\s\S]*?(?:<\/falborAction>|$)/gi;
+          const replacePatternMarkdown = /```(?:jsx?|tsx?|typescript|javascript|html?|css|python|py|json|vue|svelte|php|ruby|go|rust|java|kotlin|swift|c|cpp|csharp)\n([\s\S]{200,}?)(?:```|$)/gi;
+          
+          const replaceFn = (match: string) => {
+            const idMatch = match.match(/id="([^"]+)"/i) || match.match(/filePath="([^"]+)"/i);
+            const titleMatch = match.match(/title="([^"]+)"/i);
+            return `<falborArtifact id="${idMatch?.[1] || 'code'}" title="${titleMatch?.[1] || 'Code'}">\n[Content omitted to save tokens. The files are actively running in the workspace. Do NOT repeat this content unless you are explicitly making changes to it.]\n</falborArtifact>`;
+          };
+
+          if (typeof msg.content === 'string') {
+            let optimizedContent = msg.content
+              .replace(replacePatternArtifact, replaceFn)
+              .replace(replacePatternAction, replaceFn)
+              .replace(replacePatternMarkdown, replaceFn);
+            return { ...msg, content: optimizedContent };
+          } else if (Array.isArray(msg.content)) {
+            return {
+              ...msg,
+              content: msg.content.map(part => {
+                if (part.type === 'text') {
+                  let optimizedText = part.text
+                    .replace(replacePatternArtifact, replaceFn)
+                    .replace(replacePatternAction, replaceFn)
+                    .replace(replacePatternMarkdown, replaceFn);
+                  return { ...part, text: optimizedText };
+                }
+                return part;
+              })
+            };
+          }
+        }
+        return msg;
+      });
       if (modelDetails && modelDetails.name && modelDetails.name.toLowerCase().includes('qwen')) {
         const lastUserMsg = [...coreMsgs].reverse().find((m) => m.role === 'user');
         if (lastUserMsg) {
@@ -642,11 +709,11 @@ CRITICAL RULES:
                 if (!response.ok) {
                   const errText = await response.text();
                   lastError = `${response.statusText} - ${errText}`;
-                  
+
                   if (response.status === 400 && errText.includes('content_policy_violation')) {
                     return `Failed: The prompt violated safety policies. DO NOT RETRY. Use a placeholder instead.`;
                   }
-                  
+
                   await new Promise(r => setTimeout(r, 1500 * attempt));
                   continue;
                 }
@@ -710,8 +777,3 @@ CRITICAL RULES:
 
   return await _streamText(streamParams as any);
 }
-
-
-
-
-

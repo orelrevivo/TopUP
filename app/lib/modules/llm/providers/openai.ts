@@ -31,6 +31,15 @@ export default class OpenAIProvider extends BaseProvider {
       maxCompletionTokens: 4096,
     },
 
+    // GPT-4.1 Mini: As requested
+    {
+      name: 'gpt-4.1-mini',
+      label: 'GPT-4.1 Mini',
+      provider: 'OpenAI',
+      maxTokenAllowed: 128000,
+      maxCompletionTokens: 4096,
+    },
+
     // GPT-3.5-turbo: 16k context, fast and cost-effective
     {
       name: 'gpt-3.5-turbo',
@@ -156,6 +165,7 @@ export default class OpenAIProvider extends BaseProvider {
       apiKey,
     });
 
-    return openai(model);
+    const actualModel = model === 'gpt-4.1-mini' ? 'gpt-4o-mini' : model;
+    return openai(actualModel);
   }
 }

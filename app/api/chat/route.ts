@@ -57,7 +57,11 @@ async function chatAction({ context, request }: RouteArgs) {
   }
 
   // Check balance
-  const userRows = await db.select({ balance: users.balance }).from(users).where(eq(users.id, userId));
+  const userRows = await db.select({
+    balance: users.balance,
+    subscriptionTier: users.subscriptionTier,
+    stats: users.stats
+  }).from(users).where(eq(users.id, userId));
   if (userRows.length === 0 || (userRows[0].balance !== null && userRows[0].balance <= 0)) {
     return NextResponse.json({ error: true, message: 'Insufficient credits. Please top up your balance.' }, { status: 402 });
   }
@@ -117,6 +121,22 @@ async function chatAction({ context, request }: RouteArgs) {
     const mcpService = mcpEnabled ? MCPService.getInstance() : null;
     const totalMessageContent = messages.reduce((acc, message) => acc + message.content, '');
     logger.debug(`Total message length: ${totalMessageContent.split(' ').length}, words`);
+
+    let requestedModel = '';
+    const lastUserMsg = messages.findLast((m: any) => m.role === 'user');
+    if (lastUserMsg) {
+      const parsed = extractPropertiesFromMessage(lastUserMsg);
+      requestedModel = parsed.model;
+    }
+
+    const isClaude = requestedModel.toLowerCase().includes('claude') || requestedModel.toLowerCase().includes('haiku') || requestedModel.toLowerCase().includes('sonnet');
+    const isGemini = requestedModel.toLowerCase().includes('gemini');
+    const isPremiumModel = isClaude || requestedModel === 'gpt-5.6-sol' || isGemini;
+    const isFreeTier = !userRows[0] || !userRows[0].subscriptionTier || userRows[0].subscriptionTier !== 'pro';
+
+    if (isPremiumModel && isFreeTier) {
+      return NextResponse.json({ error: true, message: 'Premium models are strictly available for Pro subscribers. Please upgrade your subscription.' }, { status: 403 });
+    }
 
     let lastChunk: string | undefined = undefined;
 
@@ -377,50 +397,50 @@ THEN build the pixel-perfect clone.`;
 
             // Select context files
             filteredFiles = await selectContext({
-            messages: optimizeMessages,
-            env: context?.cloudflare?.env,
-            apiKeys,
-            files,
-            providerSettings,
-            promptId,
-            contextOptimization,
-            summary,
-            onFinish(resp) {
-              if (resp.usage) {
-                logger.debug('selectContext token usage', JSON.stringify(resp.usage));
-                cumulativeUsage.completionTokens += resp.usage.completionTokens || 0;
-                cumulativeUsage.promptTokens += resp.usage.promptTokens || 0;
-                cumulativeUsage.totalTokens += resp.usage.totalTokens || 0;
-              }
-            },
-          });
+              messages: optimizeMessages,
+              env: context?.cloudflare?.env,
+              apiKeys,
+              files,
+              providerSettings,
+              promptId,
+              contextOptimization,
+              summary,
+              onFinish(resp) {
+                if (resp.usage) {
+                  logger.debug('selectContext token usage', JSON.stringify(resp.usage));
+                  cumulativeUsage.completionTokens += resp.usage.completionTokens || 0;
+                  cumulativeUsage.promptTokens += resp.usage.promptTokens || 0;
+                  cumulativeUsage.totalTokens += resp.usage.totalTokens || 0;
+                }
+              },
+            });
 
-          if (filteredFiles) {
-            logger.debug(`files in context : ${JSON.stringify(Object.keys(filteredFiles))}`);
-          }
+            if (filteredFiles) {
+              logger.debug(`files in context : ${JSON.stringify(Object.keys(filteredFiles))}`);
+            }
 
-          dataStream.writeMessageAnnotation({
-            type: 'codeContext',
-            files: Object.keys(filteredFiles).map((key) => {
-              let path = key;
+            dataStream.writeMessageAnnotation({
+              type: 'codeContext',
+              files: Object.keys(filteredFiles).map((key) => {
+                let path = key;
 
-              if (path.startsWith(WORK_DIR)) {
-                path = path.replace(WORK_DIR, '');
-              }
+                if (path.startsWith(WORK_DIR)) {
+                  path = path.replace(WORK_DIR, '');
+                }
 
-              return path;
-            }),
-          } as ContextAnnotation);
+                return path;
+              }),
+            } as ContextAnnotation);
 
-          dataStream.writeData({
-            type: 'progress',
-            label: 'context',
-            status: 'complete',
-            order: progressCounter++,
-            message: 'Code Files Selected',
-          } satisfies ProgressAnnotation);
+            dataStream.writeData({
+              type: 'progress',
+              label: 'context',
+              status: 'complete',
+              order: progressCounter++,
+              message: 'Code Files Selected',
+            } satisfies ProgressAnnotation);
 
-          // logger.debug('Code Files Selected');
+            // logger.debug('Code Files Selected');
           } catch (e: any) {
             logger.error('Context optimization failed, proceeding without filtering:', e);
             dataStream.writeData({
@@ -436,6 +456,26 @@ THEN build the pixel-perfect clone.`;
         let baseTools: Record<string, any> = {
           webSearch,
           readPageContent,
+          shell: tool({
+            description: 'Do not use this. Use <falborAction type="shell"> instead.',
+            parameters: z.object({}),
+            execute: async () => 'ERROR: You attempted to use a JSON function call for shell. You MUST use the XML format <falborAction type="shell"> instead as per your system prompt instructions.'
+          }),
+          start: tool({
+            description: 'Do not use this. Use <falborAction type="start"> instead.',
+            parameters: z.object({}),
+            execute: async () => 'ERROR: You attempted to use a JSON function call for start. You MUST use the XML format <falborAction type="start"> instead as per your system prompt instructions.'
+          }),
+          file: tool({
+            description: 'Do not use this. Use <falborAction type="file"> instead.',
+            parameters: z.object({}),
+            execute: async () => 'ERROR: You attempted to use a JSON function call for file. You MUST use the XML format <falborAction type="file"> instead as per your system prompt instructions.'
+          }),
+          scan: tool({
+            description: 'Do not use this. Use <falborAction type="scan"> instead.',
+            parameters: z.object({}),
+            execute: async () => 'ERROR: You attempted to use a JSON function call for scan. You MUST use the XML format <falborAction type="scan"> instead as per your system prompt instructions.'
+          })
         };
 
         // Determine which MCPs to activate.
@@ -455,7 +495,7 @@ THEN build the pixel-perfect clone.`;
         }
 
         if (mcpEnabled && mcpService && effectiveMCPs.length > 0) {
-          baseTools = mcpService.getToolsForServers(effectiveMCPs);
+          baseTools = { ...baseTools, ...mcpService.getToolsForServers(effectiveMCPs) };
         }
 
         // Native tools injection (Gmail, Slack, GitHub, Vercel, Telegram, Klipy, etc.)
@@ -521,7 +561,7 @@ THEN build the pixel-perfect clone.`;
               let inputCost = 0.002;
               let outputCost = 0.006;
               const modelNameLower = (lastMessage?.content || '').toString().toLowerCase();
-              
+
               if (modelNameLower.includes('deepseek')) {
                 inputCost = 0.00014; // $0.14 per 1M tokens
                 outputCost = 0.00028; // $0.28 per 1M tokens
@@ -608,7 +648,7 @@ THEN build the pixel-perfect clone.`;
         let generatedChars = 0;
         let lastDeductedChars = 0;
         let charsPerCent = 666;
-        
+
         const modelNameLower = (lastMessage?.content || '').toString().toLowerCase();
         if (modelNameLower.includes('deepseek')) charsPerCent = 3000;
         else if (modelNameLower.includes('haiku')) charsPerCent = 1000;

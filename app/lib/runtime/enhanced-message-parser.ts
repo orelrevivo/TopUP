@@ -38,13 +38,89 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
     this.wasReset = false;
     input = input || '';
 
+    // Auto-rescue orphan falborAction tags that the AI forgot to wrap in falborArtifact
+    if (input.includes('<falborAction') && !input.includes('<falborArtifact')) {
+      const firstActionIndex = input.indexOf('<falborAction');
+      if (firstActionIndex !== -1) {
+        input = input.substring(0, firstActionIndex) + 
+                `<falborArtifact id="auto-rescue-${messageId}" title="Generated Action" type="bundled">\n` + 
+                input.substring(firstActionIndex);
+      }
+      if (input.includes('</falborAction>') && !input.includes('</falborArtifact>')) {
+        const lastActionCloseIndex = input.lastIndexOf('</falborAction>');
+        if (lastActionCloseIndex !== -1) {
+          const insertPos = lastActionCloseIndex + '</falborAction>'.length;
+          input = input.substring(0, insertPos) + '\n</falborArtifact>' + input.substring(insertPos);
+        }
+      }
+    }
+
     // If no explicit artifacts in the raw input, check if we should auto-wrap code blocks
     if (!this._hasDetectedArtifacts(input)) {
       const enhancedInput = this._detectAndWrapCodeBlocks(messageId, input);
       return super.parse(messageId, enhancedInput);
     }
 
+    // Artifacts ARE present — but the AI may ALSO have leaked raw code blocks
+    // outside the artifact sections as "explanation" text. Strip those out so
+    // they don't pollute the chat message with duplicate file content.
+    input = this._stripLeakedCodeBlocksOutsideArtifacts(input);
+
     return super.parse(messageId, input);
+  }
+
+  /**
+   * When a response contains proper <falborArtifact> blocks, the AI sometimes
+   * also writes the file contents as plain code blocks in the text before the
+   * artifact. This method removes those leaked blocks from the non-artifact
+   * portions of the text, keeping only the artifact sections intact.
+   */
+  private _stripLeakedCodeBlocksOutsideArtifacts(input: string): string {
+    const ARTIFACT_OPEN = '<falborArtifact';
+    const ARTIFACT_CLOSE = '</falborArtifact>';
+
+    let result = '';
+    let pos = 0;
+
+    while (pos < input.length) {
+      const nextArtifact = input.indexOf(ARTIFACT_OPEN, pos);
+
+      if (nextArtifact === -1) {
+        // No more artifacts — clean code blocks from trailing text
+        result += this._removeLeakedCodeBlocks(input.substring(pos));
+        break;
+      }
+
+      // Clean code blocks from the text before this artifact
+      result += this._removeLeakedCodeBlocks(input.substring(pos, nextArtifact));
+
+      // Find end of this artifact
+      const artifactEnd = input.indexOf(ARTIFACT_CLOSE, nextArtifact);
+
+      if (artifactEnd === -1) {
+        // Unclosed artifact — include everything else as-is
+        result += input.substring(nextArtifact);
+        break;
+      }
+
+      // Include the artifact block unchanged
+      result += input.substring(nextArtifact, artifactEnd + ARTIFACT_CLOSE.length);
+      pos = artifactEnd + ARTIFACT_CLOSE.length;
+    }
+
+    return result;
+  }
+
+  /**
+   * Remove large code blocks from plain text that already has artifact coverage.
+   * Short inline code snippets (< 8 lines) are kept since they may be examples.
+   */
+  private _removeLeakedCodeBlocks(text: string): string {
+    return text.replace(/```[\w]*\n([\s\S]*?)```/g, (_match, content: string) => {
+      const lines = content.split('\n').length;
+      // Keep short snippets (< 8 lines) — they're likely inline examples, not full files
+      return lines >= 8 ? '' : _match;
+    });
   }
 
   private _hasDetectedArtifacts(input: string): boolean {
@@ -167,7 +243,7 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
 
     // Also detect standalone file operations without code blocks
     const fileOperationPattern =
-      /(?:create|write|save|generate)\s+(?:a\s+)?(?:new\s+)?file\s+(?:at\s+)?[`'"]*([\/\w\-\.]+\.\w+)[`'"]*\s+with\s+(?:the\s+)?(?:following\s+)?content:?\s*\n([\s\S]+?)(?=\n\n|\n(?:create|write|save|generate|now|next|then|finally)|$)/gi;
+      /(?:create|write|save|generate)\s+(?:a\s+)?(?:new\s+)?file\s+(?:at\s+)?[`'"]*([\\/\w\-\.]+\.\w+)[`'"]*\s+with\s+(?:the\s+)?(?:following\s+)?content:?\s*\n([\s\S]+?)(?=\n\n|\n(?:create|write|save|generate|now|next|then|finally)|$)/gi;
 
     enhanced = enhanced.replace(fileOperationPattern, (match, filePath, content) => {
       const blockHash = this._hashBlock(match);
@@ -191,6 +267,34 @@ export class EnhancedStreamingMessageParser extends StreamingMessageParser {
       logger.debug(`Auto-wrapped file operation: ${filePath}`);
 
       processed.set(blockHash, wrapped);
+      return wrapped;
+    });
+
+    // LAST RESORT: Catch any remaining code blocks with substantial code content
+    // This handles smaller models (DeepSeek Chat, GPT-4o Mini) that ignore XML format instructions
+    // and just dump raw markdown code blocks into the chat.
+    const lastResortCodeBlockPattern = /```(jsx?|tsx?|typescript|javascript|html?|css|python|py|json|vue|svelte|php|ruby|go|rust|java|kotlin|swift|c|cpp|csharp)\n([\s\S]{10,}?)(?:```|$)/gi;
+
+    enhanced = enhanced.replace(lastResortCodeBlockPattern, (match, language, content) => {
+      const blockHash = this._hashBlock(match);
+
+      if (processed.has(blockHash)) {
+        return processed.get(blockHash)!;
+      }
+
+      // Skip if this looks like a shell command sequence
+      if (this._isShellCommand(content, language)) {
+        return match;
+      }
+
+      // Infer a file name from the content
+      const filePath = this._inferFileNameFromContent(content, language);
+      const artifactId = `artifact-${messageId}-${this._artifactCounter++}`;
+      const wrapped = this._wrapInArtifact(artifactId, filePath, content.trim());
+
+      logger.debug(`Last-resort auto-wrapped code block (lang=${language}) as file: ${filePath}`);
+      processed.set(blockHash, wrapped);
+
       return wrapped;
     });
 
@@ -495,7 +599,7 @@ ${content.trim()}
     const lines = content.trim().split('\n');
     if (lines.length > 5) return true;
     if (lines[0]?.startsWith('#!/')) return true;
-    
+
     // Check for common bash scripting constructs
     const scriptPatterns = [
       /\bif\s+\[/i,          // if [ ... ]

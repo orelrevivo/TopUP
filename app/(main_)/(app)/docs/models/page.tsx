@@ -15,8 +15,8 @@ export default function ModelsDocsPage() {
           Every user starts with a free balance. As you interact with the AI, generate code, or ask questions, tokens are consumed. The rate at which your balance decreases depends directly on <strong>which model you choose</strong>.
         </p>
         <ul className="space-y-2 mb-0">
-          <li><strong>Free Subscription:</strong> Your balance is limited. It is highly recommended to use cheaper models like DeepSeek to stretch your credits further. Using premium models will consume your free credits very quickly.</li>
-          <li><strong>Pro Subscription:</strong> Gives you a much larger balance and access to premium models without constantly worrying about token consumption.</li>
+          <li><strong>Free Subscription:</strong> Your balance is limited. We provide high-quality free models like <strong>DeepSeek</strong> and <strong>GPT-4.1 Mini</strong> that you can use extensively. However, <strong>Pro/Premium models are very expensive and are strictly limited to 1 message per free user</strong> to let you try them out. Using them further requires an upgrade.</li>
+          <li><strong>Pro Subscription:</strong> Gives you a much larger balance and unlimited access to all premium models without the 1-message restriction.</li>
         </ul>
       </div>
 
@@ -42,6 +42,20 @@ export default function ModelsDocsPage() {
               <td className="px-4 py-3">Coding & Logic</td>
               <td className="px-4 py-3">Fast</td>
               <td className="px-4 py-3 text-red-400">No</td>
+              <td className="px-4 py-3 text-green-400">$ (Free / Cheapest)</td>
+            </tr>
+            <tr className="hover:bg-falbor-elements-background-depth-2/50 transition-colors">
+              <td className="px-4 py-3 font-medium text-falbor-elements-textPrimary">GPT-4.1 Mini</td>
+              <td className="px-4 py-3">General Tasks & Logic</td>
+              <td className="px-4 py-3">Fast</td>
+              <td className="px-4 py-3 text-green-400">Yes</td>
+              <td className="px-4 py-3 text-green-400">$ (Free / Cheapest)</td>
+            </tr>
+            <tr className="hover:bg-falbor-elements-background-depth-2/50 transition-colors">
+              <td className="px-4 py-3 font-medium text-falbor-elements-textPrimary">Qwen</td>
+              <td className="px-4 py-3">Lightweight efficiency</td>
+              <td className="px-4 py-3">Fast</td>
+              <td className="px-4 py-3 text-green-400">Yes</td>
               <td className="px-4 py-3 text-green-400">$ (Cheapest)</td>
             </tr>
             <tr className="hover:bg-falbor-elements-background-depth-2/50 transition-colors">
@@ -49,28 +63,28 @@ export default function ModelsDocsPage() {
               <td className="px-4 py-3">Speed & Efficiency</td>
               <td className="px-4 py-3">Fastest</td>
               <td className="px-4 py-3 text-green-400">Yes</td>
-              <td className="px-4 py-3">$$ (Medium)</td>
+              <td className="px-4 py-3">$$ (Premium / 1-Use)</td>
             </tr>
             <tr className="hover:bg-falbor-elements-background-depth-2/50 transition-colors">
               <td className="px-4 py-3 font-medium text-falbor-elements-textPrimary">Claude Haiku 4.5</td>
               <td className="px-4 py-3">General Tasks</td>
               <td className="px-4 py-3">Normal</td>
               <td className="px-4 py-3 text-green-400">Yes</td>
-              <td className="px-4 py-3">$$ (Medium)</td>
+              <td className="px-4 py-3">$$ (Premium / 1-Use)</td>
             </tr>
             <tr className="hover:bg-falbor-elements-background-depth-2/50 transition-colors">
               <td className="px-4 py-3 font-medium text-falbor-elements-textPrimary">Claude Sonnet 4.5</td>
               <td className="px-4 py-3">Complex Tasks & Websites</td>
               <td className="px-4 py-3">Heavy</td>
               <td className="px-4 py-3 text-green-400">Yes</td>
-              <td className="px-4 py-3 text-orange-400">$$$ (Expensive)</td>
+              <td className="px-4 py-3 text-orange-400">$$$ (Premium / 1-Use)</td>
             </tr>
             <tr className="hover:bg-falbor-elements-background-depth-2/50 transition-colors">
               <td className="px-4 py-3 font-medium text-falbor-elements-textPrimary">GPT-5.6 Sol</td>
               <td className="px-4 py-3">Complex Tasks & Websites</td>
               <td className="px-4 py-3">Heavy</td>
               <td className="px-4 py-3 text-green-400">Yes</td>
-              <td className="px-4 py-3 text-orange-400">$$$ (Expensive)</td>
+              <td className="px-4 py-3 text-orange-400">$$$ (Premium / 1-Use)</td>
             </tr>
           </tbody>
         </table>
@@ -78,10 +92,10 @@ export default function ModelsDocsPage() {
 
       <h2>Choosing the right model</h2>
       <p>
-        If you are on a free plan and want to build a simple application or ask general programming questions, we strongly recommend using <strong>Deepseek V4 Pro</strong>. It consumes a fraction of the credits compared to other models.
+        If you are on a free plan and want to build a simple application or ask general programming questions, we strongly recommend using <strong>Deepseek V4 Pro</strong> or <strong>GPT-4.1 Mini</strong>. These models are fully unlocked for free users and consume a fraction of the credits.
       </p>
       <p>
-        When you need pixel-perfect website clones, deep architectural design, or you need the AI to analyze an image you uploaded, switch to <strong>Claude Sonnet 4.5</strong> or <strong>GPT-5.6 Sol</strong>. These models are significantly more expensive, but they are the industry leaders for complex generative tasks.
+        When you need pixel-perfect website clones, deep architectural design, or you need the AI to analyze an image you uploaded, switch to <strong>Claude Sonnet 4.5</strong> or <strong>GPT-5.6 Sol</strong>. These models are significantly more expensive and are limited to 1 message for free users to test their capabilities.
       </p>
     </article>
   );

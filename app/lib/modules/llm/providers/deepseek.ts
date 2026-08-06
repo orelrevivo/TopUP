@@ -36,7 +36,7 @@ export default class DeepseekProvider extends BaseProvider {
     },
     {
       name: 'deepseek-chat',
-      label: 'Deepseek V4 Pro',
+      label: 'Deepseek Chat',
       provider: 'Deepseek',
       maxTokenAllowed: 8000,
       maxCompletionTokens: 8000,
