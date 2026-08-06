@@ -84,8 +84,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json()) as { user?: any; token?: string; error?: string };
-      if (!res.ok) return { error: data.error ?? "Login failed" };
+      const data = (await res.json()) as { user?: any; token?: string; error?: string; requiresVerification?: boolean };
+      if (!res.ok) {
+        if (res.status === 403 && data.requiresVerification) {
+          return { requiresVerification: true };
+        }
+        return { error: data.error ?? "Login failed" };
+      }
       if (data.token) setSessionCookie(data.token);
       setUser(data.user);
       syncStorageFromServer();
@@ -103,8 +108,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json()) as { user?: any; token?: string; error?: string };
+      const data = (await res.json()) as { user?: any; token?: string; error?: string; requiresVerification?: boolean; email?: string };
       if (!res.ok) return { error: data.error ?? "Registration failed" };
+      if (data.requiresVerification) {
+        return { requiresVerification: true, email: data.email };
+      }
       if (data.token) setSessionCookie(data.token);
       setUser(data.user);
       syncStorageFromServer();

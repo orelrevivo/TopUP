@@ -24,6 +24,7 @@ import { NativeToolsService } from '~/lib/services/nativeToolsService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { SupabaseService } from '~/lib/services/supabaseService';
 import type { RouteArgs } from '~/lib/security';
+import { webSearch, readPageContent } from '~/lib/services/searchTools';
 
 export async function POST(request: Request) {
   return chatAction({ request, context: { cloudflare: { env: process.env as Record<string, string> } } });
@@ -433,7 +434,10 @@ THEN build the pixel-perfect clone.`;
           }
         }
 
-        let baseTools: Record<string, any> = {};
+        let baseTools: Record<string, any> = {
+          webSearch,
+          readPageContent,
+        };
 
         // Determine which MCPs to activate.
         // If selectedMCPs has explicit selections, use those.

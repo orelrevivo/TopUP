@@ -17,6 +17,7 @@ export default function LoginPage() {
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [loginUri, setLoginUri] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
         setLoginUri(window.location.origin + "/api/auth/google");
@@ -31,7 +32,9 @@ export default function LoginPage() {
         setSubmitting(true);
         const result = await login(email, password);
         setSubmitting(false);
-        if (result.error) {
+        if (result.requiresVerification) {
+            router.push(`/verified?email=${encodeURIComponent(email)}`);
+        } else if (result.error) {
             setError(result.error);
         } else {
             router.push("/");
@@ -50,7 +53,7 @@ export default function LoginPage() {
                     <CardTitle>Welcome back</CardTitle>
                     <CardDescription><TextShimmer as="span">Log in to your account to continue</TextShimmer></CardDescription>
                 </CardHeader>
-                <form onSubmit={handleSubmit}>
+                <form onSubmit={handleSubmit} autoComplete="off">
                     <CardContent className="space-y-4">
                         {error && (
                             <div className="text-sm text-red-500 bg-red-500/10 rounded-md px-3 py-2">{error}</div>
@@ -64,18 +67,37 @@ export default function LoginPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 autoFocus
+                                autoComplete="off"
+                                readOnly
+                                onFocus={(e) => e.target.removeAttribute('readonly')}
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm text-falbor-elements-textSecondary">Password</label>
-                            <Input
-                                type="password"
-                                placeholder="••••••••"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                            />
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="••••••••"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="pr-10"
+                                    autoComplete="off"
+                                    readOnly
+                                    onFocus={(e) => e.target.removeAttribute('readonly')}
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                >
+                                    {showPassword ? (
+                                        <span className="i-ph:eye-slash block h-4 w-4" />
+                                    ) : (
+                                        <span className="i-ph:eye block h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
                         </div>
                     </CardContent>
                     <CardFooter className="flex-col gap-3">

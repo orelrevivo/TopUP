@@ -26,6 +26,38 @@ export default function PricingTab() {
   const [subscriptionTier, setSubscriptionTier] = useState("free")
   const [isLoading, setIsLoading] = useState(true)
   const [selectedAmount, setSelectedAmount] = useState(10)
+  const [promoCode, setPromoCode] = useState("")
+  const [isRedeeming, setIsRedeeming] = useState(false)
+  const [promoMessage, setPromoMessage] = useState("")
+  const [isPromoError, setIsPromoError] = useState(false)
+
+  const handleRedeem = async () => {
+    if (!promoCode.trim()) return
+    setIsRedeeming(true)
+    setPromoMessage("")
+    try {
+      const res = await fetch("/api/user/promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setPromoMessage("Coupon code applied successfully! $2.00 added and Early Access activated.")
+        setIsPromoError(false)
+        setPromoCode("")
+        fetchTier()
+      } else {
+        setPromoMessage(data.error || "Failed to redeem code.")
+        setIsPromoError(true)
+      }
+    } catch (e) {
+      setPromoMessage("Network error, please try again.")
+      setIsPromoError(true)
+    } finally {
+      setIsRedeeming(false)
+    }
+  }
 
   const fetchTier = async () => {
     const res = await fetch("/api/user/credits")
@@ -189,8 +221,41 @@ export default function PricingTab() {
             >
               <span>Purchase</span>
             </button>
-          </div>
         </div>
+      </div>
+    </div>
+      {/* Code Line - Redeem Promo Code */}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-2">
+          Redeem Promo Code
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Enter your promotion coupon or early access code below.
+        </p>
+
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Enter promo code"
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value)}
+            disabled={isRedeeming}
+            className="flex-1 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2.5 text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
+          />
+          <button
+            onClick={handleRedeem}
+            disabled={isRedeeming || !promoCode.trim()}
+            className="px-6 py-2.5 bg-purple-500 hover:bg-purple-600 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors"
+          >
+            {isRedeeming ? "Redeeming..." : "Redeem"}
+          </button>
+        </div>
+
+        {promoMessage && (
+          <div className={`mt-4 text-sm font-medium ${isPromoError ? "text-red-500" : "text-green-500"}`}>
+            {promoMessage}
+          </div>
+        )}
       </div>
     </div>
   )

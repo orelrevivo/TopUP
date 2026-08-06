@@ -66,10 +66,10 @@ const sliderOptions: SliderOptions<WorkbenchViewType> = {
   },
   extra: hasSupabaseConfig
     ? {
-        value: 'database',
-        text: 'Database',
-        icon: 'i-ph:database',
-      }
+      value: 'database',
+      text: 'Database',
+      icon: 'i-ph:database',
+    }
     : undefined,
 };
 

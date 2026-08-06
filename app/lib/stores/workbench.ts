@@ -55,7 +55,7 @@ export class WorkbenchStore {
     import.meta.hot?.data.supabaseAlert ?? atom<SupabaseAlert | undefined>(undefined);
   deployAlert: WritableAtom<DeployAlert | undefined> =
     import.meta.hot?.data.deployAlert ?? atom<DeployAlert | undefined>(undefined);
-  
+
   isInspectorMode: WritableAtom<boolean> = import.meta.hot?.data.isInspectorMode ?? atom(false);
   isDesignSystemMode: WritableAtom<boolean> = import.meta.hot?.data.isDesignSystemMode ?? atom(false);
   isSlidesMode: WritableAtom<boolean> = import.meta.hot?.data.isSlidesMode ?? atom(false);

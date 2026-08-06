@@ -540,8 +540,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
             <div className="flex-1 flex flex-col h-full w-full overflow-hidden">
               <div className="p-4 space-y-3">
                 <div className="relative w-full">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none">
-                    {/* ✅ FIX: added `block` so the icon element has dimensions */}
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
                     <span className="i-ph:magnifying-glass block h-4 w-4 text-gray-400 dark:text-gray-500" />
                   </div>
                   <input

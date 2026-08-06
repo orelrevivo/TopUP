@@ -349,11 +349,11 @@ export class StreamingMessageParser {
     if (state.insideAction && state.currentArtifact) {
       const currentAction = state.currentAction;
       let content = currentAction.content;
-      
+
       if (state.unclosedContent) {
         content += state.unclosedContent;
       }
-      
+
       content = content.trim();
 
       if ('type' in currentAction && currentAction.type === 'file') {

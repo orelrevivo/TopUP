@@ -1,14 +1,14 @@
 import { db } from "~/lib/db";
 import { users } from "~/lib/db/schema";
-import { verifyPassword, createToken, SESSION_DURATION_DAYS } from "~/lib/auth";
-import { eq } from "drizzle-orm";
+import { createToken, SESSION_DURATION_DAYS } from "~/lib/auth";
+import { eq, and } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = (await request.json()) as { email: string; password: string };
+    const { email, code } = (await request.json()) as { email: string; code: string };
 
-    if (!email || !password) {
-      return new Response(JSON.stringify({ error: "Email and password are required" }), {
+    if (!email || !code) {
+      return new Response(JSON.stringify({ error: "Email and verification code are required" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
@@ -17,34 +17,34 @@ export async function POST(request: Request) {
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
     if (!user) {
-      return new Response(JSON.stringify({ error: "Invalid email or password" }), {
-        status: 401,
+      return new Response(JSON.stringify({ error: "User not found" }), {
+        status: 404,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    if (!user.passwordHash) {
-      return new Response(JSON.stringify({ error: "This account was created with Google. Please sign in with Google." }), {
-        status: 403,
+    if (user.isVerified) {
+      return new Response(JSON.stringify({ error: "This email is already verified" }), {
+        status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const valid = await verifyPassword(password, user.passwordHash);
-
-    if (!valid) {
-      return new Response(JSON.stringify({ error: "Invalid email or password" }), {
-        status: 401,
+    if (user.verificationCode !== code.trim()) {
+      return new Response(JSON.stringify({ error: "Invalid verification code" }), {
+        status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    if (!user.isVerified) {
-      return new Response(JSON.stringify({ error: "Verification required", requiresVerification: true }), {
-        status: 403,
-        headers: { "Content-Type": "application/json" },
-      });
-    }
+    // Mark as verified and clear code
+    await db.update(users)
+      .set({
+        isVerified: true,
+        verificationCode: null,
+        updatedAt: new Date()
+      })
+      .where(eq(users.id, user.id));
 
     const token = await createToken(user.id);
     const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
@@ -68,7 +68,7 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error("Login error:", error);
+    console.error("Verification error:", error);
     return new Response(JSON.stringify({ error: "Internal server error" }), {
       status: 500,
       headers: { "Content-Type": "application/json" },

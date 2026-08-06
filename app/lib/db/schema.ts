@@ -24,6 +24,8 @@ export const users = pgTable("users", {
   balance: integer("balance").default(100).notNull(),
   subscriptionTier: text("subscription_tier").default("free").notNull(),
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  isVerified: boolean("is_verified").default(true).notNull(),
+  verificationCode: text("verification_code"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

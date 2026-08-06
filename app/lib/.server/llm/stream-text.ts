@@ -565,8 +565,9 @@ ${systemPrompt}`;
         },
       },
     }),
-    system: isGameMode
-      ? `${systemPrompt}\n\nAdditionally, you are an expert 2D Game Developer AI. Your goal is to build an entire fully-functional 2D web game based on the user's request.
+    system: (() => {
+      let finalPrompt = isGameMode
+        ? `${systemPrompt}\n\nAdditionally, you are an expert 2D Game Developer AI. Your goal is to build an entire fully-functional 2D web game based on the user's request.
 CRITICAL RULES:
 - When building the game for the FIRST time, you must create all graphical assets required (characters, backgrounds, items, UI) using the \`generate_image_asset\` tool.
 - ONLY generate images during the initial game creation or if the user explicitly asks for new images/assets.
@@ -576,9 +577,32 @@ CRITICAL RULES:
 - Place all generated images inside the \`public/\` folder.
 - The game should be built using React (HTML5 Canvas or DOM elements) and standard web technologies.
 - Write a highly polished, fully complete game. It should be visually impressive and fun to play.`
-      : chatMode === 'build' ? systemPrompt : discussPrompt(),
+        : chatMode === 'build' ? systemPrompt : discussPrompt();
+
+      if (modelDetails && modelDetails.name && modelDetails.name.toLowerCase().includes('qwen')) {
+        finalPrompt = `CRITICAL FOR QWEN MODEL: You MUST present all market research and validation reports inside a <falborArtifact id="validation" title="Market Research"><falborAction type="analyzer" title="Market Research & Validation">...</falborAction></falborArtifact> block. NEVER output plain text research directly in the chat. You MUST use these XML tags to open the side panel.\n\n${finalPrompt}`;
+      }
+
+      return finalPrompt;
+    })(),
     ...tokenParams,
-    messages: sanitizeCoreMessages(convertToCoreMessages(visionSafeMessages as any)),
+    messages: (() => {
+      const coreMsgs = sanitizeCoreMessages(convertToCoreMessages(visionSafeMessages as any));
+      if (modelDetails && modelDetails.name && modelDetails.name.toLowerCase().includes('qwen')) {
+        const lastUserMsg = [...coreMsgs].reverse().find((m) => m.role === 'user');
+        if (lastUserMsg) {
+          if (typeof lastUserMsg.content === 'string') {
+            lastUserMsg.content += `\n\n[CRITICAL REMINDER: You MUST present all market research and validation reports inside a <falborArtifact id="validation" title="Market Research"><falborAction type="analyzer" title="Market Research & Validation">...</falborAction></falborArtifact> block. NEVER output plain text research in the chat. You MUST use these XML tags to open the side panel.]`;
+          } else if (Array.isArray(lastUserMsg.content)) {
+            lastUserMsg.content.push({
+              type: 'text',
+              text: `\n\n[CRITICAL REMINDER: You MUST present all market research and validation reports inside a <falborArtifact id="validation" title="Market Research"><falborAction type="analyzer" title="Market Research & Validation">...</falborAction></falborArtifact> block. NEVER output plain text research in the chat. You MUST use these XML tags to open the side panel.]`
+            });
+          }
+        }
+      }
+      return coreMsgs;
+    })(),
     ...filteredOptions,
 
     // Set temperature to 1 for reasoning models (required by OpenAI API)

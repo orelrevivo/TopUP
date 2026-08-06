@@ -2,6 +2,7 @@ import { db } from "~/lib/db";
 import { users } from "~/lib/db/schema";
 import { hashPassword, createToken, SESSION_DURATION_DAYS } from "~/lib/auth";
 import { eq } from "drizzle-orm";
+import { Resend } from "resend";
 
 export async function POST(request: Request) {
   try {
@@ -41,29 +42,51 @@ export async function POST(request: Request) {
     const baseUsername = email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, '');
     const uniqueUsername = `${baseUsername}${Math.floor(Math.random() * 10000)}`;
 
+    // Generate 6-digit verification code
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
     const [user] = await db.insert(users).values({ 
       email, 
       passwordHash,
       username: uniqueUsername,
-      displayName: email.split("@")[0]
+      displayName: email.split("@")[0],
+      isVerified: false,
+      verificationCode,
     }).returning();
 
-    const token = await createToken(user.id);
-    const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
-    const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
-    const isSecure = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
-    const secureFlag = isSecure ? "Secure; " : "";
+    // Send verification email via Resend API
+    if (process.env.RESEND_API_KEY) {
+      try {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        await resend.emails.send({
+          from: 'onboarding@resend.dev',
+          to: email,
+          subject: 'Verify your Falbor account',
+          html: `<div style="font-family: sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; border: 1px solid #eaeaea; border-radius: 8px;">
+                   <h2 style="color: #6b21a8; text-align: center;">Verify your Email</h2>
+                   <p>Thank you for signing up for Falbor! Please use the following 6-digit verification code to complete your registration:</p>
+                   <div style="font-size: 32px; font-weight: bold; text-align: center; letter-spacing: 4px; padding: 15px 0; color: #111;">${verificationCode}</div>
+                   <p style="color: #666; font-size: 14px;">If you did not request this, please ignore this email.</p>
+                 </div>`,
+        });
+      } catch (e) {
+        console.error('Failed to send verification email via Resend:', e);
+      }
+    }
+
+    // Always log it to the console so the developer can see it instantly
+    console.log(`[EMAIL VERIFICATION] Generated code for ${email}: ${verificationCode}`);
 
     const body = JSON.stringify({
-      user: { id: user.id, email: user.email, displayName: user.displayName },
-      token,
+      success: true,
+      requiresVerification: true,
+      email: user.email,
     });
 
     return new Response(body, {
       status: 200,
       headers: {
         "Content-Type": "application/json",
-        "Set-Cookie": `session=${token}; HttpOnly; ${secureFlag}Path=/; SameSite=Lax; Max-Age=${maxAge}; Expires=${expires}`,
       },
     });
   } catch (error) {

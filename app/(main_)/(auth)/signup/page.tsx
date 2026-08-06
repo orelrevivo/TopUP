@@ -18,6 +18,9 @@ export default function SignupPage() {
     const [error, setError] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [loginUri, setLoginUri] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+    const [acceptTerms, setAcceptTerms] = useState(false);
 
     useEffect(() => {
         setLoginUri(window.location.origin + "/api/auth/google");
@@ -26,17 +29,36 @@ export default function SignupPage() {
     const { register, loginWithGoogle } = useAuth();
     const router = useRouter();
 
+    const hasMinLength = password.length >= 8;
+    const hasUppercase = /[A-Z]/.test(password);
+    const hasLowercase = /[a-z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+
+    const isPasswordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError("");
 
-        if (password !== confirmPassword) {
-            setError("Passwords do not match");
+        if (!acceptTerms) {
+            setError("You must accept the Terms of Service and Privacy Policy");
             return;
         }
 
-        if (password.length < 6) {
-            setError("Password must be at least 6 characters");
+        const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+        if (!emailRegex.test(email.trim())) {
+            setError("Please enter a valid email address (e.g. name@domain.com)");
+            return;
+        }
+
+        if (!isPasswordValid) {
+            setError("Password does not meet the security requirements");
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError("Passwords do not match");
             return;
         }
 
@@ -46,6 +68,8 @@ export default function SignupPage() {
 
         if (result.error) {
             setError(result.error);
+        } else if (result.requiresVerification) {
+            router.push(`/verified?email=${encodeURIComponent(email)}`);
         } else {
             router.push("/");
         }
@@ -77,29 +101,98 @@ export default function SignupPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 autoFocus
+                                autoComplete="new-password"
                             />
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm text-falbor-elements-textSecondary">Password</label>
-                            <Input
-                                type="password"
-                                placeholder="At least 6 characters"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
-                                required
-                                minLength={6}
-                            />
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="At least 8 characters"
+                                    value={password}
+                                    onChange={(e) => setPassword(e.target.value)}
+                                    required
+                                    className="pr-10"
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                >
+                                    {showPassword ? (
+                                        <span className="i-ph:eye-slash block h-4 w-4" />
+                                    ) : (
+                                        <span className="i-ph:eye block h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
+                            <div className="space-y-1 mt-2 text-xs">
+                                <p className="text-gray-500 dark:text-gray-400 font-medium">Password requirements:</p>
+                                <div className="grid grid-cols-2 gap-x-2 gap-y-1">
+                                    <span className={hasMinLength ? "text-green-500 flex items-center gap-1" : "text-red-500/70 dark:text-gray-500 flex items-center gap-1"}>
+                                        <span>{hasMinLength ? "✓" : "✗"}</span> Min 8 characters
+                                    </span>
+                                    <span className={hasUppercase ? "text-green-500 flex items-center gap-1" : "text-red-500/70 dark:text-gray-500 flex items-center gap-1"}>
+                                        <span>{hasUppercase ? "✓" : "✗"}</span> 1 uppercase letter
+                                    </span>
+                                    <span className={hasLowercase ? "text-green-500 flex items-center gap-1" : "text-red-500/70 dark:text-gray-500 flex items-center gap-1"}>
+                                        <span>{hasLowercase ? "✓" : "✗"}</span> 1 lowercase letter
+                                    </span>
+                                    <span className={hasNumber ? "text-green-500 flex items-center gap-1" : "text-red-500/70 dark:text-gray-500 flex items-center gap-1"}>
+                                        <span>{hasNumber ? "✓" : "✗"}</span> 1 number
+                                    </span>
+                                    <span className={hasSpecialChar ? "text-green-500 flex items-center gap-1" : "text-red-500/70 dark:text-gray-500 flex items-center gap-1"}>
+                                        <span>{hasSpecialChar ? "✓" : "✗"}</span> 1 special char
+                                    </span>
+                                </div>
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <label className="text-sm text-falbor-elements-textSecondary">Confirm password</label>
-                            <Input
-                                type="password"
-                                placeholder="Repeat your password"
-                                value={confirmPassword}
-                                onChange={(e) => setConfirmPassword(e.target.value)}
+                            <div className="relative">
+                                <Input
+                                    type={showConfirmPassword ? "text" : "password"}
+                                    placeholder="Repeat your password"
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    required
+                                    className="pr-10"
+                                    autoComplete="new-password"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+                                >
+                                    {showConfirmPassword ? (
+                                        <span className="i-ph:eye-slash block h-4 w-4" />
+                                    ) : (
+                                        <span className="i-ph:eye block h-4 w-4" />
+                                    )}
+                                </button>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-2 pt-2">
+                            <input
+                                id="accept-terms"
+                                type="checkbox"
+                                checked={acceptTerms}
+                                onChange={(e) => setAcceptTerms(e.target.checked)}
+                                className="mt-1 h-4 w-4 rounded border-gray-300 dark:border-gray-800 text-purple-600 focus:ring-purple-500/50 cursor-pointer"
                                 required
-                                minLength={6}
                             />
+                            <label htmlFor="accept-terms" className="text-xs text-falbor-elements-textSecondary select-none cursor-pointer">
+                                I agree to the{" "}
+                                <a href="/terms" target="_blank" rel="noopener noreferrer" className="text-purple-500 hover:underline">
+                                    Terms of Service
+                                </a>{" "}
+                                and{" "}
+                                <a href="/privacy" target="_blank" rel="noopener noreferrer" className="text-purple-500 hover:underline">
+                                    Privacy Policy
+                                </a>
+                            </label>
                         </div>
                     </CardContent>
                     <CardFooter className="flex-col gap-3">

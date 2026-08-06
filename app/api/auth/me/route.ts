@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     const [user] = await db.select().from(users).where(eq(users.id, userId)).limit(1);
 
-    if (!user) {
+    if (!user || !user.isVerified) {
       return NextResponse.json({ user: null }, { status: 200 });
     }
 
