@@ -83,6 +83,20 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
     return null;
   }
 
+  const firstTool = toolInvocations[0]?.toolInvocation;
+  const annotation = toolCallAnnotations.find((a) => a.toolCallId === firstTool?.toolCallId);
+  
+  let dynamicTitle = 'MCP Tool Invocation';
+  if (firstTool) {
+    if (firstTool.args && typeof firstTool.args === 'object' && 'toolSummary' in firstTool.args && typeof (firstTool.args as any).toolSummary === 'string') {
+      dynamicTitle = (firstTool.args as any).toolSummary;
+    } else if (annotation?.toolDescription) {
+      dynamicTitle = annotation.toolDescription;
+    } else {
+      dynamicTitle = firstTool.toolName;
+    }
+  }
+
   return (
     <div className="tool-invocation border border-falbor-elements-borderColor flex flex-col overflow-hidden rounded-lg w-full transition-border duration-150">
       <div className="flex">
@@ -96,9 +110,9 @@ export const ToolInvocations = memo(({ toolInvocations, toolCallAnnotations, add
           </div>
           <div className="p-2.5 w-full text-left">
             <div className="w-full text-falbor-elements-textPrimary font-medium leading-5 text-sm">
-              MCP Tool Invocations{' '}
+              <span>{dynamicTitle}</span>
               {hasToolResults && (
-                <span className="w-full w-full text-falbor-elements-textSecondary text-xs mt-0.5">
+                <span className="w-full text-falbor-elements-textSecondary text-xs mt-0.5 ml-2">
                   ({toolResults.length} tool{hasToolResults ? 's' : ''} used)
                 </span>
               )}

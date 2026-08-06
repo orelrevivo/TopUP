@@ -512,15 +512,50 @@ export const HackingAssistantMessage = memo(
           <ScreenshotInvocations screenshots={screenshots} />
           
           <SkillInvocations skills={skills} />
-          <Markdown append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html>
-            {cleanContent}
-          </Markdown>
-          {toolInvocations && toolInvocations.length > 0 && (
-            <ToolInvocations
-              toolInvocations={toolInvocations}
-              toolCallAnnotations={toolCallAnnotations}
-              addToolResult={addToolResult}
-            />
+          {parts ? (
+            parts.map((part, index) => {
+              if (part.type === 'text') {
+                return (
+                  <Markdown key={index} append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html>
+                    {part.text}
+                  </Markdown>
+                );
+              }
+
+              if (part.type === 'tool-invocation') {
+                return (
+                  <ToolInvocations
+                    key={index}
+                    toolInvocations={[part]}
+                    toolCallAnnotations={toolCallAnnotations}
+                    addToolResult={addToolResult}
+                  />
+                );
+              }
+
+              if (part.type === 'reasoning') {
+                return (
+                  <div key={index} className="text-xs text-falbor-elements-textTertiary italic mb-2">
+                    Thinking: {part.reasoning}
+                  </div>
+                );
+              }
+
+              return null;
+            })
+          ) : (
+            <>
+              <Markdown append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html>
+                {cleanContent}
+              </Markdown>
+              {toolInvocations && toolInvocations.length > 0 && (
+                <ToolInvocations
+                  toolInvocations={toolInvocations}
+                  toolCallAnnotations={toolCallAnnotations}
+                  addToolResult={addToolResult}
+                />
+              )}
+            </>
           )}
           {(onRewind || onFork) && messageId && (
             <div className="absolute -bottom-4 right-4 flex gap-1 flex-row justify-end bg-falbor-elements-artifacts-inlineCode-background dark:bg-[#252525] border border-falbor-elements-borderColor rounded-md p-1 shadow-sm z-10">

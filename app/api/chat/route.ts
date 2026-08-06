@@ -52,16 +52,15 @@ function parseCookies(cookieHeader: string): Record<string, string> {
 
 async function chatAction({ context, request }: RouteArgs) {
   const userId = await getUserId(request as unknown as NextRequest);
-  // if (!userId) {
-  //   return NextResponse.json({ error: true, message: 'Unauthorized. Please log in.' }, { status: 401 });
-  // }
-  const mockUserId = userId || 'test-user';
+  if (!userId) {
+    return NextResponse.json({ error: true, message: 'Unauthorized. Please log in.' }, { status: 401 });
+  }
 
   // Check balance
-  // const userRows = await db.select({ balance: users.balance }).from(users).where(eq(users.id, mockUserId));
-  // if (userRows.length === 0 || userRows[0].balance < 5) {
-  //   return new Response(JSON.stringify({ error: true, message: 'Insufficient credits. Please top up your balance.' }), { status: 402 });
-  // }
+  const userRows = await db.select({ balance: users.balance }).from(users).where(eq(users.id, userId));
+  if (userRows.length === 0 || (userRows[0].balance !== null && userRows[0].balance <= 0)) {
+    return NextResponse.json({ error: true, message: 'Insufficient credits. Please top up your balance.' }, { status: 402 });
+  }
 
   const streamRecovery = new StreamRecoveryManager({
     timeout: 45000,
@@ -494,11 +493,16 @@ THEN build the pixel-perfect clone.`;
           }
         }
 
+        const lastUserMsg = processedMessages.findLast((m) => m.role === 'user');
+        const extractedProps = lastUserMsg ? extractPropertiesFromMessage(lastUserMsg) : { provider: 'OpenAI' };
+        const activeProvider = extractedProps.provider || 'OpenAI';
+        const isContinueStepsSupported = ['Anthropic', 'OpenAI', 'Google'].includes(activeProvider);
+
         const options: StreamingOptions = {
           supabaseConnection: supabase,
           ...mcpTools,
           maxSteps: Math.max(maxLLMSteps || 1, 10),
-          experimental_continueSteps: true,
+          experimental_continueSteps: isContinueStepsSupported,
           onStepFinish: ({ toolCalls }) => {
             if (!mcpService) return;
             toolCalls.forEach((toolCall) => {

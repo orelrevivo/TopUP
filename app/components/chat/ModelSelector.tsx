@@ -315,6 +315,11 @@ export const ModelSelector = ({
 
         if (focusedModelIndex >= 0 && focusedModelIndex < filteredModels.length) {
           const selectedModel = filteredModels[focusedModelIndex];
+          
+          if (selectedModel.name === 'qwen3.7-flash' || selectedModel.name === 'deepseek-v4-pro') {
+            return;
+          }
+          
           setModel?.(selectedModel.name);
           setIsModelDropdownOpen(false);
           setModelSearchQuery('');
@@ -803,24 +808,30 @@ export const ModelSelector = ({
                   )}
                 </div>
               ) : (
-                filteredModels.map((modelOption, index) => (
+                filteredModels.map((modelOption, index) => {
+                  const isDisabledModel = modelOption.name === 'qwen3.7-flash' || modelOption.name === 'deepseek-v4-pro';
+                  const disabledTooltip = isDisabledModel ? 'This model is currently undergoing maintenance and will be available soon after we address certain problems.' : undefined;
+                  
+                  return (
                   <div
                     ref={(el: HTMLDivElement | null) => { modelOptionsRef.current[index] = el; }}
                     key={modelOption.name}
                     role="option"
                     aria-selected={model === modelOption.name}
+                    title={disabledTooltip}
                     className={classNames(
-                      'px-3 py-2 text-sm cursor-pointer',
-                      'hover:bg-falbor-elements-background-depth-3',
+                      'px-3 py-2 text-sm',
+                      isDisabledModel ? 'cursor-not-allowed opacity-50' : 'cursor-pointer hover:bg-falbor-elements-background-depth-3',
                       'text-falbor-elements-textPrimary',
                       'outline-none',
-                      model === modelOption.name || focusedModelIndex === index
+                      !isDisabledModel && (model === modelOption.name || focusedModelIndex === index)
                         ? 'bg-falbor-elements-background-depth-2'
                         : undefined,
-                      focusedModelIndex === index ? 'ring-1 ring-inset ring-falbor-elements-focus' : undefined,
+                      !isDisabledModel && focusedModelIndex === index ? 'ring-1 ring-inset ring-falbor-elements-focus' : undefined,
                     )}
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (isDisabledModel) return;
                       setModel?.(modelOption.name);
                       setIsModelDropdownOpen(false);
                       setModelSearchQuery('');
@@ -858,7 +869,7 @@ export const ModelSelector = ({
                       </div>
                     </div>
                   </div>
-                ))
+                )})
               )}
             </div>
           </div>

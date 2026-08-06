@@ -402,6 +402,12 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 disabled={(!props.providerList || props.providerList.length === 0) || !user}
                 onClick={(event) => {
                   if (!user) return;
+                  
+                  if (user.balance !== undefined && user.balance !== null && user.balance <= 0) {
+                    toast.error("Insufficient credits. Please top up your balance to continue.");
+                    return;
+                  }
+
                   if (props.isStreaming) {
                     props.handleStop?.();
                     return;
@@ -733,12 +739,18 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       modelIcon = "Default";
                     }
 
+                    const isDisabledModel = m.name === 'qwen3.7-flash' || m.name === 'deepseek-v4-pro';
+
                     return (
                       <DropdownItem
                         key={m.name}
-                        className="group overflow-visible"
+                        className={classNames("group overflow-visible", isDisabledModel ? "cursor-not-allowed opacity-50" : "")}
                         active={props.model === m.name}
-                        onSelect={() => {
+                        onSelect={(e) => {
+                          if (isDisabledModel) {
+                            e.preventDefault();
+                            return;
+                          }
                           props.setModel?.(m.name);
                           const targetProvider = props.providerList?.find(p => p.name === m.provider);
                           if (targetProvider) {
@@ -784,21 +796,30 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                         </span>
                         {props.model === m.name && <div className="i-ph:check text-sm text-falbor-elements-textPrimary" />}
 
-                        <div className="absolute left-[calc(100%+8px)] top-0 hidden group-hover:flex flex-col w-[260px] p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5E5] dark:border-[#2C2C2E] shadow-xl z-[1001] animate-in fade-in zoom-in-95 cursor-default">
-                          <div className="text-[13px] font-medium text-[#11181C] dark:text-[#EDEDED] leading-snug">{bestFor}</div>
-                          <div className="flex items-center gap-1.5 mt-2 text-[12px] text-[#687076] dark:text-[#A0A0AB]">
-                            <img src={`/icons/${modelIcon}.svg`} className="w-3.5 h-3.5" alt={providerName} />
-                            <span>Powered by {displayName}</span>
+                        {isDisabledModel ? (
+                          <div className="absolute left-[calc(100%+8px)] top-0 hidden group-hover:flex flex-col w-[260px] p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-red-500/50 shadow-xl z-[1001] animate-in fade-in zoom-in-95 cursor-default">
+                            <div className="text-[13px] font-medium text-red-500/90 leading-snug">Currently Unavailable</div>
+                            <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] mt-2">
+                              These models are not working so well right now. They will arrive soon after addressing certain problems we have.
+                            </div>
                           </div>
+                        ) : (
+                          <div className="absolute left-[calc(100%+8px)] top-0 hidden group-hover:flex flex-col w-[260px] p-3 rounded-xl bg-white dark:bg-[#1C1C1E] border border-[#E5E5E5] dark:border-[#2C2C2E] shadow-xl z-[1001] animate-in fade-in zoom-in-95 cursor-default">
+                            <div className="text-[13px] font-medium text-[#11181C] dark:text-[#EDEDED] leading-snug">{bestFor}</div>
+                            <div className="flex items-center gap-1.5 mt-2 text-[12px] text-[#687076] dark:text-[#A0A0AB]">
+                              <img src={`/icons/${modelIcon}.svg`} className="w-3.5 h-3.5" alt={providerName} />
+                              <span>Powered by {displayName}</span>
+                            </div>
 
-                          <div className="h-px w-full bg-[#E5E5E5] dark:bg-[#2C2C2E] my-3" />
+                            <div className="h-px w-full bg-[#E5E5E5] dark:bg-[#2C2C2E] my-3" />
 
-                          <div className="flex flex-col gap-1.5">
-                            <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Vision:</span> <span className={vision.includes('No') ? 'text-red-500/80' : 'text-green-500/80'}>{vision}</span></div>
-                            <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Speed:</span> <span className="text-[#11181C] dark:text-[#EDEDED]">{speed}</span></div>
-                            <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Cost:</span> <span className="text-[#11181C] dark:text-[#EDEDED]">{price}</span></div>
+                            <div className="flex flex-col gap-1.5">
+                              <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Vision:</span> <span className={vision.includes('No') ? 'text-red-500/80' : 'text-green-500/80'}>{vision}</span></div>
+                              <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Speed:</span> <span className="text-[#11181C] dark:text-[#EDEDED]">{speed}</span></div>
+                              <div className="text-[12px] text-[#687076] dark:text-[#A0A0AB] flex justify-between"><span>Cost:</span> <span className="text-[#11181C] dark:text-[#EDEDED]">{price}</span></div>
+                            </div>
                           </div>
-                        </div>
+                        )}
                       </DropdownItem>
                     );
                   })}

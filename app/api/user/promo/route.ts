@@ -18,7 +18,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Promo code is required.' }, { status: 400 });
     }
 
-    if (code.trim() !== 'Early Access') {
+    const normalizedCode = code.trim().replace(/\s+/g, '').toUpperCase();
+    if (normalizedCode !== 'EARLYACCESS') {
       return NextResponse.json({ error: 'Invalid promo code.' }, { status: 400 });
     }
 
