@@ -79,7 +79,7 @@ export const SkillEditor: React.FC<SkillEditorProps> = ({ skill, onBack }) => {
           <div className="flex-1 border border-falbor-elements-borderColor rounded-lg overflow-hidden bg-falbor-elements-background-depth-3 relative">
             <div className="absolute inset-0 overflow-hidden">
               <CodeMirrorEditor
-                theme={theme}
+                theme={theme === 'dark' ? 'dark' : 'light'}
                 editable={true}
                 doc={{ value: content, filePath: `${name || 'skill'}.md`, isBinary: false }}
                 onChange={(update) => setContent(update.content)}

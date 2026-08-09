@@ -228,7 +228,7 @@ export const ChatImpl = memo(
                 const correctProvider = PROVIDER_LIST.find((p) => p.staticModels?.some(m => m.name === targetModel));
                 if (correctProvider) {
                   setModel(targetModel);
-                  setProvider(correctProvider);
+                  setProvider(correctProvider as unknown as ProviderInfo);
                 }
               }
             })
@@ -241,7 +241,7 @@ export const ChatImpl = memo(
         const correctProvider = PROVIDER_LIST.find((p) => p.staticModels?.some(m => m.name === targetModel));
         if (correctProvider) {
           setModel(targetModel);
-          setProvider(correctProvider);
+          setProvider(correctProvider as unknown as ProviderInfo);
           toast.success('Model changed to: ' + targetModel);
         } else {
           toast.error('Failed to change model: Provider not found');
