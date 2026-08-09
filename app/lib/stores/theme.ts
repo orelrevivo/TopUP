@@ -1,15 +1,22 @@
 import { atom } from 'nanostores';
 import { logStore } from './logs';
 
-export type Theme = 'dark' | 'light';
+export type Theme = 'dark' | 'light' | 'system';
 
 export const kTheme = 'falbor_theme';
 
 export function themeIsDark() {
-  return themeStore.get() === 'dark';
+  const theme = themeStore.get();
+  if (theme === 'system') {
+    if (typeof window !== 'undefined') {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches;
+    }
+    return false;
+  }
+  return theme === 'dark';
 }
 
-export const DEFAULT_THEME = 'light';
+export const DEFAULT_THEME = 'system';
 
 export const themeStore = atom<Theme>(initStore());
 
@@ -19,7 +26,11 @@ function initStore() {
     const themeAttribute = document.querySelector('html')?.getAttribute('data-theme');
     const theme = persistedTheme ?? (themeAttribute as Theme) ?? DEFAULT_THEME;
 
-    document.querySelector('html')?.setAttribute('data-theme', theme);
+    let actualTheme = theme;
+    if (theme === 'system') {
+      actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+    }
+    document.querySelector('html')?.setAttribute('data-theme', actualTheme);
 
     return theme;
   }
@@ -27,23 +38,18 @@ function initStore() {
   return DEFAULT_THEME;
 }
 
-export function toggleTheme() {
-  const currentTheme = themeStore.get();
-  const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-
-  // Update the theme store
+export function setTheme(newTheme: Theme) {
   themeStore.set(newTheme);
-
-  // Update localStorage
   localStorage.setItem(kTheme, newTheme);
+  
+  let actualTheme = newTheme;
+  if (newTheme === 'system') {
+    actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  document.querySelector('html')?.setAttribute('data-theme', actualTheme);
 
-  // Update the HTML attribute
-  document.querySelector('html')?.setAttribute('data-theme', newTheme);
-
-  // Update user profile if it exists
   try {
     const userProfile = localStorage.getItem('falbor_user_profile');
-
     if (userProfile) {
       const profile = JSON.parse(userProfile);
       profile.theme = newTheme;
@@ -52,6 +58,17 @@ export function toggleTheme() {
   } catch (error) {
     console.error('Error updating user profile theme:', error);
   }
-
   logStore.logSystem(`Theme changed to ${newTheme} mode`);
 }
+
+export function toggleTheme() {
+  const currentTheme = themeStore.get();
+  let newTheme: Theme = currentTheme === 'dark' ? 'light' : 'dark';
+  if (currentTheme === 'system') {
+    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    newTheme = isDark ? 'light' : 'dark';
+  }
+
+  setTheme(newTheme);
+}
+

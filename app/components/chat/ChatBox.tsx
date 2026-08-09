@@ -108,6 +108,31 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const toggleSelectedMCP = useMCPStore((state) => state.toggleSelectedMCP);
   const [connections, setConnections] = React.useState<any[]>([]);
 
+  const [balance, setBalance] = React.useState<number | null>(null);
+  const [subscriptionTier, setSubscriptionTier] = React.useState<string>('free');
+  const [displayTokenUsage, setDisplayTokenUsage] = React.useState<boolean>(false);
+
+  React.useEffect(() => {
+    if (user) {
+      fetch('/api/user/credits')
+        .then(res => res.json())
+        .then(data => {
+          if (data.balance !== undefined) setBalance(data.balance);
+          if (data.subscriptionTier) setSubscriptionTier(data.subscriptionTier);
+        })
+        .catch(console.error);
+        
+      fetch('/api/sync?key=falbor_display_token_usage')
+        .then(res => res.json())
+        .then(data => {
+          if (data.value !== undefined) {
+             setDisplayTokenUsage(data.value === true || data.value === 'true');
+          }
+        })
+        .catch(console.error);
+    }
+  }, [user]);
+
   React.useEffect(() => {
     fetch('/api/mcp/connections', { cache: 'no-store' })
       .then((res) => res.json())
@@ -123,30 +148,46 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
       .catch((err) => console.error('Error fetching connections', err));
   }, []);
 
-  const claudeModel = props.modelList.find(m => m.name.toLowerCase().includes('sonnet') && m.provider === 'Anthropic');
+  const claudeModel = props.modelList.find(m => m.name === 'claude-sonnet-4-5' && m.provider === 'Anthropic');
   const haikuModel = props.modelList.find(m => m.name === 'claude-haiku-4-5' && m.provider === 'Anthropic');
-  const deepseekModel = props.modelList.find(m => (m.name === 'deepseek-v4-flash' || m.name === 'deepseek-v4-pro' || m.name === 'deepseek-reasoner' || m.name === 'deepseek-chat') && m.provider === 'Deepseek');
   const gptSolModel = props.modelList.find(m => m.name === 'gpt-5.6-sol' && m.provider === 'OpenAI');
-  const geminiProModel = props.modelList.find(m => m.name === 'gemini-3.6-pro' && m.provider === 'Google');
-  const geminiFlashModel = props.modelList.find(m => m.name === 'gemini-3.6-flash' && m.provider === 'Google');
-  const qwenModel = props.modelList.find(m => m.name === 'qwen3.7-flash' && m.provider === 'Qwen');
-  const gpt41MiniModel = props.modelList.find(m => m.name === 'gpt-4o-mini' && m.provider === 'OpenAI');
+  const gpt4oModel = props.modelList.find(m => m.name === 'gpt-4o' && m.provider === 'OpenAI');
   const isFreeTierUser = !(user as any)?.subscriptionTier || (user as any).subscriptionTier !== 'pro';
-  const rawAvailableModels = [claudeModel, haikuModel, geminiProModel, geminiFlashModel, gptSolModel, deepseekModel, qwenModel, gpt41MiniModel].filter(Boolean);
+  const rawAvailableModels =
+    [
+      gpt4oModel,
+      gptSolModel,
+      claudeModel,
+      haikuModel,
+    ].filter(Boolean);
 
-  const availableModels = isFreeTierUser
-    ? [deepseekModel, gpt41MiniModel, qwenModel].filter(Boolean)
-    : rawAvailableModels;
+  const availableModels = rawAvailableModels;
+  const selectedModelInfo = availableModels.find(m => m?.name === props.model);
 
   useEffect(() => {
-    if (isFreeTierUser && props.model) {
-      const isCurrentlyPremium = ['claude', 'gpt-5.6', 'gemini'].some(key => props.model?.toLowerCase().includes(key));
-      if (isCurrentlyPremium && props.setModel && gpt41MiniModel) {
-        props.setModel(gpt41MiniModel.name);
+    const handleInsertMcpToken = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      const connectorId = customEvent.detail?.connectorId;
+      if (!connectorId) return;
+      
+      const textarea = props.textareaRef?.current;
+      if (textarea && props.handleInputChange) {
+        const cursorPosition = textarea.selectionStart;
+        const textBefore = props.input.substring(0, cursorPosition);
+        const textAfter = props.input.substring(cursorPosition);
+        const token = `@${connectorId} `;
+        const newValue = textBefore + token + textAfter;
+        props.handleInputChange({ target: { value: newValue } } as any);
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(cursorPosition + token.length, cursorPosition + token.length);
+        }, 10);
       }
-    }
-  }, [isFreeTierUser, props.model, props.setModel, gpt41MiniModel]);
-  const selectedModelInfo = availableModels.find(m => m?.name === props.model);
+    };
+
+    window.addEventListener('insert-mcp-token', handleInsertMcpToken);
+    return () => window.removeEventListener('insert-mcp-token', handleInsertMcpToken);
+  }, [props.input, props.handleInputChange, props.textareaRef]);
 
   return (
     <div className="relative w-full max-w-chat mx-auto z-prompt flex flex-col">
@@ -520,7 +561,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                             }}
                             disabled={!isConnected}
                             className={classNames(
-                              'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm transition-colors text-left',
+                              'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
                               isConnected
                                 ? 'text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 cursor-pointer'
                                 : 'text-falbor-elements-textTertiary opacity-60 cursor-not-allowed',
@@ -551,12 +592,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     <McpTools asMenuItem={true} />
                   </DropdownSubContent>
                 </DropdownSub>
-
-                {/* <WebSearch
-                  onSearchResult={(result) => props.onWebSearchResult?.(result)}
-                  disabled={props.isStreaming}
-                  asMenuItem={true}
-                /> */}
 
                 {/* <ScreenRecorderButton
                   disabled={props.isStreaming}
@@ -598,7 +633,11 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 onStop={props.stopListening}
                 disabled={props.isStreaming}
               />
-
+              {/* <WebSearch
+                onSearchResult={(result) => props.onWebSearchResult?.(result)}
+                disabled={props.isStreaming}
+                asMenuItem={true}
+              /> */}
               {isSlidesMode && (
                 <IconButton
                   title="Disable Slides Mode"
@@ -677,7 +716,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                           <img src="/icons/models/claude-light.svg" className="w-4 h-4 dark:hidden" alt="Claude" />
                           <img src="/icons/models/claude-dark.svg" className="w-4 h-4 hidden dark:block" alt="Claude" />
                         </>
-                      ) : props.model === deepseekModel?.name ? (
+                      ) : props.model?.includes('deepseek') ? (
                         <>
                           <img src="/icons/models/deepseek-light.svg" className="w-4 h-4 dark:hidden" alt="DeepSeek" />
                           <img src="/icons/models/deepseek-dark.svg" className="w-4 h-4 hidden dark:block" alt="DeepSeek" />
@@ -869,9 +908,9 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 </Dropdown>
               )}
 
-              {/* {typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_SUPABASE_ORG_ID && ( */}
-              <SupabaseConnection />
-              {/* )} */}
+              {typeof process !== 'undefined' && !!process.env.NEXT_PUBLIC_SUPABASE_ORG_ID && (
+                <SupabaseConnection />
+              )}
             </div>
             <ExpoQrModal open={props.qrModalOpen} onClose={() => props.setQrModalOpen(false)} />
             <SkillsDialog open={skillsDialogOpen} onOpenChange={setSkillsDialogOpen} />
@@ -948,6 +987,30 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
             )}
           </div>
         </div>
+        {displayTokenUsage && (
+          <div className="text-center text-xs mt-2 text-falbor-elements-textTertiary">
+            <span>
+              Remaining Balance: {balance ?? 0} credits
+              {subscriptionTier !== 'pro' && (
+                <>
+                  {' '}·{' '}
+                  <button 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      import('~/lib/stores/settings').then(({ settingsTabStore, settingsOpenStore }) => {
+                        settingsTabStore.set('pricing');
+                        settingsOpenStore.set(true);
+                      });
+                    }}
+                    className="text-[#0099ff] hover:underline"
+                  >
+                    Switch to Pro for more usage
+                  </button>
+                </>
+              )}
+            </span>
+          </div>
+        )}
       </div>
     </div>
   );

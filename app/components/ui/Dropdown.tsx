@@ -6,6 +6,7 @@ interface DropdownProps {
   trigger: ReactNode;
   children: ReactNode;
   align?: 'start' | 'center' | 'end';
+  side?: 'top' | 'right' | 'bottom' | 'left';
   sideOffset?: number;
   className?: string;
 }
@@ -37,7 +38,7 @@ export const DropdownItem = ({ children, onSelect, className, asChild, active }:
 
 export const DropdownSeparator = () => <DropdownMenu.Separator className="h-px bg-[#D6D6D6] dark:bg-[#353538] my-1 mx-2" />;
 
-export const Dropdown = ({ trigger, children, align = 'end', sideOffset = 5, className }: DropdownProps) => {
+export const Dropdown = ({ trigger, children, align = 'end', side, sideOffset = 5, className }: DropdownProps) => {
   return (
     <DropdownMenu.Root>
       <DropdownMenu.Trigger asChild>{trigger}</DropdownMenu.Trigger>
@@ -58,6 +59,7 @@ export const Dropdown = ({ trigger, children, align = 'end', sideOffset = 5, cla
             'z-[1000]',
             className,
           )}
+          side={side}
           sideOffset={sideOffset}
           align={align}
         >

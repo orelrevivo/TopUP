@@ -1,7 +1,7 @@
 'use client';
 import { motion, type Variants } from 'framer-motion';
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
-import { useCallback, useEffect, useRef, useState, useMemo } from 'react';
+import React, { useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { toast } from 'react-toastify';
 import { Dialog, DialogButton, DialogDescription, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
@@ -22,6 +22,13 @@ import { profileStore } from '~/lib/stores/profile';
 import { useAuth } from '~/hooks/useAuth';
 import { sidebarOpen, sidebarPinned } from '~/lib/stores/sidebar';
 import { chatStore } from '~/lib/stores/chat';
+import { DropdownSeparator, Dropdown } from '../ui/Dropdown';
+import { McpTools } from '../chat/MCPTools';
+import { MCP_CONNECTORS } from '../@settings/tabs/mcp/connectors';
+import { useMCPStore } from '~/lib/stores/mcp';
+import { Badge } from '../ui';
+import Link from 'next/link';
+import { SkillsDialog } from '../skills/SkillsDialog';
 
 const squareMenuVariants = {
   closed: {
@@ -135,6 +142,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const { user } = useAuth();
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
+  const [skillsDialogOpen, setSkillsDialogOpen] = useState(false);
 
   // Load from IndexedDB or Postgres depending on route
   const loadEntries = useCallback(() => {
@@ -426,10 +434,25 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
     console.log('Setting dialog content:', content);
     setDialogContent(content);
   }, []);
-
+  const [connections, setConnections] = React.useState<any[]>([]);
+  const selectedMCPs = useMCPStore((state) => state.selectedMCPs);
+  const toggleSelectedMCP = useMCPStore((state) => state.toggleSelectedMCP);
+  React.useEffect(() => {
+    fetch('/api/mcp/connections', { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && Array.isArray(data.connections)) {
+          setConnections(data.connections);
+        } else if (Array.isArray(data)) {
+          setConnections(data);
+        } else {
+          setConnections([]);
+        }
+      })
+      .catch((err) => console.error('Error fetching connections', err));
+  }, []);
   return (
     <>
-      {/* Mobile Backdrop for Square Layout */}
       {open && variant === 'square' && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-40"
@@ -458,16 +481,12 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
             "h-14 flex items-center px-4 gap-2 border-b border-transparent bg-transparent transition-all",
             open ? "justify-between" : "justify-center"
           )}>
-            {open ? (
+            {open && (
               <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
                 <a href={isHacking ? "/hacking" : "/"} className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
                   <img src={isHacking ? "/hacking/logo-light-styled.png" : "/logo-light-styled.png"} alt="logo" className="w-[130px] inline-block dark:hidden" />
                   <img src={isHacking ? "/hacking/logo-dark-styled.png" : "/logo-dark-styled.png"} alt="logo" className="w-[130px] inline-block hidden dark:block" />
                 </a>
-              </div>
-            ) : (
-              <div className="flex items-center justify-center">
-                <div className="w-8 h-8 rounded-md bg-blue-500/20 text-blue-500 flex items-center justify-center font-bold">L</div>
               </div>
             )}
             <div className="flex items-center gap-1">
@@ -538,19 +557,113 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
             </div>
           ) : (
             <div className="flex-1 flex flex-col h-full w-full overflow-hidden">
-              <div className="p-4 space-y-3">
+              <div className="p-4 space-y-1">
                 <div className="relative w-full">
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
-                    <span className="i-ph:magnifying-glass block h-4 w-4 text-gray-400 dark:text-gray-500" />
+                    <span className="i-ph:magnifying-glass block h-4 w-4 text-gray-600 dark:text-gray-500" />
                   </div>
                   <input
-                    className="w-full bg-gray-50 dark:bg-gray-900 relative pl-9 pr-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500 border border-gray-200 dark:border-gray-800"
+                    className="w-full bg-[#EBEBEB] dark:bg-gray-900 
+                    relative pl-9 pr-3 py-2 rounded-lg focus:outline-none
+                    focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900
+                    dark:text-gray-100 
+                    placeholder-gray-600 dark:placeholder-gray-500"
                     type="search"
                     placeholder="Search chats..."
                     onChange={handleSearchChange}
                     aria-label="Search chats"
                   />
                 </div>
+                <Link href={'/'} className='relative w-full'>
+                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
+                    <div className="i-ph:plus w-4 h-4 mr-2 dark:text-white" />
+                  </div>
+                  <button
+                    className="flex items-center mt-1
+                    justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900
+                    relative pl-9 pr-3 py-2 
+                    rounded-lg focus:outline-none focus:ring-1
+                    focus:ring-purple-500/50 text-sm text-gray-900
+                    dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500"
+                  >
+                    New Chat
+                  </button>
+                </Link>
+                <button
+                  onClick={() => setSkillsDialogOpen(true)}
+                  className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1"
+                >
+                  <div className="i-ph:puzzle-piece text-xl text-falbor-elements-textSecondary mr-2" />
+                  <span>Create AI skill</span>
+                </button>
+                <Dropdown
+                  align="start"
+                  side="right"
+                  trigger={
+                    <button className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1">
+                      <div className="i-ph:graph text-xl text-falbor-elements-textSecondary mr-2" />
+                      <span>Connectors</span>
+
+                      <Badge size="sm" variant="destructive" className="!rounded-md ml-auto mr-2">
+                        New
+                      </Badge>
+
+                      <div className="i-ph:caret-right text-xs text-falbor-elements-textSecondary" />
+                    </button>
+                  }
+                  className="w-64 max-h-[300px] overflow-y-auto z-[1000]"
+                >
+                  {MCP_CONNECTORS.filter(c => c.id !== 'custom').map((connector) => {
+                    const hasDbConnection = Array.isArray(connections) && connections.some((c) => c.connectorId === connector.id || c.connector_id === connector.id);
+                    const hasLocalConnection = Object.keys(useMCPStore.getState().settings?.mcpConfig?.mcpServers || {}).some(key => key.startsWith(`${connector.id}-`));
+                    const isConnected = hasDbConnection || hasLocalConnection;
+                    const isSelected = selectedMCPs.includes(connector.id);
+
+                    return (
+                      <div key={connector.id} className="relative group w-full">
+                        <button
+                          onClick={() => {
+                            if (isConnected) {
+                              toggleSelectedMCP(connector.id);
+                              if (!isSelected) {
+                                window.dispatchEvent(
+                                  new CustomEvent('insert-mcp-token', { detail: { connectorId: connector.id } })
+                                );
+                              }
+                            }
+                          }}
+                          disabled={!isConnected}
+                          className={classNames(
+                            'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
+                            isConnected
+                              ? 'text-falbor-elements-textPrmary hover:bg-falbor-elements-background-depth-3 cursor-pointer'
+                              : 'text-falbor-elements-textTertiary opacity-60 cursor-not-allowed',
+                            isSelected && 'bg-falbor-elements-background-depth-3'
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <img src={connector.logo} className="w-5 h-5 object-contain" alt={connector.name} />
+                            <span>{connector.name}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            {isSelected && <div className="i-ph:check text-accent-500 text-sm" />}
+                            {!isConnected && (
+                              <div className="i-ph:warning-circle text-orange-500 text-sm opacity-80" />
+                            )}
+                          </div>
+                        </button>
+
+                        {!isConnected && (
+                          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-falbor-elements-background-depth-4 text-falbor-elements-textPrimary text-xs rounded border border-falbor-elements-borderColor shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
+                            Needs to be connected in settings
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <DropdownSeparator />
+                  <McpTools asMenuItem={true} />
+                </Dropdown>
               </div>
               <div className="flex items-center justify-between text-sm px-4 py-2">
                 <div className="font-medium text-gray-600 dark:text-gray-400">Your Chats</div>
@@ -579,7 +692,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                 <DialogRoot open={dialogContent !== null}>
                   {binDates(filteredList).map(({ category, items }) => (
                     <div key={category} className="mt-2 first:mt-0 space-y-1">
-                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 sticky top-0 z-1 bg-white dark:bg-gray-950 px-4 py-1">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 sticky top-0 z-1 bg-white dark:bg-[#111114] px-4 py-1">
                         {category}
                       </div>
                       <div className="space-y-0.5 pr-1">
@@ -681,6 +794,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
             </div>
           )}
         </div>
+        <SkillsDialog open={skillsDialogOpen} onOpenChange={setSkillsDialogOpen} />
       </motion.div>
     </>
   );

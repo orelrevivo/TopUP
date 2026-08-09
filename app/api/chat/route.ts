@@ -134,8 +134,19 @@ async function chatAction({ context, request }: RouteArgs) {
     const isPremiumModel = isClaude || requestedModel === 'gpt-5.6-sol' || isGemini;
     const isFreeTier = !userRows[0] || !userRows[0].subscriptionTier || userRows[0].subscriptionTier !== 'pro';
 
+    const premiumUsageCount = (userRows[0]?.stats as any)?.premium_model_usage?.[requestedModel] || 0;
+
     if (isPremiumModel && isFreeTier) {
-      return NextResponse.json({ error: true, message: 'Premium models are strictly available for Pro subscribers. Please upgrade your subscription.' }, { status: 403 });
+      if (premiumUsageCount >= 1) {
+        return NextResponse.json({ error: true, message: 'Premium model limit reached (1/1). Please upgrade to Pro for unlimited access.' }, { status: 403 });
+      }
+
+      // Increment usage count for free users
+      const stats = (userRows[0]?.stats as any) || {};
+      if (!stats.premium_model_usage) stats.premium_model_usage = {};
+      stats.premium_model_usage[requestedModel] = (stats.premium_model_usage[requestedModel] || 0) + 1;
+      
+      await db.update(users).set({ stats }).where(eq(users.id, userId));
     }
 
     let lastChunk: string | undefined = undefined;

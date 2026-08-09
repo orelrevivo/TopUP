@@ -1,5 +1,5 @@
 import type { TabType } from './types';
-import { User, Settings, Bell, Star, Database, Cloud, Laptop, Github, Wrench, List, LogOut, Brain, CreditCard, Receipt } from 'lucide-react';
+import { User, Settings, Sliders, Bell, Star, Database, Cloud, Laptop, Github, Wrench, List, LogOut, Brain, CreditCard, Receipt } from 'lucide-react';
 
 // GitLab icon component
 const GitLabIcon = () => (
@@ -43,7 +43,7 @@ export const TAB_ICONS: Record<TabType, React.ComponentType<{ className?: string
   memories: Brain,
   pricing: CreditCard,
   billing: Receipt,
-  settings: Settings,
+  settings: Sliders,
   notifications: Bell,
   features: Star,
   data: Database,
@@ -60,11 +60,11 @@ export const TAB_ICONS: Record<TabType, React.ComponentType<{ className?: string
 };
 
 export const TAB_LABELS: Record<TabType, string> = {
-  profile: 'Profile',
+  profile: 'Edit Profile',
   memories: 'Memories',
   pricing: 'Pricing',
   billing: 'Billing',
-  settings: 'Settings',
+  settings: 'General',
   notifications: 'Notifications',
   features: 'Features',
   data: 'Data Management',
@@ -103,7 +103,7 @@ export const TAB_DESCRIPTIONS: Record<TabType, string> = {
 
 export const DEFAULT_TAB_CONFIG = [
   // User Window Tabs (Always visible by default)
-  { id: 'settings', visible: true, window: 'user' as const, order: -4 },
+  { id: 'settings', visible: true, window: 'user' as const, order: -6 },
   { id: 'profile', visible: true, window: 'user' as const, order: -5 },
   { id: 'pricing', visible: true, window: 'user' as const, order: -3 },
   { id: 'billing', visible: true, window: 'user' as const, order: -2 },

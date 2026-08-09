@@ -104,10 +104,10 @@ export function WebSearch({ onSearchResult, disabled = false, asMenuItem }: WebS
   return (
     <div ref={containerRef} className="relative">
       {asMenuItem ? (
-        <button
+        <IconButton
           disabled={disabled || isSearching}
           onClick={() => setIsOpen(!isOpen)}
-          className="flex items-center gap-2 w-full px-3 py-2 text-sm text-left hover:bg-falbor-elements-background-depth-3 transition-colors text-falbor-elements-textPrimary disabled:opacity-50"
+          className={classNames('text-falbor-elements-item-contentAccent')}
         >
           {isSearching ? (
             <div className="i-svg-spinners:90-ring-with-bg text-falbor-elements-loader-progress text-xl animate-spin" />
@@ -115,7 +115,7 @@ export function WebSearch({ onSearchResult, disabled = false, asMenuItem }: WebS
             <div className="i-ph:globe text-xl text-falbor-elements-textSecondary" />
           )}
           <span>Fetch URL</span>
-        </button>
+        </IconButton>
       ) : (
         <IconButton
           title="Fetch URL content"

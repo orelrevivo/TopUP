@@ -152,7 +152,7 @@ export const ChatImpl = memo(
             const parsed = JSON.parse(saved);
             const p = PROVIDER_LIST.find((p) => p.name === parsed.provider);
             if (p) return p as ProviderInfo;
-          } catch(e) {}
+          } catch (e) { }
         }
       }
 
@@ -166,7 +166,7 @@ export const ChatImpl = memo(
         if (lastUserMsg && typeof lastUserMsg.content === 'string') {
           const modelMatch = lastUserMsg.content.match(MODEL_REGEX);
           const providerMatch = lastUserMsg.content.match(PROVIDER_REGEX);
-          
+
           let extractedModel = modelMatch?.[1];
           const extractedProvider = PROVIDER_LIST.find((p) => p.name === providerMatch?.[1]);
 
@@ -191,20 +191,20 @@ export const ChatImpl = memo(
               const isValidModel = PROVIDER_LIST.some((p) => p.staticModels?.some((m) => m.name === parsed.model));
               if (isValidModel) return parsed.model;
             }
-          } catch(e) {}
+          } catch (e) { }
         }
       }
-      
+
       let providerInfo = DEFAULT_PROVIDER as ProviderInfo;
       const defaultProviderName = Cookies.get('lastSelectedProvider') || Cookies.get('defaultProvider') || DEFAULT_PROVIDER.name;
       providerInfo = (PROVIDER_LIST.find((p) => p.name === defaultProviderName) || DEFAULT_PROVIDER) as ProviderInfo;
-      
+
       const savedModel = Cookies.get('lastSelectedModel');
       if (savedModel) {
         const isValidModel = PROVIDER_LIST.some((p) => p.staticModels?.some((m) => m.name === savedModel));
         if (isValidModel) return savedModel;
       }
-      
+
       return providerInfo.staticModels?.[0]?.name || DEFAULT_MODEL;
     });
 
@@ -215,6 +215,44 @@ export const ChatImpl = memo(
         Cookies.set('lastSelectedModel', model, { expires: 365 });
       }
     }, [provider, model, activeChatId]);
+
+    useEffect(() => {
+      if ((!initialMessages || initialMessages.length === 0) && typeof window !== 'undefined') {
+        const saved = localStorage.getItem('chat_model_' + activeChatId);
+        if (!saved) {
+          fetch('/api/sync')
+            .then(res => res.json())
+            .then(data => {
+              if (data.falbor_default_model) {
+                const targetModel = data.falbor_default_model;
+                const correctProvider = PROVIDER_LIST.find((p) => p.staticModels?.some(m => m.name === targetModel));
+                if (correctProvider) {
+                  setModel(targetModel);
+                  setProvider(correctProvider);
+                }
+              }
+            })
+            .catch(console.error);
+        }
+      }
+
+      const handleModelChange = (e: Event) => {
+        const targetModel = (e as CustomEvent).detail;
+        const correctProvider = PROVIDER_LIST.find((p) => p.staticModels?.some(m => m.name === targetModel));
+        if (correctProvider) {
+          setModel(targetModel);
+          setProvider(correctProvider);
+          toast.success('Model changed to: ' + targetModel);
+        } else {
+          toast.error('Failed to change model: Provider not found');
+        }
+      };
+
+      window.addEventListener('falbor_default_model_changed', handleModelChange);
+      return () => {
+        window.removeEventListener('falbor_default_model_changed', handleModelChange);
+      };
+    }, [activeChatId, initialMessages]);
 
     const { showChat } = useStore(chatStore);
     const [animationScope, animate] = useAnimate();
@@ -285,7 +323,7 @@ export const ChatImpl = memo(
           messageLength: message.content.length,
         });
       }
-      
+
       useMCPStore.getState().clearSelectedMCPs();
 
       logger.debug('Finished streaming');
@@ -345,7 +383,7 @@ export const ChatImpl = memo(
       if (inputFromLastMsg) {
         setInput(inputFromLastMsg);
       }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+      // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []); // run exactly once on mount
 
     useEffect(() => {
