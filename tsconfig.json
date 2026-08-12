@@ -1,27 +1,12 @@
 {
   "compilerOptions": {
-    "lib": ["dom", "dom.iterable", "esnext"],
     "target": "es2018",
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
     "module": "esnext",
     "moduleResolution": "bundler",
-    "resolveJsonModule": true,
-    "isolatedModules": true,
-    "jsx": "preserve",
-    "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+    "baseUrl": ".",
     "paths": {
-      "~/*": ["./app/*"]
+      "~/*": ["apps/falbor/app/*"]
     }
   },
-  "include": ["next-env.d.ts", "app/**/*.ts", "app/**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "functions"]
+  "include": []
 }
