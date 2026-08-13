@@ -776,8 +776,4 @@ CRITICAL RULES:
   );
 
   return await _streamText(streamParams as any);
-}   ),
-  );
-
-return await _streamText(streamParams as any);
 }
