@@ -150,13 +150,11 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
 
   const claudeModel = props.modelList.find(m => m.name === 'claude-sonnet-4-5' && m.provider === 'Anthropic');
   const haikuModel = props.modelList.find(m => m.name === 'claude-haiku-4-5' && m.provider === 'Anthropic');
-  const gptSolModel = props.modelList.find(m => m.name === 'gpt-5.6-sol' && m.provider === 'OpenAI');
   const gpt4oModel = props.modelList.find(m => m.name === 'gpt-4o' && m.provider === 'OpenAI');
   const isFreeTierUser = !(user as any)?.subscriptionTier || (user as any).subscriptionTier !== 'pro';
   const rawAvailableModels =
     [
       gpt4oModel,
-      gptSolModel,
       claudeModel,
       haikuModel,
     ].filter(Boolean);
@@ -779,7 +777,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       modelIcon = "Default";
                     }
 
-                    const isPremiumModel = isClaude || m.name === 'gpt-5.6-sol' || isGemini;
+                    const isPremiumModel = isClaude || isGemini;
                     const isFreeTier = !(user as any)?.subscriptionTier || (user as any).subscriptionTier !== 'pro';
                     const premiumUsageCount = (user as any)?.stats?.premium_model_usage?.[m.name] || 0;
                     const hasReachedLimit = isPremiumModel && isFreeTier && premiumUsageCount >= 1;
@@ -832,7 +830,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                           )}
                           <span className="flex items-center gap-2">
                             {displayName}
-                            {(m.name === 'claude-haiku-4-5' || m.name === 'gpt-5.6-sol' || m.name === 'gemini-3.6-pro') && (
+                            {(m.name === 'claude-haiku-4-5' || m.name === 'gemini-3.6-pro') && (
                               <Badge size="sm" variant="destructive" className='!rounded-md'>
                                 New
                               </Badge>
