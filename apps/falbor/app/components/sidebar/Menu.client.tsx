@@ -626,7 +626,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                     Organization
                   </button>
                 </Link>
-                <Link href={'/sources'} className='relative w-full'>
+                {/* <Link href={'/sources'} className='relative w-full'>
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
                     <div className={classNames(
                       "i-ph:spider-web w-4 h-4 mr-2 transition-colors",
@@ -639,7 +639,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                     <div className="i-ph:network text-xl text-falbor-elements-textSecondary mr-2" />
                     Sources
                   </button>
-                </Link>
+                </Link> */}
                 <button
                   onClick={() => setSkillsDialogOpen(true)}
                   className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1"
