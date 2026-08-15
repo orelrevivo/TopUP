@@ -9,36 +9,55 @@ const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 export async function POST(request: Request) {
   try {
     let credential = "";
+    let accessToken = "";
     let isFormData = false;
 
     const contentType = request.headers.get("content-type") || "";
     
     if (contentType.includes("application/json")) {
-      const body = (await request.json()) as { credential?: string };
+      const body = (await request.json()) as { credential?: string; accessToken?: string };
       credential = body.credential || "";
+      accessToken = body.accessToken || "";
     } else if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       credential = formData.get("credential")?.toString() || "";
+      accessToken = formData.get("accessToken")?.toString() || "";
       isFormData = true;
     }
 
-    if (!credential) {
-      return new Response(JSON.stringify({ error: "No credential provided" }), {
+    if (!credential && !accessToken) {
+      return new Response(JSON.stringify({ error: "No credentials provided" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    // Verify the Google ID token
-    const ticket = await client.verifyIdToken({
-      idToken: credential,
-      audience: [
-        process.env.GOOGLE_CLIENT_ID || "",
-        process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
-      ].filter(Boolean), 
-    });
+    let payload: any = null;
 
-    const payload = ticket.getPayload();
+    if (accessToken) {
+      // Fetch user profile using access token (Implicit flow from custom button)
+      const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (!res.ok) {
+        return new Response(JSON.stringify({ error: "Invalid Google access token" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+      payload = await res.json();
+    } else {
+      // Verify the Google ID token (Redirect flow from official button)
+      const ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: [
+          process.env.GOOGLE_CLIENT_ID || "",
+          process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "",
+        ].filter(Boolean), 
+      });
+      payload = ticket.getPayload();
+    }
+
     if (!payload || !payload.email) {
       return new Response(JSON.stringify({ error: "Invalid Google token" }), {
         status: 400,

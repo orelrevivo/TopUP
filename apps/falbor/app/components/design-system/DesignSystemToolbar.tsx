@@ -4,6 +4,10 @@ import Popover from '~/components/ui/Popover';
 import { Switch } from '~/components/ui/Switch';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { Button, IconButton } from '../ui';
+import { VisualEditorExportModal } from '../chat/VisualEditorExportModal';
+import { publishAIToFunnel } from '~/lib/actions/funnel-publish';
+import { useToast } from '~/components/ui/use-toast';
+import { useRouter } from 'next/navigation';
 
 interface DesignSystemToolbarProps {
   isInspectorMode: boolean;
@@ -14,8 +18,66 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
   isInspectorMode,
   isDesignSystemMode,
 }) => {
+  const [modalOpen, setModalOpen] = React.useState(false);
+  const { toast } = useToast();
+  const router = useRouter();
+
   const toggleInspectorMode = () => {
     workbenchStore.isInspectorMode.set(!isInspectorMode);
+  };
+
+  const handleWorkspaceSuccess = async (subAccountId: string) => {
+    try {
+      // Grab all generated files from the workbench store
+      const files = workbenchStore.files.get();
+      const pages = [];
+      let combinedCss = '';
+      
+      // First pass: collect all CSS
+      for (const [filePath, file] of Object.entries(files)) {
+        if (file && filePath.endsWith('.css') && file.type === 'file' && typeof file.content === 'string') {
+          combinedCss += `\n/* ${filePath} */\n${file.content}\n`;
+        }
+      }
+      
+      // Second pass: collect HTML and inject CSS
+      for (const [filePath, file] of Object.entries(files)) {
+        if (file && filePath.endsWith('.html') && file.type === 'file' && typeof file.content === 'string') {
+          const parts = filePath.split('/');
+          const fileName = parts[parts.length - 1];
+          const name = fileName.replace('.html', '');
+          const pathName = name === 'index' ? '' : name;
+          
+          let htmlContent = file.content;
+          
+          // Inject styles into the <head> if possible, otherwise prepend
+          if (combinedCss) {
+            const styleTag = `<style>\n${combinedCss}\n</style>`;
+            if (htmlContent.includes('</head>')) {
+              htmlContent = htmlContent.replace('</head>', `${styleTag}\n</head>`);
+            } else {
+              htmlContent = styleTag + '\n' + htmlContent;
+            }
+          }
+          
+          pages.push({
+            name: name.charAt(0).toUpperCase() + name.slice(1),
+            pathName,
+            htmlContent
+          });
+        }
+      }
+
+      if (pages.length === 0) {
+        throw new Error('No HTML files were found in the generated workspace.');
+      }
+      
+      const { funnelId, pageId } = await publishAIToFunnel('chat-123', subAccountId, pages);
+      toast(`Successfully published to Visual Editor Funnel: ${funnelId}`, { type: 'success' });
+      router.push(`/visual-editor/subaccount/${subAccountId}/funnels/${funnelId}/editor/${pageId}`);
+    } catch (error: any) {
+      toast(error.message || 'Could not publish site.', { type: 'error' });
+    }
   };
 
   return (
@@ -55,60 +117,22 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
             )}
           />
 
-          <Popover
-            align="start"
-            side="top"
-            trigger={
-              <button
-                className={classNames(
-                  "px-2 py-1 transition-colors flex items-center justify-center",
-                  isInspectorMode
-                    ? ""
-                    : "hover:text-falbor-elements-item-contentActive"
-                )}
-              >
-                <div className="i-ph:caret-up text-sm" />
-              </button>
-            }
+          <button
+            onClick={() => setModalOpen(true)}
+            title="Publish to Visual Editor"
+            className={classNames(
+              "px-2 py-1 ml-1 transition-colors flex items-center justify-center text-falbor-elements-item-contentDefault hover:text-falbor-elements-item-contentActive"
+            )}
           >
-            <div className="w-40 text-falbor-elements-textPrimary">
-              <div
-                className="flex items-center justify-between p-2 cursor-pointer hover:bg-[#F0EDF0]"
-                onClick={() => {
-                  const next = !isDesignSystemMode;
-                  workbenchStore.isDesignSystemMode.set(next);
-
-                  if (next && !isInspectorMode) {
-                    workbenchStore.isInspectorMode.set(true);
-                  }
-                }}
-              >
-                <span className="text-xs">Design System</span>
-
-                <Switch
-                  checked={isDesignSystemMode}
-                  className="pointer-events-none"
-                  onCheckedChange={(checked) => {
-                    workbenchStore.isDesignSystemMode.set(checked);
-
-                    if (checked && !isInspectorMode) {
-                      workbenchStore.isInspectorMode.set(true);
-                    }
-                  }}
-                />
-              </div>
-
-              <div className="w-full border-t border-gray-300" />
-
-              <div className="px-2 py-2 w-full">
-                <p className="text-xs text-falbor-elements-textSecondary">
-                  You can design the elements yourself
-                </p>
-              </div>
-            </div>
-          </Popover>
+            <div className="i-ph:export text-sm" />
+          </button>
         </div>
       </div>
+      <VisualEditorExportModal 
+        open={modalOpen} 
+        onOpenChange={setModalOpen} 
+        onSuccess={handleWorkspaceSuccess}
+      />
     </div>
   );
 };

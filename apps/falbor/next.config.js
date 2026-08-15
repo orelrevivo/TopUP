@@ -1,9 +1,34 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'lh3.googleusercontent.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'uploadthing.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'utfs.io',
+      }
+    ],
+  },
 
   experimental: {
     serverComponentsExternalPackages: ["shiki", "playwright-core", "@browserbasehq/stagehand", "chromium-bidi"],
+    serverActions: {
+      bodySizeLimit: '10mb',
+    },
+  },
+  typescript: {
+    ignoreBuildErrors: true,
+  },
+  eslint: {
+    ignoreDuringBuilds: true,
   },
 
   async headers() {

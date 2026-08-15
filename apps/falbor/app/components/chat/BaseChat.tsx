@@ -90,13 +90,14 @@ interface BaseChatProps {
   llmErrorAlert?: LlmErrorAlertType;
   clearLlmErrorAlert?: () => void;
   data?: JSONValue[] | undefined;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
   append?: (message: Message) => void;
   designScheme?: DesignScheme;
   setDesignScheme?: (scheme: DesignScheme) => void;
   selectedElement?: ElementInfo | null;
   setSelectedElement?: (element: ElementInfo | null) => void;
+  hideIntro?: boolean;
   cloneUrl?: string | null;
   setCloneUrl?: (url: string | null) => void;
   addToolResult?: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;
@@ -147,6 +148,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       setDesignScheme,
       selectedElement,
       setSelectedElement,
+      hideIntro,
       cloneUrl,
       setCloneUrl,
       addToolResult = () => {
@@ -443,6 +445,34 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       }
     };
 
+    const pendingQuestions = React.useMemo(() => {
+      if (!messages || messages.length === 0) return [];
+      const lastMessage = messages[messages.length - 1];
+      if (lastMessage.role !== 'assistant') return [];
+      
+      const content = lastMessage.content;
+      if (!content) return [];
+      
+      const regex = /<falborAction\s+[^>]*type="question"[^>]*>([\s\S]*?)<\/falborAction>/g;
+      const questions = [];
+      let match;
+      while ((match = regex.exec(content)) !== null) {
+        try {
+          let jsonStr = match[1].trim();
+          if (jsonStr.startsWith('```json')) {
+            jsonStr = jsonStr.replace(/^```json/, '').replace(/```$/, '').trim();
+          } else if (jsonStr.startsWith('```')) {
+            jsonStr = jsonStr.replace(/^```/, '').replace(/```$/, '').trim();
+          }
+          const data = JSON.parse(jsonStr);
+          questions.push(data);
+        } catch (e) {
+          console.error("Failed to parse question action", e);
+        }
+      }
+      return questions;
+    }, [messages]);
+
     const baseChat = (
       <div
         ref={ref}
@@ -452,7 +482,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
 
         <div className="flex flex-col lg:flex-row overflow-hidden w-full h-full">
           <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full relative')}>
-            {!chatStarted && (
+            {!chatStarted && !hideIntro && (
               <div id="intro" className="mt-[23vh] max-w-md mx-auto text-center px-4 lg:px-0">
                 <h1 className="text-falbor-elements-textPrimary ml-[-50px] text-5xl lg:text-3xl animate-fade-in flex items-center justify-center gap-2">
                   Don’t just build.
@@ -582,6 +612,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     cloneUrl={cloneUrl}
                     setCloneUrl={setCloneUrl}
                     onWebSearchResult={onWebSearchResult}
+                    pendingQuestions={pendingQuestions}
                   />
                   {!chatStarted && setChatMode && chatMode && (
                     <div className="flex justify-start mt-3 max-w-chat mx-auto">
@@ -591,6 +622,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           left: { value: 'build', text: 'MVP', icon: 'i-ph:rocket-launch-duotone' },
                           middle: { value: 'troubleshoot', text: 'Troubleshoot', icon: 'i-ph:wrench-duotone' },
                           right: { value: 'discuss', text: 'Chat', icon: 'i-ph:chats-duotone' },
+                          extra: { value: 'idea', text: 'Idea', icon: 'i-ph:lightbulb-duotone' },
                         }}
                         setSelected={setChatMode as any}
                       />

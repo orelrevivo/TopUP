@@ -124,7 +124,13 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
   const reloadPreview = () => {
     if (iframeRef.current) {
-      iframeRef.current.src = iframeRef.current.src;
+      try {
+        const url = new URL(iframeRef.current.src);
+        url.searchParams.set('t', Date.now().toString());
+        iframeRef.current.src = url.toString();
+      } catch (e) {
+        iframeRef.current.src = iframeRef.current.src;
+      }
     }
   };
 

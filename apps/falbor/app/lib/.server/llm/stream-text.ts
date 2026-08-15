@@ -174,7 +174,7 @@ export async function streamText(props: {
   contextFiles?: FileMap;
   summary?: string;
   messageSliceId?: number;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot';
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
   isSlidesMode?: boolean;
   isGameMode?: boolean;
   designScheme?: DesignScheme;
@@ -300,11 +300,57 @@ export async function streamText(props: {
     }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData);
 
   // Prepend critical file-writing rules to every system prompt.
-  const FILE_WRITING_ENFORCEMENT = `CRITICAL RULES (HIGHEST PRIORITY — OVERRIDE EVERYTHING):
-1. NEVER write code in the chat. ALL code goes inside <falborAction type="file" filePath="..."> inside a <falborArtifact>.
-2. When editing ANY file: write the COMPLETE file, first line to last line. NEVER partial snippets.
-3. FORBIDDEN: <<<< SEARCH / ==== REPLACE / >>>> END markers or any diff format.
-4. Every <falborAction type="file"> must contain the FULL final file. No "// rest of file". No truncation.
+  const FILE_WRITING_ENFORCEMENT = `
+<CRITICAL_ENFORCEMENT_RULES>
+  THESE ARE THE MOST IMPORTANT RULES FOR GENERATING ARTIFACTS AND CODE. YOU MUST FOLLOW THEM EXACTLY OR YOUR OUTPUT WILL BREAK.
+
+  1. WRAP EVERYTHING IN AN ARTIFACT: ALL code files, shell commands, and questions MUST be placed inside a single \`<falborArtifact>\` block. NEVER output raw JSON or code outside of an artifact.
+  2. CONVERSATIONAL CONTEXT: ALWAYS provide a brief, friendly explanation or summary in plain text BEFORE the \`<falborArtifact>\` block. NEVER output just an artifact with no conversational context above it.
+  3. EXACTLY ONE ARTIFACT PER MESSAGE: You must use exactly one \`<falborArtifact>\` per response. NEVER create multiple artifacts.
+  4. FULL FILES ONLY (NO LAZY UPDATES): When writing or updating files using \`<falborAction type="file">\`, you MUST provide the COMPLETE, unmodified file content from the very first line to the very last line. 
+     - NO placeholders like "// rest of code here"
+     - NO diffs or partial updates
+     - YOU MUST REWRITE THE ENTIRE FILE EVERY TIME. If you omit code or styles, you will break the application!
+  5. EMPTY ARTIFACTS ARE FORBIDDEN: When the user asks you to add a feature or update the code, you MUST actually output the updated files using \`<falborAction type="file">\` inside your artifact. DO NOT just output an empty artifact box with a title and no files!
+  6. PRESERVE EXISTING DESIGN: When the user asks you to add a new feature or page to an existing project, DO NOT rewrite the entire application's design, layout, or color scheme unless explicitly asked. ONLY make the changes necessary to fulfill the request. If asked to create a new page, actually create a new file/route for it.
+  7. MODULAR ARCHITECTURE (NO MONOLITHIC FILES): Do NOT dump all your CSS or components into massive, monolithic files (like one giant 'styles.css' or 'App.jsx'). You MUST break down your code into small, modular files (e.g., separate CSS files or module files for each specific section/component). When adding a new section, create new dedicated files for it instead of bloating existing ones. This prevents accidental redesigns!
+  8. NO INSPECTION-ONLY MESSAGES: Do NOT start by only running terminal commands to inspect the directory (like \`ls\`, \`pwd\`, or \`find\`) without generating code. You MUST write and output the actual files for the landing page or application in your very first response alongside any setup commands inside your single artifact. The user expects to see the application built immediately!
+  9. VITE CONFIGURATION (CRITICAL FOR LIVE RECONNECTS): When creating or editing a 'vite.config.js' or 'vite.config.ts' file, you MUST configure the development server's watcher to use polling so hot-reloading works in the browser WebContainer.
+     Example config:
+     // ...
+     export default defineConfig({
+       server: {
+         watch: {
+           usePolling: true
+         }
+       }
+     });
+     // ...
+  10. INTERACTIVE QUESTIONS ONLY: You must NEVER use markdown lists for choices/questions (e.g. "1. Option A"). You must ALWAYS use the \`<falborAction type="question">\` block.
+
+  CORRECT FORMAT EXAMPLE (HOW TO WRITE FILES AND ASK QUESTIONS):
+  Here is the portfolio MVP you requested! I have set up the main page and included a question to finalize the design.
+  <falborArtifact id="portfolio-mvp-setup" title="Portfolio MVP Setup">
+    <falborAction type="file" filePath="app/page.tsx">
+      import React from 'react';
+      
+      export default function Page() {
+        return (
+          <div className="min-h-screen bg-black text-white">
+            <h1>My Portfolio</h1>
+            <p>This is the full, complete file content. No code is omitted.</p>
+          </div>
+        );
+      }
+    </falborAction>
+    <falborAction type="question" title="Design Choice">
+    {
+      "question": "Which visual style do you prefer?",
+      "options": ["Dark mode", "Light mode"]
+    }
+    </falborAction>
+  </falborArtifact>
+</CRITICAL_ENFORCEMENT_RULES>
 
 `;
   systemPrompt = FILE_WRITING_ENFORCEMENT + systemPrompt;
@@ -352,7 +398,7 @@ console.log("Hello");
 ${systemPrompt}`;
   }
 
-  if (chatMode === 'build' && contextFiles && contextOptimization) {
+  if (contextFiles && contextOptimization) {
     const codeContext = createFilesContext(contextFiles, true);
 
     systemPrompt = `${systemPrompt}
@@ -410,6 +456,9 @@ ${systemPrompt}`;
   }
 
   logger.info(`Sending llm call to ${provider.name} with model ${modelDetails.name}`);
+  console.log('\n\n======================================================');
+  console.log('✅ 100% VERIFIED: You are talking to model:', modelDetails.name);
+  console.log('======================================================\n\n');
 
   // Log reasoning model detection and token parameters
   const isReasoning = isReasoningModel(modelDetails.name);
@@ -590,7 +639,7 @@ CRITICAL RULES:
 - Place all generated images inside the \`public/\` folder.
 - The game should be built using React (HTML5 Canvas or DOM elements) and standard web technologies.
 - Write a highly polished, fully complete game. It should be visually impressive and fun to play.`
-        : chatMode === 'build' ? systemPrompt : discussPrompt();
+        : (chatMode === 'build' || chatMode === 'idea') ? systemPrompt : discussPrompt();
 
       if (modelDetails && modelDetails.name && modelDetails.name.toLowerCase().includes('qwen')) {
         finalPrompt = `CRITICAL FOR QWEN MODEL: You MUST present all market research and validation reports inside a <falborArtifact id="validation" title="Market Research"><falborAction type="analyzer" title="Market Research & Validation">...</falborAction></falborArtifact> block. NEVER output plain text research directly in the chat. You MUST use these XML tags to open the side panel.\n\n${finalPrompt}`;

@@ -37,8 +37,8 @@ interface HackingChatBoxProps {
   exportChat?: () => void;
   qrModalOpen?: boolean;
   setQrModalOpen?: (open: boolean) => void;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
   designScheme?: any;
   setDesignScheme?: (scheme: any) => void;
   selectedElement?: any;

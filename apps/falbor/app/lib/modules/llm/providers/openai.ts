@@ -15,6 +15,7 @@ export default class OpenAIProvider extends BaseProvider {
   staticModels: ModelInfo[] = [
     // GPT-5.6 Models
     { name: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 8192 },
+    { name: 'gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 8192 },
 
     /*
      * Essential fallback models - only the most stable/reliable ones
@@ -166,6 +167,11 @@ export default class OpenAIProvider extends BaseProvider {
     });
 
     const actualModel = model === 'gpt-4.1-mini' ? 'gpt-4o-mini' : model;
+    
+    if (actualModel.startsWith('gpt-5.6')) {
+      return openai(actualModel, { reasoningEffort: 'none' } as any);
+    }
+    
     return openai(actualModel);
   }
 }

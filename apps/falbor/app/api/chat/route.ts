@@ -24,7 +24,7 @@ import { NativeToolsService } from '~/lib/services/nativeToolsService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { SupabaseService } from '~/lib/services/supabaseService';
 import type { RouteArgs } from '~/lib/security';
-import { webSearch, readPageContent } from '~/lib/services/searchTools';
+import { webSearch, readPageContent, searchReddit, searchGitHubIssues, searchTwitter } from '~/lib/services/searchTools';
 
 export async function POST(request: Request) {
   return chatAction({ request, context: { cloudflare: { env: process.env as Record<string, string> } } });
@@ -80,7 +80,7 @@ async function chatAction({ context, request }: RouteArgs) {
       files: any;
       promptId?: string;
       contextOptimization: boolean;
-      chatMode: 'discuss' | 'build' | 'troubleshoot';
+      chatMode: 'discuss' | 'build' | 'troubleshoot' | 'idea';
       isSlidesMode?: boolean;
       isGameMode?: boolean;
       designScheme?: DesignScheme;
@@ -467,6 +467,9 @@ THEN build the pixel-perfect clone.`;
         let baseTools: Record<string, any> = {
           webSearch,
           readPageContent,
+          searchReddit,
+          searchGitHubIssues,
+          searchTwitter,
           shell: tool({
             description: 'Do not use this. Use <falborAction type="shell"> instead.',
             parameters: z.object({}),

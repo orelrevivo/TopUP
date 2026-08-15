@@ -6,7 +6,7 @@ const JWT_SECRET = process.env.JWT_SECRET
   ? new TextEncoder().encode(process.env.JWT_SECRET)
   : null;
 const COOKIE_NAME = "session";
-const PUBLIC_ROUTES = ["/login", "/signup", "/verified", "/privacy", "/api/auth/login", "/api/auth/register", "/api/auth/verify", "/api/auth/logout", "/api/health"];
+const PUBLIC_ROUTES = ["/login", "/signup", "/verified", "/privacy", "/terms", "/api/auth/login", "/api/auth/register", "/api/auth/verify", "/api/auth/logout", "/api/health"];
 const STATIC_PREFIXES = ["/_next", "/favicon", "/icons", "/logo", "/apple-touch-icon", "/social_preview", "/landing"];
 
 export async function middleware(request: NextRequest) {

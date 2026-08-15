@@ -40,6 +40,7 @@ import { Badge } from '../ui';
 import { MCP_CONNECTORS } from '~/components/@settings/tabs/mcp/connectors';
 import { useMCPStore } from '~/lib/stores/mcp';
 import Link from 'next/link';
+import { QuestionOverlay, type QuestionData } from './QuestionOverlay';
 
 interface ChatBoxProps {
   isModelSettingsCollapsed: boolean;
@@ -77,14 +78,15 @@ interface ChatBoxProps {
   enhancingPrompt?: boolean | undefined;
   enhancePrompt?: (() => void) | undefined;
   onWebSearchResult?: (result: string) => void;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
   designScheme?: DesignScheme;
   setDesignScheme?: (scheme: DesignScheme) => void;
   selectedElement?: ElementInfo | null;
   setSelectedElement?: ((element: ElementInfo | null) => void) | undefined;
   cloneUrl?: string | null;
   setCloneUrl?: ((url: string | null) => void) | undefined;
+  pendingQuestions?: QuestionData[];
 }
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
@@ -256,6 +258,24 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           </>
         )}
         <div className="relative bg-white dark:bg-[#141414] backdrop-blur border border-[#D6D6D6] dark:border-[#353538] rounded-[10.5px] dark:rounded-lg h-full z-10">
+          {props.pendingQuestions && props.pendingQuestions.length > 0 && !props.isStreaming && (
+            <QuestionOverlay
+              questions={props.pendingQuestions}
+              onSkipAll={() => {
+                if (props.handleSendMessage) {
+                  props.handleSendMessage(new Event('submit') as any, "Skipped questions.");
+                }
+              }}
+              onSubmit={(answers) => {
+                if (props.handleSendMessage) {
+                  const answerText = Object.entries(answers).map(([k, v], i) => `Q${i + 1}: ${v}`).join('\n');
+                  props.handleSendMessage(new Event('submit') as any, `Answers:\n${answerText}`);
+                }
+              }}
+            />
+          )}
+          {!(props.pendingQuestions && props.pendingQuestions.length > 0 && !props.isStreaming) && (
+            <>
           <svg className={classNames(styles.PromptEffectContainer, "hidden dark:block")}>
             <defs>
               <linearGradient
@@ -683,7 +703,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
               <div></div>
             ) : null}
             <div className="flex items-center gap-1">
-              {availableModels.length > 0 && (
+              {false && availableModels.length > 0 && (
                 <Dropdown
                   sideOffset={8}
                   align="start"
@@ -970,6 +990,8 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
               </div>
             )}
           </div>
+          </>
+          )}
         </div>
         {displayTokenUsage && (
           <div className="text-center text-xs mt-2 text-falbor-elements-textTertiary">

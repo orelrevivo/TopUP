@@ -102,14 +102,14 @@ export default function TermsOfService() {
                   id={`toc-${s.id}`}
                   onClick={() => handleSectionClick(s.id)}
                   className={`group flex items-center gap-3 text-left rounded-lg px-3 py-2 text-sm transition-all duration-150 ${activeSection === s.id
-                      ? 'bg-[#D97A55]/10 text-[#D97A55] font-medium'
-                      : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'
+                    ? 'bg-[#D97A55]/10 text-[#D97A55] font-medium'
+                    : 'text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800'
                     }`}
                 >
                   <span
                     className={`shrink-0 w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold transition-colors ${activeSection === s.id
-                        ? 'bg-[#D97A55] text-white'
-                        : 'bg-zinc-100 text-zinc-400 group-hover:bg-zinc-200'
+                      ? 'bg-[#D97A55] text-white'
+                      : 'bg-zinc-100 text-zinc-400 group-hover:bg-zinc-200'
                       }`}
                   >
                     {i + 1}
@@ -366,8 +366,8 @@ export default function TermsOfService() {
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
                   <polyline points="22,6 12,13 2,6" />
                 </svg>
-                <a href="mailto:orelrevivo4000@gmail.com" className="text-[#D97A55] font-medium hover:underline">
-                  orelrevivo4000@gmail.com
+                <a href="mailto:contact@falbor.xyz" className="text-[#D97A55] font-medium hover:underline">
+                  contact@falbor.xyz
                 </a>
               </div>
               <p className="mt-4 text-sm text-zinc-500">

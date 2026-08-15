@@ -17,7 +17,7 @@ export interface PromptOptions {
     };
   };
   supabaseProjectData?: any;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot';
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
 }
 
 export class PromptLibrary {

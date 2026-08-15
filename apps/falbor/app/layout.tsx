@@ -6,6 +6,13 @@ import { StorageSync } from './lib/auth/StorageSync';
 import { ThemeSync } from './components/ui/ThemeSync.client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { StayUpInit } from './components/stayup/StayUpInit.client';
+import { Montserrat } from 'next/font/google';
+
+const montserrat = Montserrat({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-montserrat',
+});
 
 export const metadata = {
   title: 'Falbor',
@@ -35,7 +42,7 @@ export default function FalborLayout({
           }}
         />
       </head>
-      <body>
+      <body className={`${montserrat.className} ${montserrat.variable}`}>
         <ThemeSync />
         <StayUpInit />
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || ""}>

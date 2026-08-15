@@ -18,8 +18,8 @@ interface MessagesProps {
   isStreaming?: boolean;
   messages?: Message[];
   append?: (message: Message) => void;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
   model?: string;
   provider?: ProviderInfo;
   addToolResult: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;

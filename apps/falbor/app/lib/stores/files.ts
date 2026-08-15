@@ -583,7 +583,7 @@ export class FilesStore {
     const webcontainer = await this.#webcontainer;
 
     try {
-      const relativePath = path.relative(webcontainer.workdir, filePath);
+      let relativePath = filePath; if (relativePath.startsWith(webcontainer.workdir)) { relativePath = relativePath.slice(webcontainer.workdir.length); } relativePath = relativePath.replace(/^\/+/, ""); relativePath = path.normalize(relativePath);
 
       if (!relativePath) {
         throw new Error(`EINVAL: invalid file path, write '${relativePath}'`);
@@ -804,7 +804,7 @@ export class FilesStore {
     const webcontainer = await this.#webcontainer;
 
     try {
-      const relativePath = path.relative(webcontainer.workdir, filePath);
+      let relativePath = filePath; if (relativePath.startsWith(webcontainer.workdir)) { relativePath = relativePath.slice(webcontainer.workdir.length); } relativePath = relativePath.replace(/^\/+/, ""); relativePath = path.normalize(relativePath);
 
       if (!relativePath) {
         throw new Error(`EINVAL: invalid file path, create '${relativePath}'`);
@@ -860,7 +860,7 @@ export class FilesStore {
     const webcontainer = await this.#webcontainer;
 
     try {
-      const relativePath = path.relative(webcontainer.workdir, folderPath);
+      let relativePath = folderPath; if (relativePath.startsWith(webcontainer.workdir)) { relativePath = relativePath.slice(webcontainer.workdir.length); } relativePath = relativePath.replace(/^\/+/, ""); relativePath = path.normalize(relativePath);
 
       if (!relativePath) {
         throw new Error(`EINVAL: invalid folder path, create '${relativePath}'`);
@@ -883,7 +883,7 @@ export class FilesStore {
     const webcontainer = await this.#webcontainer;
 
     try {
-      const relativePath = path.relative(webcontainer.workdir, filePath);
+      let relativePath = filePath; if (relativePath.startsWith(webcontainer.workdir)) { relativePath = relativePath.slice(webcontainer.workdir.length); } relativePath = relativePath.replace(/^\/+/, ""); relativePath = path.normalize(relativePath);
 
       if (!relativePath) {
         throw new Error(`EINVAL: invalid file path, delete '${relativePath}'`);
@@ -915,7 +915,7 @@ export class FilesStore {
     const webcontainer = await this.#webcontainer;
 
     try {
-      const relativePath = path.relative(webcontainer.workdir, folderPath);
+      let relativePath = folderPath; if (relativePath.startsWith(webcontainer.workdir)) { relativePath = relativePath.slice(webcontainer.workdir.length); } relativePath = relativePath.replace(/^\/+/, ""); relativePath = path.normalize(relativePath);
 
       if (!relativePath) {
         throw new Error(`EINVAL: invalid folder path, delete '${relativePath}'`);

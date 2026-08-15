@@ -19,7 +19,7 @@ interface AuthContextValue {
   register: (email: string, password: string) => Promise<{ error?: string; requiresVerification?: boolean; email?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
-  loginWithGoogle: (credential: string) => Promise<{ error?: string }>;
+  loginWithGoogle: (data: { credential?: string; accessToken?: string }) => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -123,12 +123,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const loginWithGoogle = useCallback(async (credential: string) => {
+  const loginWithGoogle = useCallback(async (tokenData: { credential?: string; accessToken?: string }) => {
     try {
       const res = await fetch("/api/auth/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ credential }),
+        body: JSON.stringify(tokenData),
       });
       const data = (await res.json()) as { user?: any; token?: string; error?: string };
       if (!res.ok) return { error: data.error ?? "Google login failed" };

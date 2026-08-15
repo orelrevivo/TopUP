@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useEffect } from "react";
+import { kTheme, DEFAULT_THEME, Theme } from "~/lib/stores/theme";
 
 export function ThemeHandler({ force }: { force?: "light" | "dark" }) {
     const { setTheme } = useTheme();
@@ -9,7 +10,32 @@ export function ThemeHandler({ force }: { force?: "light" | "dark" }) {
     useEffect(() => {
         if (force) {
             setTheme(force);
+            
+            // Force the HTML tag to dark theme for the landing page
+            document.documentElement.setAttribute('data-theme', force);
+            document.documentElement.classList.add(force);
+
+            // Override next-themes and themeStore behavior on landing page
+            if (force === 'dark') {
+                document.documentElement.classList.remove('light');
+                document.documentElement.style.colorScheme = 'dark';
+            }
         }
+        
+        return () => {
+            // When unmounting (e.g. user logs in), restore the real theme
+            const persistedTheme = localStorage.getItem(kTheme) as Theme | undefined;
+            const theme = persistedTheme ?? DEFAULT_THEME;
+            let actualTheme = theme;
+            if (theme === 'system') {
+                actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+            }
+            setTheme(actualTheme);
+            document.documentElement.setAttribute('data-theme', actualTheme);
+            document.documentElement.classList.remove(actualTheme === 'dark' ? 'light' : 'dark');
+            document.documentElement.classList.add(actualTheme);
+            document.documentElement.style.colorScheme = actualTheme;
+        };
     }, [force, setTheme]);
 
     return null;

@@ -73,7 +73,7 @@ export function simplifyFalborActions(input: string | any[] | undefined | null):
 
   // Replace each matching occurrence
   return input.replace(regex, (_0, openingTag, _2, closingTag) => {
-    return `${openingTag}\n          ...\n        ${closingTag}`;
+    return `${openingTag}\n<!-- [SYSTEM NOTE: The file content has been truncated from your conversation history to save tokens. However, in your own responses, YOU MUST STILL OUTPUT THE FULL FILE CONTENT without omitting anything. NEVER USE PLACEHOLDERS.] -->\n${closingTag}`;
   });
 }
 

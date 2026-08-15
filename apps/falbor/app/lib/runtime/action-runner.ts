@@ -325,7 +325,12 @@ export class ActionRunner {
     }
 
     const webcontainer = await this.#webcontainer;
-    const relativePath = nodePath.relative(webcontainer.workdir, action.filePath);
+    let relativePath = action.filePath;
+    if (relativePath.startsWith(webcontainer.workdir)) {
+      relativePath = relativePath.slice(webcontainer.workdir.length);
+    }
+    relativePath = relativePath.replace(/^\/+/, '');
+    relativePath = nodePath.normalize(relativePath);
 
     let folder = nodePath.dirname(relativePath);
 

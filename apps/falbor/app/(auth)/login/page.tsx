@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import BackgroundRays from "~/components/ui/BackgroundRays";
 import { TextShimmer } from "~/components/ui/text-shimmer";
 import { GoogleLogin } from "@react-oauth/google";
+import { ThemeHandler } from "~/components/landing/ThemeHandler";
 
 export default function LoginPage() {
     const [email, setEmail] = useState("");
@@ -42,9 +43,12 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="">
-            <BackgroundRays />
-            <Card className="w-[400px] mx-4 relative z-10">
+        <div
+            className="dark min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat"
+            style={{ backgroundImage: "url('/background/auth.png')" }}
+        >
+            <ThemeHandler force="dark" />
+            <Card className="w-[400px] mx-4 relative z-10 bg-black/50 backdrop-blur-md border-zinc-800">
                 <CardHeader className="text-center">
                     <div className="flex justify-center mb-4">
                         <img src="/logo-light-styled.png" alt="Falbor" className="w-24 inline-block dark:hidden" />
@@ -105,9 +109,9 @@ export default function LoginPage() {
                             {submitting ? "Logging in..." : "Log in"}
                         </Button>
                         <div className="relative w-full py-2 flex items-center justify-center">
-                            <div className="border-t border-falbor-elements-border flex-grow"></div>
+                            <div className="border-t dark:border-[#2B2A33] border-falbor-elements-border flex-grow"></div>
                             <span className="bg-falbor-elements-background-depth-1 px-3 text-xs text-falbor-elements-textSecondary">OR</span>
-                            <div className="border-t border-falbor-elements-border flex-grow"></div>
+                            <div className="border-t dark:border-[#2B2A33] border-falbor-elements-border flex-grow"></div>
                         </div>
                         <div className="w-full flex justify-center h-[40px]">
                             {loginUri && (
@@ -116,6 +120,11 @@ export default function LoginPage() {
                                     login_uri={loginUri}
                                     useOneTap
                                     onSuccess={() => { }}
+                                    theme="outline"
+                                    shape="rectangular"
+                                    size="large"
+                                    text="continue_with"
+                                    width="352"
                                 />
                             )}
                         </div>

@@ -73,8 +73,8 @@ interface HackingBaseChatProps {
   llmErrorAlert?: LlmErrorAlertType;
   clearLlmErrorAlert?: () => void;
   data?: JSONValue[] | undefined;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
   append?: (message: Message) => void;
   designScheme?: DesignScheme;
   setDesignScheme?: (scheme: DesignScheme) => void;

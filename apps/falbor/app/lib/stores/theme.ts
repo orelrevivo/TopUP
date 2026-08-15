@@ -30,7 +30,10 @@ function initStore() {
     if (theme === 'system') {
       actualTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
     }
-    document.querySelector('html')?.setAttribute('data-theme', actualTheme);
+    
+    document.documentElement.setAttribute('data-theme', actualTheme);
+    document.documentElement.classList.remove(actualTheme === 'dark' ? 'light' : 'dark');
+    document.documentElement.classList.add(actualTheme);
 
     return theme;
   }

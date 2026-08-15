@@ -15,13 +15,63 @@ import type { ProviderInfo } from '~/types/model';
 
 const logger = createScopedLogger('MarkdownComponent');
 
+function extractNodeText(node: any): string {
+  if (!node?.children) {
+    return '';
+  }
+
+  return node.children
+    .map((child: any) => {
+      if (child.type === 'text') {
+        return child.value;
+      }
+
+      return extractNodeText(child);
+    })
+    .join('');
+}
+
+function getQuickActionIcon(type: string, label: string) {
+  if (type === 'file') {
+    return 'i-ph:file';
+  }
+
+  if (type === 'link') {
+    return 'i-ph:link';
+  }
+
+  if (type === 'implement') {
+    return 'i-ph:code';
+  }
+
+  const text = `${type} ${label}`.toLowerCase();
+  const keywords: [RegExp, string][] = [
+    [/(think|deep|reason|plan|ponder|reflect|analy)/, 'i-ph:brain'],
+    [/(search|research|lookup|find|investigat|competitor)/, 'i-ph:magnifying-glass'],
+    [/(scan|check|review|audit|verify|test|inspect)/, 'i-ph:scan'],
+    [/(fix|bug|error|repair|resolve|issue|debug|correct)/, 'i-ph:wrench'],
+    [/(design|style|ui|visual|theme|palette|aesthetic|look)/, 'i-ph:palette'],
+    [/(generate|create|build|make|write)/, 'i-ph:sparkle'],
+    [/(explain|learn|how|what|why|detail|understand)/, 'i-ph:chats'],
+    [/(implement|code|develop|deploy)/, 'i-ph:code'],
+  ];
+
+  for (const [regex, icon] of keywords) {
+    if (regex.test(text)) {
+      return icon;
+    }
+  }
+
+  return 'i-ph:lightning';
+}
+
 interface MarkdownProps {
   children: string;
   html?: boolean;
   limitedMarkdown?: boolean;
   append?: (message: Message) => void;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
   model?: string;
   provider?: ProviderInfo;
 }
@@ -162,15 +212,9 @@ export const Markdown = memo(
             const path = dataProps['data-path'] || dataProps.dataPath;
             const href = dataProps['data-href'] || dataProps.dataHref;
 
-            const iconClassMap: Record<string, string> = {
-              file: 'i-ph:file',
-              message: 'i-ph:chats',
-              implement: 'i-ph:code',
-              link: 'i-ph:link',
-            };
-
             const safeType = typeof type === 'string' ? type : '';
-            const iconClass = iconClassMap[safeType] ?? 'i-ph:question';
+            const labelText = extractNodeText(node);
+            const iconClass = getQuickActionIcon(safeType, labelText);
 
             return (
               <button

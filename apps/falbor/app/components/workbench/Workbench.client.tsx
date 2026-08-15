@@ -196,30 +196,34 @@ export const Workbench = memo(
               </button>
             )} */}
             <div className="absolute inset-0 px-2 lg:px-4">
-              <div className="h-full flex flex-col bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor shadow-sm rounded-xl overflow-hidden">
-                  <div className="flex items-center px-3 py-2 border-b border-falbor-elements-borderColor gap-1.5 z-10 bg-falbor-elements-background-depth-2 shrink-0">
-                    <button
-                      className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-falbor-elements-textSecondary mr-1`}
-                      disabled={!canHideChat || isSmallViewport}
-                      onClick={() => {
-                        if (canHideChat) {
-                          chatStore.setKey('showChat', !showChat);
-                        }
-                      }}
-                    />
-                    <button
-                      className={`${showHistory ? 'i-ph:clock-counter-clockwise-fill' : 'i-ph:clock-counter-clockwise'} text-lg text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors mr-2`}
-                      onClick={() => chatStore.setKey('showHistory', !showHistory)}
-                      title="History"
-                    />
-                    <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
-                    <div className="ml-auto" />
-                    {selectedView === 'diff' && (
-                      <FileModifiedDropdown fileHistory={fileHistory} onSelectFile={handleSelectFile} />
-                    )}
-                  </div>
-                  <div className="relative flex-1 overflow-hidden">
-                  <View initial={{ x: '0%' }} animate={{ x: selectedView === 'code' ? '0%' : '-100%' }}>
+              <div className="h-full flex flex-col bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor shadow-sm rounded-[7px] overflow-hidden">
+                <div className="flex items-center px-3 py-2 border-b border-falbor-elements-borderColor gap-1.5 z-10 bg-falbor-elements-background-depth-2 shrink-0">
+                  <button
+                    className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-falbor-elements-textSecondary mr-1`}
+                    disabled={!canHideChat || isSmallViewport}
+                    onClick={() => {
+                      if (canHideChat) {
+                        chatStore.setKey('showChat', !showChat);
+                      }
+                    }}
+                  />
+                  <button
+                    className={`${showHistory ? 'i-ph:clock-counter-clockwise-fill' : 'i-ph:clock-counter-clockwise'} text-lg text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors mr-2`}
+                    onClick={() => chatStore.setKey('showHistory', !showHistory)}
+                    title="History"
+                  />
+                  <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
+                  <div className="ml-auto" />
+                  {selectedView === 'diff' && (
+                    <FileModifiedDropdown fileHistory={fileHistory} onSelectFile={handleSelectFile} />
+                  )}
+                </div>
+                <div className="relative flex-1 overflow-hidden">
+                  <View
+                    initial={{ x: '0%' }}
+                    animate={{ x: selectedView === 'code' ? '0%' : '-100%' }}
+                    style={{ pointerEvents: selectedView === 'code' ? 'auto' : 'none' }}
+                  >
                     <EditorPanel
                       editorDocument={currentDocument}
                       isStreaming={isStreaming}
@@ -237,24 +241,28 @@ export const Workbench = memo(
                   <View
                     initial={{ x: '100%' }}
                     animate={{ x: selectedView === 'preview' ? '0%' : selectedView === 'code' ? '100%' : '-100%' }}
+                    style={{ pointerEvents: selectedView === 'preview' ? 'auto' : 'none' }}
                   >
                     <Preview setSelectedElement={setSelectedElement} />
                   </View>
                   <View
                     initial={{ x: '100%' }}
-                    animate={{ x: selectedView === 'workflow' ? '0%' : (selectedView === 'database') ? '-100%' : '100%' }}
+                    animate={{ x: selectedView === 'workflow' ? '0%' : (selectedView === 'database' || selectedView === 'research') ? '-100%' : '100%' }}
+                    style={{ pointerEvents: selectedView === 'workflow' ? 'auto' : 'none' }}
                   >
                     <WorkflowView sendMessage={sendMessage} />
                   </View>
                   <View
                     initial={{ x: '100%' }}
                     animate={{ x: selectedView === 'database' ? '0%' : (selectedView === 'research' ? '-100%' : '100%') }}
+                    style={{ pointerEvents: selectedView === 'database' ? 'auto' : 'none' }}
                   >
                     <DatabaseView sendMessage={sendMessage} />
                   </View>
                   <View
                     initial={{ x: '100%' }}
                     animate={{ x: selectedView === 'research' ? '0%' : '100%' }}
+                    style={{ pointerEvents: selectedView === 'research' ? 'auto' : 'none' }}
                   >
                     <ResearchView />
                   </View>

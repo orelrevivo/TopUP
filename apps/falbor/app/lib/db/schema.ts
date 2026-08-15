@@ -1,4 +1,18 @@
-import { pgTable, text, timestamp, uuid, jsonb, boolean, integer } from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+import { pgTable, text, timestamp, uuid, jsonb, boolean, integer, decimal } from "drizzle-orm/pg-core";
+
+// Re-export types so `import { Agency } from '~/lib/db/schema'` keeps working.
+// The actual type definitions are in types.ts (safe for client components).
+export type {
+  User, Agency, SubAccount, Permission, Tag, Pipeline, Lane, Ticket,
+  Trigger, Automation, Funnel, FunnelPage, FunnelProduct,
+  NewUser, NewAgency, NewSubAccount, NewFunnel, NewFunnelPage,
+  AgencyWithSubAccounts, UserWithAgency, FunnelWithPages, LaneWithTickets, PipelineWithLanes,
+  Plan, AgencySidebarOption, Contact,
+  Prisma,
+} from './types'
+
+export { ActionType, TriggerTypes } from './types'
 
 export const users = pgTable("users", {
   id: uuid("id").defaultRandom().primaryKey(),
@@ -26,6 +40,8 @@ export const users = pgTable("users", {
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   isVerified: boolean("is_verified").default(true).notNull(),
   verificationCode: text("verification_code"),
+  role: text("role").default("SUBACCOUNT_USER"),
+  agencyId: uuid("agency_id"), // Will reference ve_agencies.id
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -475,3 +491,198 @@ export const stayupNotifications = pgTable("stayup_notifications", {
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+// ─── Visual Editor Tables ────────────────────────────────────────────────────────
+
+export const veAgencies = pgTable("ve_agencies", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  connectAccountId: text("connect_account_id").default(""),
+  customerId: text("customer_id").default(""),
+  name: text("name").notNull(),
+  agencyLogo: text("agency_logo").notNull(),
+  companyEmail: text("company_email").notNull(),
+  companyPhone: text("company_phone").notNull(),
+  whiteLabel: boolean("white_label").default(true).notNull(),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  zipCode: text("zip_code").notNull(),
+  state: text("state").notNull(),
+  country: text("country").notNull(),
+  goal: integer("goal").default(5).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veSubAccounts = pgTable("ve_sub_accounts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  connectAccountId: text("connect_account_id").default(""),
+  paypalClientId: text("paypal_client_id").default(""),
+  name: text("name").notNull(),
+  subAccountLogo: text("sub_account_logo").notNull(),
+  companyEmail: text("company_email").notNull(),
+  companyPhone: text("company_phone").notNull(),
+  goal: integer("goal").default(5).notNull(),
+  address: text("address").notNull(),
+  city: text("city").notNull(),
+  zipCode: text("zip_code").notNull(),
+  state: text("state").notNull(),
+  country: text("country").notNull(),
+  agencyId: uuid("agency_id").notNull().references(() => veAgencies.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const vePermissions = pgTable("ve_permissions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  email: text("email").notNull(), // Should relate to users.email
+  subAccountId: uuid("sub_account_id").notNull().references(() => veSubAccounts.id, { onDelete: "cascade" }),
+  access: boolean("access").notNull(),
+});
+
+export const veTags = pgTable("ve_tags", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  color: text("color").notNull(),
+  subAccountId: uuid("sub_account_id").notNull().references(() => veSubAccounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const vePipelines = pgTable("ve_pipelines", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  subAccountId: uuid("sub_account_id").notNull().references(() => veSubAccounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veLanes = pgTable("ve_lanes", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  pipelineId: uuid("pipeline_id").notNull().references(() => vePipelines.id, { onDelete: "cascade" }),
+  order: integer("order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veTickets = pgTable("ve_tickets", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  laneId: uuid("lane_id").notNull().references(() => veLanes.id, { onDelete: "cascade" }),
+  order: integer("order").default(0).notNull(),
+  value: decimal("value"),
+  description: text("description"),
+  customerId: uuid("customer_id"), // refers to ve_contacts
+  assignedUserId: uuid("assigned_user_id").references(() => users.id, { onDelete: "set null" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veTriggers = pgTable("ve_triggers", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  subAccountId: uuid("sub_account_id").notNull().references(() => veSubAccounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veAutomations = pgTable("ve_automations", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  triggerId: uuid("trigger_id").references(() => veTriggers.id, { onDelete: "cascade" }),
+  published: boolean("published").default(false).notNull(),
+  subAccountId: uuid("sub_account_id").notNull().references(() => veSubAccounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veFunnels = pgTable("ve_funnels", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  published: boolean("published").default(false).notNull(),
+  subDomainName: text("sub_domain_name").unique(),
+  favicon: text("favicon"),
+  liveProducts: text("live_products").default("[]"),
+  subAccountId: uuid("sub_account_id").notNull().references(() => veSubAccounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veFunnelPages = pgTable("ve_funnel_pages", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  pathName: text("path_name").default("").notNull(),
+  visits: integer("visits").default(0).notNull(),
+  content: text("content"),
+  order: integer("order").notNull(),
+  previewImage: text("preview_image"),
+  funnelId: uuid("funnel_id").notNull().references(() => veFunnels.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veFunnelsProduct = pgTable("ve_funnels_product", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  price: text("price").notNull(),
+  priceId: text("price_id").notNull(),
+  subAccountId: uuid("sub_account_id").notNull().references(() => veSubAccounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const veContacts = pgTable("ve_contacts", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  subAccountId: uuid("sub_account_id").notNull().references(() => veSubAccounts.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// --- RELATIONS ---
+export const usersRelations = relations(users, ({ one, many }) => ({
+  Agency: one(veAgencies, { fields: [users.agencyId], references: [veAgencies.id] }),
+  Permissions: many(vePermissions),
+}));
+
+export const veAgenciesRelations = relations(veAgencies, ({ many }) => ({
+  SubAccount: many(veSubAccounts),
+  Users: many(users),
+}));
+
+export const veSubAccountsRelations = relations(veSubAccounts, ({ one, many }) => ({
+  Agency: one(veAgencies, { fields: [veSubAccounts.agencyId], references: [veAgencies.id] }),
+  Permissions: many(vePermissions),
+  Funnels: many(veFunnels),
+  Contact: many(veContacts),
+}));
+
+export const vePermissionsRelations = relations(vePermissions, ({ one }) => ({
+  User: one(users, { fields: [vePermissions.email], references: [users.email] }),
+  SubAccount: one(veSubAccounts, { fields: [vePermissions.subAccountId], references: [veSubAccounts.id] }),
+}));
+
+export const veFunnelsRelations = relations(veFunnels, ({ one, many }) => ({
+  SubAccount: one(veSubAccounts, { fields: [veFunnels.subAccountId], references: [veSubAccounts.id] }),
+  FunnelPages: many(veFunnelPages),
+}));
+
+export const veFunnelPagesRelations = relations(veFunnelPages, ({ one }) => ({
+  Funnel: one(veFunnels, { fields: [veFunnelPages.funnelId], references: [veFunnels.id] }),
+}));
+
+export const veFunnelsProductRelations = relations(veFunnelsProduct, ({ one }) => ({
+  SubAccount: one(veSubAccounts, { fields: [veFunnelsProduct.subAccountId], references: [veSubAccounts.id] }),
+}));
+
+export const veContactsRelations = relations(veContacts, ({ one, many }) => ({
+  SubAccount: one(veSubAccounts, { fields: [veContacts.subAccountId], references: [veSubAccounts.id] }),
+  Ticket: many(veTickets),
+}));
+
+export const veTicketsRelations = relations(veTickets, ({ one }) => ({
+  Contact: one(veContacts, { fields: [veTickets.customerId], references: [veContacts.id] }),
+}));

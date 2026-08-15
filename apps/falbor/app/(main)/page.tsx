@@ -13,12 +13,16 @@ import { usePathname } from 'next/navigation';
 import { LandingScrollHandler } from "~/components/landing/landing-scroll-handler";
 import { ThemeHandler } from "~/components/landing/ThemeHandler";
 import FeaturesHero from "~/components/landing/FeaturesHero";
-import FeatureWebsiteBuilder from "~/components/landing/FeatureWebsiteBuilder";
-import FeatureOrganizations from "~/components/landing/FeatureOrganizations";
-import FeatureDarknet from "~/components/landing/FeatureDarknet";
-import FeatureDatabase from "~/components/landing/FeatureDatabase";
-import FeatureWorkflow from "~/components/landing/FeatureWorkflow";
+import FeatureCard from '~/components/landing/FeatureCard';
+import { featuresData } from '~/components/landing/FeatureData';
 import DefaultDemo from "~/components/landing/Navbar";
+import TestimonialsSection from "~/components/landing/TestimonialsSection";
+import AgentPaceSection from "~/components/landing/AgentPaceSection";
+import FalborRoadSection from "~/components/landing/FalborRoadSection";
+import HowItWorksSection from "~/components/landing/HowItWorksSection";
+import IntegrationsSection from "~/components/landing/IntegrationsSection";
+import PricingSection from "~/components/landing/PricingSection";
+import StartFreeSection from "~/components/landing/StartFreeSection";
 
 const SECTIONS = ["Builder", "Database", "Organizations", "Workflow", "Darknet"];
 const TOTAL = SECTIONS.length; // 5 sections
@@ -139,7 +143,7 @@ function PageContent() {
 
   if (!user) {
     return (
-      <div ref={scrollContainerRef} className="absolute inset-0 overflow-y-auto overflow-x-hidden bg-black text-white">
+      <div ref={scrollContainerRef} className="dark absolute inset-0 overflow-y-auto overflow-x-hidden bg-black text-white">
         <ThemeHandler force="dark" />
         <LandingScrollHandler />
         <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-48px)] max-w-5xl pointer-events-auto">
@@ -147,17 +151,12 @@ function PageContent() {
             <DefaultDemo />
           </div>
         </div>
-
         <div className="relative w-full flex flex-col items-center z-20">
           <div className="relative w-full flex items-center bg-black z-0">
             <FeaturesHero />
           </div>
-
-          {/* 900vh scroll track */}
           <div ref={bookContainerRef} className="h-[900vh] w-full relative bg-black">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
-
-              {/* Ambient glow orbs */}
               <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
                 <motion.div
                   className="absolute w-[800px] h-[800px] rounded-full"
@@ -172,33 +171,22 @@ function PageContent() {
                   transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 4 }}
                 />
               </div>
-
-              {/* Card 1: always visible base */}
               <div className="absolute inset-0 w-full h-full z-[1]">
-                <FeatureWebsiteBuilder />
+                <FeatureCard data={featuresData[0]} />
               </div>
-
-              {/* Card 2: Database */}
               <div ref={card2Ref} className="absolute inset-0 w-full h-full z-[2]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
-                <FeatureDatabase />
+                <FeatureCard data={featuresData[1]} />
               </div>
-
-              {/* Card 3: Organizations */}
               <div ref={card3Ref} className="absolute inset-0 w-full h-full z-[3]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
-                <FeatureOrganizations />
+                <FeatureCard data={featuresData[2]} />
               </div>
-
-              {/* Card 4: Workflow */}
               <div ref={card4Ref} className="absolute inset-0 w-full h-full z-[4]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
-                <FeatureWorkflow />
+                <FeatureCard data={featuresData[3]} />
               </div>
-
               {/* Card 5: Darknet */}
-              <div ref={card5Ref} className="absolute inset-0 w-full h-full z-[5]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
-                <FeatureDarknet />
-              </div>
-
-              {/* Nav dots */}
+              {/* <div ref={card5Ref} className="absolute inset-0 w-full h-full z-[5]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
+                <FeatureCard data={featuresData[4]} />
+              </div> */}
               <div className="absolute right-6 top-1/2 -translate-y-1/2 z-[100] flex flex-col gap-4 items-center">
                 {SECTIONS.map((label, i) => (
                   <div key={label} className="relative flex items-center group">
@@ -217,10 +205,12 @@ function PageContent() {
                   </div>
                 ))}
               </div>
-
             </div>
           </div>
         </div>
+        <HowItWorksSection />
+        <IntegrationsSection />
+        <PricingSection />
       </div>
     );
   }

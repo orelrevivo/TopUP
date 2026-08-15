@@ -149,8 +149,8 @@ export const Artifact = memo(({ artifactId, messageId, append, model, provider }
     computed(artifact.runner.actions, (actions) => {
       // Filter out Supabase actions except for migrations
       return Object.values(actions).filter((action) => {
-        // Exclude actions with type 'supabase' or actions that contain 'supabase' in their content
-        return action.type !== 'supabase' && !(action.type === 'shell' && action.content?.includes('supabase'));
+        // Exclude actions with type 'supabase', 'question', or actions that contain 'supabase' in their content
+        return action.type !== 'supabase' && action.type !== 'question' && !(action.type === 'shell' && action.content?.includes('supabase'));
       });
     }),
   );

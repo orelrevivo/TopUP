@@ -9,5 +9,8 @@
     "dev": "npm run dev --workspace=falbor",
     "build": "npm run build --workspace=falbor",
     "start": "npm run start --workspace=falbor"
+  },
+  "dependencies": {
+    "uuid": "^14.0.1"
   }
 }
