@@ -638,7 +638,6 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                   >
                     <div className="i-ph:network text-xl text-falbor-elements-textSecondary mr-2" />
                     Sources
-                  </button>
                 </Link> */}
                 <Link href={'/visual-editor'} className='relative w-full'>
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
