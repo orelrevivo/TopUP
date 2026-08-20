@@ -15,10 +15,15 @@ import Link from 'next/link'
 import { CustomWaitlist } from '~/components/visual-editor/global/custom-waitlist'
 
 export default async function Home() {
-  const prices = await stripe.prices.list({
-    product: process.env.NEXT_PLURA_PRODUCT_ID,
-    active: true,
-  })
+  let prices = { data: [] as any[] }
+  try {
+    prices = await stripe.prices.list({
+      product: process.env.NEXT_PLURA_PRODUCT_ID,
+      active: true,
+    })
+  } catch (error) {
+    console.warn('Failed to fetch prices from Stripe during build/render.', error)
+  }
 
   return (
     <main className="w-full min-h-screen relative flex items-center justify-center flex-col">
