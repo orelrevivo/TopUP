@@ -8,7 +8,7 @@ export function parseHtmlToEditorElements(html: string): EditorElement[] {
   // Find the body if it exists, otherwise use root
   const root = $('body').length > 0 ? $('body') : $.root()
 
-  function mapNodeToElement(node: cheerio.Element): EditorElement | null {
+  function mapNodeToElement(node: any): EditorElement | null {
     if (node.type === 'text') {
       const text = $(node).text().trim()
       if (!text) return null
@@ -36,7 +36,7 @@ export function parseHtmlToEditorElements(html: string): EditorElement[] {
         const parts = style.split(':')
         if (parts.length === 2) {
           const key = parts[0].trim().replace(/-([a-z])/g, g => g[1].toUpperCase())
-          styles[key as keyof React.CSSProperties] = parts[1].trim()
+          styles[key as keyof React.CSSProperties] = parts[1].trim() as any
         }
       })
     }
@@ -82,7 +82,7 @@ export function parseHtmlToEditorElements(html: string): EditorElement[] {
       name = tagName.toUpperCase()
       const children: EditorElement[] = []
       $(node).contents().each((_, child) => {
-        const childElement = mapNodeToElement(child as cheerio.Element)
+        const childElement = mapNodeToElement(child as any)
         if (childElement) {
           children.push(childElement)
         }
@@ -102,8 +102,8 @@ export function parseHtmlToEditorElements(html: string): EditorElement[] {
 
   const elements: EditorElement[] = []
   
-  root.contents().each((_, child) => {
-    const childElement = mapNodeToElement(child as cheerio.Element)
+  ;(root as any).contents().each((_: any, child: any) => {
+    const childElement = mapNodeToElement(child as any)
     if (childElement) {
       elements.push(childElement)
     }

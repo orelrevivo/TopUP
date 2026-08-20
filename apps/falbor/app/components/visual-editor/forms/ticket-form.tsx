@@ -66,7 +66,7 @@ const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
   const saveTimerRef = useRef<ReturnType<typeof setTimeout>>()
   const [allTeamMembers, setAllTeamMembers] = useState<User[]>([])
   const [assignedTo, setAssignedTo] = useState(
-    (defaultData.ticket?.Assigned as any)?.id || ''
+    defaultData.ticket?.Assigned?.id || ''
   )
   const form = useForm<z.infer<typeof TicketFormSchema>>({
     mode: 'onChange',
@@ -247,7 +247,7 @@ const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
                       <Avatar className="w-8 h-8">
                         <AvatarImage
                           alt="contact"
-                          src={teamMember.avatarUrl || undefined}
+                          src={teamMember.avatarUrl}
                         />
                         <AvatarFallback className="bg-primary text-sm text-white">
                           <User2 size={14} />

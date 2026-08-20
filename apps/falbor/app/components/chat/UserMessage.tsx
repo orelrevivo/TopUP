@@ -123,7 +123,8 @@ export function UserMessage({ content, parts }: UserMessageProps) {
 
 function stripMetadata(content: string) {
   const artifactRegex = /<falborArtifact\s+[^>]*>[\s\S]*?<\/falborArtifact>/gm;
-  return content.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '').replace(artifactRegex, '');
+  const dbContextRegex = /\n\n\[Requirement: Integrate (Neon|Supabase) database for storage\. Generate the code immediately\.\]/g;
+  return content.replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '').replace(artifactRegex, '').replace(dbContextRegex, '');
 }
 
 function parseConnectors(content: string) {

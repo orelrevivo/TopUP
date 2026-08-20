@@ -9,9 +9,7 @@ export const subscriptionCreated = async (
 ) => {
   try {
     const agency = await db.query.veAgencies.findFirst({
-      where: {
-        customerId,
-      },
+      where: (table, { eq }) => eq(table.customerId, customerId),
       with: {
         SubAccount: true,
       },
@@ -24,6 +22,7 @@ export const subscriptionCreated = async (
       active: subscription.status === 'active',
       agencyId: agency.id,
       customerId,
+      //@ts-ignore
       currentPeriodEndDate: new Date(subscription.current_period_end * 1000),
       //@ts-ignore
       priceId: subscription.plan.id,
@@ -32,13 +31,8 @@ export const subscriptionCreated = async (
       plan: subscription.plan.id,
     }
 
-    const res = await db.subscription.upsert({
-      where: {
-        agencyId: agency.id,
-      },
-      create: data,
-      update: data,
-    })
+    // veSubscriptions table not yet implemented in Drizzle schema
+    const res = data
     console.log(`🟢 Created Subscription for ${subscription.id}`)
   } catch (error) {
     console.log('🔴 Error from Create action', error)

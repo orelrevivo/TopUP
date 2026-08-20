@@ -233,6 +233,11 @@ export class FalborShell {
     this.terminal.input('\x03');
     await this.waitTillOscCode('prompt');
 
+    // Synchronize shell state by sending an empty newline and waiting for the prompt
+    // This perfectly clears any dangling input buffer and avoids race conditions
+    this.terminal.input('\n');
+    await this.waitTillOscCode('prompt');
+
     if (state && state.executionPrms) {
       await state.executionPrms;
     }

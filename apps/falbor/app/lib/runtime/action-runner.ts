@@ -405,32 +405,25 @@ export class ActionRunner {
       source: 'netlify',
     });
 
-    const webcontainer = await this.#webcontainer;
+    const shell = this.#shellTerminal();
+    await shell.ready();
 
-    // Create a new terminal specifically for the build
-    const buildProcess = await webcontainer.spawn('npm', ['run', 'build']);
+    if (!shell || !shell.terminal || !shell.process) {
+      unreachable('Shell terminal not found');
+    }
 
-    let output = '';
-    const outputPromise = buildProcess.output.pipeTo(
-      new WritableStream({
-        write(data) {
-          output += data;
-        },
-      }),
-    );
-
-    const exitCode = await buildProcess.exit;
-    await outputPromise.catch(() => {
-      // Ignore output piping errors; we still have whatever was captured
+    const resp = await shell.executeCommand(this.runnerId.get(), action.content, () => {
+      logger.debug(`[${action.type}]:Aborting Action\n\n`, action);
+      action.abort();
     });
 
     let buildDir = '';
 
-    if (exitCode !== 0) {
+    if (resp?.exitCode !== 0) {
       const buildResult = {
         path: buildDir,
-        exitCode,
-        output,
+        exitCode: resp?.exitCode || 1,
+        output: resp?.output || '',
       };
 
       this.buildOutput = buildResult;
@@ -440,15 +433,41 @@ export class ActionRunner {
         type: 'error',
         title: 'Build Failed',
         description: 'Your application build failed',
-        content: output || 'No build output available',
+        content: resp?.output || 'No build output available',
         stage: 'building',
         buildStatus: 'failed',
         deployStatus: 'pending',
         source: 'netlify',
       });
 
-      throw new ActionCommandError('Build Failed', output || 'No Output Available');
+      throw new ActionCommandError('Build Failed', resp?.output || 'No Output Available');
     }
+
+    const webcontainer = await this.#webcontainer;
+    const commonBuildDirs = ['dist', 'build', 'out', 'output', '.next', 'public'];
+    let finalBuildDir = '';
+
+    for (const dir of commonBuildDirs) {
+      try {
+        await webcontainer.fs.readdir(dir);
+        finalBuildDir = dir;
+        break;
+      } catch {
+        continue;
+      }
+    }
+
+    if (!finalBuildDir) {
+      finalBuildDir = 'dist';
+    }
+
+    const buildResult = {
+      path: finalBuildDir,
+      exitCode: 0,
+      output: resp?.output || '',
+    };
+
+    this.buildOutput = buildResult;
 
     // Trigger build success alert
     this.onDeployAlert?.({
@@ -460,35 +479,6 @@ export class ActionRunner {
       deployStatus: 'running',
       source: 'netlify',
     });
-
-    // Check for common build directories
-    const commonBuildDirs = ['dist', 'build', 'out', 'output', '.next', 'public'];
-
-    // Try to find the first existing build directory
-    for (const dir of commonBuildDirs) {
-      const dirPath = nodePath.join(webcontainer.workdir, dir);
-
-      try {
-        await webcontainer.fs.readdir(dirPath);
-        buildDir = dirPath;
-        break;
-      } catch {
-        continue;
-      }
-    }
-
-    // If no build directory was found, use the default (dist)
-    if (!buildDir) {
-      buildDir = nodePath.join(webcontainer.workdir, 'dist');
-    }
-
-    const buildResult = {
-      path: buildDir,
-      exitCode,
-      output,
-    };
-
-    this.buildOutput = buildResult;
 
     return buildResult;
   }

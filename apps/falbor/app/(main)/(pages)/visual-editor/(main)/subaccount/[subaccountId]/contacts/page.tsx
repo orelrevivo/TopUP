@@ -11,7 +11,7 @@ import {
 } from '~/components/visual-editor/ui/table'
 import { db } from '~/lib/visual-editor/db'
 import { Contact, SubAccount, Ticket } from '~/lib/db/schema'
-import format from 'date-fns/format'
+import { format } from 'date-fns'
 import React from 'react'
 import CraeteContactButton from './_components/create-contact-btn'
 

@@ -1,13 +1,10 @@
 import type {
-  Contact,
   Lane,
-  Notification,
-  Prisma,
-  Role,
   Tag,
   Ticket,
   User,
 } from '~/lib/db/schema'
+import type { Role, Contact } from '~/lib/db/types'
 import type {
   _getTicketsWithAllRelations,
   getAuthUserDetails,
@@ -34,12 +31,12 @@ export type NotificationWithUser =
         role: Role
         agencyId: string | null
       }
-    } & Notification)[]
-  | undefined
+    } & any)[]
+  | any
 
-export type UserWithPermissionsAndSubAccounts = Prisma.PromiseReturnType<
+export type UserWithPermissionsAndSubAccounts = Awaited<ReturnType<
   typeof getUserPermissions
->
+>>
 
 export const FunnelPageSchema = z.object({
   name: z.string().min(1),
@@ -49,16 +46,16 @@ export const FunnelPageSchema = z.object({
 
 
 export type AuthUserWithAgencySigebarOptionsSubAccounts =
-  Prisma.PromiseReturnType<typeof getAuthUserDetails>
+  Awaited<ReturnType<typeof getAuthUserDetails>>
 
 export type UsersWithAgencySubAccountPermissionsSidebarOptions =
-  Prisma.PromiseReturnType<
+  Awaited<ReturnType<
     typeof __getUsersWithAgencySubAccountPermissionsSidebarOptions
-  >
+  >>
 
-export type GetMediaFiles = Prisma.PromiseReturnType<typeof getMedia>
+export type GetMediaFiles = Awaited<ReturnType<typeof getMedia>>
 
-export type CreateMediaType = Prisma.MediaCreateWithoutSubaccountInput
+export type CreateMediaType = any
 
 export type TicketAndTags = Ticket & {
   Tags: Tag[]
@@ -81,15 +78,15 @@ export const CreateFunnelFormSchema = z.object({
   favicon: z.string().optional(),
 })
 
-export type PipelineDetailsWithLanesCardsTagsTickets = Prisma.PromiseReturnType<
+export type PipelineDetailsWithLanesCardsTagsTickets = Awaited<ReturnType<
   typeof getPipelineDetails
->
+>>
 
 export const LaneFormSchema = z.object({
   name: z.string().min(1),
 })
 
-export type TicketWithTags = Prisma.PromiseReturnType<typeof getTicketsWithTags>
+export type TicketWithTags = Awaited<ReturnType<typeof getTicketsWithTags>>
 
 const currencyNumberRegex = /^\d+(\.\d{1,2})?$/
 
@@ -101,9 +98,9 @@ export const TicketFormSchema = z.object({
   }),
 })
 
-export type TicketDetails = Prisma.PromiseReturnType<
+export type TicketDetails = Awaited<ReturnType<
   typeof _getTicketsWithAllRelations
->
+>>
 
 export const ContactUserFormSchema = z.object({
   name: z.string().min(1, 'Required'),
@@ -132,8 +129,8 @@ export type StripeCustomerType = {
 
 export type PricesList = Stripe.ApiList<Stripe.Price>
 
-export type FunnelsForSubAccount = Prisma.PromiseReturnType<
+export type FunnelsForSubAccount = Awaited<ReturnType<
   typeof getFunnels
->[0]
+>>[0]
 
-export type UpsertFunnelPage = Prisma.FunnelPageCreateWithoutFunnelInput
+export type UpsertFunnelPage = any

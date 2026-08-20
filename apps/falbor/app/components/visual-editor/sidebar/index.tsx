@@ -34,16 +34,16 @@ const Sidebar = async ({ id, type }: Props) => {
 
   const sidebarOpt =
     type === 'agency'
-      ? user.Agency.SidebarOption?.length
-        ? user.Agency.SidebarOption
+      ? (user.Agency as any).SidebarOption?.length
+        ? (user.Agency as any).SidebarOption
         : [
             { id: '1', name: 'Launchpad', link: `/visual-editor/agency/${user.Agency.id}/launchpad`, icon: 'clipboardIcon', agencyId: user.Agency.id, createdAt: new Date(), updatedAt: new Date() },
             { id: '2', name: 'Sub Accounts', link: `/visual-editor/agency/${user.Agency.id}/all-subaccounts`, icon: 'person', agencyId: user.Agency.id, createdAt: new Date(), updatedAt: new Date() },
             { id: '3', name: 'Team', link: `/visual-editor/agency/${user.Agency.id}/team`, icon: 'shield', agencyId: user.Agency.id, createdAt: new Date(), updatedAt: new Date() },
             { id: '4', name: 'Settings', link: `/visual-editor/agency/${user.Agency.id}/settings`, icon: 'settings', agencyId: user.Agency.id, createdAt: new Date(), updatedAt: new Date() }
           ]
-      : user.Agency.SubAccount.find((subaccount) => subaccount.id === id)?.SidebarOption?.length
-        ? user.Agency.SubAccount.find((subaccount) => subaccount.id === id)?.SidebarOption
+      : (user.Agency.SubAccount.find((subaccount) => subaccount.id === id) as any)?.SidebarOption?.length
+        ? (user.Agency.SubAccount.find((subaccount) => subaccount.id === id) as any)?.SidebarOption
         : [
             { id: '1', name: 'Launchpad', link: `/visual-editor/subaccount/${id}/launchpad`, icon: 'clipboardIcon', subAccountId: id, createdAt: new Date(), updatedAt: new Date() },
             { id: '2', name: 'Funnels', link: `/visual-editor/subaccount/${id}/funnels`, icon: 'pipelines', subAccountId: id, createdAt: new Date(), updatedAt: new Date() },

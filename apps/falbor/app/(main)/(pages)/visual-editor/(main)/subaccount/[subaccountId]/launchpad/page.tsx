@@ -15,6 +15,8 @@ import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
 import PayPalButton from './_components/paypal-button'
+import { eq } from 'drizzle-orm'
+import { veSubAccounts } from '~/lib/db/schema'
 
 type Props = {
   searchParams: {
@@ -57,10 +59,9 @@ const LaunchPad = async ({ params, searchParams }: Props) => {
           grant_type: 'authorization_code',
           code: searchParams.code,
         })
-        await db.query.veSubAccounts.update({
-          where: { id: params.subaccountId },
-          data: { connectAccountId: response.stripe_user_id },
-        })
+        await db.update(veSubAccounts)
+          .set({ connectAccountId: response.stripe_user_id })
+          .where(eq(veSubAccounts.id, params.subaccountId))
         connectedStripeAccount = true
       } catch (error) {
         console.log('🔴 Could not connect stripe account', error)

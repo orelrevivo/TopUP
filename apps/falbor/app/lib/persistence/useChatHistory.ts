@@ -206,8 +206,6 @@ export function useChatHistory() {
         }
       }
 
-      takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), _urlId, chatSummary);
-
       if (!description.get() && firstArtifact?.title) {
         description.set(firstArtifact?.title);
       }
@@ -238,6 +236,8 @@ export function useChatHistory() {
         timestamp: new Date().toISOString(),
         metadata: chatMetadata.get() as Record<string, any>,
       });
+
+      takeSnapshot(messages[messages.length - 1].id, workbenchStore.files.get(), _urlId, chatSummary);
     },
     duplicateCurrentChat: async (listItemId: string) => {
       if (!mixedId && !listItemId) return;

@@ -53,7 +53,7 @@ export function useFalborDeploy() {
         actionId,
         action: {
           type: 'build' as const,
-          content: 'npm install && npm run build',
+          content: 'npm run build',
         },
       };
 
@@ -80,26 +80,34 @@ export function useFalborDeploy() {
       // Get the build files
       const container = await webcontainer;
 
-      // Remove /home/project from buildPath if it exists
-      const buildPath = buildOutput.path ? buildOutput.path.replace('/home/project', '') : '';
-
       // Check if the build path exists
       let finalBuildPath = '';
-
-      // List of common output directories to check
-      const commonOutputDirs = [buildPath, '/dist', '/build', '/out', '/output', '/.next', '/public'].filter(Boolean);
-
-      // Verify the build path exists, or try to find an alternative
       let buildPathExists = false;
 
-      for (const dir of commonOutputDirs) {
+      // First trust the path returned by the action-runner
+      if (buildOutput.path) {
         try {
-          await container.fs.readdir(dir);
-          finalBuildPath = dir;
+          await container.fs.readdir(buildOutput.path);
+          finalBuildPath = buildOutput.path;
           buildPathExists = true;
-          break;
-        } catch (error) {
-          continue;
+        } catch (e) {
+          // Fall back to searching
+        }
+      }
+
+      if (!buildPathExists) {
+        // List of common output directories to check
+        const commonOutputDirs = ['dist', 'build', 'out', 'output', '.next', 'public'];
+  
+        for (const dir of commonOutputDirs) {
+          try {
+            await container.fs.readdir(dir);
+            finalBuildPath = dir;
+            buildPathExists = true;
+            break;
+          } catch (error) {
+            continue;
+          }
         }
       }
 
@@ -260,6 +268,15 @@ export function useFalborDeploy() {
     } catch (error) {
       console.error('Deploy error:', error);
       toast.error(error instanceof Error ? error.message : 'Deployment failed');
+      
+      const deploymentId = `deploy-artifact`;
+      const deployArtifact = workbenchStore.artifacts.get()[deploymentId];
+      if (deployArtifact) {
+        deployArtifact.runner.handleDeployAction('deploying', 'failed', {
+          error: error instanceof Error ? error.message : 'Deployment failed',
+          source: 'falbor'
+        });
+      }
 
       return false;
     } finally {

@@ -14,6 +14,9 @@ import { DEFAULT_MODEL, DEFAULT_PROVIDER, MODEL_REGEX, PROMPT_COOKIE_KEY, PROVID
 import { cubicEasingFn } from '~/utils/easings';
 import { createScopedLogger, renderLogger } from '~/utils/logger';
 import { BaseChat } from './BaseChat';
+// import { SupabaseChatAlert } from './SupabaseChatAlert';
+// import { DeployChatAlert } from './DeployChatAlert';
+import { selectedDatabase } from '~/lib/stores/database';
 import Cookies from 'js-cookie';
 import { debounce } from '~/utils/debounce';
 import { useSettings } from '~/lib/hooks/useSettings';
@@ -34,7 +37,7 @@ import { skillsStore } from '~/lib/stores/skills';
 
 const logger = createScopedLogger('Chat');
 
-export function Chat({ hideIntro }: { hideIntro?: boolean }) {
+export function Chat({ hideIntro, hideSlider, isCompact }: { hideIntro?: boolean; hideSlider?: boolean; isCompact?: boolean }) {
   renderLogger.trace('Chat');
 
   const { ready, initialMessages, storeMessageHistory, importChat, exportChat } = useChatHistory();
@@ -51,6 +54,8 @@ export function Chat({ hideIntro }: { hideIntro?: boolean }) {
           storeMessageHistory={storeMessageHistory}
           importChat={importChat}
           hideIntro={hideIntro}
+          hideSlider={hideSlider}
+          isCompact={isCompact}
         />
       )}
     </>
@@ -82,10 +87,12 @@ interface ChatProps {
   exportChat: () => void;
   description?: string;
   hideIntro?: boolean;
+  hideSlider?: boolean;
+  isCompact?: boolean;
 }
 
 export const ChatImpl = memo(
-  ({ description, initialMessages, storeMessageHistory, importChat, exportChat, hideIntro }: ChatProps) => {
+  ({ description, initialMessages, storeMessageHistory, importChat, exportChat, hideIntro, hideSlider, isCompact }: ChatProps) => {
     useShortcuts();
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -169,7 +176,7 @@ export const ChatImpl = memo(
     const { showChat } = useStore(chatStore);
     const [animationScope, animate] = useAnimate();
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
-    const [chatMode, setChatMode] = useState<'discuss' | 'build' | 'troubleshoot' | 'idea'>('build');
+    const [chatMode, setChatMode] = useState<'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research'>('build');
     const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
     const mcpSettings = useMCPStore((state) => state.settings);
     const selectedMCPs = useMCPStore((state) => state.selectedMCPs);
@@ -193,6 +200,7 @@ export const ChatImpl = memo(
           anonKey: supabaseConn?.credentials?.anonKey,
         },
       },
+      databaseProvider: 'neon',
       maxLLMSteps: mcpSettings.maxLLMSteps,
       mcpEnabled: mcpSettings.mcpEnabled || selectedMCPs.length > 0,
       selectedMCPs: selectedMCPs,
@@ -235,8 +243,6 @@ export const ChatImpl = memo(
           messageLength: message.content.length,
         });
       }
-
-      useMCPStore.getState().clearSelectedMCPs();
 
       logger.debug('Finished streaming');
     }, [model, provider.name]);
@@ -531,6 +537,13 @@ export const ChatImpl = memo(
 
       let finalMessageContent = messageContent;
 
+      const dbContext = selectedDatabase.get();
+      if (dbContext === 'neon') {
+        finalMessageContent = `${finalMessageContent}\n\n[Requirement: Integrate Neon database for storage. Generate the code immediately.]`;
+      } else if (dbContext === 'supabase') {
+        finalMessageContent = `${finalMessageContent}\n\n[Requirement: Integrate Supabase database for storage. Generate the code immediately.]`;
+      }
+
       if (cloneUrl) {
         finalMessageContent = `[Clone Website: ${cloneUrl}]\n\n${finalMessageContent}`;
       }
@@ -546,10 +559,10 @@ export const ChatImpl = memo(
         try {
           const wc = await webcontainer;
           await wc.fs.mkdir('.falbor/uploads', { recursive: true });
-          
+
           for (const file of uploadedFiles) {
-             const arrayBuffer = await file.arrayBuffer();
-             await wc.fs.writeFile(`.falbor/uploads/${file.name}`, new Uint8Array(arrayBuffer));
+            const arrayBuffer = await file.arrayBuffer();
+            await wc.fs.writeFile(`.falbor/uploads/${file.name}`, new Uint8Array(arrayBuffer));
           }
         } catch (e) {
           console.error("Failed to write uploaded files to WebContainer", e);
@@ -787,6 +800,20 @@ export const ChatImpl = memo(
       [input, handleInputChange],
     );
 
+    useEffect(() => {
+      const handleExternalMessage = (event: Event) => {
+        const customEvent = event as CustomEvent<string>;
+        if (customEvent.detail) {
+          sendMessage(undefined as any, customEvent.detail);
+        }
+      };
+
+      window.addEventListener('falbor:externalChatMessage', handleExternalMessage);
+      return () => {
+        window.removeEventListener('falbor:externalChatMessage', handleExternalMessage);
+      };
+    }, [sendMessage]);
+
     return (
       <BaseChat
         ref={animationScope}
@@ -860,10 +887,13 @@ export const ChatImpl = memo(
         setDesignScheme={setDesignScheme}
         selectedElement={selectedElement}
         setSelectedElement={setSelectedElement}
+        hideSlider={hideSlider}
+        isCompact={isCompact}
         cloneUrl={cloneUrl}
         setCloneUrl={setCloneUrl}
         addToolResult={addToolResult}
         onWebSearchResult={handleWebSearchResult}
+        hideIntro={hideIntro}
       />
     );
   },

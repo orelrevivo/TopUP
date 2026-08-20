@@ -32,24 +32,26 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
       const files = workbenchStore.files.get();
       const pages = [];
       let combinedCss = '';
-      
+
       // First pass: collect all CSS
       for (const [filePath, file] of Object.entries(files)) {
-        if (file && filePath.endsWith('.css') && file.type === 'file' && typeof file.content === 'string') {
+        if (!file) continue;
+        if (filePath.endsWith('.css') && file.type === 'file' && typeof file.content === 'string') {
           combinedCss += `\n/* ${filePath} */\n${file.content}\n`;
         }
       }
-      
+
       // Second pass: collect HTML and inject CSS
       for (const [filePath, file] of Object.entries(files)) {
-        if (file && filePath.endsWith('.html') && file.type === 'file' && typeof file.content === 'string') {
+        if (!file) continue;
+        if (filePath.endsWith('.html') && file.type === 'file' && typeof file.content === 'string') {
           const parts = filePath.split('/');
           const fileName = parts[parts.length - 1];
           const name = fileName.replace('.html', '');
           const pathName = name === 'index' ? '' : name;
-          
+
           let htmlContent = file.content;
-          
+
           // Inject styles into the <head> if possible, otherwise prepend
           if (combinedCss) {
             const styleTag = `<style>\n${combinedCss}\n</style>`;
@@ -59,7 +61,7 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
               htmlContent = styleTag + '\n' + htmlContent;
             }
           }
-          
+
           pages.push({
             name: name.charAt(0).toUpperCase() + name.slice(1),
             pathName,
@@ -71,7 +73,7 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
       if (pages.length === 0) {
         throw new Error('No HTML files were found in the generated workspace.');
       }
-      
+
       const { funnelId, pageId } = await publishAIToFunnel('chat-123', subAccountId, pages);
       toast(`Successfully published to Visual Editor Funnel: ${funnelId}`, { type: 'success' });
       router.push(`/visual-editor/subaccount/${subAccountId}/funnels/${funnelId}/editor/${pageId}`);
@@ -128,9 +130,9 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
           </button>
         </div>
       </div>
-      <VisualEditorExportModal 
-        open={modalOpen} 
-        onOpenChange={setModalOpen} 
+      <VisualEditorExportModal
+        open={modalOpen}
+        onOpenChange={setModalOpen}
         onSuccess={handleWorkspaceSuccess}
       />
     </div>

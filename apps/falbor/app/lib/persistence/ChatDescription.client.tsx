@@ -3,6 +3,8 @@ import { TooltipProvider } from '@radix-ui/react-tooltip';
 import WithTooltip from '~/components/ui/Tooltip';
 import { useEditChatDescription } from '~/lib/hooks';
 import { description as descriptionStore } from '~/lib/persistence';
+import { ChatSettingsModal } from '~/components/chat/ChatSettingsModal';
+import { useState } from 'react';
 
 export function ChatDescription() {
   const initialDescription = useStore(descriptionStore)!;
@@ -12,6 +14,8 @@ export function ChatDescription() {
       initialDescription,
       syncWithGlobalStore: true,
     });
+
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   if (!initialDescription) {
     // doing this to prevent showing edit button until chat description is set
@@ -59,8 +63,25 @@ export function ChatDescription() {
               </button>
             </WithTooltip>
           </TooltipProvider>
+
+          <TooltipProvider>
+            <WithTooltip tooltip="Settings">
+              <button
+                type="button"
+                className="ml-2 hover:text-falbor-elements-item-contentAccent"
+                onClick={(event) => {
+                  event.preventDefault();
+                  setSettingsOpen(true);
+                }}
+              >
+                <i className="i-ph:dots-three-vertical-bold h-5 w-5 block" />
+              </button>
+            </WithTooltip>
+          </TooltipProvider>
         </>
       )}
+
+      <ChatSettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
     </div>
   );
 }

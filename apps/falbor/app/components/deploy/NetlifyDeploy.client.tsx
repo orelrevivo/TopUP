@@ -57,7 +57,7 @@ export function useNetlifyDeploy() {
         actionId,
         action: {
           type: 'build' as const,
-          content: 'npm install && npm run build',
+          content: 'npm run build',
         },
       };
 
@@ -84,31 +84,34 @@ export function useNetlifyDeploy() {
       // Get the build files
       const container = await webcontainer;
 
-      // Remove /home/project from buildPath if it exists
-      const buildPath = buildOutput.path.replace('/home/project', '');
-
-      console.log('Original buildPath', buildPath);
-
       // Check if the build path exists
-      let finalBuildPath = buildPath;
-
-      // List of common output directories to check if the specified build path doesn't exist
-      const commonOutputDirs = [buildPath, '/dist', '/build', '/out', '/output', '/.next', '/public'];
-
-      // Verify the build path exists, or try to find an alternative
+      let finalBuildPath = '';
       let buildPathExists = false;
 
-      for (const dir of commonOutputDirs) {
+      // First trust the path returned by the action-runner
+      if (buildOutput.path) {
         try {
-          await container.fs.readdir(dir);
-          finalBuildPath = dir;
+          await container.fs.readdir(buildOutput.path);
+          finalBuildPath = buildOutput.path;
           buildPathExists = true;
-          console.log(`Using build directory: ${finalBuildPath}`);
-          break;
-        } catch (error) {
-          // Directory doesn't exist, try the next one
-          console.log(`Directory ${dir} doesn't exist, trying next option. ${error}`);
-          continue;
+        } catch (e) {
+          // Fall back to searching
+        }
+      }
+
+      if (!buildPathExists) {
+        // List of common output directories to check
+        const commonOutputDirs = ['dist', 'build', 'out', 'output', '.next', 'public'];
+  
+        for (const dir of commonOutputDirs) {
+          try {
+            await container.fs.readdir(dir);
+            finalBuildPath = dir;
+            buildPathExists = true;
+            break;
+          } catch (error) {
+            continue;
+          }
         }
       }
 
@@ -309,6 +312,15 @@ export function useNetlifyDeploy() {
     } catch (error) {
       console.error('Deploy error:', error);
       toast.error(error instanceof Error ? error.message : 'Deployment failed');
+
+      const deploymentId = `deploy-artifact`;
+      const deployArtifact = workbenchStore.artifacts.get()[deploymentId];
+      if (deployArtifact) {
+        deployArtifact.runner.handleDeployAction('deploying', 'failed', {
+          error: error instanceof Error ? error.message : 'Deployment failed',
+          source: 'netlify'
+        });
+      }
 
       return false;
     } finally {

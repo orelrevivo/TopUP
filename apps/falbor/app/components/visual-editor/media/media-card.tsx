@@ -1,5 +1,5 @@
 'use client'
-import { Media } from '~/lib/db/schema'
+
 import { useRouter } from 'next/navigation'
 import React, { useState } from 'react'
 import {
@@ -26,7 +26,7 @@ import Image from 'next/image'
 import { deleteMedia, saveActivityLogsNotification } from '~/lib/visual-editor/queries'
 import { toast } from '../ui/use-toast'
 
-type Props = { file: Media }
+type Props = { file: any }
 
 const MediaCard = ({ file }: Props) => {
   const [loading, setLoading] = useState(false)

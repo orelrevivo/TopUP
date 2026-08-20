@@ -117,7 +117,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
                 >
                   {(provided) => (
                     <div
-                      {...provided.droppableProps}
+                      {...(provided.droppableProps as any)}
                       ref={provided.innerRef}
                     >
                       {pagesState.map((page, idx) => (

@@ -23,6 +23,7 @@ import HowItWorksSection from "~/components/landing/HowItWorksSection";
 import IntegrationsSection from "~/components/landing/IntegrationsSection";
 import PricingSection from "~/components/landing/PricingSection";
 import StartFreeSection from "~/components/landing/StartFreeSection";
+import AgentFeaturesSection from "~/components/landing/AgentFeaturesSection";
 
 const SECTIONS = ["Builder", "Database", "Organizations", "Workflow", "Darknet"];
 const TOTAL = SECTIONS.length; // 5 sections
@@ -155,6 +156,8 @@ function PageContent() {
           <div className="relative w-full flex items-center bg-black z-0">
             <FeaturesHero />
           </div>
+          <AgentFeaturesSection />
+
           <div ref={bookContainerRef} className="h-[900vh] w-full relative bg-black">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
               <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
@@ -208,7 +211,7 @@ function PageContent() {
             </div>
           </div>
         </div>
-        <HowItWorksSection />
+        {/* <HowItWorksSection /> */}
         <IntegrationsSection />
         <PricingSection />
       </div>

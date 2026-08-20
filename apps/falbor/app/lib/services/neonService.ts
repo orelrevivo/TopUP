@@ -5,59 +5,91 @@ import { createScopedLogger } from "~/utils/logger";
 
 const logger = createScopedLogger("api.neonService");
 
+export interface NeonProjectData {
+  databaseUrl: string;
+  projectId: string;
+  databaseName: string;
+  ownerName: string;
+  host: string;
+  password?: string;
+}
+
 export class NeonService {
+  private static failedProvisionChats = new Set<string>();
+
   /**
    * Retrieves an existing Neon database for the chat, or creates a new one via the Neon API.
+   * Returns rich connection data (DATABASE_URL, projectId, etc.) so the AI can wire the
+   * generated website to the provisioned database using Drizzle ORM.
    */
-  static async getOrCreateNeonDatabase(chatId: string): Promise<string | null> {
+  static async getOrCreateNeonDatabase(chatId: string): Promise<NeonProjectData | null> {
     try {
-      // 1. Check if database already exists for this chat
+      if (this.failedProvisionChats.has(chatId)) {
+        throw new Error("Neon provisioning previously failed for this chat (max projects reached). Skipping retry.");
+      }
+
       const [existing] = await db.select().from(neonDatabases).where(eq(neonDatabases.chatId, chatId)).limit(1);
 
       if (existing) {
-        return existing.databaseUrl;
+        return {
+          databaseUrl: existing.databaseUrl,
+          projectId: existing.projectId,
+          databaseName: "neondb",
+          ownerName: "neondb_owner",
+          host: "",
+        };
       }
 
-      // 2. No existing database, check for API key
       const apiKey = process.env.NEON_API_KEY;
       if (!apiKey) {
-        logger.warn("NEON_API_KEY is not set. Skipping Neon database auto-provisioning.");
-        return null;
+        throw new Error("Missing Neon credentials: NEON_API_KEY must be set in your .env file.");
       }
 
-      // 3. Create a new Neon project
-      logger.info(`Creating Neon project for chat: ${chatId}`);
-      
+      logger.info(`Creating a new Neon project for chat: ${chatId}`);
+
+      const projectPayload: any = {
+        name: `falbor-${Date.now().toString().slice(-6)}`,
+        region_id: "aws-us-east-1",
+        pg_version: 17,
+      };
+
+      const orgId = process.env.NEON_ORG_ID;
+      if (orgId) {
+        projectPayload.org_id = orgId;
+      }
+
       const res = await fetch("https://console.neon.tech/api/v2/projects", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${apiKey}`,
           "Content-Type": "application/json",
-          "Accept": "application/json"
+          "Accept": "application/json",
         },
-        body: JSON.stringify({
-          project: {
-            name: `chat-${chatId}`
-          }
-        })
+        body: JSON.stringify({ project: projectPayload }),
       });
 
       if (!res.ok) {
         const errorText = await res.text();
+        if (res.status === 400 && (errorText.includes("maximum") || errorText.includes("limit"))) {
+          this.failedProvisionChats.add(chatId);
+        }
         throw new Error(`Neon API error: ${res.status} - ${errorText}`);
       }
 
       const data = await res.json();
-      
+
       // Neon returns connection_uris array on project creation
       const connectionUri = data.connection_uris?.[0]?.connection_uri;
       const projectId = data.project?.id;
+      const connectionParams = data.connection_uris?.[0]?.connection_parameters || {};
+      const databaseName = connectionParams.database || data.databases?.[0]?.name || "neondb";
+      const ownerName = connectionParams.role || data.roles?.[0]?.name || "neondb_owner";
+      const host = connectionParams.host || "";
 
       if (!connectionUri || !projectId) {
         throw new Error("Invalid response from Neon API: missing connection_uri or project.id");
       }
 
-      // 4. Save to database
       await db.insert(neonDatabases).values({
         chatId,
         databaseUrl: connectionUri,
@@ -65,10 +97,17 @@ export class NeonService {
       });
 
       logger.info(`Successfully provisioned Neon project ${projectId} for chat ${chatId}`);
-      return connectionUri;
-    } catch (error) {
+      return {
+        databaseUrl: connectionUri,
+        projectId,
+        databaseName,
+        ownerName,
+        host,
+        password: connectionParams.password,
+      };
+    } catch (error: any) {
       logger.error("Failed to provision Neon database", error);
-      return null;
+      throw new Error(`Neon Provisioning Failed: ${error.message || String(error)}`);
     }
   }
 }

@@ -2,7 +2,7 @@
 
 import ignore from 'ignore';
 import { useEffect, useState, Suspense } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, useParams } from 'next/navigation';
 import { useGit } from '~/lib/hooks/useGit';
 import { Header } from '~/components/header/Header';
 import BackgroundRays from '~/components/ui/BackgroundRays';
@@ -51,7 +51,13 @@ export default function GitPage() {
 function GitPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const repoUrl = searchParams.get('url') ?? '';
+  const params = useParams<{ repo?: string[] }>();
+
+  let repoUrl = searchParams.get('url') ?? '';
+  
+  if (!repoUrl && params?.repo?.length) {
+    repoUrl = `https://${params.repo.join('/')}`;
+  }
 
   const { ready, gitClone } = useGit();
 

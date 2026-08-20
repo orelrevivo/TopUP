@@ -5,7 +5,7 @@ import { pgTable, text, timestamp, uuid, jsonb, boolean, integer, decimal } from
 // The actual type definitions are in types.ts (safe for client components).
 export type {
   User, Agency, SubAccount, Permission, Tag, Pipeline, Lane, Ticket,
-  Trigger, Automation, Funnel, FunnelPage, FunnelProduct,
+  Trigger, Automation, Action, Funnel, FunnelPage, FunnelProduct,
   NewUser, NewAgency, NewSubAccount, NewFunnel, NewFunnelPage,
   AgencyWithSubAccounts, UserWithAgency, FunnelWithPages, LaneWithTickets, PipelineWithLanes,
   Plan, AgencySidebarOption, Contact,
@@ -597,6 +597,17 @@ export const veAutomations = pgTable("ve_automations", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const veActions = pgTable("ve_actions", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  type: text("type").notNull(),
+  automationId: uuid("automation_id").notNull().references(() => veAutomations.id, { onDelete: "cascade" }),
+  order: integer("order").notNull(),
+  laneId: text("lane_id").default("0").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const veFunnels = pgTable("ve_funnels", {
   id: uuid("id").defaultRandom().primaryKey(),
   name: text("name").notNull(),
@@ -658,11 +669,16 @@ export const veSubAccountsRelations = relations(veSubAccounts, ({ one, many }) =
   Permissions: many(vePermissions),
   Funnels: many(veFunnels),
   Contact: many(veContacts),
+  Tags: many(veTags),
 }));
 
 export const vePermissionsRelations = relations(vePermissions, ({ one }) => ({
   User: one(users, { fields: [vePermissions.email], references: [users.email] }),
   SubAccount: one(veSubAccounts, { fields: [vePermissions.subAccountId], references: [veSubAccounts.id] }),
+}));
+
+export const veTagsRelations = relations(veTags, ({ one }) => ({
+  SubAccount: one(veSubAccounts, { fields: [veTags.subAccountId], references: [veSubAccounts.id] }),
 }));
 
 export const veFunnelsRelations = relations(veFunnels, ({ one, many }) => ({

@@ -23,6 +23,7 @@ import { MCPService } from '~/lib/services/mcpService';
 import { NativeToolsService } from '~/lib/services/nativeToolsService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { SupabaseService } from '~/lib/services/supabaseService';
+import { NeonService } from '~/lib/services/neonService';
 import type { RouteArgs } from '~/lib/security';
 import { webSearch, readPageContent, searchReddit, searchGitHubIssues, searchTwitter } from '~/lib/services/searchTools';
 
@@ -74,7 +75,7 @@ async function chatAction({ context, request }: RouteArgs) {
     },
   });
 
-  const { messages, files, promptId, contextOptimization, supabase, chatMode, isSlidesMode, isGameMode, designScheme, maxLLMSteps, mcpEnabled, selectedMCPs, chatId } =
+  const { messages, files, promptId, contextOptimization, supabase, chatMode, isSlidesMode, isGameMode, designScheme, maxLLMSteps, mcpEnabled, selectedMCPs, chatId, databaseProvider } =
     (await request.json()) as {
       messages: Messages;
       files: any;
@@ -92,6 +93,7 @@ async function chatAction({ context, request }: RouteArgs) {
           supabaseUrl?: string;
         };
       };
+      databaseProvider?: 'neon' | 'supabase';
       maxLLMSteps: number;
       mcpEnabled?: boolean;
       selectedMCPs?: string[];
@@ -464,12 +466,14 @@ THEN build the pixel-perfect clone.`;
           }
         }
 
-        let baseTools: Record<string, any> = {
-          webSearch,
-          readPageContent,
-          searchReddit,
-          searchGitHubIssues,
-          searchTwitter,
+        // IMPORTANT: In build mode we intentionally expose ZERO JSON tools.
+        // The WebContainer workspace is client-side only: file writes and shell
+        // commands can ONLY happen via <falborAction> XML blocks parsed in the
+        // browser. If we define shell/file/start/scan as JSON tools, models like
+        // GPT-5.x prefer native function calling, hit the error stub below, and
+        // give up ("I couldn't create the page"). With no tools available they
+        // must emit the XML format, which is the only path that actually works.
+        const poisonedWorkspaceTools: Record<string, any> = {
           shell: tool({
             description: 'Do not use this. Use <falborAction type="shell"> instead.',
             parameters: z.object({}),
@@ -489,8 +493,22 @@ THEN build the pixel-perfect clone.`;
             description: 'Do not use this. Use <falborAction type="scan"> instead.',
             parameters: z.object({}),
             execute: async () => 'ERROR: You attempted to use a JSON function call for scan. You MUST use the XML format <falborAction type="scan"> instead as per your system prompt instructions.'
-          })
+          }),
         };
+
+        let baseTools: Record<string, any> = {};
+
+        if (chatMode !== 'build') {
+          baseTools = {
+            ...baseTools,
+            webSearch,
+            readPageContent,
+            searchReddit,
+            searchGitHubIssues,
+            searchTwitter,
+            ...poisonedWorkspaceTools,
+          };
+        }
 
         // Determine which MCPs to activate.
         // If selectedMCPs has explicit selections, use those.
@@ -530,13 +548,19 @@ THEN build the pixel-perfect clone.`;
         console.log('[CHAT_ROUTE] Calculated tools:', Object.keys(baseTools));
 
         let supabaseProjectData: any = undefined;
+        let neonProjectData: any = undefined;
         const liveDeductionState = { deductedCents: 0 };
+        const activeDatabaseProvider = databaseProvider || 'neon';
 
         if (chatId) {
           try {
-            supabaseProjectData = await SupabaseService.getOrCreateSupabaseProject(chatId);
+            if (activeDatabaseProvider === 'supabase') {
+              supabaseProjectData = await SupabaseService.getOrCreateSupabaseProject(chatId);
+            } else {
+              neonProjectData = await NeonService.getOrCreateNeonDatabase(chatId);
+            }
           } catch (e: any) {
-            logger.error("Supabase provisioning failed:", e);
+            logger.error(`${activeDatabaseProvider} provisioning failed:`, e);
             dataStream.writeData({
               type: 'progress',
               label: 'database',
@@ -650,6 +674,7 @@ THEN build the pixel-perfect clone.`;
           summary,
           messageSliceId,
           supabaseProjectData,
+          neonProjectData,
           onImageGenerated: (filePath, base64) => {
             dataStream.writeData({
               type: 'file-write',

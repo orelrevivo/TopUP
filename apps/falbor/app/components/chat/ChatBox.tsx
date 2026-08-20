@@ -41,6 +41,7 @@ import { MCP_CONNECTORS } from '~/components/@settings/tabs/mcp/connectors';
 import { useMCPStore } from '~/lib/stores/mcp';
 import Link from 'next/link';
 import { QuestionOverlay, type QuestionData } from './QuestionOverlay';
+import { selectedDatabase } from '~/lib/stores/database';
 
 interface ChatBoxProps {
   isModelSettingsCollapsed: boolean;
@@ -105,9 +106,10 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const [cloneUrlInput, setCloneUrlInput] = React.useState('');
   const [modelSelectorOpen, setModelSelectorOpen] = React.useState(false);
   const { imageGenerationEnabled, applyDesignScheme, setApplyDesignScheme } = useSettings();
-
+  const [isQuestionsOpen, setIsQuestionsOpen] = React.useState(false);
   const selectedMCPs = useMCPStore((state) => state.selectedMCPs);
   const toggleSelectedMCP = useMCPStore((state) => state.toggleSelectedMCP);
+  const activeDb = useStore(selectedDatabase);
   const [connections, setConnections] = React.useState<any[]>([]);
 
   const [balance, setBalance] = React.useState<number | null>(null);
@@ -610,6 +612,57 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     })}
                     <DropdownSeparator />
                     <McpTools asMenuItem={true} />
+                  </DropdownSubContent>
+                </DropdownSub>
+
+                <DropdownSub>
+                  <DropdownSubTrigger>
+                    <div className="i-ph:database text-xl text-falbor-elements-textSecondary"></div>
+                    <span>Database</span>
+                  </DropdownSubTrigger>
+                  <DropdownSubContent className="w-64 z-[1000] p-1">
+                    <div className="relative group w-full mb-1">
+                      <button
+                        onClick={() => {
+                          selectedDatabase.set('neon');
+                          const textarea = props.textareaRef?.current;
+                          if (textarea) {
+                            textarea.focus();
+                          }
+                        }}
+                        className={classNames(
+                          'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
+                          'text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 cursor-pointer',
+                          activeDb === 'neon' && 'bg-falbor-elements-background-depth-3'
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <img src="https://cdn.simpleicons.org/neon" className="w-5 h-5 object-contain" alt="Neon" />
+                          <span>Neon</span>
+                        </div>
+                        {activeDb === 'neon' && <div className="i-ph:check text-[#3ECF8E]" />}
+                      </button>
+                    </div>
+                    <Tooltip
+                      content="This feature will come soon. But in the meantime, you can tell the AI to replace the line for you and use the Supabase that's yours."
+                      side="right"
+                    >
+                      <div className="relative group w-full">
+                        <button
+                          disabled
+                          className={classNames(
+                            'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
+                            'text-falbor-elements-textPrimary opacity-50 cursor-not-allowed'
+                          )}
+                        >
+                          <div className="flex items-center gap-2">
+                            <img src="https://cdn.simpleicons.org/supabase" className="w-5 h-5 object-contain grayscale" alt="Supabase" />
+                            <span>Supabase</span>
+                          </div>
+                          <span className="text-[10px] uppercase tracking-wider font-semibold text-falbor-elements-textTertiary bg-falbor-elements-background-depth-3 px-1.5 py-0.5 rounded">Soon</span>
+                        </button>
+                      </div>
+                    </Tooltip>
                   </DropdownSubContent>
                 </DropdownSub>
 

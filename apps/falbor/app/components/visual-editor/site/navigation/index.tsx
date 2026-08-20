@@ -1,5 +1,5 @@
 import { ModeToggle } from '~/components/visual-editor/global/mode-toggle'
-import { Avatar, AvatarFallback, AvatarImage } from '../ui/avatar'
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar'
 import Image from 'next/image'
 import Link from 'next/link'
 import React from 'react'
@@ -37,7 +37,7 @@ const Navigation = ({ user }: Props) => {
         </Link>
         {user && (
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user?.avatarUrl} alt="Profile" />
+            <AvatarImage src={user?.avatarUrl ?? undefined} alt="Profile" />
             <AvatarFallback className="bg-primary/10">
               {user?.name?.charAt(0)?.toUpperCase() || 'U'}
             </AvatarFallback>

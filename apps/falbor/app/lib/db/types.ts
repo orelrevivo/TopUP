@@ -14,8 +14,10 @@ import type {
   veTickets,
   veTriggers,
   veAutomations,
+  veActions,
   veFunnels,
   veFunnelPages,
+  veFunnelsProduct,
 } from './schema'
 
 // ---------- Core app types ----------
@@ -30,8 +32,10 @@ export type Lane = InferSelectModel<typeof veLanes>
 export type Ticket = InferSelectModel<typeof veTickets>
 export type Trigger = InferSelectModel<typeof veTriggers>
 export type Automation = InferSelectModel<typeof veAutomations>
+export type Action = InferSelectModel<typeof veActions>
 export type Funnel = InferSelectModel<typeof veFunnels>
 export type FunnelPage = InferSelectModel<typeof veFunnelPages>
+export type FunnelProduct = InferSelectModel<typeof veFunnelsProduct>
 
 // ---------- Insert types (for forms) ----------
 export type NewUser = InferInsertModel<typeof users>
@@ -81,10 +85,6 @@ export type Contact = {
   createdAt: Date
   updatedAt: Date
   subAccountId: string
-}
-export type FunnelProduct = {
-  productId: string
-  recurring: boolean
 }
 
 // ---------- Prisma-compatible utility namespace ----------

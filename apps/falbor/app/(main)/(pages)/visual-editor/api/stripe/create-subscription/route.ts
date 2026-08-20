@@ -1,6 +1,8 @@
 import { db } from '~/lib/visual-editor/db'
 import { stripe } from '~/lib/visual-editor/stripe'
 import { NextResponse } from 'next/server'
+import { veAgencies } from '~/lib/db/schema'
+import { eq } from 'drizzle-orm'
 
 export async function POST(req: Request) {
   const { customerId, priceId, email, agencyId } = await req.json()
@@ -22,16 +24,14 @@ export async function POST(req: Request) {
       email,
     })
     activeCustomerId = customer.id
-    await db.query.veAgencies.update({
-      where: { id: agencyId },
-      data: { customerId: activeCustomerId },
-    })
+    await db.update(veAgencies)
+      .set({ customerId: activeCustomerId })
+      .where(eq(veAgencies.id, agencyId))
   }
 
   const subscriptionExists = await db.query.veAgencies.findFirst({
     where: (table, { eq }) => eq(table.customerId, activeCustomerId),
-    with: { Subscription: true },
-  })
+  }) as any
 
   try {
     if (

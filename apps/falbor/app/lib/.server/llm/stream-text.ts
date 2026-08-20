@@ -116,49 +116,89 @@ function stripImagesFromMessages(messages: any[], modelDetails: any): any[] {
 
   logger.info(`Model ${modelDetails.name} is not vision-capable. Stripping image parts.`);
 
+  // When images are stripped, tell the model the user attached an image so it
+  // acknowledges it instead of acting as if nothing was uploaded.
+  const strippedImageNotice = (message: any) => {
+    const hadImage =
+      (Array.isArray(message?.content) && message.content.some((p: any) => p?.type === 'image' || p?.type === 'image_url')) ||
+      Array.isArray(message?.parts) ||
+      Array.isArray(message?.experimental_attachments);
+
+    if (!hadImage) {
+      return message;
+    }
+
+    const notice =
+      '[NOTE: The user attached an image, but the currently selected model does not support image input, so you cannot see it. Briefly acknowledge that you received an image but cannot view it with this model, then proceed with the request using text only — do NOT refuse the request.]';
+
+    if (typeof message.content === 'string') {
+      return { ...message, content: `${message.content}\n\n${notice}` };
+    }
+
+    if (Array.isArray(message.content)) {
+      return { ...message, content: [...message.content, { type: 'text', text: notice }] };
+    }
+
+    return { ...message, content: notice };
+  };
+
   return messages.map((message) => {
     let newContent = message.content;
     let newParts = message.parts;
     let newAttachments = message.experimental_attachments;
+    let hadImage = false;
 
     // 1. Strip images from string/array content
     if (Array.isArray(newContent)) {
-      newContent = newContent.filter(
-        (part: any) =>
-          part &&
-          typeof part === 'object' &&
-          part.type !== 'image' &&
-          part.type !== 'image_url'
+      const filtered = newContent.filter(
+        (part: any) => {
+          const isImage = part && typeof part === 'object' && (part.type === 'image' || part.type === 'image_url');
+          if (isImage) hadImage = true;
+          return !isImage;
+        }
       );
+      newContent = filtered;
       if (newContent.length === 0) newContent = ''; // Prevent empty content array
     }
 
     // 2. Strip images from parts array
     if (Array.isArray(newParts)) {
-      newParts = newParts.filter(
-        (part: any) =>
-          part &&
-          typeof part === 'object' &&
-          part.type !== 'image' &&
-          part.type !== 'image_url'
+      const filtered = newParts.filter(
+        (part: any) => {
+          const isImage = part && typeof part === 'object' && (part.type === 'image' || part.type === 'image_url');
+          if (isImage) hadImage = true;
+          return !isImage;
+        }
       );
+      newParts = filtered;
       if (newParts.length === 0) newParts = undefined;
     }
 
     // 3. Strip image attachments
     if (Array.isArray(newAttachments)) {
-      newAttachments = newAttachments.filter(
-        (attachment: any) => !attachment.contentType?.startsWith('image/')
+      const filtered = newAttachments.filter(
+        (attachment: any) => {
+          const isImage = attachment.contentType?.startsWith('image/');
+          if (isImage) hadImage = true;
+          return !isImage;
+        }
       );
+      newAttachments = filtered;
       if (newAttachments.length === 0) newAttachments = undefined;
     }
 
-    return {
+    let result = {
       ...message,
       content: newContent,
       parts: newParts,
       experimental_attachments: newAttachments,
     };
+
+    if (hadImage && (message.role === 'user' || message.role === 'assistant')) {
+      result = strippedImageNotice(result);
+    }
+
+    return result;
   });
 }
 
@@ -179,6 +219,7 @@ export async function streamText(props: {
   isGameMode?: boolean;
   designScheme?: DesignScheme;
   supabaseProjectData?: any;
+  neonProjectData?: any;
   onImageGenerated?: (filePath: string, base64: string) => void;
 }) {
   const {
@@ -197,6 +238,7 @@ export async function streamText(props: {
     isGameMode,
     designScheme,
     supabaseProjectData,
+    neonProjectData,
     onImageGenerated,
   } = props;
   let currentModel = DEFAULT_MODEL;
@@ -297,14 +339,16 @@ export async function streamText(props: {
         credentials: options?.supabaseConnection?.credentials || undefined,
       },
       supabaseProjectData,
-    }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData);
+      neonProjectData,
+      chatMode,
+    }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData, undefined, neonProjectData);
 
   // Prepend critical file-writing rules to every system prompt.
   const FILE_WRITING_ENFORCEMENT = `
 <CRITICAL_ENFORCEMENT_RULES>
   THESE ARE THE MOST IMPORTANT RULES FOR GENERATING ARTIFACTS AND CODE. YOU MUST FOLLOW THEM EXACTLY OR YOUR OUTPUT WILL BREAK.
 
-  1. WRAP EVERYTHING IN AN ARTIFACT: ALL code files, shell commands, and questions MUST be placed inside a single \`<falborArtifact>\` block. NEVER output raw JSON or code outside of an artifact.
+  1. WRAP EVERYTHING IN AN ARTIFACT: ALL code files, shell commands, and questions MUST be placed inside a single \`<falborArtifact>\` block. NEVER output raw JSON or code outside of an artifact, UNLESS you are calling an available JSON tool/function. You are fully allowed to use the provided tools (like gmail_search_emails, slack_post_message, etc.) as needed.
   2. CONVERSATIONAL CONTEXT: ALWAYS provide a brief, friendly explanation or summary in plain text BEFORE the \`<falborArtifact>\` block. NEVER output just an artifact with no conversational context above it.
   3. EXACTLY ONE ARTIFACT PER MESSAGE: You must use exactly one \`<falborArtifact>\` per response. NEVER create multiple artifacts.
   4. FULL FILES ONLY (NO LAZY UPDATES): When writing or updating files using \`<falborAction type="file">\`, you MUST provide the COMPLETE, unmodified file content from the very first line to the very last line. 
@@ -378,7 +422,7 @@ IMPORTANT REQUIREMENTS FOR SLIDES MODE:
 
   if (modelDetails.name === 'claude-haiku-4-5') {
     systemPrompt = `CRITICAL RULES (MUST FOLLOW):
-1. Never output code or JSON directly in the chat response.
+1. Never output code or JSON directly in the chat response, EXCEPT when natively calling provided tools like webSearch or gmail_search_emails.
 2. ALWAYS use the <falborArtifact> format for writing code.
 3. NEVER use <function_calls>, <invoke>, or <parameter> tags. Output the <falborArtifact> DIRECTLY in your response.
 4. Separate every file using its own <falborAction type="file" filePath="path/to/file"> block. Do not combine multiple files into one.
@@ -572,28 +616,68 @@ ${systemPrompt}`;
       }),
       middleware: {
         wrapStream: async ({ doStream, params }) => {
-          // The set of tool names actually available to the model
-          const availableToolNames = new Set(Object.keys((params as any).tools || {}));
+          // The set of tool names actually available to the model.
+          // params.tools can be either an object (dict) or an array depending on SDK version.
+          const rawTools = (params as any).tools;
+          let availableToolNames: Set<string>;
+          if (Array.isArray(rawTools)) {
+            availableToolNames = new Set(rawTools.map((t: any) => t.name || t.id).filter(Boolean));
+          } else if (rawTools && typeof rawTools === 'object') {
+            availableToolNames = new Set(Object.keys(rawTools));
+          } else {
+            availableToolNames = new Set();
+          }
 
-          params.prompt = params.prompt.map((msg) => {
+          // Track stripped tool-call IDs so we can also remove orphaned tool-result parts.
+          const strippedToolCallIds = new Set<string>();
+
+          // Pass 1: Strip tool-call parts from assistant messages when the tool isn't available.
+          const promptAfterStrip = params.prompt.map((msg) => {
             if (msg.role === 'assistant' && Array.isArray(msg.content)) {
-              return {
-                ...msg,
-                content: msg.content.filter((part: any) => {
-                  // Remove any tool-call parts that reference tools not in the available set
-                  // (e.g. DeepSeek hallucinates 'shell' as a callable tool)
-                  if (part.type === 'tool-call') {
-                    if (availableToolNames.size > 0 && !availableToolNames.has(part.toolName)) {
-                      console.warn(`[stream-text] Stripping hallucinated tool call: ${part.toolName}`);
-                      return false;
-                    }
+              const filtered = msg.content.filter((part: any) => {
+                if (part.type === 'tool-call') {
+                  // Only strip if tools ARE configured but this specific tool is missing.
+                  // If availableToolNames is empty, tools aren't loaded — don't strip valid tool calls.
+                  if (availableToolNames.size > 0 && !availableToolNames.has(part.toolName)) {
+                    console.warn(`[stream-text] Stripping unavailable tool call: ${part.toolName} (id: ${part.toolCallId})`);
+                    if (part.toolCallId) strippedToolCallIds.add(part.toolCallId);
+                    return false;
                   }
-                  return part.type === 'text' || part.type === 'tool-call';
-                }),
-              };
+                }
+                return part.type === 'text' || part.type === 'tool-call';
+              });
+              return { ...msg, content: filtered };
             }
             return msg;
           });
+
+          // Pass 2: Remove orphaned tool-result parts from user messages, and remove
+          // entire messages that become empty after stripping.
+          params.prompt = promptAfterStrip.map((msg) => {
+            // In AI SDK internal format, tool results are stored as 'tool-result' parts
+            // inside 'user' role messages — NOT as separate 'role: tool' messages.
+            if (msg.role === 'user' && Array.isArray(msg.content) && strippedToolCallIds.size > 0) {
+              const filtered = msg.content.filter((part: any) => {
+                if (part.type === 'tool-result' && strippedToolCallIds.has(part.toolCallId)) {
+                  console.warn(`[stream-text] Removing orphaned tool-result for stripped call: ${part.toolCallId}`);
+                  return false;
+                }
+                return true;
+              });
+              // If a user message becomes completely empty after removing tool results, drop it.
+              if (filtered.length === 0) return null;
+              return { ...msg, content: filtered };
+            }
+            // Also handle explicit role:'tool' messages (some SDK versions use this format).
+            if ((msg as any).role === 'tool') {
+              const toolCallId = (msg as any).tool_call_id || (msg as any).toolCallId;
+              if (toolCallId && strippedToolCallIds.has(toolCallId)) {
+                console.warn(`[stream-text] Removing orphaned role:tool message: ${toolCallId}`);
+                return null;
+              }
+            }
+            return msg;
+          }).filter(Boolean) as typeof params.prompt;
 
           // Detect continuation step: if the last message is an assistant message, 
           // the AI SDK is trying to auto-continue. Many models (like DeepSeek) 

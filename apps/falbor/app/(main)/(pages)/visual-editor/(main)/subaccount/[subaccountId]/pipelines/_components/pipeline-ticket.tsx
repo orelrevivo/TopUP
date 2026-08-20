@@ -136,8 +136,8 @@ const PipelineTicket = ({
         }
         return (
           <div
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
+            {...(provided.draggableProps as any)}
+            {...(provided.dragHandleProps as any)}
             ref={provided.innerRef}
           >
             <AlertDialog>
@@ -207,10 +207,10 @@ const PipelineTicket = ({
                       <Avatar className="w-8 h-8">
                         <AvatarImage
                           alt="contact"
-                          src={ticket.Assigned?.avatarUrl}
+                          src={ticket.Assigned?.avatarUrl ?? undefined}
                         />
                         <AvatarFallback className="bg-primary text-sm text-white">
-                          {ticket.Assigned?.name}
+                          {ticket.Assigned?.displayName?.slice(0, 2).toUpperCase() || ticket.Assigned?.email?.slice(0, 2).toUpperCase()}
                           {!ticket.assignedUserId && <User2 size={14} />}
                         </AvatarFallback>
                       </Avatar>
@@ -222,7 +222,7 @@ const PipelineTicket = ({
                         </span>
                         {ticket.assignedUserId && (
                           <span className="text-xs w-28  overflow-ellipsis overflow-hidden whitespace-nowrap text-muted-foreground">
-                            {ticket.Assigned?.name}
+                            {ticket.Assigned?.displayName || ticket.Assigned?.email}
                           </span>
                         )}
                       </div>

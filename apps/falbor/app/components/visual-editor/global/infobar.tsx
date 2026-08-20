@@ -1,14 +1,14 @@
 'use client'
 import { NotificationWithUser } from '~/lib/visual-editor/types'
 import { Avatar, AvatarFallback } from '../ui/avatar'
-// import { Role } from '~/lib/db/schema'
+import { Role } from '~/lib/db/types'
 import React from 'react'
 import { twMerge } from 'tailwind-merge'
 import { ModeToggle } from './mode-toggle'
 
 type Props = {
   notifications: NotificationWithUser | []
-  role?: any
+  role?: Role
   className?: string
   subAccountId?: string
   user: any

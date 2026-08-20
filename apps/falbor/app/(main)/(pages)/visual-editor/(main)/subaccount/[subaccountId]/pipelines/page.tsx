@@ -1,6 +1,7 @@
 import { db } from '~/lib/visual-editor/db'
 import { redirect } from 'next/navigation'
 import React from 'react'
+import { vePipelines } from '~/lib/db/schema'
 
 type Props = {
   params: { subaccountId: string }
@@ -17,12 +18,13 @@ const Pipelines = async ({ params }: Props) => {
     )
 
   try {
-    const response = await db.query.vePipelines.create({
-      data: { name: 'First Pipeline', subAccountId: params.subaccountId },
-    })
+    const response = await db.insert(vePipelines).values({
+      name: 'First Pipeline',
+      subAccountId: params.subaccountId,
+    }).returning()
 
     return redirect(
-      `/visual-editor/subaccount/${params.subaccountId}/pipelines/${response.id}`
+      `/visual-editor/subaccount/${params.subaccountId}/pipelines/${response[0].id}`
     )
   } catch (error) {
     console.log()

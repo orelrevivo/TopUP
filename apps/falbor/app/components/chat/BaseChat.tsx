@@ -90,8 +90,8 @@ interface BaseChatProps {
   llmErrorAlert?: LlmErrorAlertType;
   clearLlmErrorAlert?: () => void;
   data?: JSONValue[] | undefined;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research') => void;
   append?: (message: Message) => void;
   designScheme?: DesignScheme;
   setDesignScheme?: (scheme: DesignScheme) => void;
@@ -102,6 +102,8 @@ interface BaseChatProps {
   setCloneUrl?: (url: string | null) => void;
   addToolResult?: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;
   onWebSearchResult?: (result: string) => void;
+  hideSlider?: boolean;
+  isCompact?: boolean;
 }
 
 export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
@@ -149,6 +151,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       selectedElement,
       setSelectedElement,
       hideIntro,
+      hideSlider,
+      isCompact,
       cloneUrl,
       setCloneUrl,
       addToolResult = () => {
@@ -449,10 +453,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       if (!messages || messages.length === 0) return [];
       const lastMessage = messages[messages.length - 1];
       if (lastMessage.role !== 'assistant') return [];
-      
+
       const content = lastMessage.content;
       if (!content) return [];
-      
+
       const regex = /<falborAction\s+[^>]*type="question"[^>]*>([\s\S]*?)<\/falborAction>/g;
       const questions = [];
       let match;
@@ -481,7 +485,9 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       >
 
         <div className="flex flex-col lg:flex-row overflow-hidden w-full h-full">
-          <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full relative')}>
+          <div className={classNames(styles.Chat, 'flex flex-col flex-grow h-full relative', {
+            'lg:min-w-[var(--chat-min-width)]': !isCompact
+          })}>
             {!chatStarted && !hideIntro && (
               <div id="intro" className="mt-[23vh] max-w-md mx-auto text-center px-4 lg:px-0">
                 <h1 className="text-falbor-elements-textPrimary ml-[-50px] text-5xl lg:text-3xl animate-fade-in flex items-center justify-center gap-2">
@@ -499,7 +505,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
             <HistoryPanel messages={messages || []} />
             <StickToBottom
               data-scrollable="true"
-              className={classNames('pt-2 px-2 sm:px-6 relative mr-10', {
+              className={classNames('pt-2 px-2 relative', {
                 'h-full flex flex-col': chatStarted,
               })}
             >
@@ -603,7 +609,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     qrModalOpen={qrModalOpen}
                     setQrModalOpen={setQrModalOpen}
                     handleFileUpload={handleFileUpload}
-                    chatMode={chatMode}
+                    // chatMode={chatMode}
                     setChatMode={setChatMode}
                     designScheme={designScheme}
                     setDesignScheme={setDesignScheme}
@@ -614,7 +620,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     onWebSearchResult={onWebSearchResult}
                     pendingQuestions={pendingQuestions}
                   />
-                  {!chatStarted && setChatMode && chatMode && (
+                  {!hideSlider && !chatStarted && setChatMode && chatMode && (
                     <div className="flex justify-start mt-3 max-w-chat mx-auto">
                       <Slider
                         selected={chatMode}
@@ -623,6 +629,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           middle: { value: 'troubleshoot', text: 'Troubleshoot', icon: 'i-ph:wrench-duotone' },
                           right: { value: 'discuss', text: 'Chat', icon: 'i-ph:chats-duotone' },
                           extra: { value: 'idea', text: 'Idea', icon: 'i-ph:lightbulb-duotone' },
+                          extra2: { value: 'mvp_research', text: 'MVP & Research', icon: 'i-ph:flask-duotone' },
                         }}
                         setSelected={setChatMode as any}
                       />

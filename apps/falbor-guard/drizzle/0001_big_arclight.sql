@@ -1,0 +1,1 @@
+ALTER TABLE "global_settings" ADD COLUMN "github_app_installation_id" text;

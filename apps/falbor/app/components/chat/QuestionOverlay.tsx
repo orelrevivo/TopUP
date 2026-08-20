@@ -17,9 +17,9 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({ questions, onS
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [customText, setCustomText] = useState('');
-  
+
   const currentQuestion = questions[currentIndex];
-  
+
   // Is an answer selected for the current question?
   const currentAnswer = answers[`q${currentIndex}`];
   const hasAnswer = currentAnswer !== undefined && currentAnswer.trim() !== '';
@@ -38,7 +38,7 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({ questions, onS
     // Treat as "Skipped"
     const newAnswers = { ...answers, [`q${currentIndex}`]: 'Skipped' };
     setAnswers(newAnswers);
-    
+
     if (currentIndex < questions.length - 1) {
       setCurrentIndex(currentIndex + 1);
       setCustomText('');
@@ -55,7 +55,7 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({ questions, onS
       setAnswers({ ...answers, [`q${currentIndex}`]: customText });
     }
   };
-  
+
   const isCustomSelected = currentAnswer !== undefined && currentQuestion.options && !currentQuestion.options.includes(currentAnswer) && currentAnswer !== 'Skipped';
 
   return (
@@ -68,10 +68,10 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({ questions, onS
           <div className="i-ph:x text-lg" />
         </button>
       </div>
-      
+
       <div className="flex-1 overflow-y-auto">
         <p className="text-md text-falbor-elements-textPrimary font-medium mb-4">{currentQuestion?.question}</p>
-        
+
         <div className="flex flex-col gap-3">
           {currentQuestion?.options?.map((opt: string, i: number) => (
             <label key={i} className="flex items-center gap-2 text-sm text-falbor-elements-textSecondary cursor-pointer hover:text-falbor-elements-textPrimary">
@@ -86,7 +86,7 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({ questions, onS
               <span>{opt}</span>
             </label>
           ))}
-          
+
           <label className="flex items-center gap-2 text-sm text-falbor-elements-textSecondary cursor-pointer hover:text-falbor-elements-textPrimary">
             <input
               type="radio"
@@ -113,12 +113,12 @@ export const QuestionOverlay: React.FC<QuestionOverlayProps> = ({ questions, onS
           </label>
         </div>
       </div>
-      
+
       <div className="flex items-center justify-between mt-4 pt-4 border-t border-falbor-elements-borderColor">
         <div className="text-xs text-falbor-elements-textSecondary">
           {currentIndex + 1} of {questions.length}
         </div>
-        
+
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={handleSkip}>
             Skip

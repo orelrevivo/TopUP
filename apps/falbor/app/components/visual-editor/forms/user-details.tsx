@@ -97,10 +97,10 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
     resolver: zodResolver(userDataSchema),
     mode: 'onChange',
     defaultValues: {
-      name: userData ? (userData as any).name : (data?.user as any)?.name,
-      email: userData ? userData.email : data?.user?.email,
-      avatarUrl: userData ? userData.avatarUrl || undefined : data?.user?.avatarUrl || undefined,
-      role: (userData ? userData.role : data?.user?.role) as any,
+      name: userData ? (userData.displayName || userData.email || '') : (data?.user?.displayName || data?.user?.email || ''),
+      email: userData?.email ?? data?.user?.email ?? '',
+      avatarUrl: userData?.avatarUrl ?? data?.user?.avatarUrl ?? '',
+      role: (userData?.role ?? data?.user?.role ?? 'SUBACCOUNT_USER') as "SUBACCOUNT_USER" | "AGENCY_OWNER" | "AGENCY_ADMIN" | "SUBACCOUNT_GUEST",
     },
   })
 
@@ -116,12 +116,22 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
 
   useEffect(() => {
     if (data.user) {
-      form.reset(data.user as any)
+      form.reset({
+        name: (data.user as any).displayName || data.user.email || '',
+        email: data.user.email || '',
+        avatarUrl: data.user.avatarUrl || '',
+        role: (data.user.role || 'SUBACCOUNT_USER') as "SUBACCOUNT_USER" | "AGENCY_OWNER" | "AGENCY_ADMIN" | "SUBACCOUNT_GUEST",
+      })
     }
     if (userData) {
-      form.reset(userData as any)
+      form.reset({
+        name: (userData as any).displayName || userData.email || '',
+        email: userData.email || '',
+        avatarUrl: userData.avatarUrl || '',
+        role: (userData.role || 'SUBACCOUNT_USER') as "SUBACCOUNT_USER" | "AGENCY_OWNER" | "AGENCY_ADMIN" | "SUBACCOUNT_GUEST",
+      })
     }
-  }, [userData, data])
+  }, [userData, data, form])
 
   const onChangePermission = async (
     subAccountId: string,
@@ -139,7 +149,7 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
     if (type === 'agency') {
       await saveActivityLogsNotification({
         agencyId: authUserData?.Agency?.id,
-        description: `Gave ${userData?.name} access to | ${subAccountPermissions?.Permissions.find(
+        description: `Gave ${(userData as any)?.displayName || userData?.email || ''} access to | ${subAccountPermissions?.Permissions.find(
           (p) => p.subAccountId === subAccountId
         )?.SubAccount.name
           } `,
@@ -176,7 +186,11 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
   const onSubmit = async (values: z.infer<typeof userDataSchema>) => {
     if (!id) return
     if (userData || data?.user) {
-      const updatedUser = await updateUser(values)
+      const { name, ...otherValues } = values
+      const updatedUser = await updateUser({
+        ...otherValues,
+        displayName: name,
+      })
       authUserData?.Agency?.SubAccount.filter((subacc) =>
         authUserData.Permissions.find(
           (p) => p.subAccountId === subacc.id && p.access
@@ -184,7 +198,7 @@ const UserDetails = ({ id, type, subAccounts, userData }: Props) => {
       ).forEach(async (subaccount) => {
         await saveActivityLogsNotification({
           agencyId: undefined,
-          description: `Updated ${(userData as any)?.name} information`,
+          description: `Updated ${(userData as any)?.displayName || userData?.email || ''} information`,
           subaccountId: subaccount.id,
         })
       })

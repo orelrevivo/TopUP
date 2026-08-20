@@ -14,8 +14,8 @@ export default class OpenAIProvider extends BaseProvider {
 
   staticModels: ModelInfo[] = [
     // GPT-5.6 Models
-    { name: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 8192 },
-    { name: 'gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 8192 },
+    { name: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 32000, vision: false },
+    { name: 'gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 32000, vision: false },
 
     /*
      * Essential fallback models - only the most stable/reliable ones

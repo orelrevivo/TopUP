@@ -73,7 +73,7 @@ const AutomationBuilder = ({ automation, subaccountId }: Props) => {
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">1</div>
           <h2 className="text-2xl font-semibold">Trigger</h2>
         </div>
-        <Card 
+        <Card
           className="border-dashed border-2 hover:border-primary transition-all cursor-pointer group relative"
           onClick={onEditTrigger}
         >
@@ -112,11 +112,11 @@ const AutomationBuilder = ({ automation, subaccountId }: Props) => {
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">2</div>
           <h2 className="text-2xl font-semibold">Actions</h2>
         </div>
-        
+
         <div className="flex flex-col gap-4">
           {automation.Action.sort((a, b) => a.order - b.order).map((action, index) => (
             <React.Fragment key={action.id}>
-              <Card 
+              <Card
                 className="hover:border-primary transition-all cursor-pointer group"
                 onClick={() => onEditAction(action)}
               >
@@ -140,9 +140,9 @@ const AutomationBuilder = ({ automation, subaccountId }: Props) => {
               )}
             </React.Fragment>
           ))}
-          
-          <Button 
-            variant="outline" 
+
+          <Button
+            variant="outline"
             className="border-dashed border-2 py-8 flex flex-col gap-2 h-auto"
             onClick={onAddAction}
           >

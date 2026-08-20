@@ -128,7 +128,7 @@ export const VisualEditorExportModal: React.FC<VisualEditorExportModalProps> = (
         <DialogDescription>
           Choose how you want to set up your Visual Editor workspace to publish this AI site.
         </DialogDescription>
-        
+
         {renderContent()}
       </Dialog>
     </DialogRoot>

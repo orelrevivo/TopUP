@@ -20,7 +20,7 @@ export async function autoSetupVisualEditorWorkspace() {
     // If the user isn't in DB yet, create them.
     await db.insert(users).values({
       id: v4(),
-      name: authUser.name || 'Unknown',
+      displayName: authUser.displayName || 'Unknown',
       avatarUrl: authUser.avatarUrl || '',
       email: authUser.email,
       role: 'AGENCY_OWNER',
@@ -51,7 +51,7 @@ export async function autoSetupVisualEditorWorkspace() {
       const subAccountId = v4()
       await db.insert(veSubAccounts).values({
         id: subAccountId,
-        name: `${authUser.name || authUser.email}'s Auto SubAccount`,
+        name: `${authUser.displayName || authUser.email}'s Auto SubAccount`,
         subAccountLogo: authUser.avatarUrl || '',
         companyEmail: authUser.email,
         companyPhone: '0000000000',
@@ -77,7 +77,7 @@ export async function autoSetupVisualEditorWorkspace() {
 
   await db.insert(veAgencies).values({
     id: agencyId,
-    name: `${authUser.name || authUser.email}'s Auto Agency`,
+    name: `${authUser.displayName || authUser.email}'s Auto Agency`,
     agencyLogo: authUser.avatarUrl || '',
     companyEmail: authUser.email,
     companyPhone: '0000000000',
@@ -93,7 +93,7 @@ export async function autoSetupVisualEditorWorkspace() {
 
   await db.insert(veSubAccounts).values({
     id: subAccountId,
-    name: `${authUser.name || authUser.email}'s Auto SubAccount`,
+    name: `${authUser.displayName || authUser.email}'s Auto SubAccount`,
     subAccountLogo: authUser.avatarUrl || '',
     companyEmail: authUser.email,
     companyPhone: '0000000000',

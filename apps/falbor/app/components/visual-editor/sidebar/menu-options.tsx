@@ -3,7 +3,6 @@ import {
   Agency,
   AgencySidebarOption,
   SubAccount,
-  SubAccountSidebarOption,
 } from '~/lib/db/schema'
 import { usePathname, useRouter } from 'next/navigation'
 import React, { useEffect, useMemo, useState } from 'react'
@@ -35,7 +34,7 @@ import { deleteAllNotifications, deleteNotification, markNotificationAsRead } fr
 type Props = {
   defaultOpen?: boolean
   subAccounts: SubAccount[]
-  sidebarOpt: AgencySidebarOption[] | SubAccountSidebarOption[]
+  sidebarOpt: AgencySidebarOption[] | any[]
   sidebarLogo: string
   details: any
   user: any
@@ -140,8 +139,8 @@ const MenuOptions = ({
               <TabsContent value="unread">
                 <div className="flex flex-col gap-y-4">
                   {notifications
-                    ?.filter((n) => !n.isRead)
-                    .map((notification) => (
+                    ?.filter((n: any) => !n.isRead)
+                    .map((notification: any) => (
                       <div
                         key={notification.id}
                         className="flex flex-col gap-y-2 mb-2 overflow-x-scroll text-ellipsis"
@@ -149,7 +148,7 @@ const MenuOptions = ({
                         <div className="flex gap-2">
                           <Avatar>
                             <AvatarImage
-                              src={notification.User.avatarUrl}
+                              src={notification.User.avatarUrl ?? undefined}
                               alt="Profile Picture"
                             />
                             <AvatarFallback className="bg-primary">
@@ -205,7 +204,7 @@ const MenuOptions = ({
                         </div>
                       </div>
                     ))}
-                  {notifications?.filter((n) => !n.isRead).length === 0 && (
+                  {notifications?.filter((n: any) => !n.isRead).length === 0 && (
                     <div className="flex flex-col items-center justify-center py-10 text-muted-foreground">
                       <Bell className="h-10 w-10 mb-2 opacity-20" />
                       <p>No unread notifications</p>
@@ -215,7 +214,7 @@ const MenuOptions = ({
               </TabsContent>
               <TabsContent value="all">
                 <div className="flex flex-col gap-y-4">
-                  {notifications?.map((notification) => (
+                  {notifications?.map((notification: any) => (
                     <div
                       key={notification.id}
                       className={clsx(
@@ -226,7 +225,7 @@ const MenuOptions = ({
                       <div className="flex gap-2">
                         <Avatar>
                           <AvatarImage
-                            src={notification.User.avatarUrl}
+                            src={notification.User.avatarUrl ?? undefined}
                             alt="Profile Picture"
                           />
                           <AvatarFallback className="bg-primary">

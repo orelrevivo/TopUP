@@ -7,6 +7,7 @@ import { ThemeSync } from './components/ui/ThemeSync.client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { StayUpInit } from './components/stayup/StayUpInit.client';
 import { Montserrat } from 'next/font/google';
+import { Analytics } from '@vercel/analytics/next';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -51,6 +52,7 @@ export default function FalborLayout({
             {children}
           </AuthProvider>
         </GoogleOAuthProvider>
+        <Analytics />
       </body>
     </html>
   );

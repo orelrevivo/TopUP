@@ -34,8 +34,8 @@ const FunnelStepCard = ({ activePage, funnelPage, index }: Props) => {
         const component = (
           <Card
             className="p-0 relative cursor-grab my-2"
-            {...provided.draggableProps}
-            {...provided.dragHandleProps}
+            {...(provided.draggableProps as any)}
+            {...(provided.dragHandleProps as any)}
             ref={provided.innerRef}
           >
             <CardContent className="p-0 flex items-center gap-4 flex-row">

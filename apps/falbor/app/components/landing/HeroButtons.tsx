@@ -3,9 +3,9 @@ import Link from "next/link"
 const HeroButtons = () => {
     return (
         <>
-            {/* <Link href={"https://github.com/orelrevivo/falbor"} target="_blank">
-                <img src="https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png" className="w-[25px]" />
-            </Link> */}
+            <Link href={"https://github.com/orelrevivo/TopUP"} target="_blank">
+                <img src="/icons/github.svg" alt="github" className="rounded-full w-[35px]" />
+            </Link>
             <Link href={"/login"}>
                 <button className="text-sm text-white font-medium cursor-pointer">Sign In</button>
             </Link>

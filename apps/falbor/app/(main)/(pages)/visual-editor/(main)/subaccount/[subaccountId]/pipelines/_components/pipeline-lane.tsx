@@ -141,7 +141,7 @@ const PipelineLane: React.FC<PipelaneLaneProps> = ({
         }
         return (
           <div
-            {...provided.draggableProps}
+            {...(provided.draggableProps as any)}
             ref={provided.innerRef}
             className="h-full"
           >
@@ -149,7 +149,7 @@ const PipelineLane: React.FC<PipelaneLaneProps> = ({
               <DropdownMenu>
                 <div className="bg-slate-200/30 dark:bg-background/20  h-[700px] w-[300px] px-4 relative rounded-lg overflow-visible flex-shrink-0 ">
                   <div
-                    {...provided.dragHandleProps}
+                    {...(provided.dragHandleProps as any)}
                     className=" h-14 backdrop-blur-lg dark:bg-background/40 bg-slate-200/60  absolute top-0 left-0 right-0 z-10 "
                   >
                     <div className="h-full flex items-center p-4 justify-between cursor-grab border-b-[1px] ">
@@ -182,7 +182,7 @@ const PipelineLane: React.FC<PipelaneLaneProps> = ({
                     {(provided) => (
                       <div className=" max-h-[700px] overflow-scroll pt-12 ">
                         <div
-                          {...provided.droppableProps}
+                          {...(provided.droppableProps as any)}
                           ref={provided.innerRef}
                           className="mt-2"
                         >

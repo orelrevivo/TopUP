@@ -8,6 +8,7 @@ import { fetchSupabaseStats } from '~/lib/stores/supabase';
 import { Dialog, DialogRoot, DialogClose, DialogTitle, DialogButton } from '~/components/ui/Dialog';
 import { toast } from 'react-toastify';
 import { workbenchStore } from '~/lib/stores/workbench';
+import { selectedDatabase } from '~/lib/stores/database';
 
 export function SupabaseConnection() {
   const {
@@ -167,7 +168,6 @@ export function SupabaseConnection() {
       </div> */}
 
       <DialogRoot open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        {isDialogOpen && (
           <Dialog className="max-w-[520px] p-6">
             {isEnvConfigured ? (
               <div className="space-y-4">
@@ -260,6 +260,23 @@ export function SupabaseConnection() {
                 </div>
 
                 <div className="flex justify-end gap-2 mt-6">
+                  {!currentChatId && (
+                    <DialogClose asChild>
+                      <button
+                        onClick={() => {
+                          selectedDatabase.set('supabase');
+                        }}
+                        className={classNames(
+                          'px-4 py-2 rounded-lg text-sm flex items-center gap-2',
+                          'bg-falbor-elements-background-depth-2 text-falbor-elements-textPrimary',
+                          'hover:bg-falbor-elements-background-depth-3 border border-falbor-elements-borderColor',
+                        )}
+                      >
+                        <div className="i-ph:magic-wand w-4 h-4" />
+                        Automatically Supabase
+                      </button>
+                    </DialogClose>
+                  )}
                   <DialogClose asChild>
                     <DialogButton type="secondary">Cancel</DialogButton>
                   </DialogClose>
@@ -427,7 +444,6 @@ export function SupabaseConnection() {
               </div>
             )}
           </Dialog>
-        )}
       </DialogRoot>
     </div>
   );

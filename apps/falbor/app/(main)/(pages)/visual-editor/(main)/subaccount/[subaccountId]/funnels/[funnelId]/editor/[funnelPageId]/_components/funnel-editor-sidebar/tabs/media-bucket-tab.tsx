@@ -9,7 +9,7 @@ type Props = {
 }
 
 const MediaBucketTab = (props: Props) => {
-  const [data, setdata] = useState<GetMediaFiles>(null)
+  const [data, setdata] = useState<GetMediaFiles>({ Media: [] })
 
   useEffect(() => {
     const fetchData = async () => {

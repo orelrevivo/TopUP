@@ -70,8 +70,8 @@ interface MarkdownProps {
   html?: boolean;
   limitedMarkdown?: boolean;
   append?: (message: Message) => void;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research') => void;
   model?: string;
   provider?: ProviderInfo;
 }
