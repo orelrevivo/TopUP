@@ -6,7 +6,7 @@ import { Check, X } from 'lucide-react'
 
 export default function PricingSection() {
     return (
-        <section className="py-16 md:py-32 bg-black text-white relative overflow-hidden">
+        <section id="pricing" className="py-16 md:py-32 bg-black text-white relative overflow-hidden">
             <div className="absolute inset-0 opacity-[0.05]"
                 style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
             <div className="mx-auto max-w-5xl px-6 relative z-10">

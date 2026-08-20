@@ -13,6 +13,9 @@ import { usePathname } from 'next/navigation';
 import { LandingScrollHandler } from "~/components/landing/landing-scroll-handler";
 import { ThemeHandler } from "~/components/landing/ThemeHandler";
 import FeaturesHero from "~/components/landing/FeaturesHero";
+import BuilderJourneySection from "~/components/landing/BuilderJourneySection";
+import IdeaToMVPSection from "~/components/landing/IdeaToMVPSection";
+import Footer from "~/components/landing/Footer";
 import FeatureCard from '~/components/landing/FeatureCard';
 import { featuresData } from '~/components/landing/FeatureData';
 import DefaultDemo from "~/components/landing/Navbar";
@@ -156,6 +159,8 @@ function PageContent() {
           <div className="relative w-full flex items-center bg-black z-0">
             <FeaturesHero />
           </div>
+          <BuilderJourneySection />
+          <IdeaToMVPSection />
           <AgentFeaturesSection />
 
           <div ref={bookContainerRef} className="h-[900vh] w-full relative bg-black">
@@ -214,6 +219,7 @@ function PageContent() {
         {/* <HowItWorksSection /> */}
         <IntegrationsSection />
         <PricingSection />
+        <Footer />
       </div>
     );
   }

@@ -29,11 +29,19 @@ export default function FeaturesHero() {
                         </span>
                     </div>
                 </div>
-                <h1 className="text-4xl md:text-5xl"
-                    style={{ textShadow: '0 0 80px rgba(255,88,0,0.2)' }}>
-                    Build, Deploy, and Automate<br />
-                    <span style={{ background: 'linear-gradient(90deg, #FF5800 0%, #ff8c42 60%, #ffffff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                        at the speed of thought.
+                <h1
+                    className="text-4xl md:text-5xl"
+                    style={{ textShadow: '0 0 80px rgba(255,88,0,0.2)' }}
+                >
+                    Don't just build your idea.<br />
+                    <span
+                        style={{
+                            background: 'linear-gradient(90deg, #FF5800 0%, #ff8c42 60%, #ffffff 100%)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                        }}
+                    >
+                        Find out if it's worth building.
                     </span>
                 </h1>
             </div>
