@@ -79,8 +79,8 @@ interface ChatBoxProps {
   enhancingPrompt?: boolean | undefined;
   enhancePrompt?: (() => void) | undefined;
   onWebSearchResult?: (result: string) => void;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea';
-  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea') => void;
+  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research';
+  setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research') => void;
   designScheme?: DesignScheme;
   setDesignScheme?: (scheme: DesignScheme) => void;
   selectedElement?: ElementInfo | null;
