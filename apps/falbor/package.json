@@ -188,6 +188,7 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-window": "^1.8.8",
+    "@types/uuid": "^10.0.0",
     "@unocss/postcss": "^0.61.9",
     "drizzle-kit": "^0.24.2",
     "eslint": "^8",
