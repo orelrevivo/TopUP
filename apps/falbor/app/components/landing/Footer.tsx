@@ -54,6 +54,7 @@ export default function Footer() {
               <img src="/landing/social/reddit.svg" alt="Reddit" className="w-6 h-6 object-contain" />
             </a>
           </div>
+          <a href="https://ufind.best/products/falbor" target="_blank" rel="noopener"><img src="https://ufind.best/badges/ufind-best-badge-light.svg" alt="Featured on ufind.best" width="150" /></a>
         </div>
       </footer>
     </div>
