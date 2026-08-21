@@ -27,7 +27,7 @@ export const Slider = genericMemo(<T,>({ selected, options, setSelected }: Slide
   const isExtra2Selected = options.extra2 ? selected === options.extra2.value : false;
 
   return (
-    <div className="flex items-center flex-wrap shrink-0 gap-1 border dark:border-falbor-elements-borderColor overflow-hidden rounded-full p-1">
+    <div className="flex items-center flex-wrap shrink-0 gap-1 border dark:border-falbor-elements-borderColor overflow-hidden rounded-md p-1">
       <SliderButton selected={isLeftSelected} icon={options.left.icon} setSelected={() => setSelected?.(options.left.value)}>
         {options.left.text}
       </SliderButton>
@@ -87,7 +87,7 @@ const SliderButton = memo(({ selected, children, icon, setSelected }: SliderButt
         <motion.span
           layoutId="pill-tab"
           transition={{ duration: 0.2, ease: cubicEasingFn }}
-          className="absolute inset-0 z-0 bg-falbor-elements-item-backgroundAccent rounded-full"
+          className="absolute inset-0 z-0 bg-falbor-elements-item-backgroundAccent rounded-md"
         ></motion.span>
       )}
     </button>

@@ -2,11 +2,11 @@
 import { motion } from 'framer-motion';
 
 const TOOLS = [
-  { name: 'Base44', angle: 0, image: '/icons/membership/Base44.svg' },
-  { name: 'Bolt', angle: 72, image: '/icons/membership/bolt-new.svg' },
-  { name: 'Lovable', angle: 144, image: '/icons/membership/lovable.svg' },
-  { name: 'Replit', angle: 216, image: '/icons/membership/replit.svg' },
-  { name: 'v0', angle: 288, image: '/icons/membership/v0.svg' },
+  { name: 'Base44', angle: 0, image: '/icons/membership/Base44.png' },
+  { name: 'Bolt', angle: 72, image: '/icons/membership/bolt-new.png' },
+  { name: 'Lovable', angle: 144, image: '/icons/membership/lovable.png' },
+  { name: 'Replit', angle: 216, image: '/icons/membership/replit.png' },
+  { name: 'v0', angle: 288, image: '/icons/membership/v0.png' },
 ];
 
 const PROCESS_STEPS = [
@@ -63,29 +63,30 @@ export default function BuilderJourneySection() {
 
             {/* Orbiting Tools */}
             {TOOLS.map((tool, i) => {
-              const radius = 140; // Desktop radius
-              // We use standard trigonometry to place items on a circle
-              const radian = (tool.angle - 90) * (Math.PI / 180);
-              const x = Math.cos(radian) * radius;
-              const y = Math.sin(radian) * radius;
-
               return (
                 <motion.div
                   key={tool.name}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.5 + i * 0.1 }}
-                  className="absolute z-10 flex items-center justify-center"
+                  className="absolute inset-4 z-10 pointer-events-none rounded-full"
                   style={{
-                    transform: `translate(${x}px, ${y}px)`,
+                    transform: `rotate(${tool.angle}deg)`,
                   }}
                 >
-                  <div className="flex items-center justify-center p-2.5 hover:scale-110 transition-transform">
-                    <img
-                      src={tool.image}
-                      alt={tool.name}
-                      className={`${tool.name === 'Base44' ? 'h-6 md:h-8' : 'h-8 md:h-15'} w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]`}
-                    />
+                  <div 
+                    className="absolute top-0 left-1/2 flex items-center justify-center pointer-events-auto"
+                    style={{
+                      transform: `translate(-50%, -50%) rotate(-${tool.angle}deg)`,
+                    }}
+                  >
+                    <div className="flex items-center justify-center p-2 hover:scale-110 transition-transform cursor-pointer">
+                      <img
+                        src={tool.image}
+                        alt={tool.name}
+                        className={`${tool.name === 'Base44' ? 'h-6 md:h-8' : 'h-8 md:h-14'} w-auto object-contain drop-shadow-[0_0_10px_rgba(255,255,255,0.1)]`}
+                      />
+                    </div>
                   </div>
                 </motion.div>
               );

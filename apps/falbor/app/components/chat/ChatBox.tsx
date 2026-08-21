@@ -115,6 +115,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const [balance, setBalance] = React.useState<number | null>(null);
   const [subscriptionTier, setSubscriptionTier] = React.useState<string>('free');
   const [displayTokenUsage, setDisplayTokenUsage] = React.useState<boolean>(false);
+  const highlightDivRef = React.useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     if (user) {
@@ -358,9 +359,10 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
 
           <div className="relative w-full">
             <div
+              ref={highlightDivRef}
               className={classNames(
                 'absolute inset-0 pl-4 pt-4 pr-16',
-                'text-sm font-sans whitespace-pre-wrap break-words pointer-events-none',
+                'text-sm font-sans whitespace-pre-wrap break-words pointer-events-none leading-6',
                 'overflow-hidden'
               )}
               aria-hidden="true"
@@ -389,10 +391,15 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
 
             <textarea
               ref={props.textareaRef}
+              onScroll={(e) => {
+                if (highlightDivRef.current) {
+                  highlightDivRef.current.scrollTop = e.currentTarget.scrollTop;
+                }
+              }}
               className={classNames(
                 'relative w-full pl-4 pt-4 pr-16 outline-none resize-none font-sans',
                 'placeholder-falbor-elements-textTertiary',
-                'bg-transparent text-transparent caret-falbor-elements-textPrimary text-sm',
+                'bg-transparent text-transparent caret-falbor-elements-textPrimary text-sm leading-6',
                 'transition-all duration-200',
                 'border-none focus:border-none focus:outline-none focus:ring-0',
               )}
@@ -530,6 +537,85 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     <span>Image generator <span className="text-xs font-mono">(coming soon)</span></span>
                   </DropdownItem>
                 )}
+                <DropdownSub>
+                  <DropdownSubTrigger>
+                    <div className="i-ph:brain text-xl text-falbor-elements-textSecondary"></div>
+                    <span>Choose a model</span>
+                  </DropdownSubTrigger>
+                  <DropdownSubContent className="w-64 max-h-[300px] overflow-y-auto z-[1000] p-1.5 flex flex-col gap-1">
+                    <div className="relative group w-full">
+                      <button
+                        className={classNames(
+                          'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left hover:bg-falbor-elements-background-depth-3 cursor-pointer text-falbor-elements-textPrimary',
+                          props.model === 'gpt-5-6' && 'bg-falbor-elements-background-depth-3'
+                        )}
+                        onClick={() => props.setModel?.('gpt-5-6')}
+                      >
+                        <div className="flex items-center gap-2">
+                          <img src="/icons/OpenAI.svg" alt="GPT" className="w-4 h-4" />
+                          <span>GPT 5.6</span>
+                        </div>
+                      </button>
+                    </div>
+                    
+                    <div className="relative group w-full">
+                      <button
+                        className={classNames(
+                          'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
+                          subscriptionTier === 'pro'
+                            ? 'hover:bg-falbor-elements-background-depth-3 cursor-pointer text-falbor-elements-textPrimary'
+                            : 'text-falbor-elements-textTertiary opacity-60 cursor-not-allowed',
+                          props.model === 'claude-sonnet-4-5' && 'bg-falbor-elements-background-depth-3'
+                        )}
+                        onClick={(e) => {
+                          if (subscriptionTier !== 'pro') {
+                            e.preventDefault();
+                            toast.error("Upgrade to Pro to use Cloud Sonnet 4.5.");
+                            return;
+                          }
+                          props.setModel?.('claude-sonnet-4-5');
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <img src="/icons/claude-color.svg" alt="Claude" className="w-4 h-4" />
+                          <span>Cloud Sonnet 4.5</span>
+                        </div>
+                        {subscriptionTier !== 'pro' && (
+                          <div className="text-[10px] bg-purple-500/10 text-purple-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Pro</div>
+                        )}
+                      </button>
+                    </div>
+
+                    <div className="relative group w-full">
+                      <button
+                        className={classNames(
+                          'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
+                          subscriptionTier === 'pro'
+                            ? 'hover:bg-falbor-elements-background-depth-3 cursor-pointer text-falbor-elements-textPrimary'
+                            : 'text-falbor-elements-textTertiary opacity-60 cursor-not-allowed',
+                          props.model === 'claude-haiku-4-5' && 'bg-falbor-elements-background-depth-3'
+                        )}
+                        onClick={(e) => {
+                          if (subscriptionTier !== 'pro') {
+                            e.preventDefault();
+                            toast.error("Upgrade to Pro to use Cloud Haki 4.5.");
+                            return;
+                          }
+                          props.setModel?.('claude-haiku-4-5');
+                        }}
+                      >
+                        <div className="flex items-center gap-2">
+                          <img src="/icons/claude-color.svg" alt="Claude" className="w-4 h-4" />
+                          <span>Cloud Haki 4.5</span>
+                        </div>
+                        {subscriptionTier !== 'pro' && (
+                          <div className="text-[10px] bg-purple-500/10 text-purple-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Pro</div>
+                        )}
+                      </button>
+                    </div>
+                  </DropdownSubContent>
+                </DropdownSub>
+                
                 {/* 
                 <div className="relative flex items-center gap-2 px-1.5 py-1 rounded-md text-sm text-falbor-elements-textPrimary hover:bg-[#E3E3E3] dark:hover:bg-[#2A2A2A] cursor-pointer w-full">
                   <div className="flex-1">
@@ -622,9 +708,10 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                   </DropdownSubTrigger>
                   <DropdownSubContent className="w-64 z-[1000] p-1">
                     <div className="relative group w-full mb-1">
-                      <button
-                        onClick={() => {
-                          selectedDatabase.set('neon');
+                      <div
+                        onClick={(e) => {
+                          e.preventDefault();
+                          selectedDatabase.set(activeDb === 'neon' ? null : 'neon');
                           const textarea = props.textareaRef?.current;
                           if (textarea) {
                             textarea.focus();
@@ -632,24 +719,27 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                         }}
                         className={classNames(
                           'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
-                          'text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 cursor-pointer',
-                          activeDb === 'neon' && 'bg-falbor-elements-background-depth-3'
+                          'text-falbor-elements-textPrimary hover:bg-falbor-elements-background-depth-3 cursor-pointer'
                         )}
                       >
                         <div className="flex items-center gap-2">
                           <img src="https://cdn.simpleicons.org/neon" className="w-5 h-5 object-contain" alt="Neon" />
-                          <span>Neon</span>
+                          <span>Neon API</span>
                         </div>
-                        {activeDb === 'neon' && <div className="i-ph:check text-[#3ECF8E]" />}
-                      </button>
+                        <Switch.Root
+                          checked={activeDb === 'neon'}
+                          className="w-8 h-4 bg-falbor-elements-background-depth-4 border border-falbor-elements-borderColor rounded-full relative shadow-inner focus:outline-none data-[state=checked]:bg-[#3ECF8E] data-[state=checked]:border-[#3ECF8E] transition-colors pointer-events-none"
+                        >
+                          <Switch.Thumb className="block w-3 h-3 bg-white rounded-full transition-transform transform translate-x-0.5 data-[state=checked]:translate-x-4.5 shadow-sm" />
+                        </Switch.Root>
+                      </div>
                     </div>
                     <Tooltip
                       content="This feature will come soon. But in the meantime, you can tell the AI to replace the line for you and use the Supabase that's yours."
                       side="right"
                     >
                       <div className="relative group w-full">
-                        <button
-                          disabled
+                        <div
                           className={classNames(
                             'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
                             'text-falbor-elements-textPrimary opacity-50 cursor-not-allowed'
@@ -659,8 +749,14 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                             <img src="https://cdn.simpleicons.org/supabase" className="w-5 h-5 object-contain grayscale" alt="Supabase" />
                             <span>Supabase</span>
                           </div>
-                          <span className="text-[10px] uppercase tracking-wider font-semibold text-falbor-elements-textTertiary bg-falbor-elements-background-depth-3 px-1.5 py-0.5 rounded">Soon</span>
-                        </button>
+                          <Switch.Root
+                            disabled
+                            checked={false}
+                            className="w-8 h-4 bg-falbor-elements-background-depth-4 border border-falbor-elements-borderColor rounded-full relative shadow-inner focus:outline-none transition-colors pointer-events-none"
+                          >
+                            <Switch.Thumb className="block w-3 h-3 bg-white rounded-full transition-transform transform translate-x-0.5 shadow-sm" />
+                          </Switch.Root>
+                        </div>
                       </div>
                     </Tooltip>
                   </DropdownSubContent>

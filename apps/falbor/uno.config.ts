@@ -355,6 +355,8 @@ export default defineConfig({
       warn: true,
       collections: {
         ...customIconCollection,
+        ph: () => import('@iconify-json/ph/icons.json', { with: { type: 'json' } }).then(i => i.default),
+        'svg-spinners': () => import('@iconify-json/svg-spinners/icons.json', { with: { type: 'json' } }).then(i => i.default),
       },
       unit: 'em',
     }),

@@ -124,8 +124,6 @@ interface ArtifactProps {
 }
 
 export const Artifact = memo(({ artifactId, messageId, append, model, provider }: ArtifactProps) => {
-  const userToggledActions = useRef(false);
-  const [showActions, setShowActions] = useState(false);
   const [allActionFinished, setAllActionFinished] = useState(false);
 
   // Whether this artifact is from history (loaded on page refresh, not generated in this session).
@@ -155,11 +153,6 @@ export const Artifact = memo(({ artifactId, messageId, append, model, provider }
     }),
   );
 
-  const toggleActions = () => {
-    userToggledActions.current = true;
-    setShowActions(!showActions);
-  };
-
   const diffStats = useMemo(() => {
     let additions = 0;
     let deletions = 0;
@@ -188,10 +181,6 @@ export const Artifact = memo(({ artifactId, messageId, append, model, provider }
   }, [actions, fileHistory]);
 
   useEffect(() => {
-    if (actions.length && !showActions && !userToggledActions.current) {
-      setShowActions(true);
-    }
-
     if (actions.length !== 0) {
       const finished = !actions.find(
         (action) => action.status !== 'complete' && !(action.type === 'start' && action.status === 'running'),
@@ -220,7 +209,7 @@ export const Artifact = memo(({ artifactId, messageId, append, model, provider }
   return (
     <>
       <div className={classNames(
-        "artifact border border-falbor-elements-borderColor flex flex-col overflow-hidden rounded-lg transition-all duration-150",
+        "artifact border border-falbor-elements-borderColor border-r-0 border-t border-l flex flex-col overflow-hidden rounded-lg transition-all duration-150",
         showWorkbench ? "w-full" : "w-full"
       )}>
         <div className="flex">
@@ -248,29 +237,10 @@ export const Artifact = memo(({ artifactId, messageId, append, model, provider }
                   </span>
                 )}
               </div>
-              <div className="w-full text-falbor-elements-textSecondary text-xs mt-0.5">
-                Click to open Workbench
-              </div>
             </div>
           </button>
 
           {artifact.type !== 'bundled' && <div className="bg-falbor-elements-artifacts-borderColor w-[1px]" />}
-          <AnimatePresence>
-            {actions.length && artifact.type !== 'bundled' && (
-              <motion.button
-                initial={{ width: 0 }}
-                animate={{ width: 'auto' }}
-                exit={{ width: 0 }}
-                transition={{ duration: 0.15, ease: cubicEasingFn }}
-                className="bg-falbor-elements-artifacts-background hover:bg-falbor-elements-artifacts-backgroundHover"
-                onClick={toggleActions}
-              >
-                <div className="p-4">
-                  <div className={showActions ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'}></div>
-                </div>
-              </motion.button>
-            )}
-          </AnimatePresence>
         </div>
         {artifact.type === 'bundled' && (
           <div className="flex items-center gap-1.5 p-5 bg-falbor-elements-actions-background border-t border-bolt-elements-artifacts-borderColor">
@@ -291,23 +261,20 @@ export const Artifact = memo(({ artifactId, messageId, append, model, provider }
             </div>
           </div>
         )}
-        <AnimatePresence>
-          {artifact.type !== 'bundled' && showActions && actions.length > 0 && (
-            <motion.div
-              className="actions"
-              initial={{ height: 0 }}
-              animate={{ height: 'auto' }}
-              exit={{ height: '0px' }}
-              transition={{ duration: 0.15 }}
-            >
-              <div className="bg-falbor-elements-artifacts-borderColor h-[1px]" />
-
-              <div className="p-5 text-left bg-falbor-elements-actions-background">
-                <ActionList actions={actions} append={append} artifactId={artifactId} messageId={messageId} model={model} provider={provider} />
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {artifact.type !== 'bundled' && actions.length > 0 && (
+          <motion.div
+            className="actions border-r border-falbor-elements-borderColor"
+            initial={{ height: 0 }}
+            animate={{ height: 'auto' }}
+            exit={{ height: '0px' }}
+            transition={{ duration: 0.15 }}
+          >
+            {/* <div className="bg-falbor-elements-artifacts-borderColor h-[1px]" /> */}
+            <div className="px-4 text-left bg-falbor-elements-actions-background">
+              <ActionList actions={actions} append={append} artifactId={artifactId} messageId={messageId} model={model} provider={provider} isHistorical={isHistoricalArtifact.current} />
+            </div>
+          </motion.div>
+        )}
       </div>
 
       {/* Diff Modal */}
@@ -348,6 +315,7 @@ interface ActionListProps {
   messageId: string;
   model?: string;
   provider?: string;
+  isHistorical?: boolean;
 }
 
 const actionVariants = {
@@ -363,9 +331,10 @@ export function openArtifactInWorkbench(filePath: any) {
   workbenchStore.setSelectedFile(`${WORK_DIR}/${filePath}`);
 }
 
-const ActionList = memo(({ actions, append, artifactId, messageId, model, provider }: ActionListProps) => {
+const ActionList = memo(({ actions, append, artifactId, messageId, model, provider, isHistorical }: ActionListProps) => {
   const [answers, setAnswers] = useState<Record<string, { selectedOption: string; customText: string }>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [showCommands, setShowCommands] = useState(false);
 
   const storageKey = `falbor-answers-${artifactId}-${messageId}`;
 
@@ -421,122 +390,158 @@ const ActionList = memo(({ actions, append, artifactId, messageId, model, provid
     });
     setSubmitted(true);
     localStorage.setItem(storageKey, JSON.stringify(answers));
+  }; const renderAction = (action: ActionState, index: number) => {
+    const isLast = index === actions.length - 1;
+    const { type, content } = action;
+
+    const rawStatus = action.status;
+    const status: ActionState['status'] = isHistorical ? 'complete' : rawStatus;
+
+    if (type === 'analyzer') {
+      return (
+        <motion.li
+          key={index}
+          variants={actionVariants}
+          initial="hidden"
+          animate="visible"
+          className="w-full"
+        >
+          <AnalyzerActionItem action={action} />
+        </motion.li>
+      );
+    }
+
+    if (type === 'question') {
+      const actionId = (action as any).id || action.content;
+      return (
+        <motion.li
+          key={index}
+          variants={actionVariants}
+          initial="hidden"
+          animate="visible"
+          className="w-full"
+        >
+          <QuestionActionItem
+            action={action}
+            value={answers[actionId] || { selectedOption: '', customText: '' }}
+            onChange={(val) => handleAnswerChange(actionId, val)}
+            disabled={submitted}
+          />
+        </motion.li>
+      );
+    }
+
+    return (
+      <motion.li
+        key={index}
+        variants={actionVariants}
+        initial="hidden"
+        className='max-w-[445px]'
+        animate="visible"
+        transition={{
+          duration: 0.2,
+          ease: cubicEasingFn,
+        }}
+      >
+        <div className="flex items-center gap-1.5 text-sm">
+          <div className={classNames('text-lg', getIconColor(status))}>
+            {status === 'running' ? (
+              <>
+                {type !== 'start' ? (
+                  <div className="i-svg-spinners:90-ring-with-bg"></div>
+                ) : (
+                  <div className="i-ph:terminal-window-duotone"></div>
+                )}
+              </>
+            ) : status === 'pending' ? (
+              <div className="i-ph:circle-duotone"></div>
+            ) : status === 'complete' ? (
+              <div className="i-ph:check"></div>
+            ) : status === 'failed' || status === 'aborted' ? (
+              <div className="i-ph:x"></div>
+            ) : null}
+          </div>
+          {type === 'file' ? (
+            <div>
+              Create{' '}
+              <code
+                className="bg-falbor-elements-artifacts-inlineCode-background text-falbor-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-falbor-elements-item-contentAccent hover:underline cursor-pointer"
+                onClick={() => openArtifactInWorkbench((action as any).filePath)}
+              >
+                {(action as any).filePath}
+              </code>
+            </div>
+          ) : type === 'shell' ? (
+            <div className="flex items-center w-full min-h-[28px]">
+              <span className="flex-1">Run command</span>
+            </div>
+          ) : type === 'scan' ? (
+            <div className="flex items-center w-full min-h-[28px]">
+              <span className="flex-1 font-semibold text-[#8b5cf6]">Scanning codebase for errors...</span>
+            </div>
+          ) : type === 'start' ? (
+            <a
+              onClick={(e) => {
+                e.preventDefault();
+                workbenchStore.currentView.set('preview');
+              }}
+              className="flex items-center w-full min-h-[28px]"
+            >
+              <span className="flex-1">Run Files</span>
+            </a>
+          ) : null}
+        </div>
+        {(type === 'shell' || type === 'start' || type === 'scan') && (
+          <ShellCodeBlock
+            classsName={classNames('mt-1', {
+              'mb-3.5': !isLast,
+            })}
+            code={content}
+          />
+        )}
+      </motion.li>
+    );
   };
+
+  const fileAndOtherActions = actions.filter(a => a.type !== 'shell' && a.type !== 'start' && a.type !== 'scan' && a.type !== 'build');
+  const commandActions = actions.filter(a => a.type === 'shell' || a.type === 'start' || a.type === 'scan' || a.type === 'build');
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-      <ul className="list-none space-y-2.5">
-        {actions.map((action, index) => {
-          const { status, type, content } = action;
-          const isLast = index === actions.length - 1;
+      {fileAndOtherActions.length > 0 && (
+        <ul className="list-none space-y-2.5 mb-2.5">
+          {fileAndOtherActions.map((action, index) => renderAction(action, index))}
+        </ul>
+      )}
 
-          if (type === 'analyzer') {
-            return (
-              <motion.li
-                key={index}
-                variants={actionVariants}
-                initial="hidden"
-                animate="visible"
-                className="w-full"
+      {commandActions.length > 0 && (
+        <div className="flex flex-col mt-2 pt-2">
+          <button
+            onClick={() => setShowCommands(!showCommands)}
+            className="flex items-center gap-1.5 text-xs text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors py-1 w-fit"
+          >
+            <div className={showCommands ? 'i-ph:caret-up-bold' : 'i-ph:caret-down-bold'}></div>
+            {showCommands ? 'See less' : 'See more'}
+          </button>
+
+          <AnimatePresence>
+            {showCommands && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                className="overflow-hidden"
               >
-                <AnalyzerActionItem action={action} />
-              </motion.li>
-            );
-          }
+                <ul className="list-none space-y-2.5 mt-3 mb-1">
+                  {commandActions.map((action, index) => renderAction(action, fileAndOtherActions.length + index))}
+                </ul>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      )}
 
-
-          if (type === 'question') {
-            const actionId = (action as any).id || action.content;
-            return (
-              <motion.li
-                key={index}
-                variants={actionVariants}
-                initial="hidden"
-                animate="visible"
-                className="w-full"
-              >
-                <QuestionActionItem
-                  action={action}
-                  value={answers[actionId] || { selectedOption: '', customText: '' }}
-                  onChange={(val) => handleAnswerChange(actionId, val)}
-                  disabled={submitted}
-                />
-              </motion.li>
-            );
-          }
-
-          return (
-            <motion.li
-              key={index}
-              variants={actionVariants}
-              initial="hidden"
-              className='max-w-[445px]'
-              animate="visible"
-              transition={{
-                duration: 0.2,
-                ease: cubicEasingFn,
-              }}
-            >
-              <div className="flex items-center gap-1.5 text-sm">
-                <div className={classNames('text-lg', getIconColor(action.status))}>
-                  {status === 'running' ? (
-                    <>
-                      {type !== 'start' ? (
-                        <div className="i-svg-spinners:90-ring-with-bg"></div>
-                      ) : (
-                        <div className="i-ph:terminal-window-duotone"></div>
-                      )}
-                    </>
-                  ) : status === 'pending' ? (
-                    <div className="i-ph:circle-duotone"></div>
-                  ) : status === 'complete' ? (
-                    <div className="i-ph:check"></div>
-                  ) : status === 'failed' || status === 'aborted' ? (
-                    <div className="i-ph:x"></div>
-                  ) : null}
-                </div>
-                {type === 'file' ? (
-                  <div>
-                    Create{' '}
-                    <code
-                      className="bg-falbor-elements-artifacts-inlineCode-background text-falbor-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-falbor-elements-item-contentAccent hover:underline cursor-pointer"
-                      onClick={() => openArtifactInWorkbench(action.filePath)}
-                    >
-                      {action.filePath}
-                    </code>
-                  </div>
-                ) : type === 'shell' ? (
-                  <div className="flex items-center w-full min-h-[28px]">
-                    <span className="flex-1">Run command</span>
-                  </div>
-                ) : type === 'scan' ? (
-                  <div className="flex items-center w-full min-h-[28px]">
-                    <span className="flex-1 font-semibold text-[#8b5cf6]">Scanning codebase for errors...</span>
-                  </div>
-                ) : type === 'start' ? (
-                  <a
-                    onClick={(e) => {
-                      e.preventDefault();
-                      workbenchStore.currentView.set('preview');
-                    }}
-                    className="flex items-center w-full min-h-[28px]"
-                  >
-                    <span className="flex-1">Run Files</span>
-                  </a>
-                ) : null}
-              </div>
-              {(type === 'shell' || type === 'start' || type === 'scan') && (
-                <ShellCodeBlock
-                  classsName={classNames('mt-1', {
-                    'mb-3.5': !isLast,
-                  })}
-                  code={content}
-                />
-              )}
-            </motion.li>
-          );
-        })}
-      </ul>
       {hasQuestions && (
         <div className="mt-4 flex justify-end">
           <button

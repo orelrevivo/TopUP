@@ -12,16 +12,9 @@ interface GeneralSettings {
   theme: Theme;
   language: string;
   notifications: boolean;
-  defaultModel: string;
+  writeCodeInLive: boolean;
   displayTokenUsage: boolean;
 }
-
-const ALL_MODELS = [
-  { id: 'gpt-4o', name: 'GPT-4o' },
-  { id: 'gpt-5.6-sol', name: 'GPT-5.6 Sol' },
-  { id: 'claude-sonnet-4-5', name: 'Sonnet 4.5' },
-  { id: 'claude-haiku-4-5', name: 'Haiku 4.5' },
-];
 
 export default function SettingsTab() {
   const { t, currentLanguage } = useTranslation();
@@ -30,7 +23,7 @@ export default function SettingsTab() {
     theme: 'system',
     language: 'en',
     notifications: true,
-    defaultModel: 'gpt-4o',
+    writeCodeInLive: false,
     displayTokenUsage: false,
   });
 
@@ -48,13 +41,15 @@ export default function SettingsTab() {
         const res = await fetch('/api/sync');
         if (res.ok) {
           const data = await res.json();
+          const isLiveCode = data.falbor_write_code_in_live === true || data.falbor_write_code_in_live === 'true';
           setSettings({
             theme: data.falbor_theme || 'system',
             language: legacyProfile.language || 'en',
             notifications: legacyProfile.notifications ?? true,
-            defaultModel: data.falbor_default_model || 'gpt-4o',
+            writeCodeInLive: isLiveCode,
             displayTokenUsage: data.falbor_display_token_usage === true || data.falbor_display_token_usage === 'true',
           });
+          localStorage.setItem('falbor_write_code_in_live', JSON.stringify(isLiveCode));
         }
       } catch (e) {
         console.error('Failed to load settings', e);
@@ -83,14 +78,14 @@ export default function SettingsTab() {
     toast[checked ? 'success' : 'info'](`Token usage display ${checked ? 'enabled' : 'disabled'}`);
   };
 
-  const handleChangeModel = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const val = e.target.value;
-    setSettings(prev => ({ ...prev, defaultModel: val }));
-    saveToServer('falbor_default_model', val);
+  const handleToggleWriteCodeInLive = (checked: boolean) => {
+    setSettings(prev => ({ ...prev, writeCodeInLive: checked }));
+    saveToServer('falbor_write_code_in_live', checked);
+    localStorage.setItem('falbor_write_code_in_live', JSON.stringify(checked));
     if (typeof window !== 'undefined') {
-      window.dispatchEvent(new CustomEvent('falbor_default_model_changed', { detail: val }));
+      window.dispatchEvent(new CustomEvent('falbor_write_code_in_live_changed', { detail: checked }));
     }
-    toast.success('Default model updated');
+    toast[checked ? 'success' : 'info'](`Live code writing ${checked ? 'enabled' : 'disabled'}`);
   };
 
   const handleChangeTheme = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -147,33 +142,22 @@ export default function SettingsTab() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Default Model */}
+          {/* Write Code in Live Switch */}
           <div className="p-5 flex items-start justify-between gap-6 border-b border-falbor-elements-borderColor">
             <div className="flex flex-col gap-1.5 flex-1">
               <div className="flex items-center gap-2">
-                <div className="i-ph:robot text-xl text-purple-500" />
-                <h3 className="font-medium text-[15px]">Default Model</h3>
+                <div className="i-ph:code text-xl text-purple-500" />
+                <h3 className="font-medium text-[15px]">Write Code in Live</h3>
               </div>
               <p className="text-sm text-falbor-elements-textSecondary leading-relaxed">
-                Select the AI model that will be used by default in new chats.
+                Automatically write code in live mode in the workbench.
               </p>
             </div>
             <div className="pt-1 shrink-0">
-              <select
-                value={settings.defaultModel}
-                onChange={handleChangeModel}
-                className={classNames(
-                  'p-2 rounded-lg text-sm min-w-[150px]',
-                  'bg-falbor-elements-background-depth-3 border border-falbor-elements-borderColor',
-                  'text-falbor-elements-textPrimary',
-                  'focus:outline-none focus:ring-2 focus:ring-purple-500/30',
-                  'transition-all duration-200'
-                )}
-              >
-                {ALL_MODELS.map(m => (
-                  <option key={m.id} value={m.id}>{m.name}</option>
-                ))}
-              </select>
+              <Switch
+                checked={settings.writeCodeInLive}
+                onCheckedChange={handleToggleWriteCodeInLive}
+              />
             </div>
           </div>
 

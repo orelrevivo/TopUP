@@ -560,17 +560,24 @@ export class WorkbenchStore {
     this.artifacts.setKey(artifactId, { ...artifact, ...state });
   }
   addAction(data: ActionCallbackData) {
-    // this._addAction(data);
+    // Register the action in the runner immediately so the UI shows the file name right away,
+    // without waiting for the execution queue (which may be blocked by a long-running terminal).
+    const artifact = this.#getArtifact(data.artifactId);
+    if (artifact) {
+      artifact.runner.addAction(data);
+    }
 
-    this.addToExecutionQueue(() => this._addAction(data));
+    // Queue the async side-effects (setting selected file / switching to code view) separately.
+    this.addToExecutionQueue(() => this._addActionSideEffects(data));
   }
-  async _addAction(data: ActionCallbackData) {
+
+  async _addActionSideEffects(data: ActionCallbackData) {
     const { artifactId } = data;
 
     const artifact = this.#getArtifact(artifactId);
 
     if (!artifact) {
-      unreachable('Artifact not found');
+      return;
     }
 
     const actionId = data.actionId;
@@ -588,8 +595,11 @@ export class WorkbenchStore {
         this.currentView.set('code');
       }
     }
+  }
 
-    return artifact.runner.addAction(data);
+  /** @deprecated Use addAction instead */
+  async _addAction(data: ActionCallbackData) {
+    return this._addActionSideEffects(data);
   }
 
   runAction(data: ActionCallbackData, isStreaming: boolean = false) {

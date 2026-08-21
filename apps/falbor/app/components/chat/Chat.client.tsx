@@ -106,6 +106,7 @@ export const ChatImpl = memo(
     const [designScheme, setDesignScheme] = useState<DesignScheme>(defaultDesignScheme);
     const actionAlert = useStore(workbenchStore.alert);
     const deployAlert = useStore(workbenchStore.deployAlert);
+    const activeDb = useStore(selectedDatabase);
     const supabaseConn = useStore(supabaseConnection);
     const selectedProject = supabaseConn.stats?.projects?.find(
       (project) => project.id === supabaseConn.selectedProjectId,
@@ -200,7 +201,7 @@ export const ChatImpl = memo(
           anonKey: supabaseConn?.credentials?.anonKey,
         },
       },
-      databaseProvider: 'neon',
+      databaseProvider: activeDb,
       maxLLMSteps: mcpSettings.maxLLMSteps,
       mcpEnabled: mcpSettings.mcpEnabled || selectedMCPs.length > 0,
       selectedMCPs: selectedMCPs,
@@ -219,6 +220,7 @@ export const ChatImpl = memo(
       selectedProject,
       supabaseConn?.credentials?.supabaseUrl,
       supabaseConn?.credentials?.anonKey,
+      activeDb,
       mcpSettings.maxLLMSteps,
       mcpSettings.mcpEnabled,
       selectedMCPs,

@@ -42,16 +42,16 @@ export default function Footer() {
           <p className="text-sm">© {new Date().getFullYear()} Falbor. All rights reserved.</p>
           <div className="flex items-center gap-4">
             <a href="https://x.com/WrRbybw84381" target="_blank" className="hover:scale-110 transition-transform">
-              <img src="/landing/social/X.svg" alt="X" className="w-14 h-14 object-contain" />
+              <img src="/landing/social/X.png" alt="X" className="w-14 h-14 object-contain" />
             </a>
             <a href="https://www.instagram.com/falbor.xyz" target="_blank" className="hover:scale-110 transition-transform">
-              <img src="/landing/social/instagram.svg" alt="Instagram" className="w-6 h-6 object-contain" />
+              <img src="/landing/social/instagram.png" alt="Instagram" className="w-6 h-6 object-contain" />
             </a>
             <a href="https://www.linkedin.com/company/falbor-xyz" target="_blank" className="hover:scale-110 transition-transform">
-              <img src="/landing/social/linkdin.svg" alt="LinkedIn" className="w-11 h-11 object-contain" />
+              <img src="/landing/social/linkdin.png" alt="LinkedIn" className="w-11 h-11 object-contain" />
             </a>
             <a href="https://www.reddit.com/r/Falbor" target="_blank" className="hover:scale-110 transition-transform">
-              <img src="/landing/social/reddit.svg" alt="Reddit" className="w-6 h-6 object-contain" />
+              <img src="/landing/social/reddit.png" alt="Reddit" className="w-6 h-6 object-contain" />
             </a>
           </div>
           <a href="https://ufind.best/products/falbor" target="_blank" rel="noopener"><img src="https://ufind.best/badges/ufind-best-badge-light.svg" alt="Featured on ufind.best" width="150" /></a>

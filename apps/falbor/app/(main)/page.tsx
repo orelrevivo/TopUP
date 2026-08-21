@@ -54,8 +54,11 @@ function getBlur(progress: number, sectionIndex: number): string {
 }
 
 import { Suspense } from 'react';
+import { useStore } from '@nanostores/react';
+import { chatStore } from '~/lib/stores/chat';
 
 function PageContent() {
+  const { started } = useStore(chatStore);
   const { user, loading } = useAuth();
   const pathname = usePathname();
 
@@ -228,7 +231,7 @@ function PageContent() {
     <div className="flex flex-row h-[100dvh] w-full overflow-hidden bg-[#f0eded5c] dark:bg-[#080808]">
       {!isChatIdPage && <ClientOnly>{() => <Menu />}</ClientOnly>}
       <div className={`flex flex-col flex-1 min-w-0 h-full w-full relative ${isChatIdPage ? 'bg-[#f0eded5c] dark:bg-[#080808]' : ''}`}>
-        {!isChatIdPage && <BackgroundRays key={pathname} />}
+        {!isChatIdPage && !started && <BackgroundRays key={pathname} />}
         <Header />
         <ClientOnly fallback={<BaseChat />}>
           {() => <Chat />}

@@ -6,6 +6,15 @@ import { createScopedLogger } from '~/utils/logger';
 
 const logger = createScopedLogger('useMessageParser');
 
+const isLiveCodeEnabled = () => {
+  if (typeof window === 'undefined') return false;
+  try {
+    return JSON.parse(localStorage.getItem('falbor_write_code_in_live') || 'false');
+  } catch {
+    return false;
+  }
+};
+
 const messageParser = new EnhancedStreamingMessageParser({
   callbacks: {
     onArtifactOpen: (data) => {

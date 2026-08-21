@@ -4,16 +4,11 @@ import { motion, type HTMLMotionProps, type Variants } from 'framer-motion';
 import { computed } from 'nanostores';
 import { memo, useCallback, useEffect, useState, useMemo } from 'react';
 import { toast } from 'react-toastify';
-import { Popover, Transition } from '@headlessui/react';
-import { diffLines, type Change } from 'diff';
-import { getLanguageFromExtension } from '~/utils/getLanguageFromExtension';
 import type { FileHistory } from '~/types/actions';
-import { DiffView } from './DiffView';
 import {
   type OnChangeCallback as OnEditorChange,
   type OnScrollCallback as OnEditorScroll,
 } from '~/components/editor/codemirror/CodeMirrorEditor';
-import { IconButton } from '~/components/ui/IconButton';
 import { Slider, type SliderOptions } from '~/components/ui/Slider';
 import { workbenchStore, type WorkbenchViewType } from '~/lib/stores/workbench';
 import { classNames } from '~/utils/classNames';
@@ -25,9 +20,7 @@ import { DatabaseView } from './DatabaseView';
 import { FileModifiedDropdown } from './FileModifiedDropdown';
 import { WorkflowView } from './workflows/WorkflowView';
 import { ResearchView } from './ResearchView';
-
 import useViewport from '~/lib/hooks';
-
 import { usePreviewStore } from '~/lib/stores/previews';
 import { chatStore } from '~/lib/stores/chat';
 import type { ElementInfo } from './Inspector';
@@ -103,9 +96,6 @@ export const Workbench = memo(
 
     const fileHistory = useStore(workbenchStore.fileHistory);
     const setFileHistory = (history: Record<string, FileHistory>) => workbenchStore.fileHistory.set(history);
-
-    // const modifiedFiles = Array.from(useStore(workbenchStore.unsavedFiles).keys());
-
     const hasPreview = useStore(computed(workbenchStore.previews, (previews) => previews.length > 0));
     const showWorkbench = useStore(workbenchStore.showWorkbench);
     const selectedFile = useStore(workbenchStore.selectedFile);
@@ -118,6 +108,23 @@ export const Workbench = memo(
 
     const isSmallViewport = useViewport(1024);
     const streaming = useStore(streamingState);
+
+    const [isLiveCode, setIsLiveCode] = useState(() => {
+      if (typeof window !== 'undefined') {
+        try {
+          return JSON.parse(localStorage.getItem('falbor_write_code_in_live') || 'false');
+        } catch {
+          return false;
+        }
+      }
+      return false;
+    });
+
+    useEffect(() => {
+      const handleLiveCodeChange = (e: Event) => setIsLiveCode((e as CustomEvent).detail);
+      window.addEventListener('falbor_write_code_in_live_changed', handleLiveCodeChange);
+      return () => window.removeEventListener('falbor_write_code_in_live_changed', handleLiveCodeChange);
+    }, []);
 
     const setSelectedView = (view: WorkbenchViewType) => {
       workbenchStore.currentView.set(view);
@@ -132,6 +139,34 @@ export const Workbench = memo(
     useEffect(() => {
       workbenchStore.setDocuments(files);
     }, [files]);
+
+    const [isDragging, setIsDragging] = useState(false);
+    const [isHovered, setIsHovered] = useState(false);
+
+    const handleMouseDown = useCallback((e: React.MouseEvent) => {
+      e.preventDefault();
+      const startX = e.clientX;
+      const root = document.documentElement;
+      const computedStyle = getComputedStyle(root);
+      const startWidth = parseInt(computedStyle.getPropertyValue('--chat-min-width')) || 533;
+
+      setIsDragging(true);
+
+      const onMouseMove = (moveEvent: MouseEvent) => {
+        const deltaX = moveEvent.clientX - startX;
+        const newWidth = Math.max(300, Math.min(startWidth + deltaX, window.innerWidth / 2));
+        root.style.setProperty('--chat-min-width', `${newWidth}px`);
+      };
+
+      const onMouseUp = () => {
+        setIsDragging(false);
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+      };
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+    }, []);
 
     const onEditorChange = useCallback<OnEditorChange>((update) => {
       workbenchStore.setCurrentDocumentContent(update.content);
@@ -177,26 +212,39 @@ export const Workbench = memo(
         >
           <div
             className={classNames(
-              'fixed top-[calc(var(--header-height)+1.2rem)] bottom-6 w-[var(--workbench-inner-width)] z-0 transition-[left,width] duration-200 falbor-ease-cubic-bezier',
+              'fixed top-[calc(var(--header-height)+1.2rem)] bottom-6 w-[var(--workbench-inner-width)] z-0 falbor-ease-cubic-bezier',
               {
                 'w-full': isSmallViewport,
                 'left-0': showWorkbench && isSmallViewport,
                 'left-[var(--workbench-left)]': showWorkbench,
                 'left-[100%]': !showWorkbench,
+                'transition-[left,width] duration-200': !isDragging,
               },
             )}
           >
-            {/* {!isSmallViewport && canHideChat && (
-              <button
-                className="absolute ml-[-10px] left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 z-50 p-1.5 text-4xl text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors flex items-center justify-center"
-                onClick={() => chatStore.setKey('showChat', !showChat)}
-                title={showChat ? 'Hide Chat' : 'Show Chat'}
-              >
-                <div className={showChat ? 'i-ph:caret-left' : 'i-ph:caret-right'} />
-              </button>
-            )} */}
             <div className="absolute inset-0 px-2 lg:px-4">
-              <div className="h-full flex flex-col bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor shadow-sm rounded-[7px] overflow-hidden">
+              {showWorkbench && !isSmallViewport && canHideChat && (
+                <div
+                  className="absolute left-2 lg:left-4 top-0 bottom-0 w-[15px] cursor-col-resize z-[100] flex justify-center items-center -ml-[7.5px]"
+                  onMouseDown={handleMouseDown}
+                  onMouseEnter={() => setIsHovered(true)}
+                  onMouseLeave={() => setIsHovered(false)}
+                >
+                  <div
+                    className={classNames(
+                      'h-full w-full transition-colors',
+                      isDragging || isHovered ? 'bg-[#8882]' : 'bg-transparent'
+                    )}
+                  />
+                </div>
+              )}
+              <div className="relative h-full flex flex-col bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor shadow-sm rounded-[7px] overflow-hidden">
+                {!isLiveCode && isStreaming && (
+                  <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-falbor-elements-background-depth-2">
+                    <div className="i-ph:spinner-gap-duotone text-5xl text-purple-500 animate-spin mb-4" />
+                    <p className="text-falbor-elements-textPrimary text-lg font-medium">AI is generating the codes...</p>
+                  </div>
+                )}
                 <div className="flex items-center px-3 py-2 border-b border-falbor-elements-borderColor gap-1.5 z-10 bg-falbor-elements-background-depth-2 shrink-0">
                   <button
                     className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-falbor-elements-textSecondary mr-1`}

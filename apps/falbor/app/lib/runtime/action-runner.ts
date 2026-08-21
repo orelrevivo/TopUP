@@ -63,6 +63,8 @@ class ActionCommandError extends Error {
   }
 }
 
+let globalCommandQueue: Promise<void> = Promise.resolve();
+
 export class ActionRunner {
   #webcontainer: Promise<WebContainer>;
   #currentExecutionPromise: Promise<void> = Promise.resolve();
@@ -113,7 +115,11 @@ export class ActionRunner {
     });
 
     this.#currentExecutionPromise.then(() => {
-      this.#updateAction(actionId, { status: 'running' });
+      // For commands, we wait until they actually start executing in the global queue
+      const currentAction = this.actions.get()[actionId];
+      if (currentAction.type === 'file') {
+        this.#updateAction(actionId, { status: 'running' });
+      }
     });
   }
 
@@ -137,7 +143,27 @@ export class ActionRunner {
 
     this.#currentExecutionPromise = this.#currentExecutionPromise
       .then(() => {
-        return this.#executeAction(actionId, isStreaming);
+        const currentAction = this.actions.get()[actionId];
+        const isCommand =
+          currentAction.type === 'shell' ||
+          currentAction.type === 'start' ||
+          currentAction.type === 'scan' ||
+          currentAction.type === 'build';
+
+        if (isCommand) {
+          globalCommandQueue = globalCommandQueue
+            .then(() => {
+              this.#updateAction(actionId, { status: 'running' });
+              return this.#executeAction(actionId, isStreaming);
+            })
+            .catch((error) => {
+              logger.error('Global action execution promise failed:', error);
+            });
+          return globalCommandQueue;
+        } else {
+          this.#updateAction(actionId, { status: 'running' });
+          return this.#executeAction(actionId, isStreaming);
+        }
       })
       .catch((error) => {
         logger.error('Action execution promise failed:', error);

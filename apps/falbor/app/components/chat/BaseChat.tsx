@@ -179,6 +179,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const showMainChatBox = !chatStarted;
     const { handleDesignSystemSave, handleLiveUpdate } = useDesignSystem();
     const isDesignSystemMode = useStore(workbenchStore.isDesignSystemMode);
+    const showWorkbench = useStore(workbenchStore.showWorkbench);
 
     useEffect(() => {
       if (expoUrl) {
@@ -485,8 +486,10 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       >
 
         <div className="flex flex-col lg:flex-row overflow-hidden w-full h-full">
-          <div className={classNames(styles.Chat, 'flex flex-col flex-grow h-full relative', {
-            'lg:min-w-[var(--chat-min-width)]': !isCompact
+          <div className={classNames(styles.Chat, 'flex flex-col h-full relative', {
+            'w-full': isCompact || !showWorkbench,
+            'lg:w-[var(--chat-min-width)] shrink-0': !isCompact && showWorkbench,
+            'flex-grow': isCompact || !showWorkbench
           })}>
             {!chatStarted && !hideIntro && (
               <div id="intro" className="mt-[23vh] max-w-md mx-auto text-center px-4 lg:px-0">
@@ -629,7 +632,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                           middle: { value: 'troubleshoot', text: 'Troubleshoot', icon: 'i-ph:wrench-duotone' },
                           right: { value: 'discuss', text: 'Chat', icon: 'i-ph:chats-duotone' },
                           extra: { value: 'idea', text: 'Idea', icon: 'i-ph:lightbulb-duotone' },
-                          extra2: { value: 'mvp_research', text: 'MVP & Research', icon: 'i-ph:flask-duotone' },
+                          extra2: { value: 'mvp_research', text: 'Research', icon: 'i-ph:flask-duotone' },
                         }}
                         setSelected={setChatMode as any}
                       />
@@ -723,7 +726,7 @@ function ScrollToBottom() {
   return (
     !isAtBottom && (
       <>
-        <div className="sticky bottom-0 left-0 right-0 bg-gradient-to-t from-falbor-elements-background-depth-1 to-transparent h-20 z-10" />
+        <div className="sticky bottom-0 w-full max-w-chat mx-auto bg-gradient-to-t from-falbor-elements-background-depth-1 to-transparent h-20 z-10 pointer-events-none" />
         <button
           className="sticky z-50 bottom-0 left-0 right-0 text-4xl rounded-lg px-1.5 py-0.5 flex items-center justify-center mx-auto gap-2 bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor text-falbor-elements-textPrimary text-sm"
           onClick={() => scrollToBottom()}
