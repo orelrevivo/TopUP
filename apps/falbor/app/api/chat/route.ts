@@ -139,11 +139,8 @@ async function chatAction({ context, request }: RouteArgs) {
     const premiumUsageCount = (userRows[0]?.stats as any)?.premium_model_usage?.[requestedModel] || 0;
 
     if (isPremiumModel && isFreeTier) {
-      if (premiumUsageCount >= 1) {
-        return NextResponse.json({ error: true, message: 'Premium model limit reached (1/1). Please upgrade to Pro for unlimited access.' }, { status: 403 });
-      }
-
-      // Increment usage count for free users
+      // Premium limits removed per user request; users are limited solely by their balance.
+      // Increment usage count for free users for analytics
       const stats = (userRows[0]?.stats as any) || {};
       if (!stats.premium_model_usage) stats.premium_model_usage = {};
       stats.premium_model_usage[requestedModel] = (stats.premium_model_usage[requestedModel] || 0) + 1;

@@ -126,8 +126,8 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           if (data.subscriptionTier) {
             const tier = data.subscriptionTier.toLowerCase();
             setSubscriptionTier(tier);
-            if (tier !== 'pro' && props.model !== 'gpt-5-6') {
-              props.setModel?.('gpt-5-6');
+            if (tier !== 'pro' && props.model !== 'gpt-5.6-luna') {
+              props.setModel?.('gpt-5.6-luna');
             }
           }
         })
@@ -141,9 +141,9 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           }
         })
         .catch(console.error);
-    } else if (!user && props.model !== 'gpt-5-6') {
+    } else if (!user && props.model !== 'gpt-5.6-luna') {
       // Force GPT-5.6 for logged out users
-      props.setModel?.('gpt-5-6');
+      props.setModel?.('gpt-5.6-luna');
     }
   }, [user]);
 
