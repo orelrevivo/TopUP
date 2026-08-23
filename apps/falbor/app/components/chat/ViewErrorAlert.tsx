@@ -3,6 +3,8 @@ import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { classNames } from '~/utils/classNames';
 
+import { usePathname } from 'next/navigation';
+
 interface ViewError {
   message: string;
   stack?: string;
@@ -16,6 +18,7 @@ interface Props {
 
 export default function ViewErrorAlert({ postMessage }: Props) {
   const [error, setError] = useState<ViewError | null>(null);
+  const pathname = usePathname();
 
   useEffect(() => {
     const handleError = (event: ErrorEvent) => {
@@ -54,6 +57,8 @@ export default function ViewErrorAlert({ postMessage }: Props) {
       ? 'We encountered an error while running terminal commands. Would you like Falbor to analyze and help resolve this issue?'
       : 'An unexpected error occurred. Would you like Falbor to analyze and help resolve this issue?';
 
+  if (pathname === '/' || pathname === '/hacking') return null;
+
   return (
     <AnimatePresence>
       {error && (
@@ -62,7 +67,7 @@ export default function ViewErrorAlert({ postMessage }: Props) {
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -20 }}
           transition={{ duration: 0.3 }}
-          className="rounded-lg border border-falbor-elements-borderColor bg-falbor-elements-background-depth-2 p-4 mb-2"
+          className="hidden md:block rounded-lg border border-falbor-elements-borderColor bg-falbor-elements-background-depth-2 p-4 mb-2"
         >
           <div className="flex items-start">
             <motion.div

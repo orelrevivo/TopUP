@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, uuid, jsonb, boolean, integer, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, jsonb, boolean, integer, decimal, serial } from "drizzle-orm/pg-core";
 
 // Re-export types so `import { Agency } from '~/lib/db/schema'` keeps working.
 // The actual type definitions are in types.ts (safe for client components).
@@ -121,7 +121,7 @@ export const mcpSettings = pgTable("mcp_settings", {
 });
 
 export const chats = pgTable("chats", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: text("id").primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").default("New Chat"),
   description: text("description"),
@@ -141,7 +141,7 @@ export const feedbacks = pgTable("feedbacks", {
 });
 
 export const deployments = pgTable("deployments", {
-  chatId: uuid("chat_id").primaryKey().references(() => chats.id, { onDelete: "cascade" }),
+  chatId: text("chat_id").primaryKey().references(() => chats.id, { onDelete: "cascade" }),
   url: text("url").notNull(),
   provider: text("provider").notNull(),
   subdomain: text("subdomain"),
@@ -150,8 +150,8 @@ export const deployments = pgTable("deployments", {
 });
 
 export const messages = pgTable("messages", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  chatId: uuid("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
+  id: text("id").primaryKey(),
+  chatId: text("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
   role: text("role").notNull(),
   content: text("content"),
   toolInvocations: jsonb("tool_invocations"),
@@ -162,7 +162,7 @@ export const messages = pgTable("messages", {
 
 export const chatSnapshots = pgTable("chat_snapshots", {
   id: uuid("id").defaultRandom().primaryKey(),
-  chatId: uuid("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
+  chatId: text("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   files: jsonb("files").default("{}"),
   summary: text("summary"),
@@ -172,7 +172,7 @@ export const chatSnapshots = pgTable("chat_snapshots", {
 export const projects = pgTable("projects", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  chatId: uuid("chat_id").references(() => chats.id, { onDelete: "set null" }),
+  chatId: text("chat_id").references(() => chats.id, { onDelete: "set null" }),
   title: text("title").notNull(),
   description: text("description"),
   deploymentConfig: jsonb("deployment_config").default("{}"),
@@ -210,14 +210,14 @@ export const gitCredentials = pgTable("git_credentials", {
 });
 
 export const neonDatabases = pgTable("neon_databases", {
-  chatId: uuid("chat_id").primaryKey(),
+  chatId: text("chat_id").primaryKey(),
   databaseUrl: text("database_url").notNull(),
   projectId: text("project_id").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
 export const supabaseDatabases = pgTable("supabase_databases", {
-  chatId: uuid("chat_id").primaryKey(),
+  chatId: text("chat_id").primaryKey(),
   supabaseUrl: text("supabase_url").notNull(),
   supabaseAnonKey: text("supabase_anon_key").notNull(),
   projectId: text("project_id").notNull(),
@@ -227,7 +227,7 @@ export const supabaseDatabases = pgTable("supabase_databases", {
 });
 
 export const skills = pgTable("skills", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: text("id").primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
@@ -247,7 +247,7 @@ export const generatedImages = pgTable("generated_images", {
 
 export const chatImages = pgTable("chat_images", {
   id: uuid("id").defaultRandom().primaryKey(),
-  chatId: uuid("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
+  chatId: text("chat_id").notNull().references(() => chats.id, { onDelete: "cascade" }),
   filePath: text("file_path").notNull(),
   base64Data: text("base64_data").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -258,7 +258,7 @@ export const chatImages = pgTable("chat_images", {
 // so hacking history is completely isolated from the main website-builder chat.
 
 export const hackingChats = pgTable("hacking_chats", {
-  id: uuid("id").defaultRandom().primaryKey(),
+  id: text("id").primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   title: text("title").default("New Hacking Chat"),
   description: text("description"),
@@ -269,8 +269,8 @@ export const hackingChats = pgTable("hacking_chats", {
 });
 
 export const hackingMessages = pgTable("hacking_messages", {
-  id: uuid("id").defaultRandom().primaryKey(),
-  chatId: uuid("chat_id").notNull().references(() => hackingChats.id, { onDelete: "cascade" }),
+  id: text("id").primaryKey(),
+  chatId: text("chat_id").notNull().references(() => hackingChats.id, { onDelete: "cascade" }),
   role: text("role").notNull(),
   content: text("content"),
   parts: jsonb("parts").default("[]"),
@@ -279,7 +279,7 @@ export const hackingMessages = pgTable("hacking_messages", {
 
 export const hackingChatSnapshots = pgTable("hacking_chat_snapshots", {
   id: uuid("id").defaultRandom().primaryKey(),
-  chatId: uuid("chat_id").notNull().references(() => hackingChats.id, { onDelete: "cascade" }),
+  chatId: text("chat_id").notNull().references(() => hackingChats.id, { onDelete: "cascade" }),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   files: jsonb("files").default("{}"),
   summary: text("summary"),
@@ -301,7 +301,7 @@ export const hackingScreenshots = pgTable("hacking_screenshots", {
 export const workflows = pgTable("workflows", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
-  chatId: uuid("chat_id").references(() => chats.id, { onDelete: "cascade" }),
+  chatId: text("chat_id").references(() => chats.id, { onDelete: "cascade" }),
   name: text("name").notNull(),
   description: text("description"),
   status: text("status").default("draft").notNull(), // draft, published, archived
@@ -359,7 +359,7 @@ export const workflowJobs = pgTable("workflow_jobs", {
 export const falborSiteFiles = pgTable("falbor_site_files", {
   id: uuid("id").defaultRandom().primaryKey(),
   subdomain: text("subdomain").notNull().unique(),
-  chatId: uuid("chat_id").notNull(),
+  chatId: text("chat_id").notNull(),
   files: jsonb("files").notNull().default("{}"), // { "/index.html": "...", "/style.css": "..." }
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
@@ -379,9 +379,9 @@ export const mcpConnections = pgTable("mcp_connections", {
 // ─── Analyzed Reports (Validation Pages) ────────────────────────────────────
 
 export const analyzedReports = pgTable("analyzed_reports", {
-  id: uuid("id").defaultRandom().primaryKey(), // We can use short IDs for shareable links, e.g. "abc123"
+  id: text("id").primaryKey(), // We can use short IDs for shareable links, e.g. "abc123"
   userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
-  chatId: uuid("chat_id").references(() => chats.id, { onDelete: "set null" }),
+  chatId: text("chat_id").references(() => chats.id, { onDelete: "set null" }),
   title: text("title").notNull(),
   problem: text("problem"),
   targetAudience: text("target_audience"),
@@ -500,7 +500,7 @@ export const stayupNotifications = pgTable("stayup_notifications", {
 export const veAgencies = pgTable("ve_agencies", {
   id: uuid("id").defaultRandom().primaryKey(),
   connectAccountId: text("connect_account_id").default(""),
-  customerId: uuid("customer_id").default(""),
+  customerId: text("customer_id").default(""),
   name: text("name").notNull(),
   agencyLogo: text("agency_logo").notNull(),
   companyEmail: text("company_email").notNull(),
@@ -709,9 +709,51 @@ export const veTicketsRelations = relations(veTickets, ({ one }) => ({
 // Legacy files table (kept to prevent data loss during migrations)
 export const files = pgTable("files", {
   id: uuid("id").defaultRandom().primaryKey(),
-  chatId: uuid("chat_id"),
+  chatId: text("chat_id"),
   path: text("path"),
   content: text("content"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Extracted from live DB to prevent Drizzle dropping them
+export const globalSettings = pgTable("global_settings", {
+  id: serial("id").primaryKey(),
+  riskyPathKeywords: text("risky_path_keywords"),
+  largePrThreshold: integer("large_pr_threshold"),
+  missingTests: boolean("missing_tests"),
+  dependencyChange: boolean("dependency_change"),
+  reportFormat: text("report_format"),
+  includeLowRisk: boolean("include_low_risk"),
+  enablePostToGithub: boolean("enable_post_to_github"),
+  githubAppInstallationId: text("github_app_installation_id"),
+});
+
+export const repositories = pgTable("repositories", {
+  id: uuid("id").primaryKey(),
+  name: text("name"),
+  fullName: text("full_name"),
+  githubId: text("github_id"),
+  connectedAt: timestamp("connected_at"),
+});
+
+export const adrRules = pgTable("adr_rules", {
+  id: uuid("id").primaryKey(),
+  repositoryId: uuid("repository_id"),
+  title: text("title"),
+  description: text("description"),
+  severity: text("severity"),
+  createdAt: timestamp("created_at"),
+});
+
+export const prReports = pgTable("pr_reports", {
+  id: uuid("id").primaryKey(),
+  repositoryId: uuid("repository_id"),
+  prNumber: text("pr_number"),
+  title: text("title"),
+  riskLevel: text("risk_level"),
+  summary: text("summary"),
+  markdownReport: text("markdown_report"),
+  createdAt: timestamp("created_at"),
+});
+
