@@ -127,11 +127,14 @@ export async function POST(request: Request) {
         "Set-Cookie": cookieString,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Google Login error:", error);
     
-    // If it was a form post, maybe redirect to login page with an error
-    return new Response(JSON.stringify({ error: "Internal server error during Google Login" }), {
+    // Return the actual error message for debugging
+    return new Response(JSON.stringify({ 
+      error: "Internal server error during Google Login",
+      details: error?.message || String(error)
+    }), {
       status: 500,
       headers: { "Content-Type": "application/json" },
     });
