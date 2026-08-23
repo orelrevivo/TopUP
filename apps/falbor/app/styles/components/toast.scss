@@ -2,6 +2,18 @@
 
 .Toastify__toast-container {
   @extend .z-toast;
+  
+  /* Center horizontally and enforce a stable max width so it doesn't jump around */
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 90vw !important;
+  max-width: 400px !important;
+
+  @media (max-width: 768px) {
+    top: 1rem !important;
+    bottom: auto !important;
+    max-width: 90vw !important;
+  }
 }
 
 .Toastify__toast {

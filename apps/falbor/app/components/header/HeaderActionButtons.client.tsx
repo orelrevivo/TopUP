@@ -35,8 +35,7 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
       setIsSyncing(false);
     }
   }, []);
-
-  const shouldShowButtons = activePreview;
+  const shouldShowButtons = _chatStarted || activePreview;
 
   return (
     <div className="flex items-center gap-2">

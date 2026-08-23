@@ -113,12 +113,12 @@ export const Workbench = memo(
     const [isLiveCode, setIsLiveCode] = useState(() => {
       if (typeof window !== 'undefined') {
         try {
-          return JSON.parse(localStorage.getItem('falbor_write_code_in_live') || 'false');
+          return JSON.parse(localStorage.getItem('falbor_write_code_in_live') || 'true');
         } catch {
-          return false;
+          return true;
         }
       }
-      return false;
+      return true;
     });
 
     useEffect(() => {
@@ -215,15 +215,15 @@ export const Workbench = memo(
         >
           <div
             className={classNames(
-              mobilePreviewFullScreen && isSmallViewport
-                ? 'fixed inset-0 z-[100] bg-falbor-elements-background-depth-2'
+              isSmallViewport
+                ? 'fixed top-0 bottom-0 z-[100] bg-falbor-elements-background-depth-2'
                 : 'fixed top-[calc(var(--header-height)+1.2rem)] bottom-6 w-[var(--workbench-inner-width)] z-0 falbor-ease-cubic-bezier',
               {
-                'w-full': isSmallViewport && !mobilePreviewFullScreen,
-                'left-0': showWorkbench && isSmallViewport && !mobilePreviewFullScreen,
-                'left-[var(--workbench-left)]': showWorkbench && !mobilePreviewFullScreen,
-                'left-[100%]': !showWorkbench && !mobilePreviewFullScreen,
-                'transition-[left,width] duration-200': !isDragging && !mobilePreviewFullScreen,
+                'w-full': isSmallViewport,
+                'left-0': showWorkbench && isSmallViewport,
+                'left-[var(--workbench-left)]': showWorkbench && !isSmallViewport,
+                'left-[100%]': !showWorkbench,
+                'transition-[left,width] duration-200': !isDragging,
               },
             )}
           >
@@ -267,15 +267,22 @@ export const Workbench = memo(
                   </div>
                 ) : (
                   <div className="flex items-center px-3 py-2 border-b border-falbor-elements-borderColor gap-1.5 z-10 bg-falbor-elements-background-depth-2 shrink-0">
-                    <button
-                      className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-falbor-elements-textSecondary mr-1`}
-                      disabled={!canHideChat || isSmallViewport}
-                      onClick={() => {
-                        if (canHideChat) {
-                          chatStore.setKey('showChat', !showChat);
-                        }
-                      }}
-                    />
+                    {isSmallViewport ? (
+                      <button
+                        className="i-ph:x text-xl text-falbor-elements-textSecondary mr-2 hover:text-falbor-elements-textPrimary transition-colors"
+                        onClick={() => workbenchStore.showWorkbench.set(false)}
+                      />
+                    ) : (
+                      <button
+                        className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-falbor-elements-textSecondary mr-1`}
+                        disabled={!canHideChat}
+                        onClick={() => {
+                          if (canHideChat) {
+                            chatStore.setKey('showChat', !showChat);
+                          }
+                        }}
+                      />
+                    )}
                     <button
                       className={`${showHistory ? 'i-ph:clock-counter-clockwise-fill' : 'i-ph:clock-counter-clockwise'} text-lg text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors mr-2`}
                       onClick={() => chatStore.setKey('showHistory', !showHistory)}
