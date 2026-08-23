@@ -71,13 +71,15 @@ export function useChatHistory() {
               if (validSnapshot && Object.keys(validSnapshot.files || {}).length > 0) {
                 restoreSnapshot(mixedId, validSnapshot);
                 hasSnapshot = true;
+                // Auto-open the workbench so cloned/restored chats show their files
+                workbenchStore.showWorkbench.set(true);
               }
 
               workbenchStore.setHasSnapshot(hasSnapshot);
               workbenchStore.setReloadedMessages(filteredMessages.map((m) => m.id));
               setInitialMessages(filteredMessages);
               setUrlId(storedMessages.urlId ?? storedMessages.id);
-              description.set(storedMessages.description);
+              description.set((storedMessages as any).title || storedMessages.description);
               chatId.set(storedMessages.id);
               const loadedMetadata = (storedMessages.metadata || {}) as Record<string, any>;
               const savedDeployUrl = typeof window !== 'undefined' ? localStorage.getItem(`deploy-url-${storedMessages.id}`) : null;

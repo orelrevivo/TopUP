@@ -6,7 +6,7 @@ import { toast } from 'react-toastify';
 import { Dialog, DialogButton, DialogDescription, DialogRoot, DialogTitle } from '~/components/ui/Dialog';
 import { ThemeSwitch } from '~/components/ui/ThemeSwitch';
 import { TAB_ICONS, TAB_LABELS, DEFAULT_TAB_CONFIG } from '~/components/@settings/core/constants';
-import { tabConfigurationStore, resetTabConfiguration, settingsOpenStore, settingsTabStore, blinkPricingStore } from '~/lib/stores/settings';
+import { tabConfigurationStore, resetTabConfiguration, settingsOpenStore, settingsTabStore, blinkPricingStore, chatSettingsOpenStore } from '~/lib/stores/settings';
 import type { TabType } from '~/components/@settings/core/types';
 import { SettingsButton } from '~/components/ui/SettingsButton';
 import { Button } from '~/components/ui/Button';
@@ -372,12 +372,20 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const prevVariant = useRef<string | null>(null);
 
   useEffect(() => {
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
     // If the layout is 'square' and we haven't seen it before (e.g. initial mount or transition to it), open it by default
     if (variant === 'square' && prevVariant.current !== 'square') {
-      sidebarOpen.set(true);
+      if (isMobile) {
+        // On mobile, start closed
+        sidebarOpen.set(false);
+      } else {
+        sidebarOpen.set(true);
+      }
     } else if (variant !== 'square') {
-      // Old behavior for 'full' variant
-      if (!chat.started && isPinned) {
+      // On mobile, always start closed regardless of pin state
+      if (isMobile) {
+        sidebarOpen.set(false);
+      } else if (!chat.started && isPinned) {
         sidebarOpen.set(true);
       } else {
         sidebarOpen.set(false);
@@ -423,7 +431,11 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
 
   const handleSettingsClick = () => {
     settingsOpenStore.set(true);
-    sidebarOpen.set(true);
+    if (window.innerWidth < 768) {
+      sidebarOpen.set(false);
+    } else {
+      sidebarOpen.set(true);
+    }
   };
 
   const handleSettingsClose = () => {
@@ -460,7 +472,15 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   }, []);
   return (
     <>
+      {/* Mobile backdrop for square variant */}
       {open && variant === 'square' && (
+        <div
+          className="md:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => sidebarOpen.set(false)}
+        />
+      )}
+      {/* Mobile backdrop for full variant */}
+      {open && variant === 'full' && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => sidebarOpen.set(false)}
@@ -479,8 +499,15 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
               'absolute md:relative left-0 top-0 bottom-0 bg-white dark:bg-[#111114] md:bg-transparent shadow-xl md:shadow-none z-50 md:z-sidebar',
               !open && 'max-md:!w-0 max-md:!opacity-0 max-md:!p-0 pointer-events-none md:pointer-events-auto'
             )
-            : 'flex selection-accent flex-col side-menu relative shrink-0 h-full bg-white dark:bg-[#111114] border-r border-falbor-elements-borderColor shadow-sm text-sm',
-          variant === 'full' && isSettingsOpen ? 'z-40' : (variant === 'full' ? 'z-sidebar' : '')
+            : classNames(
+              'flex selection-accent flex-col side-menu shrink-0 h-full bg-white dark:bg-[#111114] border-r border-falbor-elements-borderColor shadow-sm text-sm',
+              // On mobile: fixed overlay that covers the full screen when open
+              'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-xl',
+              !open && 'max-md:!w-0 max-md:!opacity-0 max-md:overflow-hidden max-md:pointer-events-none',
+              // Restore relative positioning on desktop
+              'md:relative'
+            ),
+          variant === 'full' && isSettingsOpen ? 'z-40' : (variant === 'full' ? 'z-sidebar max-md:z-50' : '')
         )}
       >
         {variant === 'square' ? (
@@ -626,6 +653,15 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                     Organization
                   </button>
                 </Link>
+                {chat.started && (
+                  <button
+                    onClick={() => chatSettingsOpenStore.set(true)}
+                    className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1"
+                  >
+                    <div className="i-ph:gear text-xl text-falbor-elements-textSecondary mr-2" />
+                    <span>Chat Settings</span>
+                  </button>
+                )}
                 {/* <Link href={'/sources'} className='relative w-full'>
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
                     <div className={classNames(
@@ -639,7 +675,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                     <div className="i-ph:network text-xl text-falbor-elements-textSecondary mr-2" />
                     Sources
                 </Link> */}
-                <Link href={'/visual-editor'} className='relative w-full'>
+                <Link href={'/visual-editor'} className='relative w-full hidden md:block'>
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
                     <div className="i-ph:paint-brush w-4 h-4 mr-2 dark:text-white text-gray-700" />
                   </div>
@@ -659,7 +695,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                 </button>
                 <Dropdown
                   align="start"
-                  side="right"
+                  side={typeof window !== 'undefined' && window.innerWidth < 768 ? 'bottom' : 'right'}
                   trigger={
                     <button className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1">
                       <div className="i-ph:graph text-xl text-falbor-elements-textSecondary mr-2" />
@@ -727,7 +763,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                 </Dropdown>
               </div>
               {isOrgRoute ? (
-                <>
+                <div className="hidden md:block">
                   <div className="flex items-center justify-between text-sm px-4 py-2">
                     <div className="ml-2 text-gray-600 dark:text-gray-400 text-xl">Organization Settings</div>
                   </div>
@@ -760,7 +796,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                       );
                     })}
                   </div>
-                </>
+                </div>
               ) : (
                 <>
                   <div className="flex items-center justify-between text-sm px-4 py-2">

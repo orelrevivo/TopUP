@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
     const list = await db.select().from(chats).where(eq(chats.userId, userId)).orderBy(desc(chats.updatedAt));
-    return NextResponse.json(list);
+    return NextResponse.json(list.map(c => ({...c, description: c.title || c.description})));
   } catch (e) {
     console.error("GET /api/data/chats error:", e);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -31,12 +31,11 @@ export async function POST(request: NextRequest) {
         id,
         userId: mockUserId,
         title: desc_text || "New Chat",
-        description: desc_text,
         model: metadata?.model,
         provider: metadata?.provider,
         ...(timestamp ? { createdAt: new Date(timestamp), updatedAt: new Date() } : {}),
       })
-      .onConflictDoUpdate({ target: chats.id, set: { title: desc_text || "New Chat", description: desc_text, updatedAt: new Date() } })
+      .onConflictDoUpdate({ target: chats.id, set: { title: desc_text || "New Chat", updatedAt: new Date() } })
       .returning();
     if (msgs?.length) {
       const now = Date.now();

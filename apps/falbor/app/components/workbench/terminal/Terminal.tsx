@@ -91,14 +91,20 @@ export const Terminal = memo(
           }
 
           resizeObserver = new ResizeObserver((entries) => {
-            // Debounce resize events
-            if (entries.length > 0 && terminal) {
-              try {
-                fitAddon.fit();
-                onTerminalResize?.(terminal.cols, terminal.rows);
-              } catch (error) {
-                logger.error(`Resize error [${id}]:`, error);
-              }
+            // Debounce resize events and ensure terminal is visible
+            if (entries.length > 0 && terminal && element.clientWidth > 0 && element.clientHeight > 0) {
+              requestAnimationFrame(() => {
+                try {
+                  // Additional safeguard check for renderer initialization
+                  if ((terminal as any)._core?._renderService?._renderer?.value === undefined) {
+                    return;
+                  }
+                  fitAddon.fit();
+                  onTerminalResize?.(terminal?.cols || 80, terminal?.rows || 24);
+                } catch (error) {
+                  logger.error(`Resize error [${id}]:`, error);
+                }
+              });
             }
           });
 

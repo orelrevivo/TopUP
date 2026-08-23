@@ -41,7 +41,7 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
   return (
     <div className="flex items-center gap-2">
       {/* Sync / Debug Dropdown */}
-      {shouldShowButtons && (
+      {/* {shouldShowButtons && (
         <div className="flex rounded-md overflow-hidden">
           <Dropdown
             trigger={
@@ -90,9 +90,25 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
             </DropdownItem>
           </Dropdown>
         </div>
-      )}
+      )} */}
       {/* Deploy Button */}
-      {shouldShowButtons && <DeployButton />}
+      {shouldShowButtons && (
+        <div className="flex">
+          <DeployButton />
+        </div>
+      )}
+      {shouldShowButtons && (
+        <button
+          onClick={() => {
+            workbenchStore.showWorkbench.set(true);
+            workbenchStore.currentView.set('preview');
+            workbenchStore.mobilePreviewFullScreen.set(true);
+          }}
+          className="md:hidden bg-[#00A3FF] hover:bg-[#0088DD] text-white px-4 py-1.5 rounded-md text-sm font-medium transition-colors border-0 ml-2"
+        >
+          Preview
+        </button>
+      )}
     </div>
   );
 }

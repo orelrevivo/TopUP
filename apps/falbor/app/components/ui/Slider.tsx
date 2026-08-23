@@ -27,7 +27,15 @@ export const Slider = genericMemo(<T,>({ selected, options, setSelected }: Slide
   const isExtra2Selected = options.extra2 ? selected === options.extra2.value : false;
 
   return (
-    <div className="flex items-center flex-wrap shrink-0 gap-1 border dark:border-falbor-elements-borderColor overflow-hidden rounded-md p-1">
+    <div 
+      className="flex items-center shrink-0 gap-1 border dark:border-falbor-elements-borderColor overflow-x-auto rounded-md p-1 max-w-full"
+      style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+    >
+      <style>{`
+        .overflow-x-auto::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
       <SliderButton selected={isLeftSelected} icon={options.left.icon} setSelected={() => setSelected?.(options.left.value)}>
         {options.left.text}
       </SliderButton>
@@ -73,7 +81,7 @@ const SliderButton = memo(({ selected, children, icon, setSelected }: SliderButt
     <button
       onClick={setSelected}
       className={classNames(
-        'bg-transparent text-sm px-2.5 py-0.5 rounded-full relative',
+        'bg-transparent text-sm px-3 md:px-2.5 py-1.5 md:py-0.5 rounded-full relative whitespace-nowrap flex-shrink-0',
         selected
           ? 'text-falbor-elements-item-contentAccent'
           : 'text-falbor-elements-item-contentDefault hover:text-falbor-elements-item-contentActive',

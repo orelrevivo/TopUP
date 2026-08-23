@@ -1,28 +1,27 @@
-import { NextResponse } from "next/server";
-import { SupabaseService } from "~/lib/services/supabaseService";
-import { createScopedLogger } from "~/utils/logger";
+import { NextResponse } from 'next/server';
+import { neon } from '@neondatabase/serverless';
+import { createScopedLogger } from '~/utils/logger';
 
-const logger = createScopedLogger("api.database.execute");
+const logger = createScopedLogger('api.database.execute');
 
 export async function POST(request: Request) {
   try {
-    const { chatId, sql } = await request.json();
+    const { chatId, databaseUrl, sql } = await request.json();
 
-    if (!chatId || !sql) {
-      return NextResponse.json({ error: "chatId and sql are required" }, { status: 400 });
+    if (!chatId || !databaseUrl || !sql) {
+      return NextResponse.json({ error: 'chatId, databaseUrl, and sql are required' }, { status: 400 });
     }
 
-    const projectData = await SupabaseService.getOrCreateSupabaseProject(chatId);
-
-    if (!projectData || !projectData.projectId) {
-      return NextResponse.json({ error: "Failed to retrieve Supabase project for chat" }, { status: 404 });
+    const sqlClient = neon(databaseUrl);
+    try {
+      const rows = await sqlClient([sql] as any);
+      return NextResponse.json({ success: true, result: rows });
+    } catch (dbError: any) {
+      logger.error('DB Error inside execute:', dbError);
+      throw dbError;
     }
-
-    const result = await SupabaseService.executeSql(projectData.projectId, sql);
-
-    return NextResponse.json({ success: true, result });
   } catch (error: any) {
-    logger.error("Failed to execute SQL:", error);
-    return NextResponse.json({ error: error.message || "Failed to execute SQL" }, { status: 500 });
+    logger.error('Failed to execute SQL:', error);
+    return NextResponse.json({ error: error.message || 'Failed to execute SQL' }, { status: 500 });
   }
 }

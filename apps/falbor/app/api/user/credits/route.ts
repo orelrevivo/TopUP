@@ -88,8 +88,13 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
     }
 
+    let addedBalance = amountNum;
+    if (tier?.toLowerCase() === 'pro') {
+      addedBalance = 3500; // Give $35 in credits for the pro tier regardless of payment amount
+    }
+
     const updateData: any = {
-      balance: sql`${users.balance} + ${amountNum}`,
+      balance: sql`${users.balance} + ${addedBalance}`,
       updatedAt: new Date(),
     };
 

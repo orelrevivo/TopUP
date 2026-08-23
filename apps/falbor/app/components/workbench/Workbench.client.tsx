@@ -98,6 +98,7 @@ export const Workbench = memo(
     const setFileHistory = (history: Record<string, FileHistory>) => workbenchStore.fileHistory.set(history);
     const hasPreview = useStore(computed(workbenchStore.previews, (previews) => previews.length > 0));
     const showWorkbench = useStore(workbenchStore.showWorkbench);
+    const mobilePreviewFullScreen = useStore(workbenchStore.mobilePreviewFullScreen);
     const selectedFile = useStore(workbenchStore.selectedFile);
     const currentDocument = useStore(workbenchStore.currentDocument);
     const unsavedFiles = useStore(workbenchStore.unsavedFiles);
@@ -208,21 +209,27 @@ export const Workbench = memo(
           initial="closed"
           animate={showWorkbench ? 'open' : 'closed'}
           variants={workbenchVariants}
-          className="z-workbench"
+          className={classNames('z-workbench', {
+            '!z-[100]': mobilePreviewFullScreen && isSmallViewport,
+          })}
         >
           <div
             className={classNames(
-              'fixed top-[calc(var(--header-height)+1.2rem)] bottom-6 w-[var(--workbench-inner-width)] z-0 falbor-ease-cubic-bezier',
+              mobilePreviewFullScreen && isSmallViewport
+                ? 'fixed inset-0 z-[100] bg-falbor-elements-background-depth-2'
+                : 'fixed top-[calc(var(--header-height)+1.2rem)] bottom-6 w-[var(--workbench-inner-width)] z-0 falbor-ease-cubic-bezier',
               {
-                'w-full': isSmallViewport,
-                'left-0': showWorkbench && isSmallViewport,
-                'left-[var(--workbench-left)]': showWorkbench,
-                'left-[100%]': !showWorkbench,
-                'transition-[left,width] duration-200': !isDragging,
+                'w-full': isSmallViewport && !mobilePreviewFullScreen,
+                'left-0': showWorkbench && isSmallViewport && !mobilePreviewFullScreen,
+                'left-[var(--workbench-left)]': showWorkbench && !mobilePreviewFullScreen,
+                'left-[100%]': !showWorkbench && !mobilePreviewFullScreen,
+                'transition-[left,width] duration-200': !isDragging && !mobilePreviewFullScreen,
               },
             )}
           >
-            <div className="absolute inset-0 px-2 lg:px-4">
+            <div className={classNames('absolute inset-0', {
+              'px-2 lg:px-4': !(mobilePreviewFullScreen && isSmallViewport)
+            })}>
               {showWorkbench && !isSmallViewport && canHideChat && (
                 <div
                   className="absolute left-2 lg:left-4 top-0 bottom-0 w-[15px] cursor-col-resize z-[100] flex justify-center items-center -ml-[7.5px]"
@@ -238,34 +245,49 @@ export const Workbench = memo(
                   />
                 </div>
               )}
-              <div className="relative h-full flex flex-col bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor shadow-sm rounded-[7px] overflow-hidden">
+              <div className={classNames('relative h-full flex flex-col bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor shadow-sm overflow-hidden', {
+                'rounded-[7px]': !(mobilePreviewFullScreen && isSmallViewport)
+              })}>
                 {!isLiveCode && isStreaming && (
                   <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-falbor-elements-background-depth-2">
                     <div className="i-ph:spinner-gap-duotone text-5xl text-purple-500 animate-spin mb-4" />
                     <p className="text-falbor-elements-textPrimary text-lg font-medium">AI is generating the codes...</p>
                   </div>
                 )}
-                <div className="flex items-center px-3 py-2 border-b border-falbor-elements-borderColor gap-1.5 z-10 bg-falbor-elements-background-depth-2 shrink-0">
-                  <button
-                    className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-falbor-elements-textSecondary mr-1`}
-                    disabled={!canHideChat || isSmallViewport}
-                    onClick={() => {
-                      if (canHideChat) {
-                        chatStore.setKey('showChat', !showChat);
-                      }
-                    }}
-                  />
-                  <button
-                    className={`${showHistory ? 'i-ph:clock-counter-clockwise-fill' : 'i-ph:clock-counter-clockwise'} text-lg text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors mr-2`}
-                    onClick={() => chatStore.setKey('showHistory', !showHistory)}
-                    title="History"
-                  />
-                  <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
-                  <div className="ml-auto" />
-                  {selectedView === 'diff' && (
-                    <FileModifiedDropdown fileHistory={fileHistory} onSelectFile={handleSelectFile} />
-                  )}
-                </div>
+                {mobilePreviewFullScreen && isSmallViewport ? (
+                  <div className="flex items-center justify-between px-4 py-3 border-b border-falbor-elements-borderColor bg-falbor-elements-background-depth-2 shrink-0">
+                    <span className="font-semibold text-falbor-elements-textPrimary">Preview Display</span>
+                    <button
+                      onClick={() => workbenchStore.mobilePreviewFullScreen.set(false)}
+                      className="text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors p-1 flex items-center gap-1"
+                    >
+                      <span className="text-sm font-medium">Exit</span>
+                      <div className="i-ph:x text-xl" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center px-3 py-2 border-b border-falbor-elements-borderColor gap-1.5 z-10 bg-falbor-elements-background-depth-2 shrink-0">
+                    <button
+                      className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-falbor-elements-textSecondary mr-1`}
+                      disabled={!canHideChat || isSmallViewport}
+                      onClick={() => {
+                        if (canHideChat) {
+                          chatStore.setKey('showChat', !showChat);
+                        }
+                      }}
+                    />
+                    <button
+                      className={`${showHistory ? 'i-ph:clock-counter-clockwise-fill' : 'i-ph:clock-counter-clockwise'} text-lg text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors mr-2`}
+                      onClick={() => chatStore.setKey('showHistory', !showHistory)}
+                      title="History"
+                    />
+                    <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
+                    <div className="ml-auto" />
+                    {selectedView === 'diff' && (
+                      <FileModifiedDropdown fileHistory={fileHistory} onSelectFile={handleSelectFile} />
+                    )}
+                  </div>
+                )}
                 <div className="relative flex-1 overflow-hidden">
                   <View
                     initial={{ x: '0%' }}

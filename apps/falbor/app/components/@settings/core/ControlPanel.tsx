@@ -99,15 +99,22 @@ export const ControlPanel = ({ open, onClose, activeTab }: ControlPanelProps) =>
           <div className="flex-1 bg-falbor-elements-background-depth-1 flex flex-col relative overflow-hidden pointer-events-auto shadow-2xl">
 
             <div className="relative z-10 flex flex-col h-full">
-              <div className="h-14 flex items-center justify-end px-4 gap-2 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50">
-                <div className="flex items-center space-x-4">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                    {activeTab ? TAB_LABELS[activeTab] : 'Control Panel'}
-                  </h2>
+              <div className="h-14 flex items-center justify-between px-4 gap-2 border-b border-gray-100 dark:border-gray-800/50 bg-gray-50/50 dark:bg-gray-900/50 relative">
+                <div className="flex items-center">
+                  <button
+                    onClick={() => sidebarOpen.set(!isSidebarOpen)}
+                    className="flex md:hidden items-center justify-center p-2 -ml-2 mr-2 text-gray-600 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md transition-colors"
+                  >
+                    <div className="i-ph:list w-5 h-5" />
+                  </button>
                 </div>
 
-                <div className="flex items-center gap-6">
-                  <div className="pl-6">
+                <h2 className="text-xl font-semibold text-gray-900 dark:text-white absolute left-1/2 -translate-x-1/2">
+                  {activeTab ? TAB_LABELS[activeTab] : 'Control Panel'}
+                </h2>
+
+                <div className="flex items-center gap-2 sm:gap-6">
+                  <div className="pl-2 sm:pl-6">
                     <AvatarDropdown onSelectTab={handleTabClick} />
                   </div>
 

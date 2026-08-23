@@ -493,14 +493,16 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           })}>
             {!chatStarted && !hideIntro && (
               <div id="intro" className="mt-[23vh] max-w-md mx-auto text-center px-4 lg:px-0">
-                <h1 className="text-falbor-elements-textPrimary ml-[-50px] text-5xl lg:text-3xl animate-fade-in flex items-center justify-center gap-2">
-                  Don’t just build.
-                  <img
-                    src="/icons/verified.png"
-                    alt="Verified"
-                    className="w-8 h-8 inline-block"
-                  />
-                  first.
+                <h1 className="text-falbor-elements-textPrimary text-4xl md:text-5xl animate-fade-in flex flex-wrap items-center justify-center gap-2 md:gap-3">
+                  <span className="whitespace-nowrap">Don’t just build.</span>
+                  <span className="flex items-center gap-2">
+                    <img
+                      src="/icons/verified.png"
+                      alt="Verified"
+                      className="w-8 h-8 md:w-10 md:h-10 inline-block"
+                    />
+                    <span className="whitespace-nowrap">first.</span>
+                  </span>
                 </h1>
               </div>
             )}
@@ -559,11 +561,13 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                     />
                   )}
                   {llmErrorAlert && <LlmErrorAlert alert={llmErrorAlert} clearAlert={() => clearLlmErrorAlert?.()} />}
-                  <ViewErrorAlert
-                    postMessage={(message) => {
-                      sendMessage?.({} as any, message);
-                    }}
-                  />
+                  {!hideIntro && (
+                    <ViewErrorAlert
+                      postMessage={(message) => {
+                        sendMessage?.({} as any, message);
+                      }}
+                    />
+                  )}
                 </div>
                 <div className={classNames({ '': !chatStarted })}>
                   {deployAlert && (

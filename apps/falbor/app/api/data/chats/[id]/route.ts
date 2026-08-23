@@ -12,8 +12,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const result = {
       id: chat.id,
       userId: chat.userId,
+      isPublic: chat.isPublic,
       urlId: chat.id,
-      description: chat.description ?? chat.title,
+      title: chat.title,
+      description: chat.description,
       timestamp: chat.createdAt?.toISOString(),
       metadata: {},
       messages: msgs.map((m) => ({

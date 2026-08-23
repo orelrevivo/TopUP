@@ -134,6 +134,7 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
     const [currentTime, setCurrentTime] = useState('');
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [dropdownLeft, setDropdownLeft] = useState(0);
+    const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
     const triggerRefs = useRef<{ [key: string]: HTMLElement | null }>({});
 
@@ -195,8 +196,9 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
 
     return (
         <div className="relative">
+            {/* Desktop navbar */}
             <div
-                className={`backdrop-blur-md bg-white border-b border-zinc-200 ${className}`}
+                className={`hidden md:block backdrop-blur-md bg-white border-b border-zinc-200 ${className}`}
                 style={{ height: '50px' }}
             >
                 <div className="w-full max-w-5xl mx-auto flex justify-between items-center h-full px-4 border-l border-r border-zinc-200">
@@ -214,7 +216,7 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                             <span className="text-black/80 hover:text-black/70 text-sm font-semibold">{appName}</span>
                         </Link>
                         <Link href="/privacy">
-                            <span className="text-black/80 hover:text-black/70 text-sm font-semibold">Legal & Privacy</span>
+                            <span className="text-black/80 hover:text-black/70 text-sm font-semibold">Legal &amp; Privacy</span>
                         </Link>
                         {menus.map((menu) => (
                             <span
@@ -235,25 +237,103 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                 </div>
             </div>
 
-            {/* Dropdowns */}
-            <MenuDropdown
-                isOpen={activeMenu === 'apple'}
-                onClose={closeDropdown}
-                items={APPLE_MENU_ITEMS}
-                left={dropdownLeft}
-                onAction={handleMenuActionLocal}
-            />
+            {/* Mobile navbar */}
+            <div className={`md:hidden backdrop-blur-md bg-white border-b border-zinc-200 ${className}`}>
+                <div className="flex items-center justify-between h-14 px-4">
+                    {/* Logo */}
+                    <Link href="/">
+                        <img src="/logo-dark-styled.png" width={110} alt="Logo" />
+                    </Link>
 
-            {menus.map((menu) => (
+                    {/* Mobile right: Sign In + Start + Hamburger */}
+                    <div className="flex items-center gap-3">
+                        <Link href="/login">
+                            <span className="text-sm font-medium text-black/80">Sign In</span>
+                        </Link>
+                        <Link href="/signup">
+                            <button className="text-sm font-medium bg-[#e7e7e7] !text-black px-3 py-1.5 rounded-md">
+                                Start free
+                            </button>
+                        </Link>
+                        <button
+                            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                            className="p-1.5 text-black/80 rounded-md transition-colors"
+                            aria-label="Toggle menu"
+                        >
+                            {mobileMenuOpen ? (
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                </svg>
+                            ) : (
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="3" y1="6" x2="21" y2="6" />
+                                    <line x1="3" y1="12" x2="21" y2="12" />
+                                    <line x1="3" y1="18" x2="21" y2="18" />
+                                </svg>
+                            )}
+                        </button>
+                    </div>
+                </div>
+
+                {/* Mobile dropdown menu */}
+                {mobileMenuOpen && (
+                    <div className="border-t border-zinc-200 backdrop-blur-md bg-white px-4 py-4 flex flex-col gap-3">
+                        <Link href="/pricing" onClick={() => setMobileMenuOpen(false)}>
+                            <div className="py-2 text-sm font-semibold text-black/80 border-b border-zinc-200">
+                                {appName}
+                            </div>
+                        </Link>
+                        <Link href="/privacy" onClick={() => setMobileMenuOpen(false)}>
+                            <div className="py-2 text-sm font-semibold text-black/80 border-b border-zinc-200">
+                                Legal &amp; Privacy
+                            </div>
+                        </Link>
+                        <Link href="/about" onClick={() => setMobileMenuOpen(false)}>
+                            <div className="py-2 text-sm font-semibold text-black/80 border-b border-zinc-200">
+                                About
+                            </div>
+                        </Link>
+                        {/* Social icons row */}
+                        <div className="flex items-center gap-4 pt-1">
+                            <a href="https://x.com/WrRbybw84381" target="_blank" rel="noopener noreferrer">
+                                <img src="/landing/social/X.png" alt="X" className="w-5 h-5 object-contain" />
+                            </a>
+                            <a href="https://www.instagram.com/falbor.xyz" target="_blank" rel="noopener noreferrer">
+                                <img src="/landing/social/instagram.png" alt="Instagram" className="w-5 h-5 object-contain" />
+                            </a>
+                            <a href="https://www.linkedin.com/company/falbor-xyz" target="_blank" rel="noopener noreferrer">
+                                <img src="/landing/social/linkdin.png" alt="LinkedIn" className="w-8 h-8 object-contain" />
+                            </a>
+                            <a href="https://www.reddit.com/r/Falbor" target="_blank" rel="noopener noreferrer">
+                                <img src="/landing/social/reddit.png" alt="Reddit" className="w-5 h-5 object-contain" />
+                            </a>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Desktop Dropdowns */}
+            <div className="hidden md:block">
                 <MenuDropdown
-                    key={menu.label}
-                    isOpen={activeMenu === menu.label}
+                    isOpen={activeMenu === 'apple'}
                     onClose={closeDropdown}
-                    items={menu.items}
+                    items={APPLE_MENU_ITEMS}
                     left={dropdownLeft}
                     onAction={handleMenuActionLocal}
                 />
-            ))}
+
+                {menus.map((menu) => (
+                    <MenuDropdown
+                        key={menu.label}
+                        isOpen={activeMenu === menu.label}
+                        onClose={closeDropdown}
+                        items={menu.items}
+                        left={dropdownLeft}
+                        onAction={handleMenuActionLocal}
+                    />
+                ))}
+            </div>
         </div>
     );
 };

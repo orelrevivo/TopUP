@@ -42,7 +42,7 @@ export default function PricingSection() {
                                 </li>
                                 <li className="flex items-start gap-3">
                                     <Check className="size-4 text-green-500 mt-0.5" />
-                                    $1 initial AI credit balance
+                                    $6 initial AI credit balance
                                 </li>
                                 <li className="flex items-start gap-3 opacity-50">
                                     <X className="size-4 text-red-500 mt-0.5" />
@@ -66,7 +66,7 @@ export default function PricingSection() {
                                         Pro
                                         <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded uppercase tracking-wider font-bold">One-time</span>
                                     </h2>
-                                    <span className="my-3 block text-4xl font-black text-white">$20</span>
+                                    <span className="my-3 block text-4xl font-black text-white">$17</span>
                                     <p className="text-zinc-500 text-sm">Pay once, no recurring fees</p>
                                 </div>
                                 <Link href="/signup?plan=pro" className="block w-full">
@@ -95,7 +95,7 @@ export default function PricingSection() {
                                     </li>
                                     <li className="flex items-start gap-3">
                                         <Check className="size-4 text-[#FF5800] mt-0.5 flex-shrink-0" />
-                                        <span className="font-medium text-white">$20.00 AI credit balance included</span>
+                                        <span className="font-medium text-white">$35.00 AI credit balance included</span>
                                     </li>
                                     <li className="flex items-start gap-3">
                                         <Check className="size-4 text-[#FF5800] mt-0.5 flex-shrink-0" />

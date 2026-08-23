@@ -28,6 +28,10 @@ export function Header() {
   const isHacking = pathname?.startsWith('/hacking');
 
   const toggleSidebar = () => {
+    if (window.innerWidth < 768) {
+      sidebarOpen.set(!isOpen);
+      return;
+    }
     if (chat.started) {
       sidebarOpen.set(!isOpen);
     } else {
@@ -50,26 +54,53 @@ export function Header() {
           'border-falbor-elements-borderColor': chat.started,
         })}
       >
+        {/* Mobile: always show hamburger button */}
+        <button
+          onClick={toggleSidebar}
+          className={classNames(
+            'flex items-center justify-center p-2 -ml-2 text-falbor-elements-textPrimary',
+            // On desktop: only show when sidebar is closed and chat is not started, or when chat started and sidebar closed
+            'md:hidden'
+          )}
+          title="Toggle Sidebar"
+        >
+          <div className="i-ph:list w-6 h-6" />
+        </button>
+
+        {/* Mobile: show logo next to hamburger when sidebar is closed */}
+        {!isOpen && (
+          <a
+            href={isHacking ? '/hacking' : '/'}
+            className="md:hidden flex items-center ml-1 text-accent-500"
+          >
+            <img src={isHacking ? '/hacking/logo-light-styled.png' : '/logo-light-styled.png'} alt="logo" className="w-[110px] inline-block dark:hidden" />
+            <img src={isHacking ? '/hacking/logo-dark-styled.png' : '/logo-dark-styled.png'} alt="logo" className="w-[110px] inline-block hidden dark:block" />
+          </a>
+        )}
+
+        {/* Desktop: hamburger when no chat started and sidebar closed */}
         {!chat.started && !isOpen && (
           <button
             onClick={toggleSidebar}
-            className="flex items-center justify-center p-2 -ml-2 text-falbor-elements-textPrimary"
+            className="hidden md:flex items-center justify-center p-2 -ml-2 text-falbor-elements-textPrimary"
             title="Toggle Sidebar"
           >
             <div className="i-ph:list w-6 h-6" />
           </button>
         )}
+        {/* Desktop: logo+hamburger when chat started and sidebar closed */}
         {chat.started && !isOpen && (
           <div
-            className="flex items-center gap-2 z-logo text-falbor-elements-textPrimary cursor-pointer"
+            className="hidden md:flex items-center gap-2 z-logo text-falbor-elements-textPrimary cursor-pointer"
             onClick={toggleSidebar}
           >
-            <a href={isHacking ? "/hacking" : "/"} className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
-              <img src={isHacking ? "/hacking/logo-light-styled.png" : "/logo-light-styled.png"} alt="logo" className="w-[130px] inline-block dark:hidden" />
-              <img src={isHacking ? "/hacking/logo-dark-styled.png" : "/logo-dark-styled.png"} alt="logo" className="w-[130px] inline-block hidden dark:block" />
+            <a href={isHacking ? '/hacking' : '/'} className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
+              <img src={isHacking ? '/hacking/logo-light-styled.png' : '/logo-light-styled.png'} alt="logo" className="w-[130px] inline-block dark:hidden" />
+              <img src={isHacking ? '/hacking/logo-dark-styled.png' : '/logo-dark-styled.png'} alt="logo" className="w-[130px] inline-block hidden dark:block" />
             </a>
           </div>
         )}
+
         <span className="flex-1" />
         {chat.started && (
           <>
@@ -79,7 +110,7 @@ export function Header() {
             <ClientOnly>
               {() => (
                 <div className="flex items-center gap-2">
-                  <ExportChatButton exportChat={exportChat} />
+                  {/* <ExportChatButton exportChat={exportChat} /> */}
                   <HeaderActionButtons chatStarted={chat.started} />
                 </div>
               )}
@@ -90,9 +121,6 @@ export function Header() {
           <ClientOnly>
             {() => (
               <div className="flex items-center gap-2">
-                {/* <Link href="/hacking" className={styles.btn}>
-                  Agent <span className="text-xs opacity-70 border px-1 py-0 rounded-xl">soon</span>
-                </Link> */}
                 <AuthButtons />
                 <UserAvatar
                   onOpenProfile={() => handleOpenPanel('profile')}

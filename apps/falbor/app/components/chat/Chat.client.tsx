@@ -6,7 +6,7 @@ import { useAnimate } from 'framer-motion';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
-import { description, useChatHistory, chatId } from '~/lib/persistence';
+import { description as descriptionStore, useChatHistory, chatId } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { webcontainer } from '~/lib/webcontainer';
@@ -41,7 +41,7 @@ export function Chat({ hideIntro, hideSlider, isCompact }: { hideIntro?: boolean
   renderLogger.trace('Chat');
 
   const { ready, initialMessages, storeMessageHistory, importChat, exportChat } = useChatHistory();
-  const title = useStore(description);
+  const title = useStore(descriptionStore);
 
 
   return (
@@ -126,7 +126,13 @@ export const ChatImpl = memo(
       const p = PROVIDER_LIST.find(p => p.staticModels?.some(m => m.name === DEFAULT_MODEL));
       return (p || DEFAULT_PROVIDER) as ProviderInfo;
     });
-    const [model, setModel] = useState<string>(DEFAULT_MODEL);
+    const [model, setModel] = useState<string>(() => {
+      if (typeof window !== 'undefined') {
+        const savedModel = Cookies.get('selectedModel');
+        if (savedModel) return savedModel;
+      }
+      return DEFAULT_MODEL;
+    });
 
     useEffect(() => {
       if (provider && model && typeof window !== 'undefined') {
@@ -234,6 +240,9 @@ export const ChatImpl = memo(
       const usage = response.usage;
       setData(undefined);
 
+      // Trigger auto-description generation if this is the first assistant response
+      // Moved to useEffect to ensure accurate message counting
+
       if (usage) {
         console.log('Token usage:', usage);
         logStore.logProvider('Chat response completed', {
@@ -339,6 +348,77 @@ export const ChatImpl = memo(
         storeMessageHistory,
       });
     }, [messages, isLoading, parseMessages]);
+
+    useEffect(() => {
+      const handleAutoFix = async (e: Event) => {
+        const customEvent = e as CustomEvent;
+        const { command, error } = customEvent.detail;
+
+        try {
+          const response = await fetch('/api/chat/auto-fix', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ failedCommand: command, errorOutput: error }),
+          });
+
+          if (!response.ok || !response.body) {
+            console.error('Auto-fix request failed');
+            return;
+          }
+
+          const reader = response.body.getReader();
+          const decoder = new TextDecoder();
+
+          let done = false;
+          while (!done) {
+            const { value, done: doneReading } = await reader.read();
+            done = doneReading;
+            const chunkValue = decoder.decode(value, { stream: true });
+
+            if (chunkValue) {
+              setMessages((currentMessages) => {
+                if (currentMessages.length === 0) return currentMessages;
+                const lastMsg = currentMessages[currentMessages.length - 1];
+                if (lastMsg.role !== 'assistant') return currentMessages;
+
+                return [
+                  ...currentMessages.slice(0, -1),
+                  { ...lastMsg, content: lastMsg.content + chunkValue },
+                ];
+              });
+            }
+          }
+        } catch (err) {
+          console.error('Auto-fix streaming error:', err);
+        }
+      };
+
+      window.addEventListener('falbor:auto-fix-error', handleAutoFix);
+      return () => {
+        window.removeEventListener('falbor:auto-fix-error', handleAutoFix);
+      };
+    }, [setMessages]);
+
+    // Trigger auto-description generation when we have exactly one user message and one assistant message
+    const [descriptionTriggered, setDescriptionTriggered] = useState(false);
+    useEffect(() => {
+      if (!descriptionTriggered && messages.length === 2 && !isLoading) {
+        if (messages[0].role === 'user' && messages[1].role === 'assistant') {
+          setDescriptionTriggered(true);
+          const idToUse = currentChatId || activeChatId;
+          if (idToUse) {
+            fetch(`/api/data/chats/${idToUse}/description`, { method: 'POST' })
+              .then(res => res.json())
+              .then(data => {
+                if (data && data.title) {
+                  descriptionStore.set(data.title);
+                }
+              })
+              .catch(console.error);
+          }
+        }
+      }
+    }, [messages, isLoading, descriptionTriggered, currentChatId, activeChatId]);
 
     const scrollTextArea = () => {
       const textarea = textareaRef.current;

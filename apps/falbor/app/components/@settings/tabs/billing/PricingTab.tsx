@@ -3,13 +3,14 @@
 import React, { useState, useEffect } from "react"
 import { Check, X, CreditCard, DollarSign } from "lucide-react"
 
-const PRO_PRICE = 20;
+const PRO_PRICE = 17;
+const PRO_CREDITS = 35;
 
 const features = {
   free: [
     { text: "Website deployment to Falbor", included: true },
     { text: "Short Screen Recordings (up to 20 mins)", included: true },
-    { text: "$1 initial AI credit balance", included: true },
+    { text: "$6 initial AI credit balance", included: true },
     { text: "Custom Supabase Databases", included: false },
     { text: "Website deployment to Netlify & Vercel", included: false },
   ],
@@ -17,7 +18,7 @@ const features = {
     { text: "Website deployment to Netlify & Vercel", included: true },
     { text: "Long Screen Recordings (up to 3 hours)", included: true },
     { text: "Custom Supabase Databases", included: true },
-    { text: `$${PRO_PRICE}.00 AI credit balance included`, included: true },
+    { text: `$${PRO_CREDITS}.00 AI credit balance included`, included: true },
     { text: "Priority Support (Coming soon)", included: true },
   ]
 };

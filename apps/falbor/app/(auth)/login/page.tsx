@@ -44,11 +44,11 @@ export default function LoginPage() {
 
     return (
         <div
-            className="dark min-h-screen w-full flex items-center justify-center bg-cover bg-center bg-no-repeat"
+            className="dark min-h-[100dvh] w-full flex flex-col justify-end md:justify-center items-center bg-cover bg-center bg-no-repeat"
             style={{ backgroundImage: "url('/background/auth.png')" }}
         >
             <ThemeHandler force="dark" />
-            <Card className="w-[400px] mx-4 relative z-10 bg-black/50 backdrop-blur-md border-zinc-800">
+            <Card className="w-full md:w-[400px] mx-0 md:mx-4 mt-auto md:mt-0 relative z-10 bg-black/50 backdrop-blur-md border-0 border-t md:border border-zinc-800 rounded-none rounded-t-[32px] md:rounded-xl overflow-y-auto max-h-[100dvh] pb-8 md:pb-0">
                 <CardHeader className="text-center">
                     <div className="flex justify-center mb-4">
                         <img src="/logo-light-styled.png" alt="Falbor" className="w-24 inline-block dark:hidden" />

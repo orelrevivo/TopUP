@@ -7,17 +7,10 @@ import { chatId } from '~/lib/persistence/useChatHistory';
 import { StudioSidebar } from './database/StudioSidebar';
 import { DatabaseSetupScreen } from './database/DatabaseSetupScreen';
 import { TablesTab } from './database/TablesTab';
-import { AuthTab } from './database/AuthTab';
-import { StorageTab } from './database/StorageTab';
-import { FunctionsTab } from './database/FunctionsTab';
-import { LogsTab } from './database/LogsTab';
+import { SQLQueryTab } from './database/SQLQueryTab';
 import type {
   ActiveTab,
   DbTable,
-  DbUser,
-  StorageBucket,
-  StorageFile,
-  DbFunction,
   TableData,
 } from './database/types';
 
@@ -30,7 +23,7 @@ const POLL_INTERVAL = 5000;
 export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
   const currentChatId = useStore(chatId);
 
-  const [isEnvConfigured, setIsEnvConfigured] = useState(false);
+  const [databaseUrl, setDatabaseUrl] = useState<string | null>(null);
   const [sqlMigrationFiles, setSqlMigrationFiles] = useState<[string, any][]>([]);
   const [isPushing, setIsPushing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -40,30 +33,25 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
   const [dbTables, setDbTables] = useState<DbTable[]>([]);
   const [selectedTable, setSelectedTable] = useState<string | null>(null);
   const [tableData, setTableData] = useState<TableData | null>(null);
-  const [dbUsers, setDbUsers] = useState<DbUser[]>([]);
-  const [storageBuckets, setStorageBuckets] = useState<StorageBucket[]>([]);
-  const [storageFiles, setStorageFiles] = useState<StorageFile[]>([]);
-  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
-  const [dbFunctions, setDbFunctions] = useState<DbFunction[]>([]);
 
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const unsubscribe = workbenchStore.files.subscribe((files) => {
-      let found = false;
+      let foundUrl: string | null = null;
       for (const [path, file] of Object.entries(files)) {
         if (path.endsWith('.env') && file?.type === 'file' && typeof file.content === 'string') {
-          if (
-            file.content.includes('VITE_SUPABASE_URL') ||
-            file.content.includes('NEXT_PUBLIC_SUPABASE_URL') ||
-            file.content.includes('SUPABASE_URL')
-          ) {
-            found = true;
-            break;
+          const lines = file.content.split('\n');
+          for (const line of lines) {
+            if (line.startsWith('DATABASE_URL=') || line.startsWith('NEON_DATABASE_URL=')) {
+              foundUrl = line.substring(line.indexOf('=') + 1).trim().replace(/^["']|["']$/g, '');
+              break;
+            }
           }
+          if (foundUrl) break;
         }
       }
-      setIsEnvConfigured(found);
+      setDatabaseUrl(foundUrl);
       setSqlMigrationFiles(
         Object.entries(files)
           .filter(([p]) => p.endsWith('.sql'))
@@ -75,11 +63,11 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
 
   const adminFetch = useCallback(
     async (action: string, payload?: any) => {
-      if (!currentChatId) return null;
+      if (!currentChatId || !databaseUrl) return null;
       const res = await fetch('/api/database/admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ chatId: currentChatId, action, payload }),
+        body: JSON.stringify({ chatId: currentChatId, databaseUrl, action, payload }),
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ error: res.statusText }));
@@ -91,35 +79,26 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
   );
 
   const fetchData = useCallback(async () => {
-    if (!isEnvConfigured || !currentChatId) return;
+    if (!databaseUrl || !currentChatId) return;
     setIsLoading(true);
     try {
-      if (activeTab === 'tables' && !selectedTable) {
+      if (activeTab === 'tables') {
         const data = await adminFetch('get_tables');
         if (data?.tables) setDbTables(data.tables);
-      } else if (activeTab === 'tables' && selectedTable) {
-        const data = await adminFetch('get_table_data', { tableName: selectedTable });
-        if (data?.columns) setTableData(data);
-      } else if (activeTab === 'auth') {
-        const data = await adminFetch('get_users');
-        if (data?.users) setDbUsers(data.users);
-      } else if (activeTab === 'storage' && !selectedBucket) {
-        const data = await adminFetch('get_storage_buckets');
-        if (data?.buckets) setStorageBuckets(data.buckets);
-      } else if (activeTab === 'storage' && selectedBucket) {
-        const data = await adminFetch('get_storage_files', { bucketId: selectedBucket });
-        if (data?.files) setStorageFiles(data.files);
-      } else if (activeTab === 'functions') {
-        const data = await adminFetch('get_functions');
-        if (data?.functions) setDbFunctions(data.functions);
+
+        if (selectedTable) {
+          const tData = await adminFetch('get_table_data', { tableName: selectedTable });
+          if (tData?.columns) setTableData(tData);
+        }
       }
       setLastUpdated(new Date());
     } catch (e: any) {
       console.error('Dashboard fetch error:', e.message);
+      toast.error(`DB Error: ${e.message}`);
     } finally {
       setIsLoading(false);
     }
-  }, [isEnvConfigured, currentChatId, activeTab, selectedTable, selectedBucket, adminFetch]);
+  }, [databaseUrl, currentChatId, activeTab, selectedTable, adminFetch]);
 
   useEffect(() => {
     if (pollingRef.current) clearInterval(pollingRef.current);
@@ -133,9 +112,7 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
   const handleTabChange = (tab: ActiveTab) => {
     setActiveTab(tab);
     setSelectedTable(null);
-    setSelectedBucket(null);
     setTableData(null);
-    setStorageFiles([]);
   };
 
   const handlePushMigrations = async () => {
@@ -152,7 +129,7 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
           const res = await fetch('/api/database/execute', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ chatId: currentChatId, sql: file.content }),
+            body: JSON.stringify({ chatId: currentChatId, databaseUrl, sql: file.content }),
           });
           if (!res.ok) {
             const errorData = await res.json().catch(() => ({}));
@@ -160,7 +137,7 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
           }
         }
       }
-      toast.success('Successfully pushed all migrations to Supabase!');
+      toast.success('Successfully pushed all migrations to Neon database!');
       fetchData();
     } catch (e: any) {
       toast.error(e.message || 'Failed to push migrations');
@@ -169,19 +146,9 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
     }
   };
 
-  const handleUserAction = async (userId: string, action: string) => {
-    try {
-      const data = await adminFetch(action, { userId });
-      if (data?.success) {
-        toast.success('Action completed successfully!');
-        fetchData();
-      }
-    } catch (e: any) {
-      toast.error(e.message || 'Action failed');
-    }
-  };
 
-  if (!isEnvConfigured) {
+
+  if (!databaseUrl) {
     return (
       <DatabaseSetupScreen
         onConnectSupabase={() => document.dispatchEvent(new CustomEvent('open-supabase-connection'))}
@@ -193,39 +160,70 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
   return (
     <div className="flex h-full bg-falbor-elements-background-depth-1 text-falbor-elements-textPrimary overflow-hidden">
       <StudioSidebar
-        activeTab={activeTab}
         isLoading={isLoading}
         lastUpdated={lastUpdated}
-        onTabChange={handleTabChange}
+        dbTables={dbTables}
+        selectedTable={selectedTable}
+        onSelectTable={(name) => {
+          setActiveTab('tables');
+          setSelectedTable(name);
+        }}
       />
 
-      <div className="flex-1 overflow-auto">
-        {activeTab === 'tables' && (
-          <TablesTab
-            sqlMigrationFiles={sqlMigrationFiles}
-            dbTables={dbTables}
-            selectedTable={selectedTable}
-            tableData={tableData}
-            isPushing={isPushing}
-            onPushMigrations={handlePushMigrations}
-            onSelectTable={(name) => setSelectedTable(name)}
-            onBack={() => { setSelectedTable(null); setTableData(null); }}
-          />
-        )}
-        {activeTab === 'auth' && (
-          <AuthTab users={dbUsers} onUserAction={handleUserAction} />
-        )}
-        {activeTab === 'storage' && (
-          <StorageTab
-            buckets={storageBuckets}
-            files={storageFiles}
-            selectedBucket={selectedBucket}
-            onSelectBucket={(id) => setSelectedBucket(id)}
-            onBack={() => { setSelectedBucket(null); setStorageFiles([]); }}
-          />
-        )}
-        {activeTab === 'functions' && <FunctionsTab functions={dbFunctions} />}
-        {activeTab === 'logs' && <LogsTab />}
+      <div className="flex-1 overflow-auto bg-white dark:bg-falbor-elements-background-depth-1">
+        <div className="border-b border-falbor-elements-borderColor flex items-center justify-between px-4 py-2 gap-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setActiveTab('tables')}
+              className={`text-sm font-medium pb-2 border-b-2 -mb-2 ${activeTab === 'tables' ? 'border-accent-500 text-falbor-elements-textPrimary' : 'border-transparent text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary'}`}
+            >
+              Table View
+            </button>
+            <button
+              onClick={() => setActiveTab('sql' as any)}
+              className={`text-sm font-medium pb-2 border-b-2 -mb-2 ${activeTab === 'sql' ? 'border-accent-500 text-falbor-elements-textPrimary' : 'border-transparent text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary'}`}
+            >
+              SQL Query
+            </button>
+          </div>
+          
+          <button 
+            onClick={() => {
+              if (pollingRef.current) clearInterval(pollingRef.current);
+              fetchData();
+              pollingRef.current = setInterval(fetchData, POLL_INTERVAL);
+            }} 
+            className="flex items-center gap-1.5 text-xs font-medium text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary bg-falbor-elements-background-depth-2 hover:bg-falbor-elements-background-depth-3 px-2 py-1 rounded-md border border-falbor-elements-borderColor transition-colors"
+          >
+            <div className={`i-ph:arrows-clockwise ${isLoading ? 'animate-spin text-accent-500' : ''}`} />
+            Refresh
+          </button>
+        </div>
+        <div className="bg-red-100 text-red-900 text-xs p-1 font-mono break-all">
+          DEBUG: ID={currentChatId || 'NULL'} | URL={databaseUrl || 'NULL'}
+        </div>
+        <div className="h-[calc(100%-41px)]">
+          {activeTab === 'tables' && (
+            <TablesTab
+              sqlMigrationFiles={sqlMigrationFiles}
+              dbTables={dbTables}
+              selectedTable={selectedTable}
+              tableData={tableData}
+              isPushing={isPushing}
+              isLoading={isLoading}
+              onPushMigrations={handlePushMigrations}
+              onSelectTable={(name) => setSelectedTable(name)}
+              onBack={() => { setSelectedTable(null); setTableData(null); }}
+            />
+          )}
+          {activeTab === 'sql' && (
+            <SQLQueryTab 
+              databaseUrl={databaseUrl} 
+              chatId={currentChatId} 
+              adminFetch={adminFetch}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

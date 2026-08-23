@@ -123,7 +123,13 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         .then(res => res.json())
         .then(data => {
           if (data.balance !== undefined) setBalance(data.balance);
-          if (data.subscriptionTier) setSubscriptionTier(data.subscriptionTier);
+          if (data.subscriptionTier) {
+            const tier = data.subscriptionTier.toLowerCase();
+            setSubscriptionTier(tier);
+            if (tier !== 'pro' && props.model !== 'gpt-5-6') {
+              props.setModel?.('gpt-5-6');
+            }
+          }
         })
         .catch(console.error);
 
@@ -135,6 +141,9 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           }
         })
         .catch(console.error);
+    } else if (!user && props.model !== 'gpt-5-6') {
+      // Force GPT-5.6 for logged out users
+      props.setModel?.('gpt-5-6');
     }
   }, [user]);
 
@@ -555,6 +564,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                           <img src="/icons/OpenAI.svg" alt="GPT" className="w-4 h-4" />
                           <span>GPT 5.6</span>
                         </div>
+                        {props.model === 'gpt-5-6' && <div className="i-ph:check text-green-500 text-sm ml-auto" />}
                       </button>
                     </div>
                     
@@ -580,8 +590,9 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                           <img src="/icons/claude-color.svg" alt="Claude" className="w-4 h-4" />
                           <span>Cloud Sonnet 4.5</span>
                         </div>
+                        {props.model === 'claude-sonnet-4-5' && <div className="i-ph:check text-green-500 text-sm ml-auto" />}
                         {subscriptionTier !== 'pro' && (
-                          <div className="text-[10px] bg-purple-500/10 text-purple-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Pro</div>
+                          <div className="text-[10px] bg-purple-500/10 text-purple-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider ml-auto">Pro</div>
                         )}
                       </button>
                     </div>
@@ -608,8 +619,9 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                           <img src="/icons/claude-color.svg" alt="Claude" className="w-4 h-4" />
                           <span>Cloud Haki 4.5</span>
                         </div>
+                        {props.model === 'claude-haiku-4-5' && <div className="i-ph:check text-green-500 text-sm ml-auto" />}
                         {subscriptionTier !== 'pro' && (
-                          <div className="text-[10px] bg-purple-500/10 text-purple-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Pro</div>
+                          <div className="text-[10px] bg-purple-500/10 text-purple-500 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider ml-auto">Pro</div>
                         )}
                       </button>
                     </div>

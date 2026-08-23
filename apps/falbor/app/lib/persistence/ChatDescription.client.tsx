@@ -4,7 +4,7 @@ import WithTooltip from '~/components/ui/Tooltip';
 import { useEditChatDescription } from '~/lib/hooks';
 import { description as descriptionStore } from '~/lib/persistence';
 import { ChatSettingsModal } from '~/components/chat/ChatSettingsModal';
-import { useState } from 'react';
+import { chatSettingsOpenStore } from '~/lib/stores/settings';
 
 export function ChatDescription() {
   const initialDescription = useStore(descriptionStore)!;
@@ -15,7 +15,7 @@ export function ChatDescription() {
       syncWithGlobalStore: true,
     });
 
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsOpen = useStore(chatSettingsOpenStore);
 
   if (!initialDescription) {
     // doing this to prevent showing edit button until chat description is set
@@ -71,7 +71,7 @@ export function ChatDescription() {
                 className="ml-2 hover:text-falbor-elements-item-contentAccent"
                 onClick={(event) => {
                   event.preventDefault();
-                  setSettingsOpen(true);
+                  chatSettingsOpenStore.set(true);
                 }}
               >
                 <i className="i-ph:dots-three-vertical-bold h-5 w-5 block" />
@@ -81,7 +81,7 @@ export function ChatDescription() {
         </>
       )}
 
-      <ChatSettingsModal isOpen={settingsOpen} onClose={() => setSettingsOpen(false)} />
+      <ChatSettingsModal isOpen={settingsOpen} onClose={() => chatSettingsOpenStore.set(false)} />
     </div>
   );
 }

@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { DialogRoot, Dialog, DialogTitle, DialogDescription } from '~/components/ui/Dialog';
 import { SetupButton } from '~/components/ui/setup/SetupButton';
 import { classNames } from '~/utils/classNames';
+import { AnalyticsTab } from '~/components/@settings/tabs/chat/AnalyticsTab';
+import { ChatSettingsTab } from '~/components/@settings/tabs/chat/ChatSettingsTab';
+import { Badge } from '../ui';
 
 interface ChatSettingsModalProps {
   isOpen: boolean;
@@ -9,11 +12,11 @@ interface ChatSettingsModalProps {
 }
 
 export function ChatSettingsModal({ isOpen, onClose }: ChatSettingsModalProps) {
-  const [activeTab, setActiveTab] = useState('analytics');
+  const [activeTab, setActiveTab] = useState('chat');
 
   const enableAnalytics = () => {
     onClose();
-    
+
     const agentPrompt = `
 # Add Falbor Analytics
 
@@ -66,17 +69,17 @@ class FalborAnalytics {
   private setupAutoTracking() {
     if (typeof window === 'undefined') return;
 
-    // Track initial pageview
     this.track('pageview');
 
-    // Setup history API interception for SPA navigation tracking
     const originalPushState = history.pushState;
+
     history.pushState = function (...args) {
       originalPushState.apply(this, args);
       window.dispatchEvent(new Event('pushstate'));
     };
 
     const originalReplaceState = history.replaceState;
+
     history.replaceState = function (...args) {
       originalReplaceState.apply(this, args);
       window.dispatchEvent(new Event('replacestate'));
@@ -100,7 +103,7 @@ class FalborAnalytics {
     if (typeof window === 'undefined') return;
 
     const endpoint = this.config.endpoint || this.defaultEndpoint;
-    
+
     const payload: AnalyticsEvent = {
       projectId: this.config.projectId,
       event: eventName,
@@ -149,75 +152,83 @@ Check the environment variables. Ensure that the following key can be securely i
 Import and initialize this utility file in the main layout or app entry point (e.g., \`app/layout.tsx\` or \`pages/_app.tsx\`) so that auto-tracking begins immediately on load.
 
 \`\`\`javascript
-import { initFalborAnalytics } from '@/lib/falbor-analytics'; // adjust path as needed
+import { initFalborAnalytics } from '@/lib/falbor-analytics';
 
-// Initialize with environment variables
 if (typeof window !== 'undefined') {
   initFalborAnalytics({
-    projectId: process.env.FALBOR_PROJECT_ID || process.env.NEXT_PUBLIC_FALBOR_PROJECT_ID || 'demo-project',
+    projectId:
+      process.env.FALBOR_PROJECT_ID ||
+      process.env.NEXT_PUBLIC_FALBOR_PROJECT_ID ||
+      'demo-project',
     options: {
       enableAutoTracking: true,
       debugMode: process.env.NODE_ENV === 'development',
-    }
+    },
   });
 }
 \`\`\`
 `;
 
-    // Dispatch custom event that Chat.client.tsx will listen to
     const event = new CustomEvent('falbor:externalChatMessage', {
       detail: agentPrompt,
     });
+
     window.dispatchEvent(event);
   };
 
   return (
     <DialogRoot open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <Dialog showCloseButton={true} onClose={onClose} className="sm:max-w-[700px] p-0 overflow-hidden bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333]">
-        <div className="flex h-[500px]">
-          {/* Sidebar */}
-          <div className="w-1/3 border-r border-gray-200 dark:border-[#333] bg-gray-50 dark:bg-[#111] p-4 flex flex-col gap-2">
-            <h3 className="text-sm font-semibold text-gray-500 dark:text-gray-400 mb-2 px-2">Settings</h3>
+      <Dialog
+        showCloseButton={true}
+        onClose={onClose}
+        className="!w-[90vw] !max-w-[1200px] p-0 overflow-hidden bg-white dark:bg-[#1a1a1a] border border-gray-200 dark:border-[#333]"
+      >
+        <div className="flex h-[800px] w-full">
+          <div className="w-[240px] bg-[#F9F6F9] dark:bg-[#111] p-4 flex flex-col gap-2 shrink-0">
+            <h3 className="text-lg font-medium text-black/80 dark:text-gray-400 px-2">
+              Settings Chat
+            </h3>
+            <button
+              onClick={() => setActiveTab('chat')}
+              className={classNames(
+                'flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors',
+                activeTab === 'chat'
+                  ? 'bg-[#F0EDF0] dark:bg-indigo-900/20 text-black dark:text-white'
+                  : 'text-[#73737B] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222]',
+              )}
+            >
+              <div className="i-ph:gear w-4 h-4 mr-2" />
+              Chat
+            </button>
+
             <button
               onClick={() => setActiveTab('analytics')}
               className={classNames(
-                'flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors',
+                'flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors font-medium',
                 activeTab === 'analytics'
-                  ? 'bg-indigo-50 dark:bg-indigo-900/20 text-indigo-600 dark:text-indigo-400 font-medium'
-                  : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222]'
+                  ? 'bg-[#F0EDF0] dark:bg-indigo-900/20 text-black dark:text-white'
+                  : 'text-[#73737B] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222]',
               )}
             >
               <div className="i-ph:chart-line-up w-4 h-4 mr-2" />
-              Analytics
+
+              <span>Analytics</span>
+
+              <Badge variant="secondary" className="ml-2">
+                Soon
+              </Badge>
             </button>
           </div>
 
-          {/* Content Area */}
-          <div className="w-2/3 p-6 bg-white dark:bg-[#1a1a1a] flex flex-col">
-            {activeTab === 'analytics' && (
-              <div className="flex flex-col h-full">
-                <div className="flex flex-col space-y-1.5 text-center sm:text-left">
-                  <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">Analytics Setup</DialogTitle>
-                  <DialogDescription className="text-gray-500 dark:text-gray-400 mt-2">
-                    Enable analytics for your project to track telemetry, monitor usage, and gain insights via the Falbor Analytics SDK.
-                  </DialogDescription>
-                </div>
+          {/* Main settings area */}
+          <div className="flex-1 min-w-0 p-3 bg-[#F9F6F9] dark:bg-[#111]">
+            <div className="w-full h-full p-6 border rounded-lg bg-white dark:bg-[#1a1a1a] flex flex-col overflow-hidden">
+              {activeTab === 'chat' && <ChatSettingsTab />}
 
-                <div className="flex-1 flex flex-col items-center justify-center text-center px-4">
-                  <div className="i-ph:chart-bar w-16 h-16 text-indigo-500 mb-4 opacity-80" />
-                  <h4 className="text-lg font-medium text-gray-900 dark:text-gray-100 mb-2">Connect Analytics</h4>
-                  <p className="text-sm text-gray-500 dark:text-gray-400 mb-6">
-                    This will install the <code className="bg-gray-100 dark:bg-[#333] px-1 rounded text-xs">falbor-analytics-sdk</code> in your project and configure your dashboard integration.
-                  </p>
-                  <SetupButton
-                    onClick={enableAnalytics}
-                    className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-6 py-2 rounded-lg transition-colors"
-                  >
-                    Enable Analytics
-                  </SetupButton>
-                </div>
-              </div>
-            )}
+              {activeTab === 'analytics' && (
+                <AnalyticsTab onEnableAnalytics={enableAnalytics} />
+              )}
+            </div>
           </div>
         </div>
       </Dialog>

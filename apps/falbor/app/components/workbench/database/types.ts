@@ -1,4 +1,4 @@
-export type ActiveTab = 'tables' | 'auth' | 'storage' | 'functions' | 'logs';
+export type ActiveTab = 'tables' | 'auth' | 'storage' | 'functions' | 'logs' | 'sql';
 
 export interface DbTable {
   schema: string;

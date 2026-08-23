@@ -60,6 +60,7 @@ export class WorkbenchStore {
   isDesignSystemMode: WritableAtom<boolean> = import.meta.hot?.data.isDesignSystemMode ?? atom(false);
   isSlidesMode: WritableAtom<boolean> = import.meta.hot?.data.isSlidesMode ?? atom(false);
   isGameMode: WritableAtom<boolean> = import.meta.hot?.data.isGameMode ?? atom(false);
+  mobilePreviewFullScreen: WritableAtom<boolean> = import.meta.hot?.data.mobilePreviewFullScreen ?? atom(false);
 
   currentAiUrl: WritableAtom<string> = import.meta.hot?.data.currentAiUrl ?? atom('');
   currentAiScreenshot: WritableAtom<string | null> = import.meta.hot?.data.currentAiScreenshot ?? atom(null);
@@ -83,6 +84,7 @@ export class WorkbenchStore {
       import.meta.hot.data.isInspectorMode = this.isInspectorMode;
       import.meta.hot.data.isDesignSystemMode = this.isDesignSystemMode;
       import.meta.hot.data.isSlidesMode = this.isSlidesMode;
+      import.meta.hot.data.mobilePreviewFullScreen = this.mobilePreviewFullScreen;
       import.meta.hot.data.currentAiUrl = this.currentAiUrl;
       import.meta.hot.data.currentAiScreenshot = this.currentAiScreenshot;
       import.meta.hot.data.currentResearchData = this.currentResearchData;
@@ -103,7 +105,11 @@ export class WorkbenchStore {
   }
 
   addToExecutionQueue(callback: () => Promise<void>) {
-    this.#globalExecutionQueue = this.#globalExecutionQueue.then(() => callback());
+    this.#globalExecutionQueue = this.#globalExecutionQueue.then(() => 
+      callback().catch(error => {
+        console.error('Action execution failed in queue, continuing to next action:', error);
+      })
+    );
   }
 
   get previews() {
@@ -660,7 +666,24 @@ export class WorkbenchStore {
         }
       }
     } else {
-      await artifact.runner.runAction(data);
+      try {
+        await artifact.runner.runAction(data);
+      } catch (error: any) {
+        if (error.name === 'ActionCommandError' || error.message?.includes('Failed To Execute Shell Command')) {
+          if (typeof window !== 'undefined') {
+            const event = new CustomEvent('falbor:auto-fix-error', {
+              detail: {
+                artifactId,
+                actionId: data.actionId,
+                command: action.content,
+                error: error.output || error.message,
+              }
+            });
+            window.dispatchEvent(event);
+          }
+        }
+        throw error;
+      }
     }
   }
 

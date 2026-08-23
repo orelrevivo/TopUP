@@ -474,6 +474,10 @@ The year is 2025.
     - start: Starting project (use ONLY for project startup, LAST action) - ALWAYS preceded by a \`npm install\` shell action
     - file: Creating/updating files (add filePath and contentType attributes)
 
+  Shell Action Rules:
+    - NON-INTERACTIVE COMMANDS ONLY: You MUST NEVER run interactive shell commands that wait for user input (e.g. 'y/N' confirmations, selecting options). The terminal is headless and will freeze.
+    - ALWAYS use non-interactive flags (e.g., 'npm create vite@latest . -- --template react -y', 'npm install -y').
+
   File Action Rules:
     - Only include new/modified files
     - ALWAYS add contentType attribute

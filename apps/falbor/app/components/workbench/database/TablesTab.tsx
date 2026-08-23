@@ -12,6 +12,7 @@ interface TablesTabProps {
   selectedTable: string | null;
   tableData: TableData | null;
   isPushing: boolean;
+  isLoading?: boolean;
   onPushMigrations: () => void;
   onSelectTable: (name: string) => void;
   onBack: () => void;
@@ -19,8 +20,7 @@ interface TablesTabProps {
 
 const SCHEMA_BADGE: Record<string, { variant: any; label: string }> = {
   public: { variant: 'info', label: 'public' },
-  auth: { variant: 'primary', label: 'auth' },
-  storage: { variant: 'warning', label: 'storage' },
+  neon_auth: { variant: 'primary', label: 'neon_auth' },
 };
 
 export function TablesTab({
@@ -29,6 +29,7 @@ export function TablesTab({
   selectedTable,
   tableData,
   isPushing,
+  isLoading,
   onPushMigrations,
   onSelectTable,
   onBack,
@@ -37,8 +38,9 @@ export function TablesTab({
     <div className="p-8 space-y-6 max-w-5xl mx-auto">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">
+          <h1 className="text-xl font-semibold flex items-center gap-2">
             {selectedTable ? `→ ${selectedTable}` : 'Tables'}
+            {isLoading && selectedTable && <div className="i-ph:spinner-gap-bold animate-spin text-sm text-falbor-elements-textTertiary" />}
           </h1>
           <p className="text-sm text-falbor-elements-textSecondary mt-0.5">
             {selectedTable ? 'Viewing live table data' : 'Browse all schemas and tables'}
@@ -96,7 +98,7 @@ export function TablesTab({
             )}
           </Card>
 
-          {(['public', 'auth', 'storage'] as const).map((schema) => {
+          {Array.from(new Set(dbTables.map(t => t.schema))).sort().map((schema) => {
             const schemaTables = dbTables.filter((t) => t.schema === schema);
             if (!schemaTables.length) return null;
             const badge = SCHEMA_BADGE[schema] ?? { variant: 'default', label: schema };

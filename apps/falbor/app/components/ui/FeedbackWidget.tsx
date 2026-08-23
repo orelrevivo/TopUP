@@ -152,7 +152,7 @@ export function FeedbackWidget({ hasMessages = false }: FeedbackWidgetProps) {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 20, scale: 0.95 }}
           transition={{ duration: 0.3, ease: [0.25, 1, 0.5, 1] }}
-          className="fixed bottom-6 right-6 z-50 w-full max-w-[440px]"
+          className="fixed bottom-6 right-6 z-50 w-full max-w-[440px] hidden md:block"
         >
           <Card className="shadow-2xl border-falbor-elements-borderColor overflow-hidden relative group bg-falbor-elements-background">
             {isMinimized ? (

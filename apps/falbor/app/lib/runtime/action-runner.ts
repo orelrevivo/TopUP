@@ -141,7 +141,7 @@ export class ActionRunner {
 
     this.#updateAction(actionId, { ...action, ...data.action, executed: !isStreaming });
 
-    this.#currentExecutionPromise = this.#currentExecutionPromise
+    const executionPromise = this.#currentExecutionPromise
       .then(() => {
         const currentAction = this.actions.get()[actionId];
         const isCommand =
@@ -151,26 +151,28 @@ export class ActionRunner {
           currentAction.type === 'build';
 
         if (isCommand) {
-          globalCommandQueue = globalCommandQueue
+          const promise = globalCommandQueue
             .then(() => {
               this.#updateAction(actionId, { status: 'running' });
               return this.#executeAction(actionId, isStreaming);
-            })
-            .catch((error) => {
-              logger.error('Global action execution promise failed:', error);
             });
-          return globalCommandQueue;
+            
+          globalCommandQueue = promise.catch((error) => {
+            logger.error('Global action execution promise failed:', error);
+          });
+          
+          return promise;
         } else {
           this.#updateAction(actionId, { status: 'running' });
           return this.#executeAction(actionId, isStreaming);
         }
-      })
-      .catch((error) => {
-        logger.error('Action execution promise failed:', error);
       });
 
-    await this.#currentExecutionPromise;
+    this.#currentExecutionPromise = executionPromise.catch((error) => {
+      logger.error('Action execution promise failed:', error);
+    });
 
+    await executionPromise;
     return;
   }
 
@@ -295,6 +297,14 @@ export class ActionRunner {
     if (!shell || !shell.terminal || !shell.process) {
       unreachable('Shell terminal not found');
     }
+
+    // Decode HTML entities that might have slipped through the markdown parser
+    action.content = action.content
+      .replace(/&amp;/g, '&')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'");
 
     // Pre-validate command for common issues
     const validationResult = await this.#validateShellCommand(action.content);

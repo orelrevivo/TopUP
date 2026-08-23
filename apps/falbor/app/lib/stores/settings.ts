@@ -9,6 +9,7 @@ import type { TabType } from '~/components/@settings/core/types';
 
 export const settingsOpenStore = atom(false);
 export const settingsTabStore = atom<TabType>('settings');
+export const chatSettingsOpenStore = atom(false);
 export const blinkPricingStore = atom(false);
 
 export interface Shortcut {
