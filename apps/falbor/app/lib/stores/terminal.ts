@@ -3,6 +3,7 @@ import { atom, type WritableAtom } from 'nanostores';
 import type { ITerminal } from '~/types/terminal';
 import { newFalborShellProcess, newShellProcess } from '~/utils/shell';
 import { coloredText } from '~/utils/terminal';
+import { isMobile } from '~/utils/mobile';
 
 export class TerminalStore {
   #webcontainer: Promise<WebContainer>;
@@ -30,7 +31,9 @@ export class TerminalStore {
       const wc = await this.#webcontainer;
       await this.#falborTerminal.init(wc, terminal);
     } catch (error: any) {
-      terminal.write(coloredText.red('Failed to spawn falbor shell\n\n') + error.message);
+      if (!isMobile()) {
+        terminal.write(coloredText.red('Failed to spawn falbor shell\n\n') + error.message);
+      }
       return;
     }
   }
@@ -40,7 +43,9 @@ export class TerminalStore {
       const shellProcess = await newShellProcess(await this.#webcontainer, terminal);
       this.#terminals.push({ terminal, process: shellProcess });
     } catch (error: any) {
-      terminal.write(coloredText.red('Failed to spawn shell\n\n') + error.message);
+      if (!isMobile()) {
+        terminal.write(coloredText.red('Failed to spawn shell\n\n') + error.message);
+      }
       return;
     }
   }

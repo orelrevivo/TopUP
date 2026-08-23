@@ -254,25 +254,17 @@ export const Workbench = memo(
                     <p className="text-falbor-elements-textPrimary text-lg font-medium">AI is generating the codes...</p>
                   </div>
                 )}
-                {mobilePreviewFullScreen && isSmallViewport ? (
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-falbor-elements-borderColor bg-falbor-elements-background-depth-2 shrink-0">
-                    <span className="font-semibold text-falbor-elements-textPrimary">Preview Display</span>
-                    <button
-                      onClick={() => workbenchStore.mobilePreviewFullScreen.set(false)}
-                      className="text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors p-1 flex items-center gap-1"
-                    >
-                      <span className="text-sm font-medium">Exit</span>
-                      <div className="i-ph:x text-xl" />
-                    </button>
-                  </div>
-                ) : (
-                  <div className="flex items-center px-3 py-2 border-b border-falbor-elements-borderColor gap-1.5 z-10 bg-falbor-elements-background-depth-2 shrink-0">
-                    {isSmallViewport ? (
+                <div className="flex items-center px-3 py-2 border-b border-falbor-elements-borderColor gap-1.5 z-10 bg-falbor-elements-background-depth-2 shrink-0">
+                  {isSmallViewport ? (
+                    <>
                       <button
                         className="i-ph:x text-xl text-falbor-elements-textSecondary mr-2 hover:text-falbor-elements-textPrimary transition-colors"
                         onClick={() => workbenchStore.showWorkbench.set(false)}
                       />
-                    ) : (
+                      <span className="font-semibold text-falbor-elements-textPrimary ml-1">Preview</span>
+                    </>
+                  ) : (
+                    <>
                       <button
                         className={`${showChat ? 'i-ph:sidebar-simple-fill' : 'i-ph:sidebar-simple'} text-lg text-falbor-elements-textSecondary mr-1`}
                         disabled={!canHideChat}
@@ -282,67 +274,79 @@ export const Workbench = memo(
                           }
                         }}
                       />
-                    )}
-                    <button
-                      className={`${showHistory ? 'i-ph:clock-counter-clockwise-fill' : 'i-ph:clock-counter-clockwise'} text-lg text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors mr-2`}
-                      onClick={() => chatStore.setKey('showHistory', !showHistory)}
-                      title="History"
-                    />
-                    <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
-                    <div className="ml-auto" />
-                    {selectedView === 'diff' && (
-                      <FileModifiedDropdown fileHistory={fileHistory} onSelectFile={handleSelectFile} />
-                    )}
-                  </div>
-                )}
+                      <button
+                        className={`${showHistory ? 'i-ph:clock-counter-clockwise-fill' : 'i-ph:clock-counter-clockwise'} text-lg text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors mr-2`}
+                        onClick={() => chatStore.setKey('showHistory', !showHistory)}
+                        title="History"
+                      />
+                      <Slider selected={selectedView} options={sliderOptions} setSelected={setSelectedView} />
+                      <div className="ml-auto" />
+                      {selectedView === 'diff' && (
+                        <FileModifiedDropdown fileHistory={fileHistory} onSelectFile={handleSelectFile} />
+                      )}
+                    </>
+                  )}
+                </div>
                 <div className="relative flex-1 overflow-hidden">
-                  <View
-                    initial={{ x: '0%' }}
-                    animate={{ x: selectedView === 'code' ? '0%' : '-100%' }}
-                    style={{ pointerEvents: selectedView === 'code' ? 'auto' : 'none' }}
-                  >
-                    <EditorPanel
-                      editorDocument={currentDocument}
-                      isStreaming={isStreaming}
-                      selectedFile={selectedFile}
-                      files={files}
-                      unsavedFiles={unsavedFiles}
-                      fileHistory={fileHistory}
-                      onFileSelect={onFileSelect}
-                      onEditorScroll={onEditorScroll}
-                      onEditorChange={onEditorChange}
-                      onFileSave={onFileSave}
-                      onFileReset={onFileReset}
-                    />
-                  </View>
-                  <View
-                    initial={{ x: '100%' }}
-                    animate={{ x: selectedView === 'preview' ? '0%' : selectedView === 'code' ? '100%' : '-100%' }}
-                    style={{ pointerEvents: selectedView === 'preview' ? 'auto' : 'none' }}
-                  >
-                    <Preview setSelectedElement={setSelectedElement} />
-                  </View>
-                  <View
-                    initial={{ x: '100%' }}
-                    animate={{ x: selectedView === 'workflow' ? '0%' : (selectedView === 'database' || selectedView === 'research') ? '-100%' : '100%' }}
-                    style={{ pointerEvents: selectedView === 'workflow' ? 'auto' : 'none' }}
-                  >
-                    <WorkflowView sendMessage={sendMessage} />
-                  </View>
-                  <View
-                    initial={{ x: '100%' }}
-                    animate={{ x: selectedView === 'database' ? '0%' : (selectedView === 'research' ? '-100%' : '100%') }}
-                    style={{ pointerEvents: selectedView === 'database' ? 'auto' : 'none' }}
-                  >
-                    <DatabaseView sendMessage={sendMessage} />
-                  </View>
-                  <View
-                    initial={{ x: '100%' }}
-                    animate={{ x: selectedView === 'research' ? '0%' : '100%' }}
-                    style={{ pointerEvents: selectedView === 'research' ? 'auto' : 'none' }}
-                  >
-                    <ResearchView />
-                  </View>
+                  {isSmallViewport ? (
+                    <View
+                      initial={{ x: '0%' }}
+                      animate={{ x: '0%' }}
+                      style={{ pointerEvents: 'auto' }}
+                    >
+                      <Preview setSelectedElement={setSelectedElement} />
+                    </View>
+                  ) : (
+                    <>
+                      <View
+                        initial={{ x: '0%' }}
+                        animate={{ x: selectedView === 'code' ? '0%' : '-100%' }}
+                        style={{ pointerEvents: selectedView === 'code' ? 'auto' : 'none' }}
+                      >
+                        <EditorPanel
+                          editorDocument={currentDocument}
+                          isStreaming={isStreaming}
+                          selectedFile={selectedFile}
+                          files={files}
+                          unsavedFiles={unsavedFiles}
+                          fileHistory={fileHistory}
+                          onFileSelect={onFileSelect}
+                          onEditorScroll={onEditorScroll}
+                          onEditorChange={onEditorChange}
+                          onFileSave={onFileSave}
+                          onFileReset={onFileReset}
+                        />
+                      </View>
+                      <View
+                        initial={{ x: '100%' }}
+                        animate={{ x: selectedView === 'preview' ? '0%' : selectedView === 'code' ? '100%' : '-100%' }}
+                        style={{ pointerEvents: selectedView === 'preview' ? 'auto' : 'none' }}
+                      >
+                        <Preview setSelectedElement={setSelectedElement} />
+                      </View>
+                      <View
+                        initial={{ x: '100%' }}
+                        animate={{ x: selectedView === 'workflow' ? '0%' : (selectedView === 'database' || selectedView === 'research') ? '-100%' : '100%' }}
+                        style={{ pointerEvents: selectedView === 'workflow' ? 'auto' : 'none' }}
+                      >
+                        <WorkflowView sendMessage={sendMessage} />
+                      </View>
+                      <View
+                        initial={{ x: '100%' }}
+                        animate={{ x: selectedView === 'database' ? '0%' : (selectedView === 'research' ? '-100%' : '100%') }}
+                        style={{ pointerEvents: selectedView === 'database' ? 'auto' : 'none' }}
+                      >
+                        <DatabaseView sendMessage={sendMessage} />
+                      </View>
+                      <View
+                        initial={{ x: '100%' }}
+                        animate={{ x: selectedView === 'research' ? '0%' : '100%' }}
+                        style={{ pointerEvents: selectedView === 'research' ? 'auto' : 'none' }}
+                      >
+                        <ResearchView />
+                      </View>
+                    </>
+                  )}
 
                 </div>
               </div>
