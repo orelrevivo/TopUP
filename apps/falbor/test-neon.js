@@ -7,7 +7,7 @@ async function runQuery(databaseUrl, query) {
 }
 
 async function test() {
-  const url = 'postgres://neondb_owner:npg_Uj32HluyYoWS@ep-green-glade-axmu503k-pooler.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require';
+  const url = '';
   try {
     const res = await runQuery(url, "SELECT schemaname, tablename FROM pg_catalog.pg_tables WHERE schemaname NOT IN ('pg_catalog', 'information_schema') ORDER BY schemaname, tablename;");
     console.log("SUCCESS:");
