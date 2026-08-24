@@ -6,11 +6,12 @@ import { useAnimate } from 'framer-motion';
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { toast } from 'react-toastify';
 import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
-import { description as descriptionStore, useChatHistory, chatId } from '~/lib/persistence';
+import { description as descriptionStore, useChatHistory, chatId, chatMetadata } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { webcontainer } from '~/lib/webcontainer';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, MODEL_REGEX, PROMPT_COOKIE_KEY, PROVIDER_LIST, PROVIDER_REGEX } from '~/utils/constants';
+import { setRewindId } from '~/lib/api/data/chat';
 import { cubicEasingFn } from '~/utils/easings';
 import { createScopedLogger, renderLogger } from '~/utils/logger';
 import { BaseChat } from './BaseChat';
@@ -40,7 +41,7 @@ const logger = createScopedLogger('Chat');
 export function Chat({ hideIntro, hideSlider, isCompact }: { hideIntro?: boolean; hideSlider?: boolean; isCompact?: boolean }) {
   renderLogger.trace('Chat');
 
-  const { ready, initialMessages, storeMessageHistory, importChat, exportChat } = useChatHistory();
+  const { ready, initialMessages, storeMessageHistory, importChat, exportChat, updateChatMestaData } = useChatHistory();
   const title = useStore(descriptionStore);
 
 
@@ -53,6 +54,7 @@ export function Chat({ hideIntro, hideSlider, isCompact }: { hideIntro?: boolean
           exportChat={exportChat}
           storeMessageHistory={storeMessageHistory}
           importChat={importChat}
+          updateChatMestaData={updateChatMestaData}
           hideIntro={hideIntro}
           hideSlider={hideSlider}
           isCompact={isCompact}
@@ -85,6 +87,7 @@ interface ChatProps {
   storeMessageHistory: (messages: Message[]) => Promise<void>;
   importChat: (description: string, messages: Message[]) => Promise<void>;
   exportChat: () => void;
+  updateChatMestaData?: (metadata: any) => Promise<void>;
   description?: string;
   hideIntro?: boolean;
   hideSlider?: boolean;
@@ -92,7 +95,7 @@ interface ChatProps {
 }
 
 export const ChatImpl = memo(
-  ({ description, initialMessages, storeMessageHistory, importChat, exportChat, hideIntro, hideSlider, isCompact }: ChatProps) => {
+  ({ description, initialMessages, storeMessageHistory, importChat, exportChat, updateChatMestaData, hideIntro, hideSlider, isCompact }: ChatProps) => {
     useShortcuts();
 
     const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -292,8 +295,18 @@ export const ChatImpl = memo(
       if (_messagesInjected.current) return;
       _messagesInjected.current = true;
 
-      const msgs = [...initialMessages];
+      let msgs = [...initialMessages];
       let inputFromLastMsg = '';
+
+      const meta = chatMetadata.get();
+      const rewindId = (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('rewindTo') : null) || meta?.rewindId;
+      
+      if (rewindId) {
+          const idx = msgs.findIndex(m => m.id === rewindId);
+          if (idx !== -1) {
+              msgs = msgs.slice(0, idx + 1);
+          }
+      }
 
       if (msgs.length > 0) {
         const lastMsg = msgs[msgs.length - 1];
@@ -975,6 +988,14 @@ export const ChatImpl = memo(
         setCloneUrl={setCloneUrl}
         addToolResult={addToolResult}
         onWebSearchResult={handleWebSearchResult}
+        fullMessages={initialMessages}
+        onRewind={async (id) => {
+          const idToUse = chatId.get();
+          if (idToUse) {
+            await setRewindId(idToUse, id);
+            window.location.reload();
+          }
+        }}
         hideIntro={hideIntro}
       />
     );

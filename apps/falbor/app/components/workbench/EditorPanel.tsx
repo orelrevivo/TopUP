@@ -179,8 +179,12 @@ export const EditorPanel = memo(
             </Panel>
           </PanelGroup>
         </Panel>
-        <PanelResizeHandle />
-        <TerminalTabs />
+        {!isMobile() && (
+          <>
+            <PanelResizeHandle />
+            <TerminalTabs />
+          </>
+        )}
       </PanelGroup>
     );
   },

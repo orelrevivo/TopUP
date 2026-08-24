@@ -49,19 +49,41 @@ export function useChatHistory() {
           .then(async ([storedMessages, snapshot]) => {
             if (cancelled) return;
             if (storedMessages && storedMessages.messages.length > 0) {
-              const validSnapshot: Snapshot = (snapshot || { chatIndex: '', files: {} }) as Snapshot;
-              const summary = validSnapshot.summary;
+              const loadedMetadata = (storedMessages.metadata || {}) as Record<string, any>;
+              const snapshotData = snapshot as any;
+              let rewindId = searchParams.get('rewindTo') || (snapshotData?.type === 'multi' ? snapshotData.rewindId : null);
 
-              const rewindId = searchParams.get('rewindTo');
-              let startingIdx = -1;
-              const endingIdx = rewindId
-                ? storedMessages.messages.findIndex((m) => m.id === rewindId) + 1
-                : storedMessages.messages.length;
-              const snapshotIndex = storedMessages.messages.findIndex((m) => m.id === validSnapshot.chatIndex);
+              let validSnapshot: Snapshot | undefined;
+              
+              if (snapshotData?.type === 'multi') {
+                const snapshots = snapshotData.snapshots || {};
+                if (rewindId && snapshots[rewindId]) {
+                  validSnapshot = snapshots[rewindId];
+                } else {
+                  // Fallback to latest
+                  const keys = Object.keys(snapshots);
+                  if (keys.length > 0) {
+                    // This is not necessarily the latest in time, but JavaScript objects preserve insertion order for string keys generally.
+                    // A better way is to find the last message id in storedMessages that has a snapshot.
+                    let found = false;
+                    for (let i = storedMessages.messages.length - 1; i >= 0; i--) {
+                       if (snapshots[storedMessages.messages[i].id]) {
+                           validSnapshot = snapshots[storedMessages.messages[i].id];
+                           found = true;
+                           break;
+                       }
+                    }
+                    if (!found) {
+                        validSnapshot = snapshots[keys[keys.length - 1]];
+                    }
+                  }
+                }
+              } else {
+                validSnapshot = (snapshotData || { chatIndex: '', files: {} }) as Snapshot;
+              }
 
               // We no longer slice the messages to hide old ones, because the user wants to see the full chat history.
-              // Just load all messages up to endingIdx.
-              let filteredMessages = storedMessages.messages.slice(0, endingIdx);
+              let filteredMessages = storedMessages.messages;
               let archivedMessages: Message[] = [];
 
               setArchivedMessages(archivedMessages);
@@ -81,10 +103,12 @@ export function useChatHistory() {
               setUrlId(storedMessages.urlId ?? storedMessages.id);
               description.set((storedMessages as any).title || storedMessages.description);
               chatId.set(storedMessages.id);
-              const loadedMetadata = (storedMessages.metadata || {}) as Record<string, any>;
               const savedDeployUrl = typeof window !== 'undefined' ? localStorage.getItem(`deploy-url-${storedMessages.id}`) : null;
               if (savedDeployUrl && !loadedMetadata.deployUrl) {
                 loadedMetadata.deployUrl = savedDeployUrl;
+              }
+              if (rewindId) {
+                loadedMetadata.rewindId = rewindId;
               }
               chatMetadata.set(loadedMetadata as IChatMetadata | undefined);
             }

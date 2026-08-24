@@ -2,6 +2,7 @@ import { memo, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useStore } from '@nanostores/react';
 import { chatStore } from '~/lib/stores/chat';
+import { chatMetadata } from '~/lib/persistence/useChatHistory';
 import type { Message } from 'ai';
 import { classNames } from '~/utils/classNames';
 
@@ -12,6 +13,8 @@ interface HistoryPanelProps {
 
 export const HistoryPanel = memo(({ messages, onRewind }: HistoryPanelProps) => {
   const { showHistory } = useStore(chatStore);
+  const meta = useStore(chatMetadata);
+  const rewindId = meta?.rewindId || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('rewindTo') : null);
 
   // Extract versions from messages
   // We look for assistant messages and try to extract the dynamicTitle
@@ -87,36 +90,41 @@ export const HistoryPanel = memo(({ messages, onRewind }: HistoryPanelProps) => 
                 No history available yet.
               </div>
             ) : (
-              versions.map((version, i) => (
-                <div
-                  key={version.id}
-                  className={classNames(
-                    "group flex flex-col p-4 rounded-lg border border-falbor-elements-borderColor transition-colors cursor-pointer",
-                    i === versions.length - 1
-                      ? "bg-falbor-elements-background-depth-2 border-accent-500/30"
-                      : "bg-falbor-elements-background-depth-1 hover:bg-falbor-elements-background-depth-2"
-                  )}
-                  onClick={() => handleRewind(version.id)}
-                >
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="font-medium text-falbor-elements-textPrimary">{version.title}</span>
-                    {i === versions.length - 1 && (
-                      <span className="text-xs px-2 py-0.5 rounded-full bg-accent-500/20 text-accent-500">
-                        Latest
-                      </span>
+              versions.map((version, i) => {
+                const isLatest = i === versions.length - 1;
+                const isActive = rewindId ? version.id === rewindId : isLatest;
+
+                return (
+                  <div
+                    key={version.id}
+                    className={classNames(
+                      "group flex flex-col p-4 rounded-lg border border-falbor-elements-borderColor transition-colors cursor-pointer",
+                      isActive
+                        ? "bg-falbor-elements-background-depth-2 border-accent-500/30"
+                        : "bg-falbor-elements-background-depth-1 hover:bg-falbor-elements-background-depth-2"
+                    )}
+                    onClick={() => handleRewind(version.id)}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="font-medium text-falbor-elements-textPrimary">{version.title}</span>
+                      {isActive && (
+                        <span className="text-xs px-2 py-0.5 rounded-full bg-accent-500/20 text-accent-500">
+                          Active
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-sm text-falbor-elements-textSecondary">
+                      {version.summary}
+                    </div>
+                    {!isActive && (
+                      <div className="mt-3 text-xs font-medium text-blue-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <div className="i-ph:arrow-u-up-left" />
+                        Restore this version
+                      </div>
                     )}
                   </div>
-                  <div className="text-sm text-falbor-elements-textSecondary">
-                    {version.summary}
-                  </div>
-                  {i !== versions.length - 1 && (
-                    <div className="mt-3 text-xs font-medium text-blue-500 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <div className="i-ph:arrow-u-up-left" />
-                      Restore this version
-                    </div>
-                  )}
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </motion.div>

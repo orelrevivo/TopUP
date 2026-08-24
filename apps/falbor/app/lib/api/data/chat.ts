@@ -102,6 +102,13 @@ export async function setSnapshot(chatId: string, snapshot: any): Promise<void> 
   });
 }
 
+export async function setRewindId(chatId: string, rewindId: string | null): Promise<void> {
+  await api(`/${encodeURIComponent(chatId)}/snapshot`, {
+    method: "POST",
+    body: JSON.stringify({ rewindId }),
+  });
+}
+
 export async function deleteSnapshot(chatId: string): Promise<void> {
   try {
     await api(`/${encodeURIComponent(chatId)}/snapshot`, { method: "DELETE" });

@@ -8,6 +8,7 @@ export interface IChatMetadata {
   gitUrl: string;
   gitBranch?: string;
   netlifySiteId?: string;
+  rewindId?: string;
 }
 
 const logger = createScopedLogger('ChatHistory');

@@ -27,22 +27,72 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
   const userId = await getUserId(request);
   if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   try {
-    const { snapshot } = (await request.json()) as { snapshot: any };
+    const body = (await request.json()) as any;
+    const { snapshot, rewindId } = body;
+    
     const [existing] = await db
       .select()
       .from(chatSnapshots)
       .where(and(eq(chatSnapshots.chatId, params.id), eq(chatSnapshots.userId, userId)))
       .limit(1);
-    if (existing) {
+
+    if (rewindId !== undefined) {
+      if (existing && existing.files) {
+        const existingFiles = existing.files as any;
+        const newFilesData = existingFiles.type === 'multi' ? { ...existingFiles } : { type: 'multi', snapshots: { [existingFiles.chatIndex]: existingFiles } };
+        newFilesData.rewindId = rewindId;
+        await db
+          .update(chatSnapshots)
+          .set({ files: newFilesData })
+          .where(eq(chatSnapshots.id, existing.id));
+      }
+      return NextResponse.json({ success: true });
+    }
+
+    let newFilesData: any;
+
+    if (existing && existing.files) {
+      const existingFiles = existing.files as any;
+      if (existingFiles.type === 'multi') {
+        newFilesData = {
+          ...existingFiles,
+          snapshots: {
+            ...existingFiles.snapshots,
+            [snapshot.chatIndex]: snapshot
+          }
+        };
+      } else if (existingFiles.chatIndex) {
+        newFilesData = {
+          type: 'multi',
+          snapshots: {
+            [existingFiles.chatIndex]: existingFiles,
+            [snapshot.chatIndex]: snapshot
+          }
+        };
+      } else {
+        newFilesData = {
+          type: 'multi',
+          snapshots: {
+            [snapshot.chatIndex]: snapshot
+          }
+        };
+      }
+
       await db
         .update(chatSnapshots)
-        .set({ files: snapshot, summary: snapshot?.summary, createdAt: new Date() })
+        .set({ files: newFilesData, summary: snapshot?.summary, createdAt: new Date() })
         .where(eq(chatSnapshots.id, existing.id));
     } else {
+      newFilesData = {
+        type: 'multi',
+        snapshots: {
+          [snapshot.chatIndex]: snapshot
+        }
+      };
       await db.insert(chatSnapshots).values({
         chatId: params.id,
         userId,
-        files: snapshot,
+        files: newFilesData,
         summary: snapshot?.summary,
       });
     }

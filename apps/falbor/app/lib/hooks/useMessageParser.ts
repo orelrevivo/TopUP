@@ -54,6 +54,14 @@ const messageParser = new EnhancedStreamingMessageParser({
     },
     onActionStream: (data) => {
       logger.trace('onActionStream', data.action);
+      
+      // On mobile devices, we skip writing file chunks progressively to avoid crashing the browser
+      // with excessive I/O operations and memory usage. The full file will be mounted when the action closes.
+      const isMobile = typeof window !== 'undefined' && (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768);
+      if (isMobile && data.action.type === 'file') {
+        return;
+      }
+      
       workbenchStore.runAction(data, true);
     },
   },

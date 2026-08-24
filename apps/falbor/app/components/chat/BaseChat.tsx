@@ -104,6 +104,8 @@ interface BaseChatProps {
   onWebSearchResult?: (result: string) => void;
   hideSlider?: boolean;
   isCompact?: boolean;
+  fullMessages?: Message[];
+  onRewind?: (id: string) => void;
 }
 
 export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
@@ -159,6 +161,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         throw new Error('addToolResult not implemented');
       },
       onWebSearchResult,
+      fullMessages,
+      onRewind,
     },
     ref,
   ) => {
@@ -507,7 +511,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               </div>
             )}
             <FeedbackWidget hasMessages={(messages?.length || 0) > 1} />
-            <HistoryPanel messages={messages || []} />
+            <HistoryPanel messages={fullMessages && fullMessages.length > (messages?.length || 0) ? fullMessages : (messages || [])} onRewind={onRewind} />
             <StickToBottom
               data-scrollable="true"
               className={classNames('pt-2 px-2 relative', {

@@ -5,9 +5,10 @@ import { classNames } from '~/utils/classNames';
 import { AssistantMessage } from './AssistantMessage';
 import { UserMessage } from './UserMessage';
 
-import { db, chatId } from '~/lib/persistence/useChatHistory';
+import { db, chatId, chatMetadata } from '~/lib/persistence/useChatHistory';
 import { forkChat } from '~/lib/persistence/db';
 import { toast } from 'react-toastify';
+import { useStore } from '@nanostores/react';
 import { forwardRef } from 'react';
 import type { ForwardedRef } from 'react';
 import type { ProviderInfo } from '~/types/model';
@@ -50,8 +51,18 @@ export const Messages = forwardRef<HTMLDivElement, MessagesProps>(
     };
 
     const groupedMessages: Message[] = [];
+    const meta = useStore(chatMetadata);
+    const rewindId = meta?.rewindId || (typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('rewindTo') : null);
 
-    for (const msg of messages) {
+    let visibleMessages = messages;
+    if (rewindId) {
+      const rewindIndex = messages.findIndex((m) => m.id === rewindId);
+      if (rewindIndex !== -1) {
+        visibleMessages = messages.slice(0, rewindIndex + 1);
+      }
+    }
+
+    for (const msg of visibleMessages) {
       if (msg.annotations?.includes('hidden') || (typeof msg.content === 'string' && msg.content.includes('[AUTOMATED SYSTEM CHECK]'))) continue;
 
       const lastGroup = groupedMessages[groupedMessages.length - 1];
