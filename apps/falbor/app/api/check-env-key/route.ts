@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
-const json = NextResponse.json;
-import { LLMManager } from '../../lib/modules/llm/manager';
-import { getApiKeysFromCookie } from '../../lib/api/cookies';
+import { LLMManager } from "~/lib/modules/llm/manager";
+import { getUserId } from "~/lib/auth";
+import { db } from "~/lib/db";
+import { providerSettings as providerSettingsTable } from "~/lib/db/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function GET(request: Request) {
   const context = { cloudflare: { env: process.env as Record<string, string> } };
@@ -12,28 +14,36 @@ export async function GET(request: Request) {
     return Response.json({ isSet: false });
   }
 
+  const userId = await getUserId(request as any);
+  let isSetInDb = false;
+
+  if (userId) {
+    try {
+      const [setting] = await db
+        .select()
+        .from(providerSettingsTable)
+        .where(and(eq(providerSettingsTable.userId, userId), eq(providerSettingsTable.providerName, provider)))
+        .limit(1);
+
+      if (setting && setting.apiKey) {
+        isSetInDb = true;
+      }
+    } catch (err) {
+      console.error("Error checking DB for provider key:", err);
+    }
+  }
+
   const llmManager = LLMManager.getInstance(context?.cloudflare?.env as any);
   const providerInstance = llmManager.getProvider(provider);
 
   if (!providerInstance || !providerInstance.config.apiTokenKey) {
-    return Response.json({ isSet: false });
+    return Response.json({ isSet: isSetInDb });
   }
 
   const envVarName = providerInstance.config.apiTokenKey;
 
-  // Get API keys from cookie
-  const cookieHeader = request.headers.get('Cookie');
-  const apiKeys = getApiKeysFromCookie(cookieHeader);
-
-  /*
-   * Check API key in order of precedence:
-   * 1. Client-side API keys (from cookies)
-   * 2. Server environment variables (from Cloudflare env)
-   * 3. Process environment variables (from .env.local)
-   * 4. LLMManager environment variables
-   */
   const isSet = !!(
-    apiKeys?.[provider] ||
+    isSetInDb ||
     (context?.cloudflare?.env as Record<string, any>)?.[envVarName] ||
     process.env[envVarName] ||
     llmManager.env[envVarName]
@@ -41,3 +51,4 @@ export async function GET(request: Request) {
 
   return Response.json({ isSet });
 }
+

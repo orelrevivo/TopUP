@@ -226,6 +226,33 @@ export function withSecurity<T extends (args: RouteArgs) => Promise<Response>>(
         responseHeaders.set(key, value);
       });
 
+      // Scan JSON response for sensitive keys or values
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        const bodyClone = response.clone();
+        try {
+          const jsonBody = await bodyClone.json();
+          scanForSensitiveData(jsonBody);
+        } catch (err: any) {
+          if (err.message && err.message.startsWith('Response blocked:')) {
+            console.error('Response scan blocked:', err.message);
+            return new Response(
+              JSON.stringify({
+                error: true,
+                message: err.message,
+              }),
+              {
+                status: 500,
+                headers: {
+                  ...createSecurityHeaders(),
+                  'Content-Type': 'application/json',
+                },
+              }
+            );
+          }
+        }
+      }
+
       return new Response(response.body, {
         status: response.status,
         statusText: response.statusText,
@@ -252,3 +279,41 @@ export function withSecurity<T extends (args: RouteArgs) => Promise<Response>>(
     }
   };
 }
+
+function scanForSensitiveData(obj: any): void {
+  if (!obj || typeof obj !== 'object') {
+    if (typeof obj === 'string') {
+      const envValues = Object.entries(process.env);
+      for (const [key, val] of envValues) {
+        if (!val || val.length < 8) continue;
+        // Skip common environment variables to avoid false positives
+        if (['NODE_ENV', 'PATH', 'PORT', 'TERM', 'SHELL', 'PWD', 'HOME', 'USER'].includes(key)) continue;
+        if (obj === val) {
+          throw new Error(`Response blocked: contains sensitive value from process.env.${key}`);
+        }
+      }
+    }
+    return;
+  }
+
+  if (Array.isArray(obj)) {
+    for (const item of obj) {
+      scanForSensitiveData(item);
+    }
+    return;
+  }
+
+  for (const [key, value] of Object.entries(obj)) {
+    const lowerKey = key.toLowerCase();
+    if (
+      lowerKey.includes('apikey') ||
+      lowerKey.includes('token') ||
+      lowerKey.includes('secret') ||
+      lowerKey.includes('password')
+    ) {
+      throw new Error(`Response blocked: sensitive key "${key}" detected`);
+    }
+    scanForSensitiveData(value);
+  }
+}
+

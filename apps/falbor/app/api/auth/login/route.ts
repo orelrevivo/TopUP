@@ -57,7 +57,6 @@ export async function POST(request: Request) {
 
     const body = JSON.stringify({
       user: { id: user.id, email: user.email, displayName: user.displayName },
-      token,
     });
 
     return new Response(body, {

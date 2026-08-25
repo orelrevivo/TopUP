@@ -24,11 +24,15 @@ import { NativeToolsService } from '~/lib/services/nativeToolsService';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { SupabaseService } from '~/lib/services/supabaseService';
 import { NeonService } from '~/lib/services/neonService';
-import type { RouteArgs } from '~/lib/security';
+import { withSecurity, type RouteArgs } from '~/lib/security';
 import { webSearch, readPageContent, searchReddit, searchGitHubIssues, searchTwitter } from '~/lib/services/searchTools';
 
+const chatPost = withSecurity(async ({ request, context }) => {
+  return chatAction({ request, context });
+});
+
 export async function POST(request: Request) {
-  return chatAction({ request, context: { cloudflare: { env: process.env as Record<string, string> } } });
+  return chatPost({ request, context: { env: process.env as any } });
 }
 
 const logger = createScopedLogger('api.chat');
@@ -81,7 +85,7 @@ async function chatAction({ context, request }: RouteArgs) {
       files: any;
       promptId?: string;
       contextOptimization: boolean;
-      chatMode: 'discuss' | 'build' | 'troubleshoot' | 'idea';
+      chatMode: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research';
       isSlidesMode?: boolean;
       isGameMode?: boolean;
       designScheme?: DesignScheme;
@@ -103,11 +107,33 @@ async function chatAction({ context, request }: RouteArgs) {
   console.log('[CHAT_ROUTE] Received body selectedMCPs:', selectedMCPs);
   console.log('[CHAT_ROUTE] Received body mcpEnabled:', mcpEnabled);
 
-  const cookieHeader = request.headers.get('Cookie');
-  const apiKeys = JSON.parse(parseCookies(cookieHeader || '').apiKeys || '{}');
-  const providerSettings: Record<string, IProviderSetting> = JSON.parse(
-    parseCookies(cookieHeader || '').providers || '{}',
-  );
+
+  const { providerSettings: providerSettingsTable } = require('~/lib/db/schema');
+  const { decrypt } = require('~/lib/crypto');
+  const userSettings = await db
+    .select()
+    .from(providerSettingsTable)
+    .where(eq(providerSettingsTable.userId, userId));
+
+  const apiKeys: Record<string, string> = {};
+  const providerSettings: Record<string, any> = {};
+
+  for (const setting of userSettings) {
+    if (setting.apiKey) {
+      try {
+        apiKeys[setting.providerName] = decrypt(setting.apiKey);
+      } catch (err) {
+        console.error(`Failed to decrypt key for ${setting.providerName}:`, err);
+      }
+    }
+    providerSettings[setting.providerName] = {
+      settings: {
+        enabled: setting.enabled,
+        ...(setting.settings as Record<string, any> || {})
+      },
+      baseUrl: setting.baseUrl
+    };
+  }
 
   const stream = new SwitchableStream();
 
@@ -664,7 +690,7 @@ THEN build the pixel-perfect clone.`;
           promptId,
           contextOptimization,
           contextFiles: filteredFiles,
-          chatMode,
+          chatMode: chatMode as any,
           isSlidesMode,
           isGameMode,
           designScheme,

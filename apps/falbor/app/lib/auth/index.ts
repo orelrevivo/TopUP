@@ -59,13 +59,6 @@ export async function getUserId(request: NextRequest): Promise<string | null> {
     }
   }
 
-  // Final fallback: x-session-token header set by localStorage backup
-  const fromHeader = request.headers.get(HEADER_NAME);
-  if (fromHeader) {
-    const payload = await verifyToken(fromHeader);
-    if (payload?.userId) return payload.userId;
-  }
-
   return null;
 }
 

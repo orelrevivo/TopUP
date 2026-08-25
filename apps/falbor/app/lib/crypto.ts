@@ -1,58 +1,39 @@
-const encoder = new TextEncoder();
-const decoder = new TextDecoder();
-const IV_LENGTH = 16;
+import crypto from 'crypto';
 
-export async function encrypt(key: string, data: string) {
-  const iv = crypto.getRandomValues(new Uint8Array(IV_LENGTH));
-  const cryptoKey = await getKey(key);
+// Deriving a 32-byte key from ENCRYPTION_SECRET or JWT_SECRET
+const ENCRYPTION_KEY = process.env.ENCRYPTION_SECRET 
+  ? crypto.createHash('sha256').update(process.env.ENCRYPTION_SECRET).digest()
+  : crypto.createHash('sha256').update(process.env.JWT_SECRET || 'fallback-secret-for-development-32bytes-long').digest();
 
-  const ciphertext = await crypto.subtle.encrypt(
-    {
-      name: 'AES-CBC',
-      iv,
-    },
-    cryptoKey,
-    encoder.encode(data),
-  );
+const ALGORITHM = 'aes-256-gcm';
+const IV_LENGTH = 12;
 
-  const bundle = new Uint8Array(IV_LENGTH + ciphertext.byteLength);
-
-  bundle.set(new Uint8Array(ciphertext));
-  bundle.set(iv, ciphertext.byteLength);
-
-  return decodeBase64(bundle);
+export function encrypt(text: string): string {
+  const iv = crypto.randomBytes(IV_LENGTH);
+  const cipher = crypto.createCipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+  let encrypted = cipher.update(text, 'utf8', 'hex');
+  encrypted += cipher.final('hex');
+  const authTag = cipher.getAuthTag().toString('hex');
+  // Combine IV, authTag, and ciphertext separated by colons
+  return `${iv.toString('hex')}:${authTag}:${encrypted}`;
 }
 
-export async function decrypt(key: string, payload: string) {
-  const bundle = encodeBase64(payload);
-
-  const iv = new Uint8Array(bundle.buffer, bundle.byteLength - IV_LENGTH);
-  const ciphertext = new Uint8Array(bundle.buffer, 0, bundle.byteLength - IV_LENGTH);
-
-  const cryptoKey = await getKey(key);
-
-  const plaintext = await crypto.subtle.decrypt(
-    {
-      name: 'AES-CBC',
-      iv,
-    },
-    cryptoKey,
-    ciphertext,
-  );
-
-  return decoder.decode(plaintext);
-}
-
-async function getKey(key: string) {
-  return await crypto.subtle.importKey('raw', encodeBase64(key), { name: 'AES-CBC' }, false, ['encrypt', 'decrypt']);
-}
-
-function decodeBase64(encoded: Uint8Array) {
-  const byteChars = Array.from(encoded, (byte) => String.fromCodePoint(byte));
-
-  return btoa(byteChars.join(''));
-}
-
-function encodeBase64(data: string) {
-  return Uint8Array.from(atob(data), (ch) => ch.codePointAt(0)!);
+export function decrypt(encryptedText: string): string {
+  try {
+    const parts = encryptedText.split(':');
+    if (parts.length !== 3) {
+      throw new Error('Invalid encrypted text format');
+    }
+    const iv = Buffer.from(parts[0], 'hex');
+    const authTag = Buffer.from(parts[1], 'hex');
+    const encrypted = parts[2];
+    const decipher = crypto.createDecipheriv(ALGORITHM, ENCRYPTION_KEY, iv);
+    decipher.setAuthTag(authTag);
+    let decrypted = decipher.update(encrypted, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    return decrypted;
+  } catch (error) {
+    console.error('Decryption failed:', error);
+    throw new Error('Failed to decrypt data');
+  }
 }

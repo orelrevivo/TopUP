@@ -24,29 +24,10 @@ interface AuthContextValue {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-function setSessionCookie(token: string) {
-  const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
-  const isHttps = window.location.protocol === "https:";
-  const secure = isHttps ? "; Secure" : "";
-  document.cookie = `session=${token}; Path=/; SameSite=Lax${secure}; Max-Age=${maxAge}`;
-  localStorage.setItem(SESSION_KEY, token);
-}
-
 function clearSessionCookie() {
   const isHttps = window.location.protocol === "https:";
   const secure = isHttps ? "; Secure" : "";
   document.cookie = `session=; Path=/; SameSite=Lax${secure}; Max-Age=0`;
-  localStorage.removeItem(SESSION_KEY);
-}
-
-function restoreSessionFromStorage() {
-  const token = localStorage.getItem(SESSION_KEY);
-  if (token) {
-    const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
-    const isHttps = window.location.protocol === "https:";
-    const secure = isHttps ? "; Secure" : "";
-    document.cookie = `session=${token}; Path=/; SameSite=Lax${secure}; Max-Age=${maxAge}`;
-  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -55,11 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      restoreSessionFromStorage();
-      const token = localStorage.getItem(SESSION_KEY);
-      const headers: Record<string, string> = {};
-      if (token) headers["x-session-token"] = token;
-      const res = await fetch("/api/auth/me", { headers });
+      const res = await fetch("/api/auth/me");
       const data = (await res.json()) as { user?: { id: string; email: string; displayName?: string | null } };
       setUser(data.user ?? null);
       if (data.user) {
@@ -84,14 +61,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json()) as { user?: any; token?: string; error?: string; requiresVerification?: boolean };
+      const data = (await res.json()) as { user?: any; error?: string; requiresVerification?: boolean };
       if (!res.ok) {
         if (res.status === 403 && data.requiresVerification) {
           return { requiresVerification: true };
         }
         return { error: data.error ?? "Login failed" };
       }
-      if (data.token) setSessionCookie(data.token);
       setUser(data.user);
       syncStorageFromServer();
       loadProfileFromServer();
@@ -108,12 +84,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),
       });
-      const data = (await res.json()) as { user?: any; token?: string; error?: string; requiresVerification?: boolean; email?: string };
+      const data = (await res.json()) as { user?: any; error?: string; requiresVerification?: boolean; email?: string };
       if (!res.ok) return { error: data.error ?? "Registration failed" };
       if (data.requiresVerification) {
         return { requiresVerification: true, email: data.email };
       }
-      if (data.token) setSessionCookie(data.token);
       setUser(data.user);
       syncStorageFromServer();
       loadProfileFromServer();
@@ -130,9 +105,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(tokenData),
       });
-      const data = (await res.json()) as { user?: any; token?: string; error?: string };
+      const data = (await res.json()) as { user?: any; error?: string };
       if (!res.ok) return { error: data.error ?? "Google login failed" };
-      if (data.token) setSessionCookie(data.token);
       setUser(data.user);
       syncStorageFromServer();
       loadProfileFromServer();
@@ -165,10 +139,7 @@ export function useAuth() {
 
 async function syncStorageFromServer() {
   try {
-    const token = localStorage.getItem(SESSION_KEY);
-    const headers: Record<string, string> = {};
-    if (token) headers["x-session-token"] = token;
-    const res = await fetch("/api/sync", { headers });
+    const res = await fetch("/api/sync");
     if (!res.ok) return;
     const data = (await res.json()) as Record<string, any>;
     for (const [key, value] of Object.entries(data)) {

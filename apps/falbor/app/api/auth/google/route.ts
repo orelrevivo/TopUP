@@ -117,7 +117,6 @@ export async function POST(request: Request) {
     // Otherwise (JSON API call like One Tap), return JSON
     const body = JSON.stringify({
       user: { id: user.id, email: user.email, displayName: user.displayName },
-      token,
     });
 
     return new Response(body, {

@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-const json = NextResponse.json;
 import { streamText } from '~/lib/.server/llm/stream-text';
 import type { IProviderSetting, ProviderInfo } from '~/types/model';
 import { generateText } from 'ai';
@@ -7,13 +6,22 @@ import { PROVIDER_LIST } from '~/utils/constants';
 import { MAX_TOKENS, PROVIDER_COMPLETION_LIMITS, isReasoningModel } from '~/lib/.server/llm/constants';
 import { LLMManager } from '~/lib/modules/llm/manager';
 import type { ModelInfo } from '~/lib/modules/llm/types';
-import { getApiKeysFromCookie, getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
-import type { RouteArgs } from '~/lib/security';
+import { withSecurity, type RouteArgs } from '~/lib/security';
+import { getUserId } from '~/lib/auth';
+import { db } from '~/lib/db';
+import { providerSettings as providerSettingsTable } from '~/lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { decrypt } from '~/lib/crypto';
+
+const llmCallPost = withSecurity(async ({ request, context }) => {
+  return llmCallAction({ request, context });
+});
 
 export async function POST(request: Request) {
-  return llmCallAction({ request, context: { cloudflare: { env: process.env as Record<string, string> } } });
+  return llmCallPost({ request, context: { env: process.env as any } });
 }
+
 
 async function getModelList(options: {
   apiKeys?: Record<string, string>;
@@ -92,9 +100,35 @@ async function llmCallAction({ context, request }: RouteArgs) {
     });
   }
 
-  const cookieHeader = request.headers.get('Cookie');
-  const apiKeys = getApiKeysFromCookie(cookieHeader);
-  const providerSettings = getProviderSettingsFromCookie(cookieHeader);
+  const userId = await getUserId(request as any);
+  if (!userId) {
+    return new Response('Unauthorized', { status: 401 });
+  }
+
+  const userSettings = await db
+    .select()
+    .from(providerSettingsTable)
+    .where(eq(providerSettingsTable.userId, userId));
+
+  const apiKeys: Record<string, string> = {};
+  const providerSettings: Record<string, any> = {};
+
+  for (const setting of userSettings) {
+    if (setting.apiKey) {
+      try {
+        apiKeys[setting.providerName] = decrypt(setting.apiKey);
+      } catch (err) {
+        console.error(`Failed to decrypt key for ${setting.providerName}:`, err);
+      }
+    }
+    providerSettings[setting.providerName] = {
+      settings: {
+        enabled: setting.enabled,
+        ...(setting.settings as Record<string, any> || {})
+      },
+      baseUrl: setting.baseUrl
+    };
+  }
 
   if (streamOutput) {
     try {
