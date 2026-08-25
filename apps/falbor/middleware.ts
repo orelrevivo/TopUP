@@ -6,7 +6,34 @@ const JWT_SECRET = process.env.JWT_SECRET
   ? new TextEncoder().encode(process.env.JWT_SECRET)
   : null;
 const COOKIE_NAME = "session";
-const PUBLIC_ROUTES = ["/login", "/signup", "/verified", "/privacy", "/terms", "/about", "/api/auth/login", "/api/auth/register", "/api/auth/verify", "/api/auth/logout", "/api/health"];
+
+const PUBLIC_ROUTES = [
+  "/login", 
+  "/signup", 
+  "/verified", 
+  "/privacy", 
+  "/terms", 
+  "/about", 
+  "/api/auth/login", 
+  "/api/auth/register", 
+  "/api/auth/verify", 
+  "/api/auth/logout", 
+  "/api/health",
+  "/api/auth/google",
+  "/api/auth/discord",
+  "/api/auth/discord/callback",
+  "/api/auth/gmail",
+  "/api/auth/gmail/callback",
+  "/api/auth/slack",
+  "/api/auth/slack/callback",
+  "/api/auth/miro",
+  "/api/auth/miro/callback",
+  "/api/auth/stripe",
+  "/api/auth/stripe/callback",
+  "/visual-editor/api/stripe/webhook",
+  "/api/cron/daily"
+];
+
 const STATIC_PREFIXES = ["/_next", "/favicon", "/icons", "/logo", "/apple-touch-icon", "/social_preview", "/landing"];
 
 export async function middleware(request: NextRequest) {
@@ -40,10 +67,33 @@ export async function middleware(request: NextRequest) {
     }
 
     if (pathname === "/api/auth/me") {
-      return NextResponse.next();
+      // Check auth for this endpoint explicitly or let it check inside the handler,
+      // but to be safe we handle it below like other API routes.
     }
 
     const sessionCookie = request.cookies.get(COOKIE_NAME);
+
+    // Enforce default-deny policy on all non-public API routes
+    const isApiRoute = pathname.startsWith("/api/") || pathname.includes("/api/");
+    if (isApiRoute && !PUBLIC_ROUTES.some((r) => pathname === r)) {
+      if (!sessionCookie) {
+        return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
+      if (JWT_SECRET) {
+        try {
+          await jwtVerify(sessionCookie.value, JWT_SECRET);
+        } catch {
+          return new NextResponse(JSON.stringify({ error: "Unauthorized: Invalid session" }), {
+            status: 401,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      }
+    }
 
     const handleSuccess = () => {
       const hostname = request.headers.get("host") || "";
@@ -57,7 +107,7 @@ export async function middleware(request: NextRequest) {
     };
 
     if (!sessionCookie) {
-      if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/") || pathname.startsWith("/docs")) {
+      if (pathname === "/" || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/") || pathname.startsWith("/docs")) {
         return handleSuccess();
       }
       return NextResponse.redirect(new URL("/login", request.url));
@@ -68,11 +118,11 @@ export async function middleware(request: NextRequest) {
         await jwtVerify(sessionCookie.value, JWT_SECRET);
         return handleSuccess();
       } catch {
-        // Token invalid — let API routes handle auth
+        // Token invalid
       }
     }
 
-    if (pathname === "/" || pathname.startsWith("/api/") || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/") || pathname.startsWith("/docs")) {
+    if (pathname === "/" || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/") || pathname.startsWith("/docs")) {
       return handleSuccess();
     }
     return NextResponse.redirect(new URL("/login", request.url));
@@ -84,3 +134,4 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
+
