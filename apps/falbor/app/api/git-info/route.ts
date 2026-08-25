@@ -2,9 +2,12 @@ import { NextResponse } from "next/server";
 const json = NextResponse.json;
 import { execSync } from 'child_process';
 import { existsSync } from 'fs';
+import { withSecurity } from '~/lib/security';
+import { requireUser, handleAuthError } from '~/lib/auth/auth-helpers';
 
-export async function GET() {
+const gitInfoGet = withSecurity(async () => {
   try {
+    await requireUser();
     // Check if we're in a git repository
     if (!existsSync('.git')) {
       return json({
@@ -56,6 +59,7 @@ export async function GET() {
       lastCommit,
     });
   } catch (error) {
+    if ((error as any).status) return handleAuthError(error);
     console.error('Error fetching git info:', error);
     return json(
       {
@@ -67,4 +71,8 @@ export async function GET() {
       { status: 500 },
     );
   }
+});
+
+export async function GET(request: Request) {
+  return gitInfoGet({ request, context: { env: process.env as any } });
 }

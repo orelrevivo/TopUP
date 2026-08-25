@@ -98,6 +98,44 @@ export const providerSettings = pgTable("provider_settings", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
+export const browserSessions = pgTable("browser_sessions", {
+  id: text("id").primaryKey(), // browserbase session id
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+});
+
+export const cronRuns = pgTable("cron_runs", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  cronName: text("cron_name").notNull(),
+  runDate: text("run_date").notNull().unique(), // e.g. "2026-08-25" to enforce once per day
+  executedAt: timestamp("executed_at").defaultNow().notNull(),
+});
+
+export const templates = pgTable("templates", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  shortDescription: text("short_description").notNull(),
+  description: text("description"),
+  mainImage: text("main_image"),
+  images: jsonb("images").default("[]"),
+  url: text("url"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const templateReviews = pgTable("template_reviews", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  templateId: uuid("template_id").notNull().references(() => templates.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(),
+  content: text("content"),
+  likes: integer("likes").default(0),
+  dislikes: integer("dislikes").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const serviceConnections = pgTable("service_connections", {
   id: uuid("id").defaultRandom().primaryKey(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -715,6 +753,48 @@ export const files = pgTable("files", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+// Extracted from live DB to prevent Drizzle dropping them
+export const globalSettings = pgTable("global_settings", {
+  id: serial("id").primaryKey(),
+  riskyPathKeywords: text("risky_path_keywords"),
+  largePrThreshold: integer("large_pr_threshold"),
+  missingTests: boolean("missing_tests"),
+  dependencyChange: boolean("dependency_change"),
+  reportFormat: text("report_format"),
+  includeLowRisk: boolean("include_low_risk"),
+  enablePostToGithub: boolean("enable_post_to_github"),
+  githubAppInstallationId: text("github_app_installation_id"),
+});
+
+export const repositories = pgTable("repositories", {
+  id: uuid("id").primaryKey(),
+  name: text("name"),
+  fullName: text("full_name"),
+  githubId: text("github_id"),
+  connectedAt: timestamp("connected_at"),
+});
+
+export const adrRules = pgTable("adr_rules", {
+  id: uuid("id").primaryKey(),
+  repositoryId: uuid("repository_id"),
+  title: text("title"),
+  description: text("description"),
+  severity: text("severity"),
+  createdAt: timestamp("created_at"),
+});
+
+export const prReports = pgTable("pr_reports", {
+  id: uuid("id").primaryKey(),
+  repositoryId: uuid("repository_id"),
+  prNumber: text("pr_number"),
+  title: text("title"),
+  riskLevel: text("risk_level"),
+  summary: text("summary"),
+  markdownReport: text("markdown_report"),
+  createdAt: timestamp("created_at"),
+});
+
 
 // Extracted from live DB to prevent Drizzle dropping them
 export const globalSettings = pgTable("global_settings", {

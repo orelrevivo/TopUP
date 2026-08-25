@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 const json = NextResponse.json;
+import { withSecurity } from '~/lib/security';
+import { requireUser, handleAuthError } from '~/lib/auth/auth-helpers';
 
 interface GitInfo {
   local: {
@@ -62,9 +64,11 @@ declare const __GIT_REPO_NAME: string;
  * declare const __GIT_REPO_URL: string;
  */
 
-export async function GET(request: Request) {
-  const context: AppContext = { env: process.env as Record<string, string> };
-  console.log('Git info API called with URL:', request.url);
+const systemGitInfoGet = withSecurity(async ({ request }) => {
+  try {
+    await requireUser();
+    const context: AppContext = { env: process.env as Record<string, string> };
+    console.log('Git info API called with URL:', request.url);
 
   // Handle CORS preflight requests
   if (request.method === 'OPTIONS') {
@@ -325,10 +329,17 @@ export async function GET(request: Request) {
     timestamp: new Date().toISOString(),
   };
 
-  return json(gitInfo, {
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    },
-  });
+    return json(gitInfo, {
+      headers: {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+      },
+    });
+  } catch (error) {
+    return handleAuthError(error);
+  }
+});
+
+export async function GET(request: Request) {
+  return systemGitInfoGet({ request, context: { env: process.env as any } });
 }

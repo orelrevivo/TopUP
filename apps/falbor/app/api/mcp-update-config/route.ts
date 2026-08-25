@@ -5,8 +5,14 @@ import { MCPService, type MCPConfig } from '~/lib/services/mcpService';
 
 const logger = createScopedLogger('api.mcp-update-config');
 
-export async function POST(request: Request, { params }: any) {
+import { withSecurity } from '~/lib/security';
+import { requireUser, handleAuthError } from '~/lib/auth/auth-helpers';
+
+const updatePost = withSecurity(async ({ request }) => {
   try {
+    // Enforce authentication
+    await requireUser();
+
     const mcpConfig = (await request.json()) as MCPConfig;
 
     if (!mcpConfig || typeof mcpConfig !== 'object') {
@@ -18,7 +24,12 @@ export async function POST(request: Request, { params }: any) {
 
     return Response.json(serverTools);
   } catch (error) {
+    if ((error as any).status) return handleAuthError(error);
     logger.error('Error updating MCP config:', error);
     return Response.json({ error: 'Failed to update MCP config' }, { status: 500 });
   }
+});
+
+export async function POST(request: Request) {
+  return updatePost({ request, context: { env: process.env as any } });
 }

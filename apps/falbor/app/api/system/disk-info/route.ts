@@ -287,10 +287,31 @@ function diskInfoResponse() {
   }
 }
 
-export async function GET() {
-  return diskInfoResponse();
+import { withSecurity } from '~/lib/security';
+import { requireUser, handleAuthError } from '~/lib/auth/auth-helpers';
+
+const diskInfoGet = withSecurity(async () => {
+  try {
+    await requireUser();
+    return diskInfoResponse();
+  } catch (error) {
+    return handleAuthError(error);
+  }
+});
+
+const diskInfoPost = withSecurity(async () => {
+  try {
+    await requireUser();
+    return diskInfoResponse();
+  } catch (error) {
+    return handleAuthError(error);
+  }
+});
+
+export async function GET(request: Request) {
+  return diskInfoGet({ request, context: { env: process.env as any } });
 }
 
-export async function POST() {
-  return diskInfoResponse();
+export async function POST(request: Request) {
+  return diskInfoPost({ request, context: { env: process.env as any } });
 }

@@ -1,28 +1,25 @@
 import { NextResponse } from 'next/server';
 import { db } from '~/lib/db';
-import { workflows, workflowVersions, users } from '~/lib/db/schema';
+import { workflows, workflowVersions } from '~/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { withSecurity } from '~/lib/security';
+import { requireUser, requireWorkflowAccess, handleAuthError } from '~/lib/auth/auth-helpers';
 
-export async function POST(req: Request) {
+const savePost = withSecurity(async ({ request }) => {
   try {
-    const { workflowId, name, description, nodes, edges, thumbnailUrl, chatId } = await req.json();
+    const { workflowId, name, description, nodes, edges, thumbnailUrl, chatId } = await request.json();
 
+    const userId = await requireUser();
     let currentWorkflowId = workflowId;
     let version = 1;
 
     if (!currentWorkflowId) {
-      // Find a default user to satisfy foreign key constraint
-      const [defaultUser] = await db.select().from(users).limit(1);
-      if (!defaultUser) {
-        return NextResponse.json({ error: 'No users found in database' }, { status: 400 });
-      }
-
-      // Create new workflow
+      // Create new workflow for authenticated user
       const [newWorkflow] = await db.insert(workflows)
         .values({
           name: name || 'Untitled Workflow',
           description: description || '',
-          userId: defaultUser.id,
+          userId: userId,
           chatId: chatId || null,
           status: 'draft',
           thumbnailUrl: thumbnailUrl || null,
@@ -30,7 +27,10 @@ export async function POST(req: Request) {
         .returning();
       currentWorkflowId = newWorkflow.id;
     } else {
-      // Update the existing workflow's name, description, and thumbnail if provided
+      // Verify workflow access/ownership
+      await requireWorkflowAccess(currentWorkflowId);
+
+      // Update the existing workflow
       await db.update(workflows)
         .set({
           name: name || 'Untitled Workflow',
@@ -63,7 +63,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, workflowId: currentWorkflowId, versionId: newVersion.id });
   } catch (error: any) {
+    if (error.status) return handleAuthError(error);
     console.error('Save workflow error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
+});
+
+export async function POST(request: Request) {
+  return savePost({ request, context: { env: process.env as any } });
 }
+

@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { db } from '~/lib/db';
 import { deployments, falborSiteFiles } from '~/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { withSecurity } from '~/lib/security';
+import { requireChatAccess, handleAuthError } from '~/lib/auth/auth-helpers';
 
-export async function GET(request: Request) {
+const deploymentsGet = withSecurity(async ({ request }) => {
   const { searchParams } = new URL(request.url);
   const chatId = searchParams.get('chatId');
 
@@ -12,18 +14,22 @@ export async function GET(request: Request) {
   }
 
   try {
+    // Check chat ownership
+    await requireChatAccess(chatId);
+
     const deployment = await db.query.deployments.findFirst({
       where: eq(deployments.chatId, chatId),
     });
 
     return NextResponse.json(deployment || null);
   } catch (error) {
+    if ((error as any).status) return handleAuthError(error);
     console.error('Error fetching deployment:', error);
     return NextResponse.json({ error: 'Failed to fetch deployment' }, { status: 500 });
   }
-}
+});
 
-export async function POST(request: Request) {
+const deploymentsPost = withSecurity(async ({ request }) => {
   try {
     const data = await request.json();
     const { chatId, url, provider, subdomain } = data;
@@ -31,6 +37,9 @@ export async function POST(request: Request) {
     if (!chatId || !url || !provider) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Check chat ownership
+    await requireChatAccess(chatId);
 
     // Insert or update deployment
     const [deployment] = await db
@@ -54,12 +63,13 @@ export async function POST(request: Request) {
 
     return NextResponse.json(deployment);
   } catch (error) {
+    if ((error as any).status) return handleAuthError(error);
     console.error('Error saving deployment:', error);
     return NextResponse.json({ error: 'Failed to save deployment' }, { status: 500 });
   }
-}
+});
 
-export async function DELETE(request: Request) {
+const deploymentsDelete = withSecurity(async ({ request }) => {
   const { searchParams } = new URL(request.url);
   const chatId = searchParams.get('chatId');
 
@@ -68,19 +78,20 @@ export async function DELETE(request: Request) {
   }
 
   try {
-    // We optionally might want to clean up files if it was a falbor deployment
-    // but the user only mentioned deleting the URL from the server for now.
+    // Check chat ownership
+    await requireChatAccess(chatId);
     
     await db.delete(deployments).where(eq(deployments.chatId, chatId));
 
     return NextResponse.json({ success: true });
   } catch (error) {
+    if ((error as any).status) return handleAuthError(error);
     console.error('Error deleting deployment:', error);
     return NextResponse.json({ error: 'Failed to delete deployment' }, { status: 500 });
   }
-}
+});
 
-export async function PATCH(request: Request) {
+const deploymentsPatch = withSecurity(async ({ request }) => {
   try {
     const data = await request.json();
     const { chatId, newSubdomain } = data;
@@ -88,6 +99,9 @@ export async function PATCH(request: Request) {
     if (!chatId || !newSubdomain) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Check chat ownership
+    await requireChatAccess(chatId);
 
     const deployment = await db.query.deployments.findFirst({
       where: eq(deployments.chatId, chatId),
@@ -144,7 +158,25 @@ export async function PATCH(request: Request) {
 
     return NextResponse.json(updated);
   } catch (error) {
+    if ((error as any).status) return handleAuthError(error);
     console.error('Error renaming deployment:', error);
     return NextResponse.json({ error: 'Failed to rename deployment' }, { status: 500 });
   }
+});
+
+export async function GET(request: Request) {
+  return deploymentsGet({ request, context: { env: process.env as any } });
 }
+
+export async function POST(request: Request) {
+  return deploymentsPost({ request, context: { env: process.env as any } });
+}
+
+export async function DELETE(request: Request) {
+  return deploymentsDelete({ request, context: { env: process.env as any } });
+}
+
+export async function PATCH(request: Request) {
+  return deploymentsPatch({ request, context: { env: process.env as any } });
+}
+

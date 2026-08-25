@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { db } from "~/lib/db";
 import { falborSiteFiles } from "~/lib/db/schema";
 import { eq } from "drizzle-orm";
+import { withSecurity } from "~/lib/security";
+import { requireChatAccess, handleAuthError } from "~/lib/auth/auth-helpers";
 
 const json = NextResponse.json;
 
@@ -12,7 +14,7 @@ interface DeployRequestBody {
   isInitial?: boolean;
 }
 
-export async function POST(request: Request) {
+const deployPost = withSecurity(async ({ request }) => {
   try {
     const { files, chatId, subdomain: existingSubdomain, isInitial = true } = (await request.json()) as DeployRequestBody;
 
@@ -23,6 +25,10 @@ export async function POST(request: Request) {
     if (!chatId) {
       return json({ error: 'No chatId provided' }, { status: 400 });
     }
+
+    // Enforce chat ownership
+    await requireChatAccess(chatId);
+
 
     // Use existing subdomain if provided, otherwise generate a new one
     const subdomain = existingSubdomain || `site-${chatId.substring(0, 8)}-${Date.now().toString(36)}`;
@@ -85,7 +91,12 @@ export async function POST(request: Request) {
       subdomain,
     });
   } catch (error) {
+    if ((error as any).status) return handleAuthError(error);
     console.error('Falbor deploy error:', error);
     return json({ error: 'Deployment failed' }, { status: 500 });
   }
+});
+
+export async function POST(request: Request) {
+  return deployPost({ request, context: { env: process.env as any } });
 }

@@ -1,19 +1,18 @@
 import { NextResponse } from 'next/server';
 import { db } from '~/lib/db';
-import { chats, hackingChats, users } from '~/lib/db/schema';
-import { desc, eq } from 'drizzle-orm';
-import { headers } from 'next/headers';
+import { chats, hackingChats } from '~/lib/db/schema';
+import { eq } from 'drizzle-orm';
+import { withSecurity } from '~/lib/security';
+import { getUserId } from '~/lib/auth';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-export async function GET() {
-  headers();
+const listGet = withSecurity(async ({ request }) => {
   try {
-    // In a real app we'd filter by logged-in user, but for now we get the default user
-    const [defaultUser] = await db.select().from(users).limit(1);
-    if (!defaultUser) {
-      return NextResponse.json({ success: true, data: [] });
+    const userId = await getUserId(request as any);
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const list1 = await db.select({
@@ -22,7 +21,7 @@ export async function GET() {
       createdAt: chats.createdAt
     })
     .from(chats)
-    .where(eq(chats.userId, defaultUser.id));
+    .where(eq(chats.userId, userId));
 
     const list2 = await db.select({
       id: hackingChats.id,
@@ -30,7 +29,7 @@ export async function GET() {
       createdAt: hackingChats.createdAt
     })
     .from(hackingChats)
-    .where(eq(hackingChats.userId, defaultUser.id));
+    .where(eq(hackingChats.userId, userId));
 
     const combined = [...list1, ...list2].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
@@ -39,4 +38,9 @@ export async function GET() {
     console.error('List chats error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
+});
+
+export async function GET(request: Request) {
+  return listGet({ request, context: { env: process.env as any } });
 }
+

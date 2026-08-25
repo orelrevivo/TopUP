@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server';
 import { db } from '~/lib/db';
 import { workflowExecutions, workflowJobs, workflowVersions } from '~/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { withSecurity } from '~/lib/security';
+import { requireWorkflowAccess, handleAuthError } from '~/lib/auth/auth-helpers';
 
-export async function POST(req: Request) {
+const executePost = withSecurity(async ({ request }) => {
   try {
-    const { workflowId, versionId, inputData } = await req.json();
+    const { workflowId, versionId, inputData } = await request.json();
 
     if (!workflowId || !versionId) {
       return NextResponse.json({ error: 'Missing workflowId or versionId' }, { status: 400 });
     }
+
+    // Verify workflow access/ownership
+    await requireWorkflowAccess(workflowId);
 
     // Get the workflow version to find the trigger node
     const [version] = await db.select()
@@ -70,7 +75,13 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, executionId: execution.id });
   } catch (error: any) {
+    if (error.status) return handleAuthError(error);
     console.error('Workflow execution error:', error);
     return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
   }
+});
+
+export async function POST(request: Request) {
+  return executePost({ request, context: { env: process.env as any } });
 }
+
