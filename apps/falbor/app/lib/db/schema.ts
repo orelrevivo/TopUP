@@ -186,6 +186,9 @@ export const deployments = pgTable("deployments", {
   url: text("url").notNull(),
   provider: text("provider").notNull(),
   subdomain: text("subdomain"),
+  seoTitle: text("seo_title"),
+  seoDescription: text("seo_description"),
+  seoImage: text("seo_image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

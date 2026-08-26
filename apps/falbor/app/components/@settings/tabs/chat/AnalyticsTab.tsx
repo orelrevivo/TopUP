@@ -1,6 +1,7 @@
 import React from 'react';
 import { SetupButton } from '~/components/ui/setup/SetupButton';
 import { DialogTitle, DialogDescription } from '~/components/ui/Dialog';
+import { TextShimmer } from '~/components/ui/text-shimmer';
 
 interface AnalyticsTabProps {
   onEnableAnalytics: () => void;
@@ -9,7 +10,7 @@ interface AnalyticsTabProps {
 export function AnalyticsTab({ onEnableAnalytics }: AnalyticsTabProps) {
   return (
     <div className="flex flex-col h-full">
-      <div className="flex flex-col space-y-1.5 text-center sm:text-left">
+      {/* <div className="flex flex-col space-y-1.5 text-center sm:text-left">
         <DialogTitle className="text-xl font-bold text-gray-900 dark:text-gray-100">Analytics Setup</DialogTitle>
         <DialogDescription className="text-gray-500 dark:text-gray-400 mt-2">
           Enable analytics for your project to track telemetry, monitor usage, and gain insights via the Falbor Analytics SDK.
@@ -28,7 +29,8 @@ export function AnalyticsTab({ onEnableAnalytics }: AnalyticsTabProps) {
         >
           Enable Analytics
         </SetupButton>
-      </div>
+      </div> */}
+      <TextShimmer className="text-xl">Analytics is not available yet</TextShimmer>
     </div>
   );
 }

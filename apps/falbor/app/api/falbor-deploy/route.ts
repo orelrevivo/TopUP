@@ -33,23 +33,12 @@ const deployPost = withSecurity(async ({ request }) => {
     // Use existing subdomain if provided, otherwise generate a new one
     const subdomain = existingSubdomain || `site-${chatId.substring(0, 8)}-${Date.now().toString(36)}`;
 
-    // Normalize file paths and rewrite index.html asset paths so they
-    // resolve correctly when served from /api/site/[subdomain]/...
+    // Normalize file paths
     const normalizedFiles: Record<string, string> = {};
 
     for (const [filePath, content] of Object.entries(files)) {
       const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
-      let finalContent = content;
-
-      // Rewrite absolute asset paths in index.html to point to our API route prefix
-      if (normalizedPath === '/index.html') {
-        finalContent = finalContent.replace(
-          /(src|href|content)\s*=\s*(['"])\/((?!\/)[^'"]*)(\2)/gi,
-          `$1=$2/api/site/${subdomain}/$3$4`
-        );
-      }
-
-      normalizedFiles[normalizedPath] = finalContent;
+      normalizedFiles[normalizedPath] = content;
     }
 
     let mergedFiles = normalizedFiles;
@@ -82,8 +71,16 @@ const deployPost = withSecurity(async ({ request }) => {
         },
       });
 
-    // Return the URL that points to our DB-backed API serving route
-    const deployUrl = `/api/site/${subdomain}`;
+    // Return the URL that points to our subdomain
+    const host = request.headers.get("host") || "";
+    let deployUrl = "";
+    if (host.includes("localhost") || host.includes("127.0.0.1")) {
+      const port = host.split(':')[1] ? `:${host.split(':')[1]}` : '';
+      deployUrl = `http://${subdomain}.localhost${port}`;
+    } else {
+      const rootDomain = host.includes("falbor.xyz") ? "falbor.xyz" : host.replace(/^www\./, "");
+      deployUrl = `https://${subdomain}.${rootDomain}`;
+    }
 
     return json({
       success: true,

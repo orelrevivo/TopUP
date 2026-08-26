@@ -17,9 +17,6 @@ const HeroButtons = () => {
                     <img src="/landing/social/reddit.png" alt="Reddit" className="w-6 h-6 object-contain" />
                 </a>
             </div>
-            <Link href={"https://github.com/orelrevivo/TopUP"} target="_blank">
-                <img src="/icons/github.png" alt="github" className="rounded-full w-[35px]" />
-            </Link>
             <Link href={"/login"}>
                 <button className="text-sm text-white font-medium cursor-pointer">Sign In</button>
             </Link>

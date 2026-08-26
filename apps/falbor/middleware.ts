@@ -43,6 +43,33 @@ function unauthorized(message = "Unauthorized") {
 export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
+    const hostname = request.headers.get("host") || "";
+    const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
+
+    let subdomain: string | null = null;
+    const parts = hostname.split('.');
+    if (isLocalhost) {
+      if (parts.length > 1) {
+        const sub = parts[0];
+        if (sub !== 'localhost' && sub !== '127') {
+          subdomain = sub;
+        }
+      }
+    } else {
+      if (parts.length >= 3) {
+        const sub = parts[0];
+        if (sub !== 'www' && sub !== 'hacking' && sub !== 'api') {
+          subdomain = sub;
+        }
+      }
+    }
+
+    if (subdomain) {
+      if (pathname.startsWith('/api/site/')) {
+        return NextResponse.next();
+      }
+      return NextResponse.rewrite(new URL(`/api/site/${subdomain}${pathname}`, request.url));
+    }
 
     const STATIC_EXTENSIONS = /\.(png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?|ttf|eot|pdf)$/i;
 
@@ -54,8 +81,6 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
 
-    const hostname = request.headers.get("host") || "";
-    const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
     if (!isLocalhost && pathname.startsWith("/hacking")) {
       const newUrl = new URL(request.url);
       newUrl.hostname = "hacking.falbor.xyz";

@@ -4,6 +4,7 @@ import { SetupButton } from '~/components/ui/setup/SetupButton';
 import { classNames } from '~/utils/classNames';
 import { AnalyticsTab } from '~/components/@settings/tabs/chat/AnalyticsTab';
 import { ChatSettingsTab } from '~/components/@settings/tabs/chat/ChatSettingsTab';
+import { DomainTab } from '~/components/@settings/tabs/chat/DomainTab';
 import TemplateTab from '~/components/@settings/tabs/chat/Template';
 import TestingTab from '~/components/@settings/tabs/chat/Testing';
 import { Badge } from '../../ui';
@@ -204,6 +205,19 @@ if (typeof window !== 'undefined') {
             </button>
 
             <button
+              onClick={() => setActiveTab('domain')}
+              className={classNames(
+                'flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors font-medium',
+                activeTab === 'domain'
+                  ? 'bg-[#F0EDF0] dark:bg-indigo-900/20 text-black dark:text-white'
+                  : 'text-[#73737B] dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#222]',
+              )}
+            >
+              <div className="i-ph:globe-simple w-4 h-4 mr-2" />
+              <span>Domain & SEO</span>
+            </button>
+
+            <button
               onClick={() => setActiveTab('analytics')}
               className={classNames(
                 'flex items-center w-full px-3 py-2 text-sm rounded-md transition-colors font-medium',
@@ -252,6 +266,8 @@ if (typeof window !== 'undefined') {
           <div className="flex-1 min-w-0 p-3 bg-[#F9F6F9] dark:bg-[#111]">
             <div className="w-full h-full p-6 border rounded-lg bg-white dark:bg-[#1a1a1a] flex flex-col overflow-hidden">
               {activeTab === 'chat' && <ChatSettingsTab />}
+
+              {activeTab === 'domain' && <DomainTab />}
 
               {activeTab === 'analytics' && (
                 <AnalyticsTab onEnableAnalytics={enableAnalytics} />
