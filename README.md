@@ -26,7 +26,7 @@ This repository is structured as a monorepo containing:
 
 1. Clone the repository:
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/orelrevivo/TopUP.git
    cd Falbor-main
    ```
 
