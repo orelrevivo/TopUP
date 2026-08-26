@@ -316,8 +316,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         fetch('/api/models')
           .then((response) => response.json())
           .then((data) => {
-            const typedData = data as { modelList: ModelInfo[] };
-            setModelList(typedData.modelList);
+            const typedData = data as { modelList?: ModelInfo[] };
+            setModelList(typedData?.modelList || []);
           })
           .catch((error) => {
             console.error('Error fetching model list:', error);
@@ -343,7 +343,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
       try {
         const response = await fetch(`/api/models/${encodeURIComponent(providerName)}`);
         const data = await response.json();
-        providerModels = (data as { modelList: ModelInfo[] }).modelList;
+        providerModels = (data as { modelList?: ModelInfo[] })?.modelList || [];
       } catch (error) {
         console.error('Error loading dynamic models for:', providerName, error);
       }

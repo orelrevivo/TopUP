@@ -150,9 +150,9 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
       .catch((err) => console.error('Error fetching connections', err));
   }, []);
 
-  const claudeModel = props.modelList.find(m => m.name === 'claude-sonnet-4-5' && m.provider === 'Anthropic');
-  const haikuModel = props.modelList.find(m => m.name === 'claude-haiku-4-5' && m.provider === 'Anthropic');
-  const gpt4oModel = props.modelList.find(m => m.name === 'gpt-4o' && m.provider === 'OpenAI');
+  const claudeModel = props.modelList?.find(m => m.name === 'claude-sonnet-4-5' && m.provider === 'Anthropic');
+  const haikuModel = props.modelList?.find(m => m.name === 'claude-haiku-4-5' && m.provider === 'Anthropic');
+  const gpt4oModel = props.modelList?.find(m => m.name === 'gpt-4o' && m.provider === 'OpenAI');
   const isFreeTierUser = !(user as any)?.subscriptionTier || (user as any).subscriptionTier !== 'pro';
   const rawAvailableModels =
     [
