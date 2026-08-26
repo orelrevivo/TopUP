@@ -28,7 +28,7 @@ export function useFalborDeploy() {
         throw new Error('No active project found');
       }
 
-      // Create a deployment artifact for visual feedback
+      
       const deploymentId = `deploy-artifact`;
       workbenchStore.addArtifact({
         id: deploymentId,
@@ -39,13 +39,13 @@ export function useFalborDeploy() {
 
       const deployArtifact = workbenchStore.artifacts.get()[deploymentId];
 
-      // Notify that build is starting
+      
       deployArtifact.runner.handleDeployAction('building', 'running', { source: 'falbor' });
 
-      // Open the terminal visually
+      
       workbenchStore.toggleTerminal(true);
 
-      // Set up build action
+      
       const actionId = 'build-' + Date.now();
       const actionData: ActionCallbackData = {
         messageId: 'falbor build',
@@ -57,16 +57,16 @@ export function useFalborDeploy() {
         },
       };
 
-      // Add the action first
+      
       artifact.runner.addAction(actionData);
 
-      // Then run it
+      
       await artifact.runner.runAction(actionData);
       
       const buildOutput = artifact.runner.buildOutput;
 
       if (!buildOutput || buildOutput.exitCode !== 0) {
-        // Notify that build failed
+        
         deployArtifact.runner.handleDeployAction('building', 'failed', {
           error: formatBuildFailureOutput(buildOutput?.output),
           source: 'falbor',
@@ -74,29 +74,29 @@ export function useFalborDeploy() {
         throw new Error('Build failed');
       }
 
-      // Notify that build succeeded and deployment is starting
+      
       deployArtifact.runner.handleDeployAction('deploying', 'running', { source: 'falbor' });
 
-      // Get the build files
+      
       const container = await webcontainer;
 
-      // Check if the build path exists
+      
       let finalBuildPath = '';
       let buildPathExists = false;
 
-      // First trust the path returned by the action-runner
+      
       if (buildOutput.path) {
         try {
           await container.fs.readdir(buildOutput.path);
           finalBuildPath = buildOutput.path;
           buildPathExists = true;
         } catch (e) {
-          // Fall back to searching
+          
         }
       }
 
       if (!buildPathExists) {
-        // List of common output directories to check
+        
         const commonOutputDirs = ['dist', 'build', 'out', 'output', '.next', 'public'];
   
         for (const dir of commonOutputDirs) {
@@ -137,7 +137,7 @@ export function useFalborDeploy() {
               content = await container.fs.readFile(fullPath, 'utf-8');
             }
 
-            // Remove build path prefix from the path
+            
             const deployPath = fullPath.replace(finalBuildPath, '');
             files[deployPath] = content;
           } else if (entry.isDirectory()) {
@@ -151,7 +151,7 @@ export function useFalborDeploy() {
 
       const fileContents = await getAllFiles(finalBuildPath);
 
-      // Get current deployment state to see if we should update an existing URL
+      
       let existingSubdomain;
       try {
         const { deploymentStore } = await import('~/lib/stores/deployments');
@@ -160,11 +160,11 @@ export function useFalborDeploy() {
           existingSubdomain = currentDeployment.subdomain;
         }
       } catch (e) {
-        // Ignore errors importing store dynamically
+        
       }
 
       const fileEntries = Object.entries(fileContents);
-      const CHUNK_MAX_SIZE = 2 * 1024 * 1024; // 2MB
+      const CHUNK_MAX_SIZE = 2 * 1024 * 1024; 
       const chunks: Record<string, string>[] = [];
       let currentChunk: Record<string, string> = {};
       let currentSize = 0;
@@ -215,7 +215,7 @@ export function useFalborDeploy() {
         }
 
         if (!response.ok || !data.success) {
-          // Notify that deployment failed
+          
           deployArtifact.runner.handleDeployAction('deploying', 'failed', {
             error: data.error || 'Invalid deployment response',
             source: 'falbor',
@@ -234,7 +234,7 @@ export function useFalborDeploy() {
         localStorage.setItem(`deploy-url-${currentChatId}`, finalDeployUrl);
         localStorage.setItem(`deploy-source-${currentChatId}`, 'falbor');
 
-        // Persist to server
+        
         try {
           await fetch('/api/deployments', {
             method: 'POST',
@@ -247,7 +247,7 @@ export function useFalborDeploy() {
             }),
           });
           
-          // Refresh store
+          
           const { fetchDeployment } = await import('~/lib/stores/deployments');
           await fetchDeployment(currentChatId);
         } catch (e) {
@@ -255,13 +255,13 @@ export function useFalborDeploy() {
         }
       }
 
-      // Notify that deployment completed successfully
+      
       deployArtifact.runner.handleDeployAction('complete', 'complete', {
         url: finalDeployUrl,
         source: 'falbor',
       });
 
-      // Show success toast notification
+      
       toast.success(`🚀 Falbor deployment completed successfully!`);
 
       return true;

@@ -16,7 +16,7 @@ import { Bar, Pie } from 'react-chartjs-2';
 import type { Chat } from '~/lib/persistence/chats';
 import { classNames } from '~/utils/classNames';
 
-// Register ChartJS components
+
 ChartJS.register(CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend, ArcElement, PointElement, LineElement);
 
 type DataVisualizationProps = {
@@ -52,7 +52,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
       return;
     }
 
-    // Process chat data
+    
     const chatDates: Record<string, number> = {};
     const roleCounts: Record<string, number> = {};
     const apiUsage: Record<string, number> = {};
@@ -86,18 +86,18 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
     setAverageMessagesPerChat(totalMessages / chats.length);
   }, [chats]);
 
-  // Get theme colors from CSS variables to ensure theme consistency
+  
   const getThemeColor = (varName: string): string => {
-    // Get the CSS variable value from document root
+    
     if (typeof document !== 'undefined') {
       return getComputedStyle(document.documentElement).getPropertyValue(varName).trim();
     }
 
-    // Fallback for SSR
+    
     return isDarkMode ? '#FFFFFF' : '#000000';
   };
 
-  // Theme-aware chart colors with enhanced dark mode visibility using CSS variables
+  
   const chartColors = {
     grid: isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.1)',
     text: getThemeColor('--falbor-elements-textPrimary'),
@@ -108,43 +108,43 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
   };
 
   const getChartColors = (index: number) => {
-    // Define color palettes based on Falbor design tokens
+    
     const baseColors = [
-      // Indigo
+      
       {
         base: getThemeColor('--falbor-elements-button-primary-text'),
       },
 
-      // Pink
+      
       {
         base: isDarkMode ? 'rgb(244, 114, 182)' : 'rgb(236, 72, 153)',
       },
 
-      // Green
+      
       {
         base: getThemeColor('--falbor-elements-icon-success'),
       },
 
-      // Yellow
+      
       {
         base: isDarkMode ? 'rgb(250, 204, 21)' : 'rgb(234, 179, 8)',
       },
 
-      // Blue
+      
       {
         base: isDarkMode ? 'rgb(56, 189, 248)' : 'rgb(14, 165, 233)',
       },
     ];
 
-    // Get the base color for this index
+    
     const color = baseColors[index % baseColors.length].base;
 
-    // Parse color and generate variations with appropriate opacity
+    
     let r = 0,
       g = 0,
       b = 0;
 
-    // Handle rgb/rgba format
+    
     const rgbMatch = color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
     const rgbaMatch = color.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([0-9.]+)\)/);
 
@@ -153,7 +153,7 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
     } else if (rgbaMatch) {
       [, r, g, b] = rgbaMatch.map(Number);
     } else if (color.startsWith('#')) {
-      // Handle hex format
+      
       const hex = color.slice(1);
       const bigint = parseInt(hex, 16);
       r = (bigint >> 16) & 255;
@@ -236,8 +236,8 @@ export function DataVisualization({ chats }: DataVisualizationProps) {
         titleColor: chartColors.text,
         bodyColor: chartColors.text,
         backgroundColor: isDarkMode
-          ? 'rgba(23, 23, 23, 0.8)' // Dark bg using Tailwind gray-900
-          : 'rgba(255, 255, 255, 0.8)', // Light bg
+          ? 'rgba(23, 23, 23, 0.8)' 
+          : 'rgba(255, 255, 255, 0.8)', 
         borderColor: chartColors.border,
         borderWidth: 1,
       },

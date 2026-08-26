@@ -6,7 +6,6 @@ export interface ConnectionStatus {
 
 export const checkConnection = async (): Promise<ConnectionStatus> => {
   try {
-    // Check if we have network connectivity
     const online = navigator.onLine;
 
     if (!online) {
@@ -16,12 +15,10 @@ export const checkConnection = async (): Promise<ConnectionStatus> => {
         lastChecked: new Date().toISOString(),
       };
     }
-
-    // Try multiple endpoints in case one fails
     const endpoints = [
       '/api/health',
-      '/', // Fallback to root route
-      '/favicon.ico', // Another common fallback
+      '/',
+      '/favicon.ico',
     ];
 
     let latency = 0;

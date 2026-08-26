@@ -12,7 +12,7 @@ export interface ConnectionState {
   isConnecting: boolean;
   connection: GitHubConnection | null;
   error: string | null;
-  isServerSide: boolean; // Indicates if this is a server-side connection
+  isServerSide: boolean;
 }
 
 export interface UseGitHubConnectionReturn extends ConnectionState {
@@ -29,11 +29,7 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
   const connecting = useStore(isConnecting);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Create API instance - will update when connection changes
   useGitHubAPI();
-
-  // Load saved connection on mount
   useEffect(() => {
     loadSavedConnection();
   }, []);
@@ -43,13 +39,10 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
     setError(null);
 
     try {
-      // Check if connection already exists in store (likely from initialization)
       if (connection?.user) {
         setIsLoading(false);
         return;
       }
-
-      // If we have a token but no user, or incomplete data, refresh
       if (connection?.token && (!connection.user || !connection.stats)) {
         await refreshConnectionData(connection);
       }
@@ -59,8 +52,6 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
       console.error('Error loading saved connection:', error);
       setError('Failed to load saved connection');
       setIsLoading(false);
-
-      // Clean up corrupted data
       localStorage.removeItem(STORAGE_KEY);
     }
   }, [connection]);
@@ -71,7 +62,6 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
     }
 
     try {
-      // Make direct API call instead of using hook
       const response = await fetch('https://api.github.com/user', {
         headers: {
           Accept: 'application/vnd.github.v3+json',
@@ -98,12 +88,8 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
   }, []);
 
   const connect = useCallback(async (token: string, tokenType: 'classic' | 'fine-grained') => {
-    // Connection start
-
     if (!token.trim()) {
-      // Token validation failed - empty token
       setError('Token is required');
-
       return;
     }
 
@@ -113,8 +99,6 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
 
     try {
       console.log('Making API request to GitHub...');
-
-      // Test the token by fetching user info
       const response = await fetch('https://api.github.com/user', {
         headers: {
           Accept: 'application/vnd.github.v3+json',
@@ -122,23 +106,16 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
           'User-Agent': 'Falbor',
         },
       });
-
       console.log('GitHub API response status:', response.status, response.statusText);
-
       if (!response.ok) {
         throw new Error(`Authentication failed: ${response.status} ${response.statusText}`);
       }
-
       const userData = (await response.json()) as GitHubUserResponse;
-
-      // Create connection object
       const connectionData: GitHubConnection = {
         user: userData,
         token,
         tokenType,
       };
-
-      // Set cookies for API requests
       Cookies.set('githubToken', token);
       Cookies.set('githubUsername', userData.login);
       Cookies.set(
@@ -148,8 +125,6 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
           password: 'x-oauth-basic',
         }),
       );
-
-      // Update the store
       updateGitHubConnection(connectionData);
 
       toast.success(`Connected to GitHub as ${userData.login}`);
@@ -167,15 +142,10 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
   }, []);
 
   const disconnect = useCallback(() => {
-    // Clear localStorage
     localStorage.removeItem(STORAGE_KEY);
-
-    // Clear all GitHub-related cookies
     Cookies.remove('githubToken');
     Cookies.remove('githubUsername');
     Cookies.remove('git:github.com');
-
-    // Reset store
     updateGitHubConnection({
       user: null,
       token: '',
@@ -211,15 +181,11 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
     }
 
     try {
-      // For server-side connections, test via our API
       const isServerSide = !connection.token;
-
       if (isServerSide) {
         const response = await fetch('/api/github-user');
         return response.ok;
       }
-
-      // For client-side connections, test directly
       const response = await fetch('https://api.github.com/user', {
         headers: {
           Accept: 'application/vnd.github.v3+json',
@@ -241,7 +207,7 @@ export function useGitHubConnection(): UseGitHubConnectionReturn {
     isConnecting: connecting,
     connection,
     error,
-    isServerSide: !connection?.token, // Server-side if no token
+    isServerSide: !connection?.token,
     connect,
     disconnect,
     refreshConnection,

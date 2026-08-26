@@ -42,12 +42,11 @@ const itemVariants = {
 export default function HowItWorksSection() {
     return (
         <div className="relative w-full bg-[#030303] overflow-hidden py-32">
-            {/* <div className="absolute inset-0 opacity-[0.05]"
-                style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '32px 32px' }} /> */}
+            {}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] pointer-events-none"
                 style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(255,88,0,0.08) 0%, transparent 70%)' }} />
             <div className="relative z-10 w-full max-w-6xl mx-auto px-8 md:px-16">
-                {/* Header */}
+                {}
                 <motion.div
                     initial={{ opacity: 0, y: 24 }}
                     whileInView={{ opacity: 1, y: 0 }}

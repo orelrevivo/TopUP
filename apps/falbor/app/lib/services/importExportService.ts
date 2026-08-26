@@ -8,25 +8,15 @@ interface ExtendedMessage extends Message {
   timestamp?: number;
 }
 
-/**
- * Service for handling import and export operations of application data
- */
 export class ImportExportService {
-  /**
-   * Export all chats to a JSON file
-   * @param db The IndexedDB database instance
-   * @returns A promise that resolves to the export data
-   */
   static async exportAllChats(db: IDBDatabase): Promise<{ chats: any[]; exportDate: string }> {
     if (!db) {
       throw new Error('Database not initialized');
     }
 
     try {
-      // Get all chats from the database using the getAllChats helper
       const chats = await getAllChats(db);
 
-      // Validate and sanitize each chat before export
       const sanitizedChats = chats.map((chat) => ({
         id: chat.id,
         description: chat.description || '',
@@ -55,116 +45,80 @@ export class ImportExportService {
     }
   }
 
-  /**
-   * Export application settings to a JSON file
-   * @returns A promise that resolves to the settings data
-   */
   static async exportSettings(): Promise<any> {
     try {
-      // Get all cookies
       const allCookies = Cookies.get();
 
-      // Create a comprehensive settings object
       return {
-        // Core settings
         core: {
-          // User profile and main settings
           falbor_user_profile: this._safeGetItem('falbor_user_profile'),
           falbor_settings: this._safeGetItem('falbor_settings'),
           falbor_profile: this._safeGetItem('falbor_profile'),
           theme: this._safeGetItem('theme'),
         },
 
-        // Provider settings (both local and cloud)
         providers: {
-          // Provider configurations from localStorage
           provider_settings: this._safeGetItem('provider_settings'),
 
-          // API keys from cookies
-          apiKeys: allCookies.apiKeys,
-
-          // Selected provider and model
           selectedModel: allCookies.selectedModel,
           selectedProvider: allCookies.selectedProvider,
 
-          // Provider-specific settings
           providers: allCookies.providers,
         },
 
-        // Feature settings
         features: {
-          // Feature flags
           viewed_features: this._safeGetItem('falbor_viewed_features'),
           developer_mode: this._safeGetItem('falbor_developer_mode'),
 
-          // Context optimization
           contextOptimizationEnabled: this._safeGetItem('contextOptimizationEnabled'),
 
-          // Auto-select template
           autoSelectTemplate: this._safeGetItem('autoSelectTemplate'),
 
-          // Latest branch
           isLatestBranch: this._safeGetItem('isLatestBranch'),
 
-          // Event logs
           isEventLogsEnabled: this._safeGetItem('isEventLogsEnabled'),
 
-          // Energy saver settings
           energySaverMode: this._safeGetItem('energySaverMode'),
           autoEnergySaver: this._safeGetItem('autoEnergySaver'),
         },
 
-        // UI configuration
         ui: {
-          // Tab configuration
           falbor_tab_configuration: this._safeGetItem('falbor_tab_configuration'),
           tabConfiguration: allCookies.tabConfiguration,
 
-          // Prompt settings
           promptId: this._safeGetItem('promptId'),
           cachedPrompt: allCookies.cachedPrompt,
         },
 
-        // Connections
         connections: {
-          // Netlify connection
           netlify_connection: this._safeGetItem('netlify_connection'),
 
-          // GitHub connections
           ...this._getGitHubConnections(allCookies),
         },
 
-        // Debug and logs
         debug: {
-          // Debug settings
           isDebugEnabled: allCookies.isDebugEnabled,
           acknowledged_debug_issues: this._safeGetItem('falbor_acknowledged_debug_issues'),
           acknowledged_connection_issue: this._safeGetItem('falbor_acknowledged_connection_issue'),
 
-          // Error logs
           error_logs: this._safeGetItem('error_logs'),
           falbor_read_logs: this._safeGetItem('falbor_read_logs'),
 
-          // Event logs
           eventLogs: allCookies.eventLogs,
         },
 
-        // Update settings
         updates: {
           update_settings: this._safeGetItem('update_settings'),
           last_acknowledged_update: this._safeGetItem('falbor_last_acknowledged_version'),
         },
 
-        // Chat snapshots (for chat history)
         chatSnapshots: this._getChatSnapshots(),
 
-        // Raw data (for debugging and complete backup)
         _raw: {
           localStorage: this._getAllLocalStorage(),
           cookies: allCookies,
         },
 
-        // Export metadata
         _meta: {
           exportDate: new Date().toISOString(),
           version: '2.0',
@@ -177,82 +131,22 @@ export class ImportExportService {
     }
   }
 
-  /**
-   * Import settings from a JSON file
-   * @param importedData The imported data
-   */
   static async importSettings(importedData: any): Promise<void> {
-    // Check if this is the new comprehensive format (v2.0)
     const isNewFormat = importedData._meta?.version === '2.0';
 
     if (isNewFormat) {
-      // Import using the new comprehensive format
       await this._importComprehensiveFormat(importedData);
     } else {
-      // Try to handle older formats
       await this._importLegacyFormat(importedData);
     }
   }
 
-  /**
-   * Import API keys from a JSON file
-   * @param keys The API keys to import
-   */
   static importAPIKeys(keys: Record<string, any>): Record<string, string> {
-    // Get existing keys from cookies
-    const existingKeys = (() => {
-      const storedApiKeys = Cookies.get('apiKeys');
-      return storedApiKeys ? JSON.parse(storedApiKeys) : {};
-    })();
-
-    // Validate and save each key
-    const newKeys = { ...existingKeys };
-    Object.entries(keys).forEach(([key, value]) => {
-      // Skip comment fields
-      if (key.startsWith('_')) {
-        return;
-      }
-
-      // Skip base URL fields (they should be set in .env.local)
-      if (key.includes('_API_BASE_URL')) {
-        return;
-      }
-
-      if (typeof value !== 'string') {
-        throw new Error(`Invalid value for key: ${key}`);
-      }
-
-      // Handle both old and new template formats
-      let normalizedKey = key;
-
-      // Check if this is the old format (e.g., "Anthropic_API_KEY")
-      if (key.includes('_API_KEY')) {
-        // Extract the provider name from the old format
-        normalizedKey = key.replace('_API_KEY', '');
-      }
-
-      /*
-       * Only add non-empty keys
-       * Use the normalized key in the correct format
-       * (e.g., "OpenAI", "Google", "Anthropic")
-       */
-      if (value) {
-        newKeys[normalizedKey] = value;
-      }
-    });
-
-    return newKeys;
+    void keys;
+    throw new Error('Browser-based API key import has been disabled');
   }
 
-  /**
-   * Create an API keys template
-   * @returns The API keys template
-   */
   static createAPIKeysTemplate(): Record<string, any> {
-    /*
-     * Create a template with provider names as keys
-     * This matches how the application stores API keys in cookies
-     */
     const template = {
       Anthropic: '',
       OpenAI: '',
@@ -270,7 +164,6 @@ export class ImportExportService {
       AzureOpenAI: '',
     };
 
-    // Add a comment to explain the format
     return {
       _comment:
         "Fill in your API keys for each provider. Keys will be stored with the provider name (e.g., 'OpenAI'). The application also supports the older format with keys like 'OpenAI_API_KEY' for backward compatibility.",
@@ -278,18 +171,11 @@ export class ImportExportService {
     };
   }
 
-  /**
-   * Reset all settings to default values
-   * @param db The IndexedDB database instance
-   */
   static async resetAllSettings(db: IDBDatabase): Promise<void> {
-    // 1. Clear all localStorage items related to application settings
-    const localStorageKeysToPreserve: string[] = ['debug_mode']; // Keys to preserve if needed
+    const localStorageKeysToPreserve: string[] = ['debug_mode'];
 
-    // Get all localStorage keys
     const allLocalStorageKeys = Object.keys(localStorage);
 
-    // Clear all localStorage items except those to preserve
     allLocalStorageKeys.forEach((key) => {
       if (!localStorageKeysToPreserve.includes(key)) {
         try {
@@ -300,14 +186,11 @@ export class ImportExportService {
       }
     });
 
-    // 2. Clear all cookies related to application settings
-    const cookiesToPreserve: string[] = []; // Cookies to preserve if needed
+    const cookiesToPreserve: string[] = [];
 
-    // Get all cookies
     const allCookies = Cookies.get();
     const cookieKeys = Object.keys(allCookies);
 
-    // Clear all cookies except those to preserve
     cookieKeys.forEach((key) => {
       if (!cookiesToPreserve.includes(key)) {
         try {
@@ -318,18 +201,15 @@ export class ImportExportService {
       }
     });
 
-    // 3. Clear all data from IndexedDB
     if (!db) {
       console.warn('Database not initialized, skipping IndexedDB reset');
     } else {
-      // Get all chats and delete them
       const chats = await getAllChats(db);
 
       const deletePromises = chats.map((chat) => deleteChat(db, chat.id));
       await Promise.all(deletePromises);
     }
 
-    // 4. Clear any chat snapshots
     const snapshotKeys = Object.keys(localStorage).filter((key) => key.startsWith('snapshot:'));
     snapshotKeys.forEach((key) => {
       try {
@@ -340,33 +220,19 @@ export class ImportExportService {
     });
   }
 
-  /**
-   * Delete all chats from the database
-   * @param db The IndexedDB database instance
-   */
   static async deleteAllChats(db: IDBDatabase): Promise<void> {
-    // Clear chat history from localStorage
     localStorage.removeItem('falbor_chat_history');
 
-    // Clear chats from IndexedDB
     if (!db) {
       throw new Error('Database not initialized');
     }
 
-    // Get all chats and delete them one by one
     const chats = await getAllChats(db);
     const deletePromises = chats.map((chat) => deleteChat(db, chat.id));
     await Promise.all(deletePromises);
   }
 
-  // Private helper methods
-
-  /**
-   * Import settings from a comprehensive format
-   * @param data The imported data
-   */
   private static async _importComprehensiveFormat(data: any): Promise<void> {
-    // Import core settings
     if (data.core) {
       Object.entries(data.core).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
@@ -379,9 +245,7 @@ export class ImportExportService {
       });
     }
 
-    // Import provider settings
     if (data.providers) {
-      // Import provider_settings to localStorage
       if (data.providers.provider_settings) {
         try {
           this._safeSetItem('provider_settings', data.providers.provider_settings);
@@ -390,8 +254,7 @@ export class ImportExportService {
         }
       }
 
-      // Import API keys and other provider cookies
-      const providerCookies = ['apiKeys', 'selectedModel', 'selectedProvider', 'providers'];
+      const providerCookies = ['selectedModel', 'selectedProvider', 'providers'];
       providerCookies.forEach((key) => {
         if (data.providers[key]) {
           try {
@@ -403,7 +266,6 @@ export class ImportExportService {
       });
     }
 
-    // Import feature settings
     if (data.features) {
       Object.entries(data.features).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
@@ -416,9 +278,7 @@ export class ImportExportService {
       });
     }
 
-    // Import UI configuration
     if (data.ui) {
-      // Import localStorage UI settings
       if (data.ui.falbor_tab_configuration) {
         try {
           this._safeSetItem('falbor_tab_configuration', data.ui.falbor_tab_configuration);
@@ -435,7 +295,6 @@ export class ImportExportService {
         }
       }
 
-      // Import UI cookies
       const uiCookies = ['tabConfiguration', 'cachedPrompt'];
       uiCookies.forEach((key) => {
         if (data.ui[key]) {
@@ -448,9 +307,7 @@ export class ImportExportService {
       });
     }
 
-    // Import connections
     if (data.connections) {
-      // Import Netlify connection
       if (data.connections.netlify_connection) {
         try {
           this._safeSetItem('netlify_connection', data.connections.netlify_connection);
@@ -459,7 +316,6 @@ export class ImportExportService {
         }
       }
 
-      // Import GitHub connections
       Object.entries(data.connections).forEach(([key, value]) => {
         if (key.startsWith('github_') && value !== null && value !== undefined) {
           try {
@@ -471,9 +327,7 @@ export class ImportExportService {
       });
     }
 
-    // Import debug settings
     if (data.debug) {
-      // Import debug localStorage settings
       const debugLocalStorageKeys = [
         'falbor_acknowledged_debug_issues',
         'falbor_acknowledged_connection_issue',
@@ -491,7 +345,6 @@ export class ImportExportService {
         }
       });
 
-      // Import debug cookies
       const debugCookies = ['isDebugEnabled', 'eventLogs'];
       debugCookies.forEach((key) => {
         if (data.debug[key]) {
@@ -504,7 +357,6 @@ export class ImportExportService {
       });
     }
 
-    // Import update settings
     if (data.updates) {
       if (data.updates.update_settings) {
         try {
@@ -523,7 +375,6 @@ export class ImportExportService {
       }
     }
 
-    // Import chat snapshots
     if (data.chatSnapshots) {
       Object.entries(data.chatSnapshots).forEach(([key, value]) => {
         if (value !== null && value !== undefined) {
@@ -537,28 +388,16 @@ export class ImportExportService {
     }
   }
 
-  /**
-   * Import settings from a legacy format
-   * @param data The imported data
-   */
   private static async _importLegacyFormat(data: any): Promise<void> {
-    /**
-     * Handle legacy format (v1.0 or earlier)
-     * This is a simplified version that tries to import whatever is available
-     */
 
-    // Try to import settings directly
     Object.entries(data).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
-        // Skip metadata fields
         if (key === 'exportDate' || key === 'version' || key === 'appVersion') {
           return;
         }
 
         try {
-          // Try to determine if this should be a cookie or localStorage item
           const isCookie = [
-            'apiKeys',
             'selectedModel',
             'selectedProvider',
             'providers',
@@ -580,11 +419,6 @@ export class ImportExportService {
     });
   }
 
-  /**
-   * Safely get an item from localStorage
-   * @param key The key to get
-   * @returns The value or null if not found
-   */
   private static _safeGetItem(key: string): any {
     try {
       const item = localStorage.getItem(key);
@@ -595,10 +429,6 @@ export class ImportExportService {
     }
   }
 
-  /**
-   * Get all localStorage items
-   * @returns All localStorage items
-   */
   private static _getAllLocalStorage(): Record<string, any> {
     const result: Record<string, any> = {};
 
@@ -622,15 +452,9 @@ export class ImportExportService {
     return result;
   }
 
-  /**
-   * Get GitHub connections from cookies
-   * @param _cookies The cookies object
-   * @returns GitHub connections
-   */
   private static _getGitHubConnections(_cookies: Record<string, string>): Record<string, any> {
     const result: Record<string, any> = {};
 
-    // Get GitHub connections from localStorage
     const localStorageKeys = Object.keys(localStorage).filter((key) => key.startsWith('github_'));
     localStorageKeys.forEach((key) => {
       try {
@@ -645,14 +469,9 @@ export class ImportExportService {
     return result;
   }
 
-  /**
-   * Get chat snapshots from localStorage
-   * @returns Chat snapshots
-   */
   private static _getChatSnapshots(): Record<string, any> {
     const result: Record<string, any> = {};
 
-    // Get chat snapshots from localStorage
     const snapshotKeys = Object.keys(localStorage).filter((key) => key.startsWith('snapshot:'));
     snapshotKeys.forEach((key) => {
       try {
@@ -667,11 +486,6 @@ export class ImportExportService {
     return result;
   }
 
-  /**
-   * Safely set an item in localStorage
-   * @param key The key to set
-   * @param value The value to set
-   */
   private static _safeSetItem(key: string, value: any): void {
     try {
       localStorage.setItem(key, JSON.stringify(value));
@@ -680,11 +494,6 @@ export class ImportExportService {
     }
   }
 
-  /**
-   * Safely set a cookie
-   * @param key The key to set
-   * @param value The value to set
-   */
   private static _safeSetCookie(key: string, value: any): void {
     try {
       Cookies.set(key, typeof value === 'string' ? value : JSON.stringify(value), { expires: 365 });

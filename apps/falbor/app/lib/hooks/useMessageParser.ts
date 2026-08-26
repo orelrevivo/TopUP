@@ -31,10 +31,6 @@ const messageParser = new EnhancedStreamingMessageParser({
     onActionOpen: (data) => {
       logger.trace('onActionOpen', data.action);
 
-      /*
-       * File actions are streamed, so we add them immediately to show progress
-       * Shell actions are complete when created by enhanced parser, so we wait for close
-       */
       if (data.action.type === 'file') {
         workbenchStore.addAction(data);
       }
@@ -42,10 +38,6 @@ const messageParser = new EnhancedStreamingMessageParser({
     onActionClose: (data) => {
       logger.trace('onActionClose', data.action);
 
-      /*
-       * Add non-file actions (shell, build, start, etc.) when they close
-       * Enhanced parser creates complete shell actions, so they're ready to execute
-       */
       if (data.action.type !== 'file') {
         workbenchStore.addAction(data);
       }
@@ -54,14 +46,12 @@ const messageParser = new EnhancedStreamingMessageParser({
     },
     onActionStream: (data) => {
       logger.trace('onActionStream', data.action);
-      
-      // On mobile devices, we skip writing file chunks progressively to avoid crashing the browser
-      // with excessive I/O operations and memory usage. The full file will be mounted when the action closes.
+
       const isMobile = typeof window !== 'undefined' && (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) || window.innerWidth <= 768);
       if (isMobile && data.action.type === 'file') {
         return;
       }
-      
+
       workbenchStore.runAction(data, true);
     },
   },
@@ -78,21 +68,17 @@ export function useMessageParser() {
   const parseMessages = useCallback((messages: Message[], isLoading: boolean) => {
     let didGlobalReset = false;
 
-    // Removed development-only global reset logic that was causing message truncation and flickering.
-    
     let hasUpdates = false;
 
     for (const message of messages) {
       if (message.role === 'assistant' || message.role === 'user') {
         const newParsedContent = messageParser.parse(message.id, extractTextContent(message));
 
-        // wasReset is true when the enhanced parser detected code blocks and re-parsed from scratch.
-        // In that case, newParsedContent is the full output and we must replace, not append.
         const shouldReplace = messageParser.wasReset;
 
         if (newParsedContent || shouldReplace) {
-          parsedMessagesRef.current[message.id] = !shouldReplace 
-            ? (parsedMessagesRef.current[message.id] || '') + newParsedContent 
+          parsedMessagesRef.current[message.id] = !shouldReplace
+            ? (parsedMessagesRef.current[message.id] || '') + newParsedContent
             : newParsedContent;
           hasUpdates = true;
         }
@@ -102,7 +88,7 @@ export function useMessageParser() {
         }
       }
     }
-    
+
     if (hasUpdates) {
       setParsedMessages({ ...parsedMessagesRef.current });
     }

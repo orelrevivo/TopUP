@@ -121,6 +121,8 @@ export const templates = pgTable("templates", {
   mainImage: text("main_image"),
   images: jsonb("images").default("[]"),
   url: text("url"),
+  chatId: text("chat_id"),
+  categories: jsonb("categories").default("[]"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -134,6 +136,7 @@ export const templateReviews = pgTable("template_reviews", {
   likes: integer("likes").default(0),
   dislikes: integer("dislikes").default(0),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
 export const serviceConnections = pgTable("service_connections", {
@@ -753,7 +756,6 @@ export const files = pgTable("files", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
-
 // Extracted from live DB to prevent Drizzle dropping them
 export const globalSettings = pgTable("global_settings", {
   id: serial("id").primaryKey(),
@@ -795,45 +797,4 @@ export const prReports = pgTable("pr_reports", {
   createdAt: timestamp("created_at"),
 });
 
-
-// Extracted from live DB to prevent Drizzle dropping them
-export const globalSettings = pgTable("global_settings", {
-  id: serial("id").primaryKey(),
-  riskyPathKeywords: text("risky_path_keywords"),
-  largePrThreshold: integer("large_pr_threshold"),
-  missingTests: boolean("missing_tests"),
-  dependencyChange: boolean("dependency_change"),
-  reportFormat: text("report_format"),
-  includeLowRisk: boolean("include_low_risk"),
-  enablePostToGithub: boolean("enable_post_to_github"),
-  githubAppInstallationId: text("github_app_installation_id"),
-});
-
-export const repositories = pgTable("repositories", {
-  id: uuid("id").primaryKey(),
-  name: text("name"),
-  fullName: text("full_name"),
-  githubId: text("github_id"),
-  connectedAt: timestamp("connected_at"),
-});
-
-export const adrRules = pgTable("adr_rules", {
-  id: uuid("id").primaryKey(),
-  repositoryId: uuid("repository_id"),
-  title: text("title"),
-  description: text("description"),
-  severity: text("severity"),
-  createdAt: timestamp("created_at"),
-});
-
-export const prReports = pgTable("pr_reports", {
-  id: uuid("id").primaryKey(),
-  repositoryId: uuid("repository_id"),
-  prNumber: text("pr_number"),
-  title: text("title"),
-  riskLevel: text("risk_level"),
-  summary: text("summary"),
-  markdownReport: text("markdown_report"),
-  createdAt: timestamp("created_at"),
-});
 

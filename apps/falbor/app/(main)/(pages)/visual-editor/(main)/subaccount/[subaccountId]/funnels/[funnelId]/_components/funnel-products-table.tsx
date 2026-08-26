@@ -53,29 +53,25 @@ const FunnelProductsTable: React.FC<FunnelProductsTableProps> = ({
   }
 
   const handleAddProduct = async (product: Stripe.Product) => {
+    const defaultPrice = product.default_price as Stripe.Price | undefined | null
+    if (!defaultPrice) return
+
     const productIdExists = liveProducts.find(
-      //@ts-ignore
-      (prod) => prod.productId === product.default_price.id
+      (prod) => prod.productId === defaultPrice.id
     )
     productIdExists
       ? setLiveProducts(
-          liveProducts.filter(
-            (prod) =>
-              prod.productId !==
-              //@ts-ignore
-              product.default_price?.id
-          )
+        liveProducts.filter(
+          (prod) => prod.productId !== defaultPrice.id
         )
-      : //@ts-ignore
-        setLiveProducts([
-          ...liveProducts,
-          {
-            //@ts-ignore
-            productId: product.default_price.id as string,
-            //@ts-ignore
-            recurring: !!product.default_price.recurring,
-          },
-        ])
+      )
+      : setLiveProducts([
+        ...liveProducts,
+        {
+          productId: defaultPrice.id,
+          recurring: !!defaultPrice.recurring,
+        },
+      ])
   }
 
   const handleAddPayPalProduct = (product: FunnelProduct) => {
@@ -84,15 +80,15 @@ const FunnelProductsTable: React.FC<FunnelProductsTableProps> = ({
     )
     productIdExists
       ? setLiveProducts(
-          liveProducts.filter((prod) => prod.productId !== product.priceId)
-        )
+        liveProducts.filter((prod) => prod.productId !== product.priceId)
+      )
       : setLiveProducts([
-          ...liveProducts,
-          {
-            productId: product.priceId,
-            recurring: false,
-          },
-        ])
+        ...liveProducts,
+        {
+          productId: product.priceId,
+          recurring: false,
+        },
+      ])
   }
 
   return (
@@ -114,8 +110,10 @@ const FunnelProductsTable: React.FC<FunnelProductsTableProps> = ({
                 <Input
                   defaultChecked={
                     !!liveProducts.find(
-                      //@ts-ignore
-                      (prod) => prod.productId === product.default_price.id
+
+                      (prod) =>
+                        prod.productId ===
+                        (product.default_price as Stripe.Price | null)?.id
                     )
                   }
                   onChange={() => handleAddProduct(product)}
@@ -134,15 +132,18 @@ const FunnelProductsTable: React.FC<FunnelProductsTableProps> = ({
               <TableCell>{product.name}</TableCell>
               <TableCell>
                 {
-                  //@ts-ignore
-                  product.default_price?.recurring ? 'Recurring' : 'One Time'
+
+                  (product.default_price as Stripe.Price | null)?.recurring
+                    ? 'Recurring'
+                    : 'One Time'
                 }
               </TableCell>
               <TableCell className="text-right">
                 $
                 {
-                  //@ts-ignore
-                  product.default_price?.unit_amount / 100
+
+                  ((product.default_price as Stripe.Price | null)?.unit_amount ??
+                    0) / 100
                 }
               </TableCell>
             </TableRow>

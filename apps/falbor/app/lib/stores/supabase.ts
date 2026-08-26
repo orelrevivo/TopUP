@@ -126,9 +126,6 @@ export function updateSupabaseConnection(connection: Partial<SupabaseConnectionS
   const newState = { ...currentState, ...connection };
   supabaseConnection.set(newState);
 
-  /*
-   * Always save the connection state to localStorage to persist across chats
-   */
   if (connection.user || connection.token || connection.selectedProjectId !== undefined || connection.credentials) {
     storage?.setItem('supabase_connection', JSON.stringify(newState));
 
@@ -144,14 +141,12 @@ export function updateSupabaseConnection(connection: Partial<SupabaseConnectionS
 }
 
 export function initializeSupabaseConnection() {
-  // Auto-connect via environment variable removed for security isolation
 }
 
 export async function fetchSupabaseStats(token: string) {
   isFetchingStats.set(true);
 
   try {
-    // Use the internal API route instead of direct Supabase API call
     const response = await fetch('/api/supabase', {
       method: 'POST',
       headers: {

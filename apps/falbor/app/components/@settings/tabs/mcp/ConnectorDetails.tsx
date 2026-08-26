@@ -62,7 +62,7 @@ export default function ConnectorDetails({ connectorId, onAddConnection }: Conne
     return <div>Connector not found</div>;
   }
 
-  // --- Detail View (The individual connection settings) ---
+  
   if (selectedConnection) {
     return (
       <ConnectionSettings 
@@ -70,16 +70,16 @@ export default function ConnectorDetails({ connectorId, onAddConnection }: Conne
         connection={selectedConnection} 
         onBack={() => {
           setSelectedConnection(null);
-          fetchConnections(); // Refresh list on back
+          fetchConnections(); 
         }}
       />
     );
   }
 
-  // --- List View (The original overview + new table) ---
+  
   return (
     <div className="flex flex-col space-y-8">
-      {/* Header */}
+      {}
       <div className="flex items-center gap-4 p-4 rounded-xl border bg-falbor-elements-background-depth-2 border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark">
         <img src={connector.logo} alt={connector.name} className="w-12 h-12 rounded-lg object-contain bg-transparent" />
         <div className="flex flex-col">
@@ -88,13 +88,13 @@ export default function ConnectorDetails({ connectorId, onAddConnection }: Conne
         </div>
       </div>
 
-      {/* Overview */}
+      {}
       <section>
         <h3 className="text-base font-semibold text-falbor-elements-textPrimary mb-2">Overview</h3>
         <p className="text-sm text-falbor-elements-textSecondary">{connector.description}</p>
       </section>
 
-      {/* Connections Table */}
+      {}
       <ConnectionsTable 
         connections={existingConnections} 
         isLoading={isLoading} 
@@ -102,7 +102,7 @@ export default function ConnectorDetails({ connectorId, onAddConnection }: Conne
         onSelectConnection={setSelectedConnection} 
       />
 
-      {/* Footer / Details */}
+      {}
       <section className="pt-6 mt-6 border-t border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark">
         <h3 className="text-base font-semibold text-falbor-elements-textPrimary mb-4">Details</h3>
         <div className="grid grid-cols-3 gap-4">

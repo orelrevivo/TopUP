@@ -2,8 +2,6 @@
 
 .Toastify__toast-container {
   @extend .z-toast;
-  
-  /* Center horizontally and enforce a stable max width so it doesn't jump around */
   left: 50% !important;
   transform: translateX(-50%) !important;
   width: 90vw !important;
@@ -18,7 +16,6 @@
 
 .Toastify__toast {
   --at-apply: shadow-md;
-
   background-color: var(--falbor-elements-bg-depth-2);
   color: var(--falbor-elements-textPrimary);
   border: 1px solid var(--falbor-elements-borderColor);

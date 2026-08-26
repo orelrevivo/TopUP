@@ -40,7 +40,7 @@ export function DemoModeWidget({ projectId, apiKey }: { projectId: string, apiKe
         };
       }
 
-      // Simulate SDK sending
+      
       await fetch('/api/stayup/ingest', {
         method: 'POST',
         headers: {

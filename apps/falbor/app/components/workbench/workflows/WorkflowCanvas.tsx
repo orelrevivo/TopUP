@@ -166,7 +166,7 @@ const WorkflowEditor = ({ workflowId: initialWorkflowId, sendMessage }: Workflow
         <Background color="#aaa" gap={16} />
       </ReactFlow>
       
-      {/* Absolute positioned header for the canvas */}
+      {}
       <div className="absolute top-4 right-4 z-10 flex gap-2">
         <button 
           onClick={async () => {
@@ -175,7 +175,7 @@ const WorkflowEditor = ({ workflowId: initialWorkflowId, sendMessage }: Workflow
               let thumbnailUrl = null;
               const flowElement = document.querySelector('.react-flow') as HTMLElement;
               if (flowElement) {
-                // Capture the canvas without the UI controls
+                
                 const filter = (node: HTMLElement) => {
                   if (node?.classList?.contains('react-flow__controls') || node?.classList?.contains('react-flow__panel')) {
                     return false;

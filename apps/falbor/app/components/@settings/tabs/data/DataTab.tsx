@@ -11,7 +11,7 @@ import { DataVisualization } from './DataVisualization';
 import { classNames } from '~/utils/classNames';
 import { toast } from 'react-toastify';
 
-// Create a custom hook to connect to the falborHistory database
+
 function useFalborHistoryDB() {
   const [db, setDb] = useState<IDBDatabase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -43,21 +43,21 @@ function useFalborHistoryDB() {
   return { db, isLoading, error };
 }
 
-// Extend the Chat interface to include the missing properties
+
 interface ExtendedChat extends Chat {
   title?: string;
   updatedAt?: number;
 }
 
-// Helper function to create a chat label and description
+
 function createChatItem(chat: Chat): ChatItem {
   return {
     id: chat.id,
 
-    // Use description as title if available, or format a short ID
+    
     label: (chat as ExtendedChat).title || chat.description || `Chat ${chat.id.slice(0, 8)}`,
 
-    // Format the description with message count and timestamp
+    
     description: `${chat.messages.length} messages - Last updated: ${new Date((chat as ExtendedChat).updatedAt || Date.parse(chat.timestamp)).toLocaleString()}`,
   };
 }
@@ -75,19 +75,19 @@ interface ChatItem {
 }
 
 export function DataTab() {
-  // Use our custom hook for the falborHistory database
+  
   const { db, isLoading: dbLoading } = useFalborHistoryDB();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const apiKeyFileInputRef = useRef<HTMLInputElement>(null);
   const chatFileInputRef = useRef<HTMLInputElement>(null);
 
-  // State for confirmation dialogs
+  
   const [showResetInlineConfirm, setShowResetInlineConfirm] = useState(false);
   const [showDeleteInlineConfirm, setShowDeleteInlineConfirm] = useState(false);
   const [showSettingsSelection, setShowSettingsSelection] = useState(false);
   const [showChatsSelection, setShowChatsSelection] = useState(false);
 
-  // State for settings categories and available chats
+  
   const [settingsCategories] = useState<SettingsCategory[]>([
     { id: 'core', label: 'Core Settings', description: 'User profile and main settings' },
     { id: 'providers', label: 'Providers', description: 'API keys and provider configurations' },
@@ -101,7 +101,7 @@ export function DataTab() {
   const [availableChats, setAvailableChats] = useState<ExtendedChat[]>([]);
   const [chatItems, setChatItems] = useState<ChatItem[]>([]);
 
-  // Data operations hook with falborHistory database
+  
   const {
     isExporting,
     isImporting,
@@ -118,13 +118,13 @@ export function DataTab() {
     handleDownloadTemplate,
     handleImportAPIKeys,
   } = useDataOperations({
-    customDb: db || undefined, // Pass the falborHistory database, converting null to undefined
+    customDb: db || undefined, 
     onReloadSettings: () => window.location.reload(),
     onReloadChats: () => {
-      // Reload chats after reset
+      
       if (db) {
         getAllChats(db).then((chats) => {
-          // Cast to ExtendedChat to handle additional properties
+          
           const extendedChats = chats as ExtendedChat[];
           setAvailableChats(extendedChats);
           setChatItems(extendedChats.map((chat) => createChatItem(chat)));
@@ -135,11 +135,11 @@ export function DataTab() {
     onResetChats: () => setShowDeleteInlineConfirm(false),
   });
 
-  // Loading states for operations not provided by the hook
+  
   const [isDeleting, setIsDeleting] = useState(false);
   const [isImportingKeys, setIsImportingKeys] = useState(false);
 
-  // Load available chats
+  
   useEffect(() => {
     if (db) {
       console.log('Loading chats from falborHistory database', {
@@ -151,11 +151,11 @@ export function DataTab() {
         .then((chats) => {
           console.log('Found chats:', chats.length);
 
-          // Cast to ExtendedChat to handle additional properties
+          
           const extendedChats = chats as ExtendedChat[];
           setAvailableChats(extendedChats);
 
-          // Create ChatItems for selection dialog
+          
           setChatItems(extendedChats.map((chat) => createChatItem(chat)));
         })
         .catch((error) => {
@@ -165,7 +165,7 @@ export function DataTab() {
     }
   }, [db]);
 
-  // Handle file input changes
+  
   const handleFileInputChange = useCallback(
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
@@ -200,7 +200,7 @@ export function DataTab() {
     [handleImportChats],
   );
 
-  // Wrapper for reset chats to handle loading state
+  
   const handleResetChatsWithState = useCallback(() => {
     setIsDeleting(true);
     handleResetChats().finally(() => setIsDeleting(false));
@@ -208,7 +208,7 @@ export function DataTab() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Hidden file inputs */}
+      {}
       <input ref={fileInputRef} type="file" accept=".json" onChange={handleFileInputChange} className="hidden" />
       <input
         ref={apiKeyFileInputRef}
@@ -225,7 +225,7 @@ export function DataTab() {
         className="hidden"
       />
 
-      {/* Reset Settings Confirmation Dialog */}
+      {}
       <ConfirmationDialog
         isOpen={showResetInlineConfirm}
         onClose={() => setShowResetInlineConfirm(false)}
@@ -238,7 +238,7 @@ export function DataTab() {
         onConfirm={handleResetSettings}
       />
 
-      {/* Delete Chats Confirmation Dialog */}
+      {}
       <ConfirmationDialog
         isOpen={showDeleteInlineConfirm}
         onClose={() => setShowDeleteInlineConfirm(false)}
@@ -251,7 +251,7 @@ export function DataTab() {
         onConfirm={handleResetChatsWithState}
       />
 
-      {/* Settings Selection Dialog */}
+      {}
       <SelectionDialog
         isOpen={showSettingsSelection}
         onClose={() => setShowSettingsSelection(false)}
@@ -264,7 +264,7 @@ export function DataTab() {
         confirmLabel="Export Selected"
       />
 
-      {/* Chats Selection Dialog */}
+      {}
       <SelectionDialog
         isOpen={showChatsSelection}
         onClose={() => setShowChatsSelection(false)}
@@ -277,7 +277,7 @@ export function DataTab() {
         confirmLabel="Export Selected"
       />
 
-      {/* Chats Section */}
+      {}
       <div>
         <h2 className="text-xl font-semibold mb-4 text-falbor-elements-textPrimary">Chats</h2>
         {dbLoading ? (
@@ -468,7 +468,7 @@ export function DataTab() {
         )}
       </div>
 
-      {/* Settings Section */}
+      {}
       <div>
         <h2 className="text-xl font-semibold mb-4 text-falbor-elements-textPrimary">Settings</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -626,7 +626,7 @@ export function DataTab() {
         </div>
       </div>
 
-      {/* API Keys Section */}
+      {}
       <div>
         <h2 className="text-xl font-semibold mb-4 text-falbor-elements-textPrimary">API Keys</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -706,7 +706,7 @@ export function DataTab() {
         </div>
       </div>
 
-      {/* Data Visualization */}
+      {}
       <div>
         <h2 className="text-xl font-semibold mb-4 text-falbor-elements-textPrimary">Data Usage</h2>
         <Card>

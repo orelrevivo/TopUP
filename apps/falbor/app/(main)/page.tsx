@@ -2,12 +2,12 @@
 import { useRef, useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 
-import { BaseChat } from '~/components/chat/BaseChat';
+import { BaseChat } from '~/components/chat/core/BaseChat';
 import { Header } from '~/components/header/Header';
 import BackgroundRays from '~/components/ui/BackgroundRays';
 import { ClientOnly } from '~/components/ui/ClientOnly';
 import { Menu } from '~/components/sidebar/Menu.client';
-import { Chat } from '~/components/chat/Chat.client';
+import { Chat } from '~/components/chat/core/Chat.client';
 import { useAuth } from '~/hooks/useAuth';
 import { usePathname } from 'next/navigation';
 import { LandingScrollHandler } from "~/components/landing/landing-scroll-handler";
@@ -29,17 +29,17 @@ import StartFreeSection from "~/components/landing/StartFreeSection";
 import AgentFeaturesSection from "~/components/landing/AgentFeaturesSection";
 
 const SECTIONS = ["Builder", "Database", "Organizations", "Workflow", "Darknet"];
-const TOTAL = SECTIONS.length; // 5 sections
-const SECTION_SPAN = 1 / TOTAL; // each section gets 0.2 of progress
-const FADE_SPAN = 0.08; // how fast each fades in
+const TOTAL = SECTIONS.length; 
+const SECTION_SPAN = 1 / TOTAL; 
+const FADE_SPAN = 0.08; 
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * Math.max(0, Math.min(1, t));
 }
 
 function getOpacity(progress: number, sectionIndex: number): number {
-  // sectionIndex 0 = always visible (WebsiteBuilder)
-  // sectionIndex 1..4 = Database, Organizations, Workflow, Darknet
+  
+  
   const start = sectionIndex * SECTION_SPAN;
   const end = start + FADE_SPAN;
   return lerp(0, 1, (progress - start) / FADE_SPAN);
@@ -65,21 +65,21 @@ function PageContent() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bookContainerRef = useRef<HTMLDivElement>(null);
 
-  // DOM refs for each card layer
+  
   const card2Ref = useRef<HTMLDivElement>(null);
   const card3Ref = useRef<HTMLDivElement>(null);
   const card4Ref = useRef<HTMLDivElement>(null);
   const card5Ref = useRef<HTMLDivElement>(null);
 
-  // Dot refs for nav
+  
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const [activeSection, setActiveSection] = useState(0);
 
   useEffect(() => {
-    if (user) return; // only run for landing page
+    if (user) return; 
 
-    // Refs live inside the !user branch — poll briefly until they mount
+    
     let attempts = 0;
     const attach = () => {
       const container = scrollContainerRef.current;
@@ -115,7 +115,7 @@ function PageContent() {
       };
 
       container.addEventListener('scroll', onScroll, { passive: true });
-      onScroll(); // run once immediately
+      onScroll(); 
       return () => container.removeEventListener('scroll', onScroll);
     };
 
@@ -162,7 +162,7 @@ function PageContent() {
           <div className="relative w-full flex items-center bg-black z-0">
             <FeaturesHero />
           </div>
-          {/* <IdeaToMVPSection /> */}
+          {}
           <AgentFeaturesSection />
           <BuilderJourneySection />
           <div ref={bookContainerRef} className="h-[900vh] w-full relative bg-black">
@@ -193,10 +193,8 @@ function PageContent() {
               <div ref={card4Ref} className="absolute inset-0 w-full h-full z-[4]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
                 <FeatureCard data={featuresData[3]} />
               </div>
-              {/* Card 5: Darknet */}
-              {/* <div ref={card5Ref} className="absolute inset-0 w-full h-full z-[5]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
-                <FeatureCard data={featuresData[4]} />
-              </div> */}
+              {}
+              {}
               <div className="absolute right-6 top-1/2 -translate-y-1/2 z-[100] flex flex-col gap-4 items-center">
                 {SECTIONS.map((label, i) => (
                   <div key={label} className="relative flex items-center group">
@@ -218,7 +216,7 @@ function PageContent() {
             </div>
           </div>
         </div>
-        {/* <HowItWorksSection /> */}
+        {}
         <IntegrationsSection />
         <PricingSection />
         <Footer />

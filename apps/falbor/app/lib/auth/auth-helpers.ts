@@ -44,7 +44,6 @@ export async function requireWorkflowAccess(workflowId: string) {
 }
 
 export async function requireDeploymentAccess(chatId: string) {
-  // Check that the user has access to the chat
   await requireChatAccess(chatId);
   const [deployment] = await db
     .select()
@@ -59,28 +58,14 @@ export async function requireProjectAccess(projectId: string, allowedRoles?: str
   if (!userId) {
     throw new AuthError(401, 'Unauthorized');
   }
-  // Lazy require schema to avoid circular references if any
-  const { projects, users } = require('~/lib/db/schema');
-  
+  const { projects } = require('~/lib/db/schema');
+
   const [project] = await db
     .select()
     .from(projects)
     .where(and(eq(projects.id, projectId), eq(projects.userId, userId)))
     .limit(1);
-    
-  if (!project) {
-    const [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.id, userId))
-      .limit(1);
-    if (!user) {
-      throw new AuthError(403, 'Forbidden: Project access denied');
-    }
-    if (allowedRoles && !allowedRoles.includes(user.role || '')) {
-      throw new AuthError(403, 'Forbidden: Insufficient role permissions');
-    }
-  }
+  if (!project) throw new AuthError(403, 'Forbidden: Project access denied');
   return project;
 }
 
@@ -91,8 +76,8 @@ export function handleAuthError(error: unknown) {
       headers: { 'Content-Type': 'application/json' },
     });
   }
-  console.error("Authentication/Authorization error:", error);
-  return new Response(JSON.stringify({ error: error instanceof Error ? error.message : 'Internal Server Error' }), {
+  console.error("Authentication/Authorization error");
+  return new Response(JSON.stringify({ error: 'Internal Server Error' }), {
     status: 500,
     headers: { 'Content-Type': 'application/json' },
   });

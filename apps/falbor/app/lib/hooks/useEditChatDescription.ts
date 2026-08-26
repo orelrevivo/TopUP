@@ -24,21 +24,6 @@ type EditChatDescriptionHook = {
   currentDescription: string;
   toggleEditMode: () => void;
 };
-
-/**
- * Hook to manage the state and behavior for editing chat descriptions.
- *
- * Offers functions to:
- * - Switch between edit and view modes.
- * - Manage input changes, blur, and form submission events.
- * - Save updates to IndexedDB and optionally to the global application state.
- *
- * @param {Object} options
- * @param {string} options.initialDescription - The current chat description.
- * @param {string} options.customChatId - Optional ID for updating the description via the sidebar.
- * @param {boolean} options.syncWithGlobalStore - Flag to indicate global description store synchronization.
- * @returns {EditChatDescriptionHook} Methods and state for managing description edits.
- */
 export function useEditChatDescription({
   initialDescription = descriptionStore.get()!,
   customChatId,
@@ -88,14 +73,11 @@ export function useEditChatDescription({
 
     if (trimmedDesc === initialDescription) {
       toggleEditMode();
-      return false; // No change, skip validation
+      return false;
     }
 
     const lengthValid = trimmedDesc.length > 0 && trimmedDesc.length <= 100;
-
-    // Allow letters, numbers, spaces, and common punctuation but exclude characters that could cause issues
     const characterValid = /^[a-zA-Z0-9\s\-_.,!?()[\]{}'"]+$/.test(trimmedDesc);
-
     if (!lengthValid) {
       toast.error('Description must be between 1 and 100 characters.');
       return false;

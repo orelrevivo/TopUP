@@ -4,7 +4,7 @@ import React, { memo, useState } from 'react';
 import { WorkflowCanvas } from './WorkflowCanvas';
 import { Sidebar } from './Sidebar';
 import { WorkflowList } from './WorkflowList';
-import { McpTools } from '~/components/chat/MCPTools';
+import { McpTools } from '~/components/chat/tools/MCPTools';
 import { Dialog, DialogTitle, DialogRoot } from '~/components/ui/Dialog';
 import { PanelHeader } from '~/components/ui/PanelHeader';
 import { PanelHeaderButton } from '~/components/ui/PanelHeaderButton';
@@ -60,9 +60,9 @@ export const WorkflowView = memo(({ sendMessage }: WorkflowViewProps) => {
 
   return (
     <div className="flex flex-col h-full bg-falbor-elements-background-depth-1 text-falbor-elements-textPrimary overflow-hidden">
-      {/* Workflow Header */}
+      {}
       <PanelHeader className="justify-between">
-        {/* Left Side - Title */}
+        {}
         <div className="flex items-center gap-2 text-falbor-elements-textPrimary">
           {view === 'editor' && (
             <PanelHeaderButton onClick={() => setView('list')}>
@@ -85,7 +85,7 @@ export const WorkflowView = memo(({ sendMessage }: WorkflowViewProps) => {
           </div>
         </div>
 
-        {/* Right Side - Actions */}
+        {}
         <div className="flex items-center gap-2">
           <McpTools />
 
@@ -105,7 +105,7 @@ export const WorkflowView = memo(({ sendMessage }: WorkflowViewProps) => {
       </PanelHeader>
 
 
-      {/* Content */}
+      {}
       {view === 'list' ? (
         <WorkflowList onSelectWorkflow={openEditor} />
       ) : (

@@ -4,8 +4,8 @@ import { useChat } from '@ai-sdk/react';
 import { addSkill } from '~/lib/stores/skills';
 import { skillCreationPrompt } from '~/lib/common/prompts/skill-prompt';
 import { Button } from '~/components/ui/Button';
-import { Markdown } from '~/components/chat/Markdown';
-import styles from '~/components/chat/BaseChat.module.scss';
+import { Markdown } from '~/components/chat/messages/Markdown';
+import styles from '~/components/chat/core/BaseChat.module.scss';
 import { TextShimmer } from '../ui/text-shimmer';
 
 interface SkillCreatorProps {
@@ -75,7 +75,7 @@ export const SkillCreator: React.FC<SkillCreatorProps> = ({ onBack, onSkillCreat
       </div>
 
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full min-h-0">
-        {/* Fixed header block — no longer flex-1/justify-center, so it never moves when the loading panel appears below */}
+        {}
         <div className="shrink-0 flex flex-col items-center justify-center text-center space-y-4 pt-12 pb-4">
           <div className="w-16 h-16 rounded-full bg-falbor-elements-background-depth-3 flex items-center justify-center">
             <div className="i-ph:puzzle-piece text-3xl text-falbor-elements-textSecondary"></div>
@@ -142,7 +142,7 @@ export const SkillCreator: React.FC<SkillCreatorProps> = ({ onBack, onSkillCreat
           </div>
         </form>
 
-        {/* Live Generation Rectangle — this is the only flex-1 element, so it alone claims leftover space */}
+        {}
         {isLoading && (
           <div className="mt-4 w-[70%] mx-auto flex-1 flex flex-col min-h-0">
             <div

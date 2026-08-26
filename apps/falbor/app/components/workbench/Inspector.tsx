@@ -13,7 +13,7 @@ export interface ElementInfo {
   className: string;
   id: string;
   textContent: string;
-  styles: Record<string, string>; // Changed from CSSStyleDeclaration
+  styles: Record<string, string>; 
   rect: {
     x: number;
     y: number;
@@ -40,12 +40,12 @@ export const Inspector = ({ isActive, iframeRef, onElementSelect }: InspectorPro
 
     const iframe = iframeRef.current;
 
-    // Listen for messages from the iframe
+    
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'INSPECTOR_HOVER') {
         const elementInfo = event.data.elementInfo;
 
-        // Adjust coordinates relative to iframe position
+        
         const iframeRect = iframe.getBoundingClientRect();
         elementInfo.rect.x += iframeRect.x;
         elementInfo.rect.y += iframeRect.y;
@@ -56,7 +56,7 @@ export const Inspector = ({ isActive, iframeRef, onElementSelect }: InspectorPro
       } else if (event.data.type === 'INSPECTOR_CLICK') {
         const elementInfo = event.data.elementInfo;
 
-        // Adjust coordinates relative to iframe position
+        
         const iframeRect = iframe.getBoundingClientRect();
         elementInfo.rect.x += iframeRect.x;
         elementInfo.rect.y += iframeRect.y;
@@ -71,7 +71,7 @@ export const Inspector = ({ isActive, iframeRef, onElementSelect }: InspectorPro
 
     window.addEventListener('message', handleMessage);
 
-    // Send activation message to iframe
+    
     const sendActivationMessage = () => {
       if (iframe.contentWindow) {
         iframe.contentWindow.postMessage(
@@ -84,7 +84,7 @@ export const Inspector = ({ isActive, iframeRef, onElementSelect }: InspectorPro
       }
     };
 
-    // Try to send activation message immediately and on load
+    
     sendActivationMessage();
     iframe.addEventListener('load', sendActivationMessage);
 
@@ -92,7 +92,7 @@ export const Inspector = ({ isActive, iframeRef, onElementSelect }: InspectorPro
       window.removeEventListener('message', handleMessage);
       iframe.removeEventListener('load', sendActivationMessage);
 
-      // Deactivate inspector in iframe
+      
       if (iframe.contentWindow) {
         iframe.contentWindow.postMessage(
           {
@@ -105,7 +105,7 @@ export const Inspector = ({ isActive, iframeRef, onElementSelect }: InspectorPro
     };
   }, [isActive, iframeRef, onElementSelect]);
 
-  // Render overlay for hovered element
+  
   return (
     <>
       {isActive && hoveredElement && (
@@ -119,7 +119,7 @@ export const Inspector = ({ isActive, iframeRef, onElementSelect }: InspectorPro
             height: hoveredElement.rect.height,
           }}
         >
-          {/* Element info tooltip */}
+          {}
           <div className="absolute -top-8 left-0 bg-gray-900 text-white text-xs px-2 py-1 rounded whitespace-nowrap">
             {hoveredElement.tagName.toLowerCase()}
             {hoveredElement.id && `#${hoveredElement.id}`}

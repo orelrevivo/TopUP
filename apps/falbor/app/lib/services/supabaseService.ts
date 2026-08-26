@@ -15,9 +15,6 @@ export interface SupabaseProjectData {
 
 export class SupabaseService {
   private static failedProvisionChats = new Set<string>();
-  /**
-   * Retrieves an existing Supabase project for the chat, or creates a new one via the Supabase Management API.
-   */
   static async getOrCreateSupabaseProject(chatId: string): Promise<SupabaseProjectData | null> {
     try {
       if (this.failedProvisionChats.has(chatId)) {
@@ -141,7 +138,6 @@ export class SupabaseService {
       }
       
       attempts++;
-      // Wait 10 seconds before polling again
       await new Promise(resolve => setTimeout(resolve, 10000));
     }
     
@@ -157,9 +153,6 @@ export class SupabaseService {
     return password;
   }
 
-  /**
-   * Executes SQL against a given project using the Management API.
-   */
   static async executeSql(projectId: string, sql: string): Promise<any> {
     const accessToken = process.env.SUPABASE_ACCESS_TOKEN || process.env.NEXT_PUBLIC_SUPABASE_ACCESS_TOKEN;
     if (!accessToken) {

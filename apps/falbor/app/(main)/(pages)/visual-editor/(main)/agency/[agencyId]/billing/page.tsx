@@ -20,7 +20,7 @@ type Props = {
 }
 
 const page = async ({ params }: Props) => {
-  //CHALLENGE : Create the add on  products
+  
   let addOns: any = { data: [] }
   try {
     addOns = await stripe.products.list({
@@ -137,9 +137,9 @@ const page = async ({ params }: Props) => {
             agencyId={params.agencyId}
             key={addOn.id}
             amt={
-              //@ts-ignore
+              
               addOn.default_price?.unit_amount
-                ? //@ts-ignore
+                ? 
                 `$${addOn.default_price.unit_amount / 100}`
                 : '$0'
             }

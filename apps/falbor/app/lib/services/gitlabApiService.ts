@@ -7,7 +7,7 @@ import type {
   GitLabCommitRequest,
 } from '~/types/GitLab';
 
-const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+const CACHE_DURATION = 5 * 60 * 1000;
 
 interface CacheEntry<T> {
   data: T;
@@ -61,12 +61,10 @@ async function fetchWithRetry(url: string, options: RequestInit, maxRetries = 3)
     try {
       const response = await fetch(url, options);
 
-      // Don't retry on client errors (4xx) except 429 (rate limit)
       if (response.status >= 400 && response.status < 500 && response.status !== 429) {
         return response;
       }
 
-      // Retry on server errors (5xx) and rate limits
       if (response.status >= 500 || response.status === 429) {
         if (attempt === maxRetries) {
           return response;
@@ -103,7 +101,6 @@ export class GitLabApiService {
   }
 
   private get _headers() {
-    // Log token format for debugging
     console.log('GitLab API token info:', {
       tokenLength: this._token.length,
       tokenPrefix: this._token.substring(0, 10) + '...',
@@ -133,7 +130,6 @@ export class GitLabApiService {
     if (!response.ok) {
       let errorMessage = `Failed to fetch user: ${response.status}`;
 
-      // Provide more specific error messages based on status code
       if (response.status === 401) {
         errorMessage =
           '401 Unauthorized: Invalid or expired GitLab access token. Please check your token and ensure it has the required scopes (api, read_repository).';
@@ -145,7 +141,6 @@ export class GitLabApiService {
         errorMessage = '429 Too Many Requests: GitLab API rate limit exceeded. Please try again later.';
       }
 
-      // Try to get more details from response body
       try {
         const errorData = (await response.json()) as any;
 
@@ -153,7 +148,6 @@ export class GitLabApiService {
           errorMessage += ` Details: ${errorData.message}`;
         }
       } catch {
-        // If we can't parse the error response, continue with the default message
       }
 
       throw new Error(errorMessage);
@@ -161,14 +155,12 @@ export class GitLabApiService {
 
     const user: GitLabUserResponse = await response.json();
 
-    // Get rate limit information from headers if available
     const rateLimit = {
       limit: parseInt(response.headers.get('ratelimit-limit') || '0'),
       remaining: parseInt(response.headers.get('ratelimit-remaining') || '0'),
       reset: parseInt(response.headers.get('ratelimit-reset') || '0'),
     };
 
-    // Handle different avatar URL fields that GitLab might return
     const processedUser = {
       ...user,
       avatar_url: user.avatar_url || (user as any).avatarUrl || (user as any).profile_image_url || null,
@@ -187,7 +179,7 @@ export class GitLabApiService {
 
     let allProjects: any[] = [];
     let page = 1;
-    const maxPages = 10; // Limit to prevent excessive API calls
+    const maxPages = 10;
 
     while (page <= maxPages) {
       const response = await this._request(
@@ -215,7 +207,6 @@ export class GitLabApiService {
 
       allProjects = [...allProjects, ...projects];
 
-      // Break if we have enough projects for initial load
       if (allProjects.length >= 100) {
         break;
       }
@@ -223,7 +214,6 @@ export class GitLabApiService {
       page++;
     }
 
-    // Transform to our interface
     const transformedProjects: GitLabProjectInfo[] = allProjects.map((project: any) => ({
       id: project.id,
       name: project.name,
@@ -281,21 +271,20 @@ export class GitLabApiService {
   }
 
   async createProject(name: string, isPrivate: boolean = false): Promise<GitLabProjectResponse> {
-    // Sanitize project name to ensure it's valid for GitLab
     const sanitizedName = name
-      .replace(/[^a-zA-Z0-9-_.]/g, '-') // Replace invalid chars with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-      .replace(/^-|-$/g, '') // Remove leading/trailing hyphens
+      .replace(/[^a-zA-Z0-9-_.]/g, '-')
+      .replace(/-+/g, '-')
+      .replace(/^-|-$/g, '')
       .toLowerCase();
 
     const response = await this._request('/projects', {
       method: 'POST',
       body: JSON.stringify({
         name: sanitizedName,
-        path: sanitizedName, // Explicitly set path to match name
+        path: sanitizedName,
         visibility: isPrivate ? 'private' : 'public',
-        initialize_with_readme: false, // Don't initialize with README to avoid conflicts
-        default_branch: 'main', // Explicitly set default branch
+        initialize_with_readme: false,
+        default_branch: 'main',
         description: `Project created from Falbor`,
       }),
     });
@@ -308,7 +297,6 @@ export class GitLabApiService {
 
         if (errorData.message) {
           if (typeof errorData.message === 'object') {
-            // Handle validation errors
             const messages = Object.entries(errorData.message as Record<string, any>)
               .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
               .join('; ');
@@ -371,7 +359,6 @@ export class GitLabApiService {
           errorMessage = errorData.error;
         }
       } catch {
-        // If JSON parsing fails, keep the default error message
       }
 
       throw new Error(errorMessage);
@@ -386,7 +373,6 @@ export class GitLabApiService {
 
   async getProjectByPath(projectPath: string): Promise<GitLabProjectResponse | null> {
     try {
-      // Double encode the project path as GitLab API requires it
       const encodedPath = encodeURIComponent(projectPath);
       const response = await this._request(`/projects/${encodedPath}`);
 
@@ -427,12 +413,9 @@ export class GitLabApiService {
     isPrivate: boolean,
     files: Record<string, string>,
   ): Promise<GitLabProjectResponse> {
-    // Create the project first
     const project = await this.createProject(name, isPrivate);
 
-    // If we have files to commit, commit them
     if (Object.keys(files).length > 0) {
-      // Wait a moment for the project to be fully created
       await new Promise((resolve) => setTimeout(resolve, 1000));
 
       const actions = Object.entries(files).map(([filePath, content]) => ({
@@ -452,10 +435,6 @@ export class GitLabApiService {
       } catch (error) {
         console.error('Failed to commit files to new project:', error);
 
-        /*
-         * Don't throw the error, as the project was created successfully
-         * The user can still access it and add files manually
-         */
       }
     }
 
@@ -467,9 +446,8 @@ export class GitLabApiService {
       return;
     }
 
-    // For existing projects, we need to determine which files exist and which are new
     const actions = Object.entries(files).map(([filePath, content]) => ({
-      action: 'create' as const, // Start with create, we'll handle conflicts in the API response
+      action: 'create' as const,
       file_path: filePath,
       content,
     }));
@@ -483,7 +461,6 @@ export class GitLabApiService {
     try {
       await this.commitFiles(projectId, commitRequest);
     } catch (error) {
-      // If we get file conflicts, retry with update actions
       if (error instanceof Error && error.message.includes('already exists')) {
         const updateActions = Object.entries(files).map(([filePath, content]) => ({
           action: 'update' as const,

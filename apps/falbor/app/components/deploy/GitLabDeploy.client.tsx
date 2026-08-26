@@ -36,7 +36,7 @@ export function useGitLabDeploy() {
         throw new Error('No active project found');
       }
 
-      // Create a deployment artifact for visual feedback
+      
       const deploymentId = `deploy-gitlab-project`;
       workbenchStore.addArtifact({
         id: deploymentId,
@@ -47,7 +47,7 @@ export function useGitLabDeploy() {
 
       const deployArtifact = workbenchStore.artifacts.get()[deploymentId];
 
-      // Notify that build is starting
+      
       deployArtifact.runner.handleDeployAction('building', 'running', { source: 'gitlab' });
 
       const actionId = 'build-' + Date.now();
@@ -61,16 +61,16 @@ export function useGitLabDeploy() {
         },
       };
 
-      // Add the action first
+      
       artifact.runner.addAction(actionData);
 
-      // Then run it
+      
       await artifact.runner.runAction(actionData);
 
       const buildOutput = artifact.runner.buildOutput;
 
       if (!buildOutput || buildOutput.exitCode !== 0) {
-        // Notify that build failed
+        
         deployArtifact.runner.handleDeployAction('building', 'failed', {
           error: formatBuildFailureOutput(buildOutput?.output),
           source: 'gitlab',
@@ -78,15 +78,15 @@ export function useGitLabDeploy() {
         throw new Error('Build failed');
       }
 
-      // Notify that build succeeded and deployment preparation is starting
+      
       deployArtifact.runner.handleDeployAction('deploying', 'running', {
         source: 'gitlab',
       });
 
-      // Get all project files instead of just the build directory since we're deploying to a repository
+      
       const container = await webcontainer;
 
-      // Get all files recursively - we'll deploy the entire project, not just the build directory
+      
       async function getAllFiles(dirPath: string, basePath: string = ''): Promise<Record<string, string>> {
         const files: Record<string, string> = {};
         const entries = await container.fs.readdir(dirPath, { withFileTypes: true });
@@ -94,10 +94,10 @@ export function useGitLabDeploy() {
         for (const entry of entries) {
           const fullPath = path.join(dirPath, entry.name);
 
-          // Create a relative path without the leading slash for GitLab
+          
           const relativePath = basePath ? `${basePath}/${entry.name}` : entry.name;
 
-          // Skip node_modules, .git directories and other common excludes
+          
           if (
             entry.isDirectory() &&
             (entry.name === 'node_modules' ||
@@ -111,7 +111,7 @@ export function useGitLabDeploy() {
           }
 
           if (entry.isFile()) {
-            // Skip binary files, large files and other common excludes
+            
             if (entry.name.endsWith('.DS_Store') || entry.name.endsWith('.log') || entry.name.startsWith('.env')) {
               continue;
             }
@@ -119,7 +119,7 @@ export function useGitLabDeploy() {
             try {
               const content = await container.fs.readFile(fullPath, 'utf-8');
 
-              // Store the file with its relative path, not the full system path
+              
               files[relativePath] = content;
             } catch (error) {
               console.warn(`Could not read file ${fullPath}:`, error);
@@ -136,20 +136,14 @@ export function useGitLabDeploy() {
 
       const fileContents = await getAllFiles('/');
 
-      /*
-       * Show GitLab deployment dialog here - it will handle the actual deployment
-       * and will receive these files to deploy
-       */
+      
 
-      /*
-       * For now, we'll just complete the deployment with a success message
-       * Notify that deployment preparation is complete
-       */
+      
       deployArtifact.runner.handleDeployAction('deploying', 'complete', {
         source: 'gitlab',
       });
 
-      // Show success toast notification
+      
       toast.success(`🚀 GitLab deployment preparation completed successfully!`);
 
       return {

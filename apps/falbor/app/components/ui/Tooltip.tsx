@@ -2,7 +2,7 @@ import * as TooltipPrimitive from '@radix-ui/react-tooltip';
 import { forwardRef, type ForwardedRef, type ReactElement } from 'react';
 import { classNames } from '~/utils/classNames';
 
-// Original WithTooltip component
+
 interface WithTooltipProps {
   tooltip: React.ReactNode;
   children: ReactElement;
@@ -80,7 +80,7 @@ const WithTooltip = forwardRef(
   },
 );
 
-// New Tooltip component with simpler API
+
 interface TooltipProps {
   content: React.ReactNode;
   children: React.ReactNode;

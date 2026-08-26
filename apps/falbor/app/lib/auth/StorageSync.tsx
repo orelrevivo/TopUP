@@ -3,11 +3,8 @@
 import { useEffect, useRef } from "react";
 import { useAuth } from "~/hooks/useAuth";
 
-const SESSION_KEY = "session_token";
-
 function authHeaders(): Record<string, string> {
-  const token = typeof window !== "undefined" ? localStorage.getItem(SESSION_KEY) : null;
-  return token ? { "x-session-token": token } : {};
+  return {};
 }
 
 function tryParseJSON(value: string): any {
@@ -55,7 +52,7 @@ export function StorageSync() {
     if (!user || synced.current) return;
     synced.current = true;
 
-    // Migrate existing IndexedDB chats to server
+    
     migrateFromIndexedDB().then((chats) => {
       if (chats.length > 0) {
         const lsSettings: Record<string, any> = {};
@@ -78,7 +75,6 @@ export function StorageSync() {
 
     const overrideSetItem = (key: string, value: string) => {
       originalSetItem(key, value);
-      if (key === SESSION_KEY) return;
       fetch("/api/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders() },
@@ -88,7 +84,6 @@ export function StorageSync() {
 
     const overrideRemoveItem = (key: string) => {
       originalRemoveItem(key);
-      if (key === SESSION_KEY) return;
       fetch(`/api/sync?key=${encodeURIComponent(key)}`, { method: "DELETE" }).catch(() => {});
     };
 

@@ -67,7 +67,7 @@ const AutomationBuilder = ({ automation, subaccountId }: Props) => {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* Trigger Section */}
+      {}
       <section>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">1</div>
@@ -99,14 +99,14 @@ const AutomationBuilder = ({ automation, subaccountId }: Props) => {
         </Card>
       </section>
 
-      {/* Connection Line */}
+      {}
       <div className="flex justify-center -my-8">
         <div className="w-1 h-12 bg-border relative">
           <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-3 h-3 bg-border rotate-45" />
         </div>
       </div>
 
-      {/* Actions Section */}
+      {}
       <section>
         <div className="flex items-center gap-2 mb-4">
           <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold">2</div>

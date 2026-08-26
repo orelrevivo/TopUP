@@ -4,7 +4,6 @@ import type { NextRequest } from "next/server";
 
 const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
 const COOKIE_NAME = "session";
-const HEADER_NAME = "x-session-token";
 export const SESSION_DURATION_DAYS = 7;
 
 export async function hashPassword(password: string): Promise<string> {
@@ -39,17 +38,11 @@ export function getTokenFromCookies(cookieHeader: string | null): string | null 
 }
 
 export async function getUserId(request: NextRequest): Promise<string | null> {
-  // Try Next.js cookies API first
   const cookieVal = request.cookies.get(COOKIE_NAME)?.value ?? null;
   if (cookieVal) {
     const payload = await verifyToken(cookieVal);
     if (payload?.userId) return payload.userId;
   }
-
-  // Fallback: parse raw Cookie header directly
-  // (works around a known Next.js edge-runtime bug where
-  //  request.cookies.get() returns undefined despite the
-  //  cookie being present in the request)
   const rawCookie = request.headers.get("cookie");
   if (rawCookie) {
     const match = rawCookie.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));
@@ -61,8 +54,6 @@ export async function getUserId(request: NextRequest): Promise<string | null> {
 
   return null;
 }
-
-/** Fallback: extract token from raw Cookie header string */
 export function getTokenFromHeader(cookieHeader: string | null): string | null {
   if (!cookieHeader) return null;
   const match = cookieHeader.match(new RegExp(`${COOKIE_NAME}=([^;]+)`));

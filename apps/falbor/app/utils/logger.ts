@@ -50,8 +50,6 @@ function log(level: DebugLevel, scope: string | undefined, messages: any[]) {
   if (levelOrder.indexOf(level) < levelOrder.indexOf(currentLevel)) {
     return;
   }
-
-  // If current level is 'none', don't log anything
   if (currentLevel === 'none') {
     return;
   }
@@ -123,39 +121,26 @@ function getColorForLevel(level: DebugLevel): string {
 }
 
 export const renderLogger = createScopedLogger('Render');
-
-// Debug logging integration
 let debugLogger: any = null;
-
-// Lazy load debug logger to avoid circular dependencies
 const getDebugLogger = () => {
   if (!debugLogger && typeof window !== 'undefined') {
     try {
-      // Use dynamic import asynchronously but don't block the function
       import('./debugLogger')
         .then(({ debugLogger: loggerInstance }) => {
           debugLogger = loggerInstance;
         })
         .catch(() => {
-          // Debug logger not available, skip integration
         });
     } catch {
-      // Debug logger not available, skip integration
     }
   }
 
   return debugLogger;
 };
 
-// Override the log function to also capture to debug logger
-
 function logWithDebugCapture(level: DebugLevel, scope: string | undefined, messages: any[]) {
-  // Call original log function (the one that does the actual console logging)
   log(level, scope, messages);
-
-  // Also capture to debug logger if available
   const debug = getDebugLogger();
-
   if (debug) {
     debug.captureLog(level, scope, messages);
   }

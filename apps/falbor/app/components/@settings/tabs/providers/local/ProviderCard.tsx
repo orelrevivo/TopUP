@@ -6,7 +6,7 @@ import { classNames } from '~/utils/classNames';
 import type { IProviderConfig } from '~/types/model';
 import { PROVIDER_DESCRIPTIONS } from './types';
 
-// Provider Card Component
+
 interface ProviderCardProps {
   provider: IProviderConfig;
   onToggle: (enabled: boolean) => void;

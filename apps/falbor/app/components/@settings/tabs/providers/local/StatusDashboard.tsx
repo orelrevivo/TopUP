@@ -6,13 +6,13 @@ import { useLocalModelHealth } from '~/lib/hooks/useLocalModelHealth';
 import HealthStatusBadge from './HealthStatusBadge';
 import { PROVIDER_ICONS } from './types';
 
-// Status Dashboard Component
+
 function StatusDashboard({ onBack }: { onBack: () => void }) {
   const { healthStatuses } = useLocalModelHealth();
 
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
+      {}
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"

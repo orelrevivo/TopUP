@@ -6,7 +6,7 @@ interface ElementInfo {
   className: string;
   id: string;
   textContent: string;
-  styles: Record<string, string>; // Changed from CSSStyleDeclaration
+  styles: Record<string, string>; 
   rect: {
     x: number;
     y: number;
@@ -65,7 +65,7 @@ export const InspectorPanel = ({ selectedElement, isVisible, onClose }: Inspecto
 
   return (
     <div className="fixed right-4 top-20 w-80 bg-falbor-elements-bg-depth-1 border border-falbor-elements-borderColor rounded-lg shadow-lg z-40 max-h-[calc(100vh-6rem)] overflow-hidden">
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between p-3 border-b border-falbor-elements-borderColor">
         <h3 className="font-medium text-falbor-elements-textPrimary">Element Inspector</h3>
         <button onClick={onClose} className="text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary">
@@ -73,7 +73,7 @@ export const InspectorPanel = ({ selectedElement, isVisible, onClose }: Inspecto
         </button>
       </div>
 
-      {/* Element Info */}
+      {}
       <div className="p-3 border-b border-falbor-elements-borderColor">
         <div className="text-sm">
           <div className="font-mono text-blue-500">
@@ -91,7 +91,7 @@ export const InspectorPanel = ({ selectedElement, isVisible, onClose }: Inspecto
         </div>
       </div>
 
-      {/* Tabs */}
+      {}
       <div className="flex border-b border-falbor-elements-borderColor">
         {(['styles', 'computed', 'box'] as const).map((tab) => (
           <button
@@ -108,7 +108,7 @@ export const InspectorPanel = ({ selectedElement, isVisible, onClose }: Inspecto
         ))}
       </div>
 
-      {/* Content */}
+      {}
       <div className="p-3 overflow-y-auto max-h-96">
         {activeTab === 'styles' && (
           <div className="space-y-2">

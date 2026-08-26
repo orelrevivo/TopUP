@@ -36,7 +36,7 @@ export function SourcesChat({
   const [searchMode, setSearchMode] = useState<'osint' | 'websites'>('osint');
   const abortRef = useRef<AbortController | null>(null);
 
-  // Fetch initial providers, models, and history
+  
   useEffect(() => {
     fetch('/api/sources-health')
       .then((res) => res.json())
@@ -87,7 +87,7 @@ export function SourcesChat({
         }
       }
 
-      // 2. Start the SSE stream
+      
       const response = await fetch('/api/sources-search', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -164,7 +164,7 @@ export function SourcesChat({
         }
       }
 
-      // 3. Save final state to DB and update URL smoothly
+      
       setActiveId((currentActiveId) => {
         if (currentActiveId) {
           fetch(`/api/sources-investigations/${currentActiveId}`, {
@@ -173,7 +173,7 @@ export function SourcesChat({
             body: JSON.stringify({ state: currentState })
           });
           
-          // Smoothly update the URL without triggering a Next.js re-render/remount
+          
           if (window.location.pathname === '/sources') {
             window.history.pushState(null, '', `/sources/${currentActiveId}`);
           }

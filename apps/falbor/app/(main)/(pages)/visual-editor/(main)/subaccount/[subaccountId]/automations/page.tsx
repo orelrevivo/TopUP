@@ -1,6 +1,6 @@
 import { getAutomations } from '~/lib/visual-editor/queries'
 import React from 'react'
-import FunnelsDataTable from '../funnels/data-table' // Reusing the data table for now
+import FunnelsDataTable from '../funnels/data-table' 
 import { Plus } from 'lucide-react'
 import { columns } from './columns'
 import AutomationForm from '~/components/visual-editor/forms/automation-form'

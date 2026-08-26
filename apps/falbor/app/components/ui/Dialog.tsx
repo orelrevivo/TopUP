@@ -142,59 +142,37 @@ export const Dialog = memo(({ children, className, showCloseButton = true, onClo
   );
 });
 
-/**
- * Props for the ConfirmationDialog component
- */
+
 export interface ConfirmationDialogProps {
-  /**
-   * Whether the dialog is open
-   */
+  
   isOpen: boolean;
 
-  /**
-   * Callback when the dialog is closed
-   */
+  
   onClose: () => void;
 
-  /**
-   * Callback when the confirm button is clicked
-   */
+  
   onConfirm: () => void;
 
-  /**
-   * The title of the dialog
-   */
+  
   title: string;
 
-  /**
-   * The description of the dialog
-   */
+  
   description: string;
 
-  /**
-   * The text for the confirm button
-   */
+  
   confirmLabel?: string;
 
-  /**
-   * The text for the cancel button
-   */
+  
   cancelLabel?: string;
 
-  /**
-   * The variant of the confirm button
-   */
+  
   variant?: 'default' | 'destructive' | 'outline' | 'secondary' | 'ghost' | 'link';
 
-  /**
-   * Whether the confirm button is in a loading state
-   */
+  
   isLoading?: boolean;
 }
 
-/**
- * A reusable confirmation dialog component that uses the Dialog component
- */
+
 export function ConfirmationDialog({
   isOpen,
   onClose,
@@ -242,58 +220,38 @@ export function ConfirmationDialog({
   );
 }
 
-/**
- * Type for selection item in SelectionDialog
- */
+
 type SelectionItem = {
   id: string;
   label: string;
   description?: string;
 };
 
-/**
- * Props for the SelectionDialog component
- */
+
 export interface SelectionDialogProps {
-  /**
-   * The title of the dialog
-   */
+  
   title: string;
 
-  /**
-   * The items to select from
-   */
+  
   items: SelectionItem[];
 
-  /**
-   * Whether the dialog is open
-   */
+  
   isOpen: boolean;
 
-  /**
-   * Callback when the dialog is closed
-   */
+  
   onClose: () => void;
 
-  /**
-   * Callback when the confirm button is clicked with selected item IDs
-   */
+  
   onConfirm: (selectedIds: string[]) => void;
 
-  /**
-   * The text for the confirm button
-   */
+  
   confirmLabel?: string;
 
-  /**
-   * The maximum height of the selection list
-   */
+  
   maxHeight?: string;
 }
 
-/**
- * A reusable selection dialog component that uses the Dialog component
- */
+
 export function SelectionDialog({
   title,
   items,
@@ -306,7 +264,7 @@ export function SelectionDialog({
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [selectAll, setSelectAll] = useState(false);
 
-  // Reset selected items when dialog opens
+  
   useEffect(() => {
     if (isOpen) {
       setSelectedItems([]);
@@ -333,13 +291,13 @@ export function SelectionDialog({
     onClose();
   };
 
-  // Calculate the height for the virtualized list
+  
   const listHeight = Math.min(
     items.length * 60,
     parseInt(maxHeight.replace('vh', '')) * window.innerHeight * 0.01 - 40,
   );
 
-  // Render each item in the virtualized list
+  
   const ItemRenderer = ({ index, style }: { index: number; style: React.CSSProperties }) => {
     const item = items[index];
     return (

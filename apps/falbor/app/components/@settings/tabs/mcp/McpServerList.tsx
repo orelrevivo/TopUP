@@ -70,12 +70,12 @@ export default function McpServerList({
               </div>
             </div>
 
-            {/* Error message */}
+            {}
             {!isAvailable && mcpServer.error && (
               <div className="mt-1.5 ml-6 text-xs text-red-600 dark:text-red-400">Error: {mcpServer.error}</div>
             )}
 
-            {/* Tool list */}
+            {}
             {isExpanded && isAvailable && (
               <div className="mt-2">
                 <div className="text-falbor-elements-textSecondary text-xs font-medium ml-1 mb-1.5">Available Tools:</div>

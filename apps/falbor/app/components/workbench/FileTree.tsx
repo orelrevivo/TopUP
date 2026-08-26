@@ -92,17 +92,17 @@ export const FileTree = memo(
       for (const fileOrFolder of fileList) {
         const depth = fileOrFolder.depth;
 
-        // if the depth is equal we reached the end of the collaped group
+        
         if (lastDepth === depth) {
           lastDepth = Number.MAX_SAFE_INTEGER;
         }
 
-        // ignore collapsed folders
+        
         if (collapsedFolders.has(fileOrFolder.fullPath)) {
           lastDepth = Math.min(lastDepth, depth);
         }
 
-        // ignore files and folders below the last collapsed folder
+        
         if (lastDepth < depth) {
           continue;
         }
@@ -329,7 +329,7 @@ function FileContextMenu({
           try {
             const filePath = path.join(fullPath, file.name);
 
-            // Convert file to binary data (Uint8Array)
+            
             const arrayBuffer = await file.arrayBuffer();
             const binaryContent = new Uint8Array(arrayBuffer);
 
@@ -403,7 +403,7 @@ function FileContextMenu({
     }
   };
 
-  // Handler for locking a file with full lock
+  
   const handleLockFile = () => {
     try {
       if (isFolder) {
@@ -423,7 +423,7 @@ function FileContextMenu({
     }
   };
 
-  // Handler for unlocking a file
+  
   const handleUnlockFile = () => {
     try {
       if (isFolder) {
@@ -443,7 +443,7 @@ function FileContextMenu({
     }
   };
 
-  // Handler for locking a folder with full lock
+  
   const handleLockFolder = () => {
     try {
       if (!isFolder) {
@@ -463,7 +463,7 @@ function FileContextMenu({
     }
   };
 
-  // Handler for unlocking a folder
+  
   const handleUnlockFolder = () => {
     try {
       if (!isFolder) {
@@ -522,7 +522,7 @@ function FileContextMenu({
               <ContextMenuItem onSelect={onCopyPath}>Copy path</ContextMenuItem>
               <ContextMenuItem onSelect={onCopyRelativePath}>Copy relative path</ContextMenuItem>
             </ContextMenu.Group>
-            {/* Add lock/unlock options for files and folders */}
+            {}
             <ContextMenu.Group className="p-1 border-t-px border-solid border-falbor-elements-borderColor">
               {!isFolder ? (
                 <>
@@ -556,7 +556,7 @@ function FileContextMenu({
                 </>
               )}
             </ContextMenu.Group>
-            {/* Add delete option in a new group */}
+            {}
             <ContextMenu.Group className="p-1 border-t-px border-solid border-falbor-elements-borderColor">
               <ContextMenuItem onSelect={handleDelete}>
                 <div className="flex items-center gap-2 text-red-500">
@@ -589,7 +589,7 @@ function FileContextMenu({
 }
 
 function Folder({ folder, collapsed, selected = false, onCopyPath, onCopyRelativePath, onClick }: FolderProps) {
-  // Check if the folder is locked
+  
   const { isLocked } = workbenchStore.isFolderLocked(folder.fullPath);
 
   return (
@@ -642,7 +642,7 @@ function File({
 }: FileProps) {
   const { depth, name, fullPath } = file;
 
-  // Check if the file is locked
+  
   const { locked } = workbenchStore.isFileLocked(fullPath);
 
   const fileModifications = fileHistory[fullPath];
@@ -842,26 +842,14 @@ function isHiddenFile(filePath: string, fileName: string, hiddenFiles: Array<str
   });
 }
 
-/**
- * Sorts the given list of nodes into a tree structure (still a flat list).
- *
- * This function organizes the nodes into a hierarchical structure based on their paths,
- * with folders appearing before files and all items sorted alphabetically within their level.
- *
- * @note This function mutates the given `nodeList` array for performance reasons.
- *
- * @param rootFolder - The path of the root folder to start the sorting from.
- * @param nodeList - The list of nodes to be sorted.
- *
- * @returns A new array of nodes sorted in depth-first order.
- */
+
 function sortFileList(rootFolder: string, nodeList: Node[], hideRoot: boolean): Node[] {
   logger.trace('sortFileList');
 
   const nodeMap = new Map<string, Node>();
   const childrenMap = new Map<string, Node[]>();
 
-  // pre-sort nodes by name and type
+  
   nodeList.sort((a, b) => compareNodes(a, b));
 
   for (const node of nodeList) {
@@ -901,7 +889,7 @@ function sortFileList(rootFolder: string, nodeList: Node[], hideRoot: boolean): 
   };
 
   if (hideRoot) {
-    // if root is hidden, start traversal from its immediate children
+    
     const rootChildren = childrenMap.get(rootFolder) || [];
 
     for (const child of rootChildren) {

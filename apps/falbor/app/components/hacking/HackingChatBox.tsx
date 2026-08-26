@@ -5,9 +5,9 @@ import { classNames } from '~/utils/classNames';
 import { SendButton } from './SendButton.client';
 import { IconButton } from '~/components/ui/IconButton';
 import { toast } from 'react-toastify';
-import { SpeechRecognitionButton } from '~/components/chat/SpeechRecognition';
-import { ScreenshotStateManager } from '~/components/chat/ScreenshotStateManager';
-import styles from '~/components/chat/BaseChat.module.scss';
+import { SpeechRecognitionButton } from '~/components/chat/input/SpeechRecognition';
+import { ScreenshotStateManager } from '~/components/chat/input/ScreenshotStateManager';
+import styles from '~/components/chat/core/BaseChat.module.scss';
 import { SkillsDialog } from '~/components/skills/SkillsDialog';
 import { workbenchStore } from '~/lib/stores/workbench';
 
@@ -48,7 +48,7 @@ interface HackingChatBoxProps {
   onWebSearchResult?: (result: string) => void;
 }
 
-export const ENABLE_SENDING = true; // Toggle this to true to enable sending for everyone
+export const ENABLE_SENDING = true; 
 
 export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
   const hasFiles = props.uploadedFiles.length > 0;
@@ -67,7 +67,7 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
         )}
       </ClientOnly>
 
-      {/* Outer wrapper */}
+      {}
       <div className={classNames('rounded-xl transition-all', {
         'p-2': !props.chatStarted,
         'p-1.5 bg-[#E3E3E3] dark:bg-[#171717]': props.chatStarted
@@ -105,7 +105,7 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
             </svg>
           )}
 
-          {/* File previews */}
+          {}
           {hasFiles && (
             <div className="px-4 pt-3 pb-1">
               <div className="flex flex-wrap gap-2">
@@ -132,7 +132,7 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
             </div>
           )}
 
-          {/* Textarea — identical to original ChatBox */}
+          {}
           <textarea
             ref={props.textareaRef}
             className={classNames(
@@ -189,7 +189,7 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
             translate="no"
           />
 
-          {/* Send button */}
+          {}
           <ClientOnly>
             {() => (
               <SendButton
@@ -210,10 +210,10 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
             )}
           </ClientOnly>
 
-          {/* Bottom toolbar — identical layout to original ChatBox */}
+          {}
           <div className="flex justify-between items-center text-sm p-4 pt-2">
             <div className="flex gap-1 items-center">
-              {/* + More actions popover */}
+              {}
               <Popover.Root>
                 <Popover.Trigger asChild>
                   <IconButton
@@ -267,7 +267,7 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
                 </Popover.Portal>
               </Popover.Root>
 
-              {/* Speech recognition */}
+              {}
               <SpeechRecognitionButton
                 isListening={props.isListening}
                 onStart={props.startListening}
@@ -275,7 +275,7 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
                 disabled={props.isStreaming}
               />
 
-              {/* Live Browser Toggle - ONLY show if chat has started */}
+              {}
               {props.chatStarted && (
                 <IconButton
                   title="Live Browser View"
@@ -290,7 +290,7 @@ export const HackingChatBox: React.FC<HackingChatBoxProps> = (props) => {
               )}
             </div>
 
-            {/* Shift+Enter hint */}
+            {}
             {props.input.length > 3 ? (
               <div className="text-xs text-falbor-elements-textTertiary">
                 Use <kbd className="kdb px-1.5 py-0.5 rounded bg-falbor-elements-background-depth-2">Shift</kbd> +{' '}

@@ -4,7 +4,7 @@ import { Card } from '~/components/ui/Card';
 import { SetupButton } from '~/components/ui/setup/SetupButton';
 import { classNames } from '~/utils/classNames';
 import { Slider } from '~/components/ui/Slider';
-import { CodeBlock } from '~/components/chat/CodeBlock';
+import { CodeBlock } from '~/components/chat/messages/CodeBlock';
 
 const FRAMEWORKS = [
   { id: 'nextjs', name: 'Next.js', logo: '/icons/nextjs.svg' },

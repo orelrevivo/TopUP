@@ -4,7 +4,7 @@ export interface Skill {
   id: string;
   name: string;
   description: string;
-  content: string; // The markdown prompt/content of the skill
+  content: string;
   isActive: boolean;
   createdAt: number;
 }
@@ -34,7 +34,6 @@ export const fetchSkillsFromServer = async () => {
     if (response.ok) {
       const data = await response.json();
       if (data.skills) {
-        // Map from DB format to our local Skill interface
         const fetchedSkills: Skill[] = data.skills.map((s: any) => ({
           ...s,
           createdAt: new Date(s.createdAt).getTime(),
@@ -48,7 +47,6 @@ export const fetchSkillsFromServer = async () => {
   }
 };
 
-// Initialize fetch
 fetchSkillsFromServer();
 
 export const addSkill = async (skill: Omit<Skill, 'id' | 'createdAt' | 'isActive'>) => {
@@ -59,14 +57,12 @@ export const addSkill = async (skill: Omit<Skill, 'id' | 'createdAt' | 'isActive
     isActive: false,
   };
   
-  // Optimistic update
   const updatedSkills = [...skillsStore.get(), newSkill];
   skillsStore.set(updatedSkills);
   
   if (isBrowser) {
     localStorage.setItem(SKILLS_STORAGE_KEY, JSON.stringify(updatedSkills));
     
-    // Sync with server
     fetch('/api/skills', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -78,7 +74,6 @@ export const addSkill = async (skill: Omit<Skill, 'id' | 'createdAt' | 'isActive
 };
 
 export const updateSkill = async (id: string, updates: Partial<Skill>) => {
-  // Optimistic update
   const updatedSkills = skillsStore.get().map(skill => 
     skill.id === id ? { ...skill, ...updates } : skill
   );
@@ -90,7 +85,6 @@ export const updateSkill = async (id: string, updates: Partial<Skill>) => {
     
     const updatedSkill = updatedSkills.find(s => s.id === id);
     if (updatedSkill) {
-      // Sync with server
       fetch('/api/skills', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
@@ -108,14 +102,12 @@ export const toggleSkillActive = (id: string) => {
 };
 
 export const deleteSkill = async (id: string) => {
-  // Optimistic update
   const updatedSkills = skillsStore.get().filter(skill => skill.id !== id);
   skillsStore.set(updatedSkills);
   
   if (isBrowser) {
     localStorage.setItem(SKILLS_STORAGE_KEY, JSON.stringify(updatedSkills));
     
-    // Sync with server
     fetch(`/api/skills?id=${id}`, {
       method: 'DELETE',
     }).catch(console.error);

@@ -59,11 +59,8 @@ export const updateProfile = (updates: Partial<Profile>) => {
   }
 };
 
-const SESSION_KEY = 'session_token';
-
 function authHeaders(): Record<string, string> {
-  const token = typeof window !== 'undefined' ? localStorage.getItem(SESSION_KEY) : null;
-  return token ? { 'x-session-token': token } : {};
+  return {};
 }
 
 export const loadProfileFromServer = async () => {
@@ -78,7 +75,6 @@ export const loadProfileFromServer = async () => {
       }
     }
   } catch {
-    // ignore
   }
 };
 
@@ -90,6 +86,5 @@ export const saveProfileToServer = async (profile: Profile) => {
       body: JSON.stringify(profile),
     });
   } catch {
-    // ignore
   }
 };

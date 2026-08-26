@@ -3,38 +3,32 @@ import { isMobile } from './mobile';
 import { PROVIDER_LIST, DEFAULT_MODEL } from './constants';
 import { logger } from './logger';
 
-// Lazy import to avoid circular dependencies
 let logStore: any = null;
 const getLogStore = () => {
   if (!logStore && typeof window !== 'undefined') {
     try {
-      // Import and set the logStore on first access
       import('~/lib/stores/logs')
         .then(({ logStore: store }) => {
           logStore = store;
         })
         .catch(() => {
-          // Ignore import errors
         });
     } catch {
-      // Ignore errors
     }
   }
 
   return logStore;
 };
 
-// Configuration interface for debug logger
 export interface DebugLoggerConfig {
   enabled: boolean;
   maxEntries: number;
   captureConsole: boolean;
   captureNetwork: boolean;
   captureErrors: boolean;
-  debounceTerminal: number; // ms
+  debounceTerminal: number;
 }
 
-// Circular buffer implementation for memory efficiency
 class CircularBuffer<T> {
   private _buffer: (T | undefined)[];
   private _head = 0;
@@ -185,7 +179,7 @@ export interface PerformanceEntry {
     total: number;
     limit: number;
   };
-  timing: any; // Using any instead of deprecated PerformanceTiming
+  timing: any;
 }
 
 export interface StateEntry {
@@ -225,28 +219,23 @@ class DebugLogger {
   private _isCapturing = false;
   private _isInitialized = false;
 
-  // Store original functions
   private _originalConsoleLog: typeof console.log;
   private _originalConsoleError: typeof console.error;
   private _originalConsoleWarn: typeof console.warn;
   private _originalFetch: typeof window.fetch | null = null;
 
-  // Store bound event handlers for proper cleanup
   private _boundErrorHandler: (event: ErrorEvent) => void;
   private _boundRejectionHandler: (event: PromiseRejectionEvent) => void;
   private _boundUnloadHandler: () => void;
 
-  // Debouncing for terminal logs
   private _terminalLogQueue: TerminalEntry[] = [];
   private _terminalLogTimer: NodeJS.Timeout | null = null;
 
-  // Helper for JSON replacer with seen tracking
   private _seenObjects = new WeakSet();
 
   constructor(config: Partial<DebugLoggerConfig> = {}) {
-    // Default configuration
     this._config = {
-      enabled: false, // Start disabled for performance
+      enabled: false,
       maxEntries: 1000,
       captureConsole: true,
       captureNetwork: true,
@@ -255,44 +244,37 @@ class DebugLogger {
       ...config,
     };
 
-    // Initialize circular buffers
     this._logs = new CircularBuffer<LogEntry>(this._config.maxEntries);
     this._errors = new CircularBuffer<ErrorEntry>(this._config.maxEntries);
     this._networkRequests = new CircularBuffer<NetworkEntry>(this._config.maxEntries);
     this._userActions = new CircularBuffer<UserActionEntry>(this._config.maxEntries);
     this._terminalLogs = new CircularBuffer<TerminalEntry>(this._config.maxEntries);
 
-    // Store original functions
     this._originalConsoleLog = console.log;
     this._originalConsoleError = console.error;
     this._originalConsoleWarn = console.warn;
 
-    // Bind event handlers once to prevent memory leaks
     this._boundErrorHandler = this._handleError.bind(this);
     this._boundRejectionHandler = this._handleUnhandledRejection.bind(this);
     this._boundUnloadHandler = this._cleanup.bind(this);
 
-    // Setup cleanup on page unload
     if (typeof window !== 'undefined') {
       window.addEventListener('beforeunload', this._boundUnloadHandler);
     }
   }
 
-  // Initialize the debug logger (lazy initialization for performance)
   initialize(): void {
     if (this._isInitialized) {
       return;
     }
 
     try {
-      // Only initialize if we're in a browser environment
       if (typeof window === 'undefined') {
         return;
       }
 
       this._isInitialized = true;
 
-      // Start capturing if enabled
       if (this._config.enabled) {
         this.startCapture();
       }
@@ -344,7 +326,6 @@ class DebugLogger {
       this._restoreErrors();
       this._restoreNetwork();
 
-      // Clear terminal log timer
       if (this._terminalLogTimer) {
         clearTimeout(this._terminalLogTimer);
         this._terminalLogTimer = null;
@@ -357,7 +338,6 @@ class DebugLogger {
     }
   }
 
-  // Public method to enable debug logging on demand
   enableDebugMode(): void {
     this._config.enabled = true;
 
@@ -368,12 +348,10 @@ class DebugLogger {
     }
   }
 
-  // Public method to disable debug logging
   disableDebugMode(): void {
     this.stopCapture();
   }
 
-  // Get current status
   getStatus(): { initialized: boolean; capturing: boolean; enabled: boolean } {
     return {
       initialized: this._isInitialized,
@@ -382,7 +360,6 @@ class DebugLogger {
     };
   }
 
-  // Update configuration
   updateConfig(newConfig: Partial<DebugLoggerConfig>): void {
     const wasCapturing = this._isCapturing;
 
@@ -392,7 +369,6 @@ class DebugLogger {
 
     this._config = { ...this._config, ...newConfig };
 
-    // Recreate buffers if maxEntries changed
     if (newConfig.maxEntries && newConfig.maxEntries !== this._config.maxEntries) {
       const oldLogs = this._logs.toArray();
       const oldErrors = this._errors.toArray();
@@ -406,7 +382,6 @@ class DebugLogger {
       this._userActions = new CircularBuffer<UserActionEntry>(this._config.maxEntries);
       this._terminalLogs = new CircularBuffer<TerminalEntry>(this._config.maxEntries);
 
-      // Re-add existing data
       oldLogs.forEach((log) => this._logs.push(log));
       oldErrors.forEach((error) => this._errors.push(error));
       oldNetworkRequests.forEach((request) => this._networkRequests.push(request));
@@ -419,7 +394,6 @@ class DebugLogger {
     }
   }
 
-  // Cleanup method
   private _cleanup(): void {
     this.stopCapture();
 
@@ -473,7 +447,6 @@ class DebugLogger {
 
   private _interceptNetwork(): void {
     try {
-      // Store original fetch if not already stored
       if (!this._originalFetch && typeof window !== 'undefined') {
         this._originalFetch = window.fetch;
       }
@@ -486,7 +459,6 @@ class DebugLogger {
       const self = this;
 
       window.fetch = async function (...args: Parameters<typeof fetch>) {
-        // Quick path for non-capturing mode
         if (!self._isCapturing) {
           return originalFetch.apply(this, args);
         }
@@ -498,7 +470,6 @@ class DebugLogger {
           const response = await originalFetch.apply(this, args);
           const duration = Math.round(performance.now() - startTime);
 
-          // Only capture if still capturing (could have changed during request)
           if (self._isCapturing) {
             self.captureNetworkRequest({
               timestamp: new Date().toISOString(),
@@ -575,26 +546,23 @@ class DebugLogger {
         level,
         scope,
 
-        /* Lazy stringification - only convert to string when needed */
         message: this._formatMessage(args),
         data: args.length === 1 && typeof args[0] === 'object' ? args[0] : undefined,
       };
 
       this._logs.push(entry);
     } catch (error) {
-      // Fallback - don't let logging errors break the app
       console.error('Debug logger failed to capture log:', error);
     }
   }
 
   private _formatMessage(args: any[]): string {
-    this._seenObjects = new WeakSet(); // Reset for each message
+    this._seenObjects = new WeakSet();
 
     return args
       .map((arg) => {
         if (typeof arg === 'object' && arg !== null) {
           try {
-            // Prevent circular reference errors and limit depth
             return JSON.stringify(arg, this._jsonReplacer.bind(this), 2);
           } catch {
             return '[Object]';
@@ -607,7 +575,6 @@ class DebugLogger {
   }
 
   private _jsonReplacer(_key: string, value: any): any {
-    // Prevent circular references and limit object depth
     if (typeof value === 'object' && value !== null) {
       if (this._seenObjects.has(value)) {
         return '[Circular]';
@@ -656,7 +623,6 @@ class DebugLogger {
 
   captureTerminalLog(entry: TerminalEntry): void {
     try {
-      // Debounce terminal logs to prevent spam
       if (this._config.debounceTerminal > 0) {
         this._terminalLogQueue.push(entry);
 
@@ -692,14 +658,12 @@ class DebugLogger {
 
   async generateDebugLog(): Promise<DebugLogData> {
     try {
-      // Enable debug mode temporarily if not already enabled
       const wasEnabled = this._config.enabled;
 
       if (!wasEnabled) {
         this.enableDebugMode();
       }
 
-      // Flush any pending terminal logs
       if (this._terminalLogTimer) {
         clearTimeout(this._terminalLogTimer);
         this._flushTerminalLogs();
@@ -712,7 +676,6 @@ class DebugLogger {
         Promise.resolve(this._collectStateInfo()),
       ]);
 
-      // Get logs from logStore with proper error handling
       const logStoreLogs = await this._getLogStoreLogs();
 
       const debugData: DebugLogData = {
@@ -729,7 +692,6 @@ class DebugLogger {
         terminalLogs: this._terminalLogs.toArray(),
       };
 
-      // Restore previous state
       if (!wasEnabled) {
         this.disableDebugMode();
       }
@@ -746,7 +708,6 @@ class DebugLogger {
       const store = getLogStore();
 
       if (!store) {
-        // Try to load the store if not already loaded
         try {
           const { logStore: storeModule } = await import('~/lib/stores/logs');
           logStore = storeModule;
@@ -808,10 +769,8 @@ class DebugLogger {
       hasActivePreview: false,
     };
 
-    // Try to get workbench information
     try {
       if (typeof window !== 'undefined') {
-        // Access stores if available
         const workbenchStore = (window as any).__falbor_workbench_store;
 
         if (workbenchStore) {
@@ -828,7 +787,6 @@ class DebugLogger {
         }
       }
     } catch {
-      // Ignore errors when accessing stores
     }
 
     return {
@@ -847,7 +805,6 @@ class DebugLogger {
 
   private _getAppVersion(): string {
     try {
-      // Try to get version from environment or default
       return process.env.NEXT_PUBLIC_APP_VERSION || '1.0.0';
     } catch {
       return '1.0.0';
@@ -856,7 +813,6 @@ class DebugLogger {
 
   private _getCurrentModel(): string {
     try {
-      // Try to get from localStorage or environment
       if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('falbor_current_model');
 
@@ -905,56 +861,49 @@ class DebugLogger {
 
   private async _getGitInfo(): Promise<AppInfo['gitInfo']> {
     try {
-      // Try to fetch git info from existing API endpoint
       const response = await fetch('/api/system/git-info');
 
       if (response.ok) {
         const gitInfo = await response.json();
 
-        // Transform the API response to match our interface
         const gitInfoTyped = gitInfo as any;
 
-        // Type assertion for API response
         return {
           branch: gitInfoTyped.local?.branch || 'unknown',
           commit: gitInfoTyped.local?.commitHash || 'unknown',
-          isDirty: false, // The existing API doesn't provide this info
+          isDirty: false,
           remoteUrl: gitInfoTyped.local?.remoteUrl,
           lastCommit: gitInfoTyped.local
             ? {
-                message: 'Latest commit',
-                date: gitInfoTyped.local.commitTime,
-                author: gitInfoTyped.local.author,
-              }
+              message: 'Latest commit',
+              date: gitInfoTyped.local.commitTime,
+              author: gitInfoTyped.local.author,
+            }
             : undefined,
         };
       }
     } catch {
-      // API not available, try client-side fallback
       console.warn('Git info API not available, using fallback');
     }
 
-    // Fallback: try to get basic git info from localStorage or known values
     return this._getGitInfoFallback();
   }
 
   private _getGitInfoFallback(): AppInfo['gitInfo'] {
     try {
-      // Try to get from localStorage (could be set by the app)
       const stored = localStorage.getItem('falbor_git_info');
 
       if (stored) {
         return JSON.parse(stored);
       }
 
-      // Try to get from environment/build variables
       const branch = process.env.NEXT_PUBLIC_GIT_BRANCH || 'unknown';
       const commit = process.env.NEXT_PUBLIC_GIT_COMMIT || 'unknown';
 
       return {
         branch,
         commit,
-        isDirty: false, // Assume clean if we don't know
+        isDirty: false,
       };
     } catch {
       return {
@@ -977,10 +926,10 @@ class DebugLogger {
       firstContentfulPaint: paintEntries.find((entry) => entry.name === 'first-contentful-paint')?.startTime,
       memoryUsage: (performance as any).memory
         ? {
-            used: (performance as any).memory.usedJSHeapSize,
-            total: (performance as any).memory.totalJSHeapSize,
-            limit: (performance as any).memory.jsHeapSizeLimit,
-          }
+          used: (performance as any).memory.usedJSHeapSize,
+          total: (performance as any).memory.totalJSHeapSize,
+          limit: (performance as any).memory.jsHeapSizeLimit,
+        }
         : undefined,
       timing,
     };
@@ -990,7 +939,6 @@ class DebugLogger {
     const store = getLogStore();
     let alerts: StateEntry['alerts'] = [];
 
-    // Get recent alerts from logStore
     if (store) {
       try {
         const logs = store.getLogs?.() || [];
@@ -1003,11 +951,9 @@ class DebugLogger {
             source: log.category,
           }));
       } catch {
-        // Ignore errors
       }
     }
 
-    // Get workbench state
     let workbenchState = {
       currentView: 'code',
       showWorkbench: false,
@@ -1032,7 +978,6 @@ class DebugLogger {
         }
       }
     } catch {
-      // Ignore errors
     }
 
     return {
@@ -1079,7 +1024,6 @@ class DebugLogger {
       this._userActions.clear();
       this._terminalLogs.clear();
 
-      // Clear any pending terminal logs
       this._terminalLogQueue = [];
 
       if (this._terminalLogTimer) {
@@ -1093,7 +1037,6 @@ class DebugLogger {
     }
   }
 
-  // Get current memory usage statistics
   getMemoryStats(): {
     logs: number;
     errors: number;
@@ -1117,9 +1060,8 @@ class DebugLogger {
   }
 }
 
-// Export singleton instance with default configuration
 export const debugLogger = new DebugLogger({
-  enabled: false, // Start disabled for performance
+  enabled: false,
   maxEntries: 1000,
   captureConsole: true,
   captureNetwork: true,
@@ -1127,12 +1069,10 @@ export const debugLogger = new DebugLogger({
   debounceTerminal: 100,
 });
 
-// Helper function to download debug log
 export async function downloadDebugLog(filename?: string): Promise<void> {
   try {
     const debugData = await debugLogger.generateDebugLog();
 
-    // Create a formatted summary
     const summary = createDebugSummary(debugData);
     const fullContent = `${summary}\n\n=== DETAILED DEBUG DATA ===\n\n${JSON.stringify(debugData, null, 2)}`;
 
@@ -1154,10 +1094,9 @@ export async function downloadDebugLog(filename?: string): Promise<void> {
   }
 }
 
-// Create a human-readable summary of the debug data
 function createDebugSummary(data: DebugLogData): string {
   const summary = [
-    '=== BOLT DIY DEBUG LOG SUMMARY ===',
+    '=== Falbor DEBUG LOG SUMMARY ===',
     `Generated: ${new Date(data.timestamp).toLocaleString()}`,
     `Session ID: ${data.sessionId}`,
     '',
@@ -1180,16 +1119,16 @@ function createDebugSummary(data: DebugLogData): string {
     '=== GIT INFORMATION ===',
     data.appInfo.gitInfo
       ? [
-          `Branch: ${data.appInfo.gitInfo.branch}`,
-          `Commit: ${data.appInfo.gitInfo.commit.substring(0, 8)}`,
-          `Working Directory: ${data.appInfo.gitInfo.isDirty ? 'Dirty' : 'Clean'}`,
-          data.appInfo.gitInfo.remoteUrl ? `Remote: ${data.appInfo.gitInfo.remoteUrl}` : '',
-          data.appInfo.gitInfo.lastCommit
-            ? `Last Commit: ${data.appInfo.gitInfo.lastCommit.message.substring(0, 50)}...`
-            : '',
-        ]
-          .filter(Boolean)
-          .join('\n')
+        `Branch: ${data.appInfo.gitInfo.branch}`,
+        `Commit: ${data.appInfo.gitInfo.commit.substring(0, 8)}`,
+        `Working Directory: ${data.appInfo.gitInfo.isDirty ? 'Dirty' : 'Clean'}`,
+        data.appInfo.gitInfo.remoteUrl ? `Remote: ${data.appInfo.gitInfo.remoteUrl}` : '',
+        data.appInfo.gitInfo.lastCommit
+          ? `Last Commit: ${data.appInfo.gitInfo.lastCommit.message.substring(0, 50)}...`
+          : '',
+      ]
+        .filter(Boolean)
+        .join('\n')
       : 'Git information not available',
     '',
     '=== SESSION STATISTICS ===',
@@ -1220,13 +1159,11 @@ function createDebugSummary(data: DebugLogData): string {
   return summary.join('\n');
 }
 
-// Utility functions for capturing additional data
 export function captureTerminalLog(
   content: string,
   type: 'input' | 'output' | 'error' = 'output',
   command?: string,
 ): void {
-  // Only capture if content is meaningful (not just whitespace or control characters)
   if (!content || content.trim().length === 0) {
     return;
   }
@@ -1255,29 +1192,23 @@ export function getDebugLogger(): DebugLogger {
   return debugLogger;
 }
 
-// Utility function to enable debug mode on demand
 export function enableDebugMode(): void {
   debugLogger.enableDebugMode();
 }
 
-// Utility function to disable debug mode
 export function disableDebugMode(): void {
   debugLogger.disableDebugMode();
 }
 
-// Utility function to get debug logger status
 export function getDebugStatus(): { initialized: boolean; capturing: boolean; enabled: boolean } {
   return debugLogger.getStatus();
 }
 
-// Utility function to update debug configuration
 export function updateDebugConfig(config: Partial<DebugLoggerConfig>): void {
   debugLogger.updateConfig(config);
 }
 
-// Initialize debug logger when this module is imported
 if (typeof window !== 'undefined') {
-  // Defer initialization to avoid blocking
   setTimeout(() => {
     debugLogger.initialize();
   }, 0);

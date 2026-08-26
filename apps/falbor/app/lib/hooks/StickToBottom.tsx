@@ -41,7 +41,7 @@ const StickToBottomContext = createContext<StickToBottomContext | null>(null);
 
 export interface StickToBottomProps
   extends Omit<React.HTMLAttributes<HTMLDivElement>, 'children'>,
-    StickToBottomOptions {
+  StickToBottomOptions {
   contextRef?: React.Ref<StickToBottomContext>;
   instance?: ReturnType<typeof useStickToBottom>;
   children: ((context: StickToBottomContext) => ReactNode) | ReactNode;
@@ -133,16 +133,11 @@ function Content({ children, ...props }: StickToBottomContentProps) {
       <div {...props} ref={context.contentRef}>
         {typeof children === 'function' ? children(context) : children}
       </div>
-      {/* Blur effect overlay */}
     </div>
   );
 }
 
 StickToBottom.Content = Content;
-
-/**
- * Use this hook inside a <StickToBottom> component to gain access to whether the component is at the bottom of the scrollable area.
- */
 export function useStickToBottomContext() {
   const context = useContext(StickToBottomContext);
 

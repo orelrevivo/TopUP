@@ -3,12 +3,12 @@ import type { Message } from 'ai';
 import { toast } from 'react-toastify';
 import { Dropdown, DropdownItem } from '~/components/ui/Dropdown';
 import { IconButton } from '~/components/ui/IconButton';
-import { ImportFolderButton } from '~/components/chat/ImportFolderButton';
+import { ImportFolderButton } from '~/components/chat/input/ImportFolderButton';
 import { workbenchStore } from '~/lib/stores/workbench';
 
 type ChatData = {
-  messages?: Message[]; // Standard Falbor format
-  description?: string; // Optional description
+  messages?: Message[]; 
+  description?: string; 
 };
 
 export function ImportButtons(importChat: ((description: string, messages: Message[]) => Promise<void>) | undefined) {
@@ -31,7 +31,7 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
                   const content = e.target?.result as string;
                   const data = JSON.parse(content) as ChatData;
 
-                  // Standard format
+                  
                   if (Array.isArray(data.messages)) {
                     await importChat(data.description || 'Imported Chat', data.messages);
                     toast.success('Chat imported successfully');
@@ -53,7 +53,7 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
             } catch (error) {
               toast.error(error instanceof Error ? error.message : 'Failed to import chat');
             }
-            e.target.value = ''; // Reset file input
+            e.target.value = ''; 
           } else {
             toast.error('Something went wrong');
           }

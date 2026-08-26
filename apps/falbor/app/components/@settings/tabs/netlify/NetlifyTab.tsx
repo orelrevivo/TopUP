@@ -25,7 +25,7 @@ interface SiteAction {
   variant?: 'default' | 'destructive' | 'outline';
 }
 
-// Netlify logo SVG component
+
 const NetlifyLogo = () => (
   <svg viewBox="0 0 40 40" className="w-5 h-5">
     <path
@@ -61,7 +61,7 @@ export default function NetlifyTab() {
       .catch(() => { });
   }, []);
 
-  // Connection testing function
+  
   const testConnection = async () => {
     if (!connection.token) {
       setConnectionTest({
@@ -107,7 +107,7 @@ export default function NetlifyTab() {
     }
   };
 
-  // Site actions
+  
   const siteActions: SiteAction[] = [
     {
       name: 'Clear Cache',
@@ -116,7 +116,7 @@ export default function NetlifyTab() {
         try {
           setIsActionLoading(true);
 
-          // Try to get site details first to check for build hooks
+          
           const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -136,12 +136,12 @@ export default function NetlifyTab() {
 
           const siteData = (await siteResponse.json()) as any;
 
-          // Check if this looks like a free account (limited features)
+          
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
-          // If site has build hooks, try triggering a build instead
+          
           if (siteData.build_settings && siteData.build_settings.repo_url) {
-            // Try to trigger a build by making a POST to the site's build endpoint
+            
             const buildResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/builds`, {
               method: 'POST',
               headers: {
@@ -157,13 +157,13 @@ export default function NetlifyTab() {
               toast.success('Build triggered with cache clear');
               return;
             } else if (buildResponse.status === 422) {
-              // Often indicates free account limitation
+              
               toast.warning('Build trigger failed. This feature may not be available on free accounts.');
               return;
             }
           }
 
-          // Fallback: Try the standard cache purge endpoint
+          
           const cacheResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/purge_cache`, {
             method: 'POST',
             headers: {
@@ -202,7 +202,7 @@ export default function NetlifyTab() {
         try {
           setIsActionLoading(true);
 
-          // Get site info first to check account type
+          
           const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -216,7 +216,7 @@ export default function NetlifyTab() {
           const siteData = (await siteResponse.json()) as any;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
-          // Get environment variables
+          
           const envResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/env`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -280,7 +280,7 @@ export default function NetlifyTab() {
         try {
           setIsActionLoading(true);
 
-          // Get site info first to check account type
+          
           const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -328,7 +328,7 @@ export default function NetlifyTab() {
         try {
           setIsActionLoading(true);
 
-          // Get site info first to check account type
+          
           const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -342,7 +342,7 @@ export default function NetlifyTab() {
           const siteData = (await siteResponse.json()) as any;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
-          // Get site traffic data (if available)
+          
           const analyticsResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/traffic`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -350,14 +350,14 @@ export default function NetlifyTab() {
           });
 
           if (analyticsResponse.ok) {
-            await analyticsResponse.json(); // Analytics data received
+            await analyticsResponse.json(); 
             toast.success('Site analytics loaded successfully');
           } else if (analyticsResponse.status === 404) {
             if (isFreeAccount) {
               toast.info('Analytics not available on free accounts. Showing basic site info instead.');
             }
 
-            // Fallback to basic site info
+            
             toast.info(`Site: ${siteData.name} - Status: ${siteData.state || 'Unknown'}`);
           } else {
             const errorText = await analyticsResponse.text();
@@ -407,7 +407,7 @@ export default function NetlifyTab() {
     },
   ];
 
-  // Deploy management functions
+  
   const handleDeploy = async (siteId: string, deployId: string, action: 'lock' | 'unlock' | 'publish') => {
     try {
       setIsActionLoading(true);
@@ -443,12 +443,12 @@ export default function NetlifyTab() {
   }, []);
 
   useEffect(() => {
-    // Check if we have a connection with a token but no stats
+    
     if (connection.user && connection.token && (!connection.stats || !connection.stats.sites)) {
       fetchNetlifyStats(connection.token);
     }
 
-    // Update local state from connection
+    
     if (connection.stats) {
       setSites(connection.stats.sites || []);
       setDeploys(connection.stats.deploys || []);
@@ -478,7 +478,7 @@ export default function NetlifyTab() {
 
       const userData = (await response.json()) as NetlifyUser;
 
-      // Update the connection store
+      
       updateNetlifyConnection({
         user: userData,
         token: tokenInput,
@@ -486,7 +486,7 @@ export default function NetlifyTab() {
 
       toast.success('Connected to Netlify successfully');
 
-      // Fetch stats after successful connection
+      
       fetchNetlifyStats(tokenInput);
     } catch (error) {
       console.error('Error connecting to Netlify:', error);
@@ -498,13 +498,13 @@ export default function NetlifyTab() {
   };
 
   const handleDisconnect = () => {
-    // Clear from localStorage
+    
     localStorage.removeItem('netlify_connection');
 
-    // Remove cookies
+    
     document.cookie = 'netlifyToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
-    // Update the store
+    
     updateNetlifyConnection({ user: null, token: '' });
     setConnectionTest(null);
     toast.success('Disconnected from Netlify');
@@ -514,7 +514,7 @@ export default function NetlifyTab() {
     setFetchingStats(true);
 
     try {
-      // Fetch sites
+      
       const sitesResponse = await fetch('https://api.netlify.com/api/v1/sites', {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -528,14 +528,14 @@ export default function NetlifyTab() {
       const sitesData = (await sitesResponse.json()) as NetlifySite[];
       setSites(sitesData);
 
-      // Fetch deploys and builds for ALL sites
+      
       const allDeploysData: NetlifyDeploy[] = [];
       const allBuildsData: NetlifyBuild[] = [];
       let lastDeployTime = '';
       let totalDeploymentCount = 0;
 
       if (sitesData && sitesData.length > 0) {
-        // Process sites in batches to avoid overwhelming the API
+        
         const batchSize = 3;
         const siteBatches = [];
 
@@ -546,7 +546,7 @@ export default function NetlifyTab() {
         for (const batch of siteBatches) {
           const batchPromises = batch.map(async (site) => {
             try {
-              // Fetch deploys for this site
+              
               const deploysResponse = await fetch(
                 `https://api.netlify.com/api/v1/sites/${site.id}/deploys?per_page=20`,
                 {
@@ -562,7 +562,7 @@ export default function NetlifyTab() {
                 siteDeploys = (await deploysResponse.json()) as NetlifyDeploy[];
               }
 
-              // Fetch builds for this site
+              
               const buildsResponse = await fetch(`https://api.netlify.com/api/v1/sites/${site.id}/builds?per_page=10`, {
                 headers: {
                   Authorization: `Bearer ${token}`,
@@ -590,16 +590,16 @@ export default function NetlifyTab() {
             totalDeploymentCount += result.deploys.length;
           }
 
-          // Small delay between batches
+          
           if (batch !== siteBatches[siteBatches.length - 1]) {
             await new Promise((resolve) => setTimeout(resolve, 200));
           }
         }
 
-        // Sort deploys by creation date (newest first)
+        
         allDeploysData.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
 
-        // Set the most recent deploy time
+        
         if (allDeploysData.length > 0) {
           lastDeployTime = allDeploysData[0].created_at;
           setLastUpdated(lastDeployTime);
@@ -609,7 +609,7 @@ export default function NetlifyTab() {
         setDeploymentCount(totalDeploymentCount);
       }
 
-      // Update the stats in the store
+      
       updateNetlifyConnection({
         stats: {
           sites: sitesData,
@@ -657,7 +657,7 @@ export default function NetlifyTab() {
           </CollapsibleTrigger>
           <CollapsibleContent className="overflow-hidden">
             <div className="space-y-4 mt-4">
-              {/* Netlify Overview Dashboard */}
+              {}
               <div className="mb-6 p-4 bg-falbor-elements-background-depth-1 rounded-lg border border-falbor-elements-borderColor">
                 <h4 className="text-sm font-medium text-falbor-elements-textPrimary mb-3">Netlify Overview</h4>
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -688,7 +688,7 @@ export default function NetlifyTab() {
                 </div>
               </div>
 
-              {/* Advanced Analytics */}
+              {}
               <div className="mb-6 space-y-4">
                 <h4 className="text-sm font-medium text-falbor-elements-textPrimary">Deployment Analytics</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -753,7 +753,7 @@ export default function NetlifyTab() {
                 </div>
               </div>
 
-              {/* Site Health Metrics */}
+              {}
               <div className="mb-6">
                 <h4 className="text-sm font-medium text-falbor-elements-textPrimary mb-2">Site Health Overview</h4>
                 <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -1159,7 +1159,7 @@ export default function NetlifyTab() {
                     </div>
                   )}
 
-                  {/* Builds Section */}
+                  {}
                   {connection.stats.builds && connection.stats.builds.length > 0 && (
                     <div className="bg-falbor-elements-background dark:bg-falbor-elements-background-depth-1 border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor rounded-lg p-4">
                       <div className="flex items-center justify-between mb-3">
@@ -1215,7 +1215,7 @@ export default function NetlifyTab() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <motion.div
         className="flex items-center justify-between gap-2"
         initial={{ opacity: 0, y: 20 }}
@@ -1258,7 +1258,7 @@ export default function NetlifyTab() {
         Connect and manage your Netlify sites with advanced deployment controls and site management
       </p>
 
-      {/* Connection Test Results */}
+      {}
       {connectionTest && (
         <motion.div
           className={classNames('p-4 rounded-lg border', {
@@ -1296,7 +1296,7 @@ export default function NetlifyTab() {
         </motion.div>
       )}
 
-      {/* Main Connection Component */}
+      {}
       <motion.div
         className="bg-falbor-elements-background dark:bg-falbor-elements-background border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor rounded-lg"
         initial={{ opacity: 0, y: 20 }}

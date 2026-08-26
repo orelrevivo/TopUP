@@ -32,7 +32,7 @@ const PayPalComponent = (props: Props) => {
           funnelData.liveProducts || '[]'
         )
         
-        // Fetch all funnel products for this subaccount
+        
         const allProducts = await getFunnelProducts(subaccountId)
 
         const selectedProducts = allProducts.filter(p => 

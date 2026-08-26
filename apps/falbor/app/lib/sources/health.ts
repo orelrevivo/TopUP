@@ -1,5 +1,7 @@
-/**
- * Health check utilities for the Sources feature.
+/*
+ *!---------------------------------------------------------------------------------------------
+ *  This feature is not implemented yet and its built for testing!
+ *--------------------------------------------------------------------------------------------
  */
 import { isTorAvailable, torFetch } from './tor-fetch';
 import { generateText } from 'ai';

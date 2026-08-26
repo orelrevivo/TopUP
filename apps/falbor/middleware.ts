@@ -8,16 +8,16 @@ const JWT_SECRET = process.env.JWT_SECRET
 const COOKIE_NAME = "session";
 
 const PUBLIC_ROUTES = [
-  "/login", 
-  "/signup", 
-  "/verified", 
-  "/privacy", 
-  "/terms", 
-  "/about", 
-  "/api/auth/login", 
-  "/api/auth/register", 
-  "/api/auth/verify", 
-  "/api/auth/logout", 
+  "/login",
+  "/signup",
+  "/verified",
+  "/privacy",
+  "/terms",
+  "/about",
+  "/api/auth/login",
+  "/api/auth/register",
+  "/api/auth/verify",
+  "/api/auth/logout",
   "/api/health",
   "/api/auth/google",
   "/api/auth/discord",
@@ -36,6 +36,10 @@ const PUBLIC_ROUTES = [
 
 const STATIC_PREFIXES = ["/_next", "/favicon", "/icons", "/logo", "/apple-touch-icon", "/social_preview", "/landing"];
 
+function unauthorized(message = "Unauthorized") {
+  return NextResponse.json({ error: message }, { status: 401 });
+}
+
 export async function middleware(request: NextRequest) {
   try {
     const { pathname } = request.nextUrl;
@@ -52,46 +56,32 @@ export async function middleware(request: NextRequest) {
 
     const hostname = request.headers.get("host") || "";
     const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
-
-    // Redirect falbor.xyz/hacking to hacking.falbor.xyz in production
     if (!isLocalhost && pathname.startsWith("/hacking")) {
       const newUrl = new URL(request.url);
       newUrl.hostname = "hacking.falbor.xyz";
       newUrl.pathname = pathname.replace(/^\/hacking/, "") || "/";
       return NextResponse.redirect(newUrl);
     }
-
-    // Serve index.html implicitly for deployed sites
     if (pathname.startsWith('/site/')) {
       return NextResponse.rewrite(new URL(`${pathname === '/site/' ? pathname : pathname.replace(/\/$/, '')}/index.html`, request.url));
     }
 
     if (pathname === "/api/auth/me") {
-      // Check auth for this endpoint explicitly or let it check inside the handler,
-      // but to be safe we handle it below like other API routes.
     }
 
     const sessionCookie = request.cookies.get(COOKIE_NAME);
-
-    // Enforce default-deny policy on all non-public API routes
     const isApiRoute = pathname.startsWith("/api/") || pathname.includes("/api/");
     if (isApiRoute && !PUBLIC_ROUTES.some((r) => pathname === r)) {
       if (!sessionCookie) {
-        return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { "Content-Type": "application/json" },
-        });
+        return unauthorized();
       }
 
-      if (JWT_SECRET) {
-        try {
-          await jwtVerify(sessionCookie.value, JWT_SECRET);
-        } catch {
-          return new NextResponse(JSON.stringify({ error: "Unauthorized: Invalid session" }), {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          });
-        }
+      // A missing signing secret must never turn authentication off.
+      if (!JWT_SECRET) return unauthorized("Authentication unavailable");
+      try {
+        await jwtVerify(sessionCookie.value, JWT_SECRET);
+      } catch {
+        return unauthorized("Unauthorized: Invalid session");
       }
     }
 
@@ -118,7 +108,6 @@ export async function middleware(request: NextRequest) {
         await jwtVerify(sessionCookie.value, JWT_SECRET);
         return handleSuccess();
       } catch {
-        // Token invalid
       }
     }
 
@@ -127,11 +116,14 @@ export async function middleware(request: NextRequest) {
     }
     return NextResponse.redirect(new URL("/login", request.url));
   } catch {
-    return NextResponse.next();
+    // Default deny for API routes if authentication middleware itself fails.
+    if (request.nextUrl.pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 }
 
 export const config = {
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
-

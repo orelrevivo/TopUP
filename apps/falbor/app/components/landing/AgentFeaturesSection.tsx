@@ -2,7 +2,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { agentFeaturesData } from './AgentFeaturesData';
-import { Chat } from '~/components/chat/Chat.client';
+import { Chat } from '~/components/chat/core/Chat.client';
 import { getUserCount } from '~/lib/actions/get-user-count';
 
 export default function AgentFeaturesSection() {
@@ -133,7 +133,7 @@ export default function AgentFeaturesSection() {
           </div>
         </div>
       </div>
-      {/* Modal Portal - Rendered at root level to prevent CSS container trapping */}
+      {}
       <AnimatePresence>
         {activeModal && (
           <div

@@ -20,13 +20,13 @@ export const useNotifications = () => {
   };
 
   useEffect(() => {
-    // Check immediately and then every minute
+
     checkNotifications();
 
     const interval = setInterval(checkNotifications, 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [logs]); // Re-run when logs change
+  }, [logs]);
 
   const markAsRead = async (notificationId: string) => {
     try {

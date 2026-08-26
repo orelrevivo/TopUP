@@ -93,7 +93,7 @@ const PipelineInfoBar = ({ pipelineId, pipelines, subAccountId }: Props) => {
 
                 <CommandSeparator />
 
-                {/* Create Pipeline Button - Fixed Version */}
+                {}
                 <div className="p-2">
                   <Button
                     variant="secondary"

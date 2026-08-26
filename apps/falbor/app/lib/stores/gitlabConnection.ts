@@ -13,7 +13,6 @@ const gitlabConnectionAtom = atom<GitLabConnection>({
 
 const gitlabUrlAtom = atom('https://gitlab.com');
 
-// Initialize connection from localStorage on startup
 function initializeConnection() {
   try {
     const savedConnection = localStorage.getItem('gitlab_connection');
@@ -26,7 +25,6 @@ function initializeConnection() {
         gitlabUrlAtom.set(parsed.gitlabUrl);
       }
 
-      // Only set if we have a valid user
       if (parsed.user) {
         gitlabConnectionAtom.set(parsed);
       }
@@ -37,24 +35,18 @@ function initializeConnection() {
   }
 }
 
-// Initialize on module load (client-side only)
 if (typeof window !== 'undefined') {
   initializeConnection();
 }
 
-// Computed store for checking if connected
 export const isGitLabConnected = computed(gitlabConnectionAtom, (connection) => !!connection.user);
 
-// Computed store for current connection
 export const gitlabConnection = computed(gitlabConnectionAtom, (connection) => connection);
 
-// Computed store for current user
 export const gitlabUser = computed(gitlabConnectionAtom, (connection) => connection.user);
 
-// Computed store for current stats
 export const gitlabStats = computed(gitlabConnectionAtom, (connection) => connection.stats);
 
-// Computed store for current URL
 export const gitlabUrl = computed(gitlabUrlAtom, (url) => url);
 
 class GitLabConnectionStore {
@@ -62,10 +54,8 @@ class GitLabConnectionStore {
     try {
       const apiService = new GitLabApiService(token, gitlabUrl);
 
-      // Test connection by fetching user
       const user = await apiService.getUser();
 
-      // Update state
       gitlabConnectionAtom.set({
         user,
         token,
@@ -73,13 +63,11 @@ class GitLabConnectionStore {
         gitlabUrl,
       });
 
-      // Set cookies for client-side access
       Cookies.set('gitlabUsername', user.username);
       Cookies.set('gitlabToken', token);
       Cookies.set('git:gitlab.com', JSON.stringify({ username: user.username, password: token }));
       Cookies.set('gitlabUrl', gitlabUrl);
 
-      // Store connection details in localStorage
       localStorage.setItem(
         'gitlab_connection',
         JSON.stringify({
@@ -121,31 +109,23 @@ class GitLabConnectionStore {
     try {
       const apiService = new GitLabApiService(connection.token, connection.gitlabUrl || 'https://gitlab.com');
 
-      // Fetch user data
       const userData = await apiService.getUser();
 
-      // Fetch projects
       const projects = await apiService.getProjects();
 
-      // Fetch events
       const events = await apiService.getEvents();
 
-      // Fetch groups
       const groups = await apiService.getGroups();
 
-      // Fetch snippets
       const snippets = await apiService.getSnippets();
 
-      // Calculate stats
       const stats: GitLabStats = calculateStatsSummary(projects, events, groups, snippets, userData);
 
-      // Update connection with stats
       gitlabConnectionAtom.set({
         ...connection,
         stats,
       });
 
-      // Update localStorage
       const updatedConnection = { ...connection, stats };
       localStorage.setItem('gitlab_connection', JSON.stringify(updatedConnection));
 
@@ -160,16 +140,13 @@ class GitLabConnectionStore {
   }
 
   disconnect() {
-    // Remove cookies
     Cookies.remove('gitlabToken');
     Cookies.remove('gitlabUsername');
     Cookies.remove('git:gitlab.com');
     Cookies.remove('gitlabUrl');
 
-    // Clear localStorage
     localStorage.removeItem('gitlab_connection');
 
-    // Reset state
     gitlabConnectionAtom.set({
       user: null,
       token: '',
@@ -190,12 +167,10 @@ class GitLabConnectionStore {
         const parsed = JSON.parse(savedConnection);
         parsed.tokenType = 'personal-access-token';
 
-        // Set GitLab URL if saved
         if (parsed.gitlabUrl) {
           gitlabUrlAtom.set(parsed.gitlabUrl);
         }
 
-        // Set connection
         gitlabConnectionAtom.set(parsed);
 
         return parsed;
@@ -223,7 +198,6 @@ class GitLabConnectionStore {
 
 export const gitlabConnectionStore = new GitLabConnectionStore();
 
-// Export hooks for React components
 export function useGitLabConnection() {
   return {
     connection: gitlabConnection,

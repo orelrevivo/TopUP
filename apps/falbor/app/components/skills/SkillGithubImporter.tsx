@@ -26,15 +26,15 @@ export const SkillGithubImporter: React.FC<SkillGithubImporterProps> = ({ onBack
 
     let rawUrl = url.trim();
     
-    // Basic validation for .md
+    
     if (!rawUrl.toLowerCase().endsWith('.md')) {
       setError('The URL must point to a Markdown (.md) file');
       return;
     }
 
-    // Transform standard github URLs to raw URLs
-    // e.g. https://github.com/user/repo/blob/main/path/to/file.md 
-    //   -> https://raw.githubusercontent.com/user/repo/main/path/to/file.md
+    
+    
+    
     if (rawUrl.includes('github.com') && rawUrl.includes('/blob/')) {
       rawUrl = rawUrl.replace('github.com', 'raw.githubusercontent.com').replace('/blob/', '/');
     }
@@ -51,12 +51,12 @@ export const SkillGithubImporter: React.FC<SkillGithubImporterProps> = ({ onBack
       const content = await response.text();
       setFileContent(content);
       
-      // Extract file name from URL
+      
       const urlParts = rawUrl.split('/');
       const extractedFileName = urlParts[urlParts.length - 1];
       setFileName(extractedFileName);
       
-      // Default the name to the filename without extension
+      
       const parsedName = extractedFileName.replace(/\.[^/.]+$/, "");
       setName(parsedName);
       

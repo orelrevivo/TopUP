@@ -4,16 +4,11 @@ import { EditorElement } from '~/providers/visual-editor/editor/editor-provider'
 
 export function parseHtmlToEditorElements(html: string): EditorElement[] {
   const $ = cheerio.load(html)
-  
-  // Find the body if it exists, otherwise use root
   const root = $('body').length > 0 ? $('body') : $.root()
-
   function mapNodeToElement(node: any): EditorElement | null {
     if (node.type === 'text') {
       const text = $(node).text().trim()
       if (!text) return null
-      
-      // If it's just text floating in a container, we wrap it in a text element
       return {
         id: v4(),
         name: 'Text',
@@ -28,8 +23,6 @@ export function parseHtmlToEditorElements(html: string): EditorElement[] {
     const tagName = node.tagName.toLowerCase()
     const className = $(node).attr('class') || undefined
     const styleAttr = $(node).attr('style') || ''
-    
-    // Parse inline styles naively
     const styles: React.CSSProperties = {}
     if (styleAttr) {
       styleAttr.split(';').forEach(style => {
@@ -44,18 +37,14 @@ export function parseHtmlToEditorElements(html: string): EditorElement[] {
     let type: EditorElement['type'] = 'container'
     let name = 'Container'
     let content: EditorElement['content'] = []
-
-    // Map tags
     if (['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'span', 'strong', 'em', 'label', 'button'].includes(tagName)) {
       type = 'text'
       name = tagName.toUpperCase()
       content = { innerText: $(node).text() }
-      // Don't traverse children for text blocks to keep them atomic, unless they have complex children
-      // For visual editor, text components just hold text
     } else if (tagName === 'a') {
       type = 'link'
       name = 'Link'
-      content = { 
+      content = {
         innerText: $(node).text(),
         href: $(node).attr('href') || '#'
       }
@@ -72,12 +61,10 @@ export function parseHtmlToEditorElements(html: string): EditorElement[] {
         src: $(node).attr('src') || $(node).find('source').attr('src') || '',
       }
     } else if (tagName === 'style' || tagName === 'script' || tagName === 'head' || tagName === 'title' || tagName === 'meta' || tagName === 'link') {
-      // Keep style/script blocks as html components so they render
       type = 'html'
       name = 'HTML / Style'
       content = { innerHtml: $.html(node) }
     } else {
-      // Default to container
       type = 'container'
       name = tagName.toUpperCase()
       const children: EditorElement[] = []
@@ -101,13 +88,13 @@ export function parseHtmlToEditorElements(html: string): EditorElement[] {
   }
 
   const elements: EditorElement[] = []
-  
-  ;(root as any).contents().each((_: any, child: any) => {
-    const childElement = mapNodeToElement(child as any)
-    if (childElement) {
-      elements.push(childElement)
-    }
-  })
+
+    ; (root as any).contents().each((_: any, child: any) => {
+      const childElement = mapNodeToElement(child as any)
+      if (childElement) {
+        elements.push(childElement)
+      }
+    })
 
   return elements
 }

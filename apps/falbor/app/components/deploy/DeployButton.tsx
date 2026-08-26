@@ -62,7 +62,7 @@ export const DeployButton = ({
   const [githubProjectName, setGithubProjectName] = useState('');
   const [gitlabProjectName, setGitlabProjectName] = useState('');
 
-  // Fetch current deployment when chat loads
+  
   useEffect(() => {
     if (currentChatId) {
       fetchDeployment(currentChatId);
@@ -106,15 +106,15 @@ export const DeployButton = ({
 
     try {
       await action();
-      // Wait a moment for any localStorage writes in the hooks to finish, then fetch latest
-      // The hooks usually save 'deploy-url-[chatId]'
+      
+      
       setTimeout(async () => {
         const url = localStorage.getItem(`deploy-url-${currentChatId}`);
         if (url && provider !== 'falbor') {
-          // falbor handles its own POST inside the hook since it has subdomain details
+          
           await saveDeploymentResult(url, provider);
         } else if (provider !== 'falbor') {
-          // just fetch to see if anything changed
+          
           await fetchDeployment(currentChatId!);
         }
       }, 500);
@@ -168,7 +168,7 @@ export const DeployButton = ({
     }
   });
 
-  // Organize provider render data
+  
   const providers = [
     { id: 'falbor', label: 'Publish with Falbor', imgSrc: '/favicon.ico', onClick: handleFalborDeployClick, disabled: false },
     { id: 'netlify', label: !netlifyConn.user ? 'No Netlify Account' : 'Publish with Netlify', imgSrc: 'https://cdn.simpleicons.org/netlify', onClick: handleNetlifyDeployClick, disabled: !netlifyConn.user },

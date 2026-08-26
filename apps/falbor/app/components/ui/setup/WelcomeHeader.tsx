@@ -8,7 +8,7 @@ export function WelcomeHeader() {
 
   return (
     <header className="absolute top-0 left-0 w-full z-20 flex h-20 items-center justify-between px-8 md:px-16 border-b">
-      {/* LEFT: Logos */}
+      {}
       <Link href={'/'}>
         <div className="flex gap-2">
           <img src={"/hacking/logo-light-styled.png"} alt="logo" className="w-[130px] inline-block dark:hidden" />
@@ -16,7 +16,7 @@ export function WelcomeHeader() {
         </div>
       </Link>
 
-      {/* RIGHT: Doc Links */}
+      {}
       <div className="flex gap-6">
         <button
           onClick={() => router.push('/docs/chat')}

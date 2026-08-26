@@ -1,6 +1,4 @@
 import ignore from 'ignore';
-
-// Common patterns to ignore, similar to .gitignore
 export const IGNORE_PATTERNS = [
   'node_modules/**',
   '.git/**',
@@ -72,8 +70,6 @@ export const detectProjectType = async (
   if (hasFile('package.json')) {
     const packageJson = await readPackageJson(files);
     const scripts = packageJson?.scripts || {};
-
-    // Check for preferred commands in priority order
     const preferredCommands = ['dev', 'start', 'preview'];
     const availableCommand = preferredCommands.find((cmd) => scripts[cmd]);
 

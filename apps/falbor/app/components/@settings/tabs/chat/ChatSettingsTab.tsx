@@ -21,7 +21,7 @@ export function ChatSettingsTab() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch chat visibility and description
+    
     if (id) {
       fetch(`/api/data/chats/${id}`)
         .then((res) => res.json())
@@ -65,7 +65,7 @@ export function ChatSettingsTab() {
       if (!res.ok) throw new Error('Failed to clone app');
       const { newId } = await res.json();
       toast.success('App cloned successfully!');
-      // Navigate to new chat
+      
       window.location.href = `/chat/${newId}`;
     } catch (e) {
       toast.error('Error cloning app');
@@ -82,7 +82,7 @@ export function ChatSettingsTab() {
         </DialogDescription>
       </div>
 
-      {/* Name Edit */}
+      {}
       <div className="flex flex-col gap-2 bg-[#F3F0F5] dark:bg-[#111] p-4 rounded-lg border border-[#D6D5DE] dark:border-[#333]">
         <h4 className="text-sm font-medium text-black dark:text-gray-100">Chat Name</h4>
         {editing ? (
@@ -120,7 +120,7 @@ export function ChatSettingsTab() {
         )}
       </div>
 
-      {/* Auto Description */}
+      {}
       <div className="flex flex-col gap-2 bg-[#F3F0F5] dark:bg-[#111] p-4 rounded-lg border border-[#D6D5DE] dark:border-[#333]">
         <h4 className="text-sm font-medium text-black dark:text-gray-100">
           Description
@@ -136,7 +136,7 @@ export function ChatSettingsTab() {
         </div>
       </div>
 
-      {/* App Visibility */}
+      {}
       <div className="flex flex-col gap-2 bg-[#F3F0F5] dark:bg-[#111] p-4 rounded-lg border border-[#D6D5DE] dark:border-[#333]">
         <h4 className="text-sm font-medium text-black dark:text-gray-100">App Visibility</h4>
         <p className="text-sm text-[#525258] dark:text-gray-400 mb-2">

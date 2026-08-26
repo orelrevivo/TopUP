@@ -11,7 +11,7 @@ interface StatsDisplayProps {
 export function StatsDisplay({ stats, onRefresh, isRefreshing }: StatsDisplayProps) {
   return (
     <div className="space-y-4">
-      {/* Repository Stats */}
+      {}
       <div>
         <h5 className="text-sm font-medium text-falbor-elements-textPrimary mb-2">Repository Stats</h5>
         <div className="grid grid-cols-2 gap-4">
@@ -36,7 +36,7 @@ export function StatsDisplay({ stats, onRefresh, isRefreshing }: StatsDisplayPro
         </div>
       </div>
 
-      {/* Contribution Stats */}
+      {}
       <div>
         <h5 className="text-sm font-medium text-falbor-elements-textPrimary mb-2">Contribution Stats</h5>
         <div className="grid grid-cols-3 gap-4">

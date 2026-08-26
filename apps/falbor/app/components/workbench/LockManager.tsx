@@ -16,16 +16,16 @@ export function LockManager() {
   const [filter, setFilter] = useState<'all' | 'files' | 'folders'>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  // Load locked items
+  
   useEffect(() => {
     const loadLockedItems = () => {
-      // We don't need to filter by chat ID here as we want to show all locked files
+      
       const items: LockedItem[] = [];
 
-      // Get all files and folders from the workbench store
+      
       const allFiles = workbenchStore.files.get();
 
-      // Check each file/folder for locks
+      
       Object.entries(allFiles).forEach(([path, item]) => {
         if (!item) {
           return;
@@ -49,16 +49,16 @@ export function LockManager() {
 
     loadLockedItems();
 
-    // Set up an interval to refresh the list periodically
+    
     const intervalId = setInterval(loadLockedItems, 5000);
 
     return () => clearInterval(intervalId);
   }, []);
 
-  // Filter and sort the locked items
+  
   const filteredAndSortedItems = lockedItems
     .filter((item) => {
-      // Apply type filter
+      
       if (filter === 'files' && item.type !== 'file') {
         return false;
       }
@@ -67,7 +67,7 @@ export function LockManager() {
         return false;
       }
 
-      // Apply search filter
+      
       if (searchTerm && !item.path.toLowerCase().includes(searchTerm.toLowerCase())) {
         return false;
       }
@@ -78,7 +78,7 @@ export function LockManager() {
       return a.path.localeCompare(b.path);
     });
 
-  // Handle selecting/deselecting a single item
+  
   const handleSelectItem = (path: string) => {
     const newSelectedItems = new Set(selectedItems);
 
@@ -91,19 +91,19 @@ export function LockManager() {
     setSelectedItems(newSelectedItems);
   };
 
-  // Handle selecting/deselecting all visible items
+  
   const handleSelectAll = (checked: boolean | 'indeterminate') => {
     if (checked === true) {
-      // Select all filtered items
+      
       const allVisiblePaths = new Set(filteredAndSortedItems.map((item) => item.path));
       setSelectedItems(allVisiblePaths);
     } else {
-      // Deselect all (clear selection)
+      
       setSelectedItems(new Set());
     }
   };
 
-  // Handle unlocking selected items
+  
   const handleUnlockSelected = () => {
     if (selectedItems.size === 0) {
       toast.error('No items selected to unlock.');
@@ -127,11 +127,11 @@ export function LockManager() {
 
     if (unlockedCount > 0) {
       toast.success(`Unlocked ${unlockedCount} selected item(s).`);
-      setSelectedItems(new Set()); // Clear selection after unlocking
+      setSelectedItems(new Set()); 
     }
   };
 
-  // Determine the state of the "Select All" checkbox
+  
   const isAllSelected = filteredAndSortedItems.length > 0 && selectedItems.size === filteredAndSortedItems.length;
   const isSomeSelected = selectedItems.size > 0 && selectedItems.size < filteredAndSortedItems.length;
   const selectAllCheckedState: boolean | 'indeterminate' = isAllSelected
@@ -142,9 +142,9 @@ export function LockManager() {
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Controls */}
+      {}
       <div className="flex items-center gap-1 px-2 py-1 border-b border-falbor-elements-borderColor">
-        {/* Search Input */}
+        {}
         <div className="relative flex-1">
           <span className="absolute left-2 top-1/2 -translate-y-1/2 text-falbor-elements-textTertiary i-ph:magnifying-glass text-xs pointer-events-none" />
           <input
@@ -156,7 +156,7 @@ export function LockManager() {
             style={{ minWidth: 0 }}
           />
         </div>
-        {/* Filter Select */}
+        {}
         <select
           className="text-xs px-1 py-0.5 h-6 bg-falbor-elements-background-depth-2 text-falbor-elements-textPrimary rounded border border-falbor-elements-borderColor focus:outline-none"
           value={filter}
@@ -168,7 +168,7 @@ export function LockManager() {
         </select>
       </div>
 
-      {/* Header Row with Select All */}
+      {}
       <div className="flex items-center justify-between px-2 py-1 text-xs text-falbor-elements-textSecondary">
         <div>
           <Checkbox
@@ -176,7 +176,7 @@ export function LockManager() {
             onCheckedChange={handleSelectAll}
             className="w-3 h-3 rounded border-falbor-elements-borderColor mr-2"
             aria-label="Select all items"
-            disabled={filteredAndSortedItems.length === 0} // Disable if no items to select
+            disabled={filteredAndSortedItems.length === 0} 
           />
           <span>All</span>
         </div>
@@ -192,7 +192,7 @@ export function LockManager() {
         <div></div>
       </div>
 
-      {/* List of locked items */}
+      {}
       <div className="flex-1 overflow-auto modern-scrollbar px-1 py-1">
         {filteredAndSortedItems.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-falbor-elements-textTertiary text-xs gap-2">
@@ -213,7 +213,7 @@ export function LockManager() {
                   checked={selectedItems.has(item.path)}
                   onCheckedChange={() => handleSelectItem(item.path)}
                   className="w-3 h-3 rounded border-falbor-elements-borderColor"
-                  aria-labelledby={`item-label-${item.path}`} // For accessibility
+                  aria-labelledby={`item-label-${item.path}`} 
                 />
                 <span
                   className={classNames(
@@ -224,7 +224,7 @@ export function LockManager() {
                 <span id={`item-label-${item.path}`} className="truncate flex-1 text-xs" title={item.path}>
                   {item.path.replace('/home/project/', '')}
                 </span>
-                {/* ... rest of the item details and buttons ... */}
+                {}
                 <span
                   className={classNames(
                     'inline-flex items-center px-1 rounded-sm text-xs',
@@ -252,7 +252,7 @@ export function LockManager() {
         )}
       </div>
 
-      {/* Footer */}
+      {}
       <div className="px-2 py-1 border-t border-falbor-elements-borderColor bg-falbor-elements-background-depth-2 text-xs text-falbor-elements-textTertiary flex justify-between items-center">
         <div>
           {filteredAndSortedItems.length} item(s) • {selectedItems.size} selected

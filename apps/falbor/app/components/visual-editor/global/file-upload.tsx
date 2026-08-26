@@ -5,7 +5,7 @@ import React, { useState } from 'react'
 import { Button } from '../ui/button'
 
 type Props = {
-  apiEndpoint?: string // Kept for prop compatibility but unused
+  apiEndpoint?: string 
   onChange: (url?: string) => void
   value?: string
 }

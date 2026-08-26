@@ -3,13 +3,13 @@ import React, { useMemo } from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function ActivityChart({ events = [] }: { events?: any[] }) {
-  // Aggregate events by day for the last 7 days
+  
   const chartData = useMemo(() => {
     const data: any[] = [];
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // Create 7 days of empty data
+    
     for (let i = 6; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
@@ -20,7 +20,7 @@ export function ActivityChart({ events = [] }: { events?: any[] }) {
       });
     }
 
-    // Fill in real data
+    
     events.forEach(event => {
       const eventDate = new Date(event.timestamp);
       eventDate.setHours(0, 0, 0, 0);
@@ -30,9 +30,9 @@ export function ActivityChart({ events = [] }: { events?: any[] }) {
       }
     });
 
-    // Return completely real data
+    
     return data.map((d) => ({
-      name: d.date.split(',')[0], // e.g. "Mon, Jan 1" -> "Mon"
+      name: d.date.split(',')[0], 
       fullDateStr: d.date,
       errors: d.errors
     }));
@@ -40,7 +40,7 @@ export function ActivityChart({ events = [] }: { events?: any[] }) {
 
   return (
     <div className="w-full mt-6 rounded-2xl border border-gray-200/60 dark:border-gray-800/60 bg-white/50 dark:bg-gray-900/20 backdrop-blur-sm p-6 shadow-sm relative overflow-hidden">
-      {/* Decorative gradient blur in background */}
+      {}
       <div className="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 bg-indigo-500/10 dark:bg-indigo-500/5 blur-3xl rounded-full pointer-events-none" />
 
       <div className="flex items-end justify-between mb-8 relative z-10">

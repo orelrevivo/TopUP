@@ -82,8 +82,9 @@ const Checkout = (props: Props) => {
             className: 'z-[100000]',
             variant: 'destructive',
             title: 'Oppse!',
-            //@ts-ignore
-            description: error.message,
+
+            description:
+              error instanceof Error ? error.message : String(error),
           })
         }
       }

@@ -1,10 +1,7 @@
 'use client';
-/*
- * @ts-nocheck
- * Preventing TS checks with files presented in the video for a better presentation.
- */
+
 import { MODEL_REGEX, PROVIDER_REGEX } from '~/utils/constants';
-import { Markdown } from '~/components/chat/Markdown';
+import { Markdown } from '~/components/chat/messages/Markdown';
 import { useStore } from '@nanostores/react';
 import { profileStore } from '~/lib/stores/profile';
 import { useState } from 'react';
@@ -29,7 +26,7 @@ interface UserMessageProps {
 export function HackingUserMessage({ content, parts }: UserMessageProps) {
   const profile = useStore(profileStore);
 
-  // Extract images from parts - look for file parts with image mime types
+  
   const images =
     parts?.filter(
       (part): part is FileUIPart => part.type === 'file' && 'mimeType' in part && part.mimeType.startsWith('image/'),

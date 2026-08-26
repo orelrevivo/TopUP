@@ -20,7 +20,7 @@ interface WorkflowListProps {
   onSelectWorkflow: (id: string | null) => void;
 }
 
-// Templates have been moved to WorkflowTemplates.tsx
+
 
 export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
   const params = useParams();
@@ -30,7 +30,7 @@ export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
   const [workflows, setWorkflows] = useState<Workflow[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Duplicate to chat state
+  
   const [duplicateModalOpen, setDuplicateModalOpen] = useState(false);
   const [workflowToDuplicate, setWorkflowToDuplicate] = useState<Workflow | null>(null);
   const [chats, setChats] = useState<{ id: string, title: string }[]>([]);
@@ -95,12 +95,12 @@ export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
     setLoadingChats(true);
 
     try {
-      // 1. Fetch server chats (hacking)
+      
       const res = await fetch('/api/chats/list');
       const data = await res.json();
       const serverChats = data.success ? data.data : [];
 
-      // 2. Fetch local indexedDB chats (standard Falbor)
+      
       const localItems = await getAll();
       const localChats = localItems.map(item => ({
         id: item.urlId as string,
@@ -108,14 +108,14 @@ export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
         createdAt: item.timestamp
       }));
 
-      // 3. Combine and sort
+      
       const combined = [...serverChats, ...localChats].sort((a, b) => {
         const dateA = new Date(a.createdAt).getTime();
         const dateB = new Date(b.createdAt).getTime();
         return dateB - dateA;
       });
 
-      // Filter out duplicate IDs just in case
+      
       const unique = Array.from(new Map(combined.map(c => [c.id, c])).values());
 
       setChats(unique);
@@ -138,7 +138,7 @@ export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
     <div className="flex-1 overflow-y-auto w-full">
       <div className="w-full flex flex-col">
 
-        {/* Your Workflows Section */}
+        {}
         <div>
           <h1 className='ml-4 pb-2 pt-2 text-xl'>Your Workflows</h1>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0 border-y border-falbor-elements-borderColor">
@@ -159,7 +159,7 @@ export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
                   onClick={() => onSelectWorkflow(wf.id)}
                   className="group flex flex-col bg-falbor-elements-background-depth-1 border-r border-b-0 border-falbor-elements-borderColor overflow-hidden hover:bg-falbor-elements-background-depth-2 transition-all cursor-pointer relative rounded-none"
                 >
-                  {/* Thumbnail Section */}
+                  {}
                   <div
                     className="h-56 bg-falbor-elements-background-depth-3 border-b border-falbor-elements-borderColor relative overflow-hidden group-hover:opacity-90"
                     onClick={() => onSelectWorkflow(wf.id)}
@@ -173,7 +173,7 @@ export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
                     )}
                   </div>
 
-                  {/* Content Section */}
+                  {}
                   <div className="p-6 flex flex-col flex-1">
                     <div className="flex items-start justify-between gap-2 mb-2">
                       <h3 onClick={() => onSelectWorkflow(wf.id)} className="font-semibold text-xl text-falbor-elements-textPrimary line-clamp-1 hover:underline">{wf.name}</h3>
@@ -235,7 +235,7 @@ export function WorkflowList({ onSelectWorkflow }: WorkflowListProps) {
 
       </div>
 
-      {/* Duplicate to Chat Modal */}
+      {}
       <Dialog.Root open={duplicateModalOpen} onOpenChange={setDuplicateModalOpen}>
         <Dialog.Portal>
           <Dialog.Overlay className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 animate-in fade-in" />

@@ -14,7 +14,7 @@ interface ServiceHeaderProps {
 
 export const ServiceHeader = memo(
   ({
-    icon: Icon, // eslint-disable-line @typescript-eslint/naming-convention
+    icon: Icon, 
     title,
     description,
     onTestConnection,

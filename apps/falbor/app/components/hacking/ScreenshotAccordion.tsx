@@ -76,7 +76,7 @@ export function ScreenshotAccordion({ url, title }: { url: string; title: string
         </AnimatePresence>
       </div>
 
-      {/* Fullscreen Lightbox using React Portal to escape all containers */}
+      {}
       {isFullscreen && typeof window !== 'undefined' && createPortal(
         <AnimatePresence>
           <motion.div

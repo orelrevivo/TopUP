@@ -44,7 +44,7 @@ interface LogDetails extends Record<string, any> {
   message: string;
 }
 
-const MAX_LOGS = 1000; // Maximum number of logs to keep in memory
+const MAX_LOGS = 1000;
 
 class LogStore {
   private _logs = map<Record<string, LogEntry>>({});
@@ -52,16 +52,13 @@ class LogStore {
   private _readLogs = new Set<string>();
 
   constructor() {
-    // Load saved logs from cookies on initialization
     this._loadLogs();
 
-    // Only load read logs in browser environment
     if (typeof window !== 'undefined') {
       this._loadReadLogs();
     }
   }
 
-  // Expose the logs store for subscription
   get logs() {
     return this._logs;
   }
@@ -125,7 +122,6 @@ class LogStore {
     }
   }
 
-  // Base log method for general logging
   private _addLog(
     message: string,
     level: LogEntry['level'],
@@ -151,7 +147,6 @@ class LogStore {
     return id;
   }
 
-  // Specialized method for API logging
   private _addApiLog(
     message: string,
     method: string,
@@ -172,22 +167,18 @@ class LogStore {
     });
   }
 
-  // System events
   logSystem(message: string, details?: Record<string, any>) {
     return this._addLog(message, 'info', 'system', details);
   }
 
-  // Provider events
   logProvider(message: string, details?: Record<string, any>) {
     return this._addLog(message, 'info', 'provider', details);
   }
 
-  // User actions
   logUserAction(message: string, details?: Record<string, any>) {
     return this._addLog(message, 'info', 'user', details);
   }
 
-  // API Connection Logging
   logAPIRequest(endpoint: string, method: string, duration: number, statusCode: number, details?: Record<string, any>) {
     const message = `${method} ${endpoint} - ${statusCode} (${duration}ms)`;
     const level = statusCode >= 400 ? 'error' : statusCode >= 300 ? 'warning' : 'info';
@@ -202,7 +193,6 @@ class LogStore {
     });
   }
 
-  // Authentication Logging
   logAuth(
     action: 'login' | 'logout' | 'token_refresh' | 'key_validation',
     success: boolean,
@@ -219,7 +209,6 @@ class LogStore {
     });
   }
 
-  // Network Status Logging
   logNetworkStatus(status: 'online' | 'offline' | 'reconnecting' | 'connected', details?: Record<string, any>) {
     const message = `Network ${status}`;
     const level = status === 'offline' ? 'error' : status === 'reconnecting' ? 'warning' : 'info';
@@ -231,7 +220,6 @@ class LogStore {
     });
   }
 
-  // Database Operations Logging
   logDatabase(operation: string, success: boolean, duration: number, details?: Record<string, any>) {
     const message = `DB ${operation} - ${success ? 'Success' : 'Failed'} (${duration}ms)`;
     const level = success ? 'info' : 'error';
@@ -245,7 +233,6 @@ class LogStore {
     });
   }
 
-  // Error events
   logError(message: string, error?: Error | unknown, details?: Record<string, any>) {
     const errorDetails =
       error instanceof Error
@@ -260,12 +247,10 @@ class LogStore {
     return this._addLog(message, 'error', 'error', errorDetails);
   }
 
-  // Warning events
   logWarning(message: string, details?: Record<string, any>) {
     return this._addLog(message, 'warning', 'system', details);
   }
 
-  // Debug events
   logDebug(message: string, details?: Record<string, any>) {
     return this._addLog(message, 'debug', 'system', details);
   }
@@ -308,7 +293,6 @@ class LogStore {
     this._saveReadLogs();
   }
 
-  // API interactions
   logApiCall(
     method: string,
     endpoint: string,
@@ -336,7 +320,6 @@ class LogStore {
     );
   }
 
-  // Network operations
   logNetworkRequest(
     method: string,
     url: string,
@@ -364,7 +347,6 @@ class LogStore {
     );
   }
 
-  // Authentication events
   logAuthEvent(event: string, success: boolean, details?: Record<string, any>) {
     return this._addLog(
       `Auth ${event} ${success ? 'succeeded' : 'failed'}`,
@@ -378,7 +360,6 @@ class LogStore {
     );
   }
 
-  // Performance tracking
   logPerformance(operation: string, duration: number, details?: Record<string, any>) {
     return this._addLog(
       `Performance: ${operation}`,
@@ -396,7 +377,6 @@ class LogStore {
     );
   }
 
-  // Error handling
   logErrorWithStack(error: Error, category: LogEntry['category'] = 'error', details?: Record<string, any>) {
     return this._addLog(
       error.message,
@@ -414,13 +394,11 @@ class LogStore {
     );
   }
 
-  // Refresh logs (useful for real-time updates)
   refreshLogs() {
     const currentLogs = this._logs.get();
     this._logs.set({ ...currentLogs });
   }
 
-  // Enhanced logging methods
   logInfo(message: string, details: LogDetails) {
     return this._addLog(message, 'info', 'system', details);
   }

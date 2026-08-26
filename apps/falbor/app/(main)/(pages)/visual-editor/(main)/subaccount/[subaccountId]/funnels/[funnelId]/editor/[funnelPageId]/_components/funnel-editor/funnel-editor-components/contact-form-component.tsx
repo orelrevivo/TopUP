@@ -75,7 +75,7 @@ const ContactFormComponent = (props: Props) => {
         ...values,
         subAccountId: subaccountId,
       })
-      //WIP Call trigger endpoint
+      
       await saveActivityLogsNotification({
         agencyId: undefined,
         description: `A New contact signed up | ${response?.name}`,

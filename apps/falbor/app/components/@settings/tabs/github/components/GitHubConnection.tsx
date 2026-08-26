@@ -24,10 +24,10 @@ export function GitHubConnection({ connectionTest, onTestConnection }: GitHubCon
 
   const handleConnect = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Securely handling connection
+    
 
     if (!token.trim()) {
-      // No token provided, returning early
+      
       return;
     }
 
@@ -35,11 +35,11 @@ export function GitHubConnection({ connectionTest, onTestConnection }: GitHubCon
       console.log('Calling connect function...');
       await connect(token, tokenType);
       console.log('Connect function completed successfully');
-      setToken(''); // Clear token on successful connection
+      setToken(''); 
     } catch (error) {
       console.log('Connect function failed:', error);
 
-      // Error handling is done in the hook
+      
     }
   };
 

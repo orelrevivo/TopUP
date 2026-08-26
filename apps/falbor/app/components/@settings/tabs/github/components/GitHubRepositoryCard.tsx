@@ -70,7 +70,7 @@ export function GitHubRepositoryCard({ repo, onClone }: GitHubRepositoryCardProp
             </span>
           </div>
 
-          {/* Repository topics/tags */}
+          {}
           {repo.topics && repo.topics.length > 0 && (
             <div className="flex items-center gap-2 text-xs">
               {repo.topics.slice(0, 3).map((topic) => (
@@ -88,13 +88,13 @@ export function GitHubRepositoryCard({ repo, onClone }: GitHubRepositoryCardProp
             </div>
           )}
 
-          {/* Repository size if available */}
+          {}
           {repo.size && (
             <div className="text-xs text-falbor-elements-textTertiary">Size: {(repo.size / 1024).toFixed(1)} MB</div>
           )}
         </div>
 
-        {/* Bottom section with Clone button positioned at bottom right */}
+        {}
         <div className="flex items-center justify-between pt-3 mt-auto">
           <span className="flex items-center gap-1 text-xs text-falbor-elements-textSecondary group-hover:text-falbor-elements-item-contentAccent transition-colors">
             <div className="i-ph:arrow-square-out w-3.5 h-3.5" />

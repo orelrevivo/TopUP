@@ -15,7 +15,7 @@ export function SourcesHistoryGrid({ history }: { history: SavedInvestigation[] 
   const router = useRouter();
 
   if (!history || history.length === 0) {
-    return null; // Don't show anything if there's no history
+    return null; 
   }
 
   return (

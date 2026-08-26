@@ -31,7 +31,7 @@ export function ProfileAppsGrid({ apps, isCurrentUser }: ProfileAppsGridProps) {
             key={app.chatId}
             className="group relative overflow-hidden flex flex-col hover:border-purple-500/50 transition-colors"
           >
-            {/* Clickable Area for opening URL */}
+            {}
             <a 
               href={app.url} 
               target="_blank" 
@@ -55,7 +55,7 @@ export function ProfileAppsGrid({ apps, isCurrentUser }: ProfileAppsGridProps) {
               </div>
             </a>
 
-            {/* Edit Button (Visible on Hover for owner) */}
+            {}
             {isCurrentUser && (
               <button
                 onClick={(e) => {

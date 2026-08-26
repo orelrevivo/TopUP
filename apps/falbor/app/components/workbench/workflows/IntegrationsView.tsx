@@ -1,5 +1,5 @@
 import React, { memo } from 'react';
-import { McpTools } from '~/components/chat/MCPTools';
+import { McpTools } from '~/components/chat/tools/MCPTools';
 
 export const IntegrationsView = memo(() => {
   return (
@@ -12,7 +12,7 @@ export const IntegrationsView = memo(() => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Google Workspace */}
+        {}
         <div className="border border-falbor-elements-borderColor bg-falbor-elements-background-depth-1 rounded-lg p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center text-2xl shadow-sm">
@@ -28,7 +28,7 @@ export const IntegrationsView = memo(() => {
           </button>
         </div>
 
-        {/* Slack */}
+        {}
         <div className="border border-falbor-elements-borderColor bg-falbor-elements-background-depth-1 rounded-lg p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-md flex items-center justify-center text-2xl shadow-sm">

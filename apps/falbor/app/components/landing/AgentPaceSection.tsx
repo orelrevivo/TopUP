@@ -48,7 +48,7 @@ export default function AgentPaceSection() {
 
     return (
         <div className="relative w-full min-h-[800px] flex items-start justify-start bg-white overflow-hidden pt-28 pb-72 border-t border-zinc-200">
-            {/* Background graph */}
+            {}
             <div
                 className="absolute bottom-0 left-0 right-0 z-10 pointer-events-none opacity-100 h-[65%]"
                 style={{

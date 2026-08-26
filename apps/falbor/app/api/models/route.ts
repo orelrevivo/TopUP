@@ -3,7 +3,7 @@ const json = NextResponse.json;
 import { LLMManager } from '~/lib/modules/llm/manager';
 import type { ModelInfo } from '~/lib/modules/llm/types';
 import type { ProviderInfo } from '~/types/model';
-import { getApiKeysFromCookie, getProviderSettingsFromCookie } from '~/lib/api/cookies';
+import { getProviderSettingsFromCookie } from '~/lib/api/cookies';
 
 interface ModelsResponse {
   modelList: ModelInfo[];
@@ -41,7 +41,7 @@ export async function GET(
 
   // Get client side maintained API keys and provider settings from cookies
   const cookieHeader = request.headers.get('Cookie');
-  const apiKeys = getApiKeysFromCookie(cookieHeader);
+  const apiKeys: Record<string, string> = {};
   const providerSettings = getProviderSettingsFromCookie(cookieHeader);
 
   const { providers, defaultProvider } = getProviderInfo(llmManager);

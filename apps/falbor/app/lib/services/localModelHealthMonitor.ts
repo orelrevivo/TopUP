@@ -1,4 +1,3 @@
-// Simple EventEmitter implementation for browser compatibility
 class SimpleEventEmitter {
   private _events: Record<string, ((...args: any[]) => void)[]> = {};
 
@@ -53,23 +52,18 @@ export interface HealthCheckResult {
 export class LocalModelHealthMonitor extends SimpleEventEmitter {
   private _healthStatuses = new Map<string, ModelHealthStatus>();
   private _checkIntervals = new Map<string, NodeJS.Timeout>();
-  private readonly _defaultCheckInterval = 30000; // 30 seconds
-  private readonly _healthCheckTimeout = 10000; // 10 seconds
+  private readonly _defaultCheckInterval = 30000;
+  private readonly _healthCheckTimeout = 10000;
 
   constructor() {
     super();
   }
 
-  /**
-   * Start monitoring a local provider
-   */
   startMonitoring(provider: 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl: string, checkInterval?: number): void {
     const key = this._getProviderKey(provider, baseUrl);
 
-    // Stop existing monitoring if any
     this.stopMonitoring(provider, baseUrl);
 
-    // Initialize status
     this._healthStatuses.set(key, {
       provider,
       baseUrl,
@@ -77,20 +71,15 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
       lastChecked: new Date(),
     });
 
-    // Start periodic health checks
     const interval = setInterval(async () => {
       await this.performHealthCheck(provider, baseUrl);
     }, checkInterval || this._defaultCheckInterval);
 
     this._checkIntervals.set(key, interval);
 
-    // Perform initial health check
     this.performHealthCheck(provider, baseUrl);
   }
 
-  /**
-   * Stop monitoring a local provider
-   */
   stopMonitoring(provider: 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl: string): void {
     const key = this._getProviderKey(provider, baseUrl);
 
@@ -104,24 +93,15 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
     this._healthStatuses.delete(key);
   }
 
-  /**
-   * Get current health status for a provider
-   */
   getHealthStatus(provider: 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl: string): ModelHealthStatus | undefined {
     const key = this._getProviderKey(provider, baseUrl);
     return this._healthStatuses.get(key);
   }
 
-  /**
-   * Get all health statuses
-   */
   getAllHealthStatuses(): ModelHealthStatus[] {
     return Array.from(this._healthStatuses.values());
   }
 
-  /**
-   * Perform a manual health check
-   */
   async performHealthCheck(
     provider: 'Ollama' | 'LMStudio' | 'OpenAILike',
     baseUrl: string,
@@ -129,7 +109,6 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
     const key = this._getProviderKey(provider, baseUrl);
     const startTime = Date.now();
 
-    // Update status to checking
     const currentStatus = this._healthStatuses.get(key);
 
     if (currentStatus) {
@@ -142,7 +121,6 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
       const result = await this._checkProviderHealth(provider, baseUrl);
       const responseTime = Date.now() - startTime;
 
-      // Update health status
       const healthStatus: ModelHealthStatus = {
         provider,
         baseUrl,
@@ -188,9 +166,6 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
     }
   }
 
-  /**
-   * Check health of a specific provider
-   */
   private async _checkProviderHealth(
     provider: 'Ollama' | 'LMStudio' | 'OpenAILike',
     baseUrl: string,
@@ -214,14 +189,10 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
     }
   }
 
-  /**
-   * Check Ollama health
-   */
   private async _checkOllamaHealth(baseUrl: string, signal: AbortSignal): Promise<HealthCheckResult> {
     try {
       console.log(`[Health Check] Checking Ollama at ${baseUrl}`);
 
-      // Check if Ollama is running
       const response = await fetch(`${baseUrl}/api/tags`, {
         method: 'GET',
         signal,
@@ -236,7 +207,6 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
 
       console.log(`[Health Check] Ollama healthy with ${models.length} models`);
 
-      // Try to get version info
       let version: string | undefined;
 
       try {
@@ -247,12 +217,11 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
           version = versionData.version;
         }
       } catch {
-        // Version endpoint might not be available in older versions
       }
 
       return {
         isHealthy: true,
-        responseTime: 0, // Will be calculated by caller
+        responseTime: 0,
         availableModels: models,
         version,
       };
@@ -266,12 +235,8 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
     }
   }
 
-  /**
-   * Check LM Studio health
-   */
   private async _checkLMStudioHealth(baseUrl: string, signal: AbortSignal): Promise<HealthCheckResult> {
     try {
-      // Normalize URL to ensure /v1 prefix
       const normalizedUrl = baseUrl.includes('/v1') ? baseUrl : `${baseUrl}/v1`;
 
       const response = await fetch(`${normalizedUrl}/models`, {
@@ -283,7 +248,6 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
       });
 
       if (!response.ok) {
-        // Check if this is a CORS error
         if (response.type === 'opaque' || response.status === 0) {
           throw new Error(
             'CORS_ERROR: LM Studio server is not configured to allow requests from this origin. Please configure CORS in LM Studio settings.',
@@ -304,7 +268,6 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      // Check if this is a CORS error
       if (
         errorMessage.includes('CORS') ||
         errorMessage.includes('NetworkError') ||
@@ -326,12 +289,8 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
     }
   }
 
-  /**
-   * Check OpenAI-like provider health
-   */
   private async _checkOpenAILikeHealth(baseUrl: string, signal: AbortSignal): Promise<HealthCheckResult> {
     try {
-      // Normalize URL to include /v1 if needed
       const normalizedUrl = baseUrl.includes('/v1') ? baseUrl : `${baseUrl}/v1`;
 
       const response = await fetch(`${normalizedUrl}/models`, {
@@ -363,18 +322,11 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
     }
   }
 
-  /**
-   * Generate a unique key for a provider
-   */
   private _getProviderKey(provider: string, baseUrl: string): string {
     return `${provider}:${baseUrl}`;
   }
 
-  /**
-   * Clean up all monitoring
-   */
   destroy(): void {
-    // Clear all intervals
     for (const interval of this._checkIntervals.values()) {
       clearInterval(interval);
     }
@@ -385,5 +337,4 @@ export class LocalModelHealthMonitor extends SimpleEventEmitter {
   }
 }
 
-// Singleton instance
 export const localModelHealthMonitor = new LocalModelHealthMonitor();

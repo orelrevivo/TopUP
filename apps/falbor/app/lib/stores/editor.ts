@@ -50,7 +50,7 @@ export class EditorStore {
               {
                 value: dirent.content,
                 filePath,
-                isBinary: dirent.isBinary, // Add this line
+                isBinary: dirent.isBinary,
                 scroll: previousDocument?.scroll,
               },
             ] as [string, EditorDocument];
@@ -87,26 +87,16 @@ export class EditorStore {
     if (!documentState) {
       return;
     }
-
-    // Check if the file is locked by getting the file from the filesStore
     const file = this.#filesStore.getFile(filePath);
 
     if (file?.isLocked) {
       logger.warn(`Attempted to update locked file: ${filePath}`);
       return;
     }
-
-    /*
-     * For scoped locks, we would need to implement diff checking here
-     * to determine if the edit is modifying existing code or just adding new code
-     * This is a more complex feature that would be implemented in a future update
-     */
-
     const currentContent = documentState.value;
     const contentChanged = currentContent !== newContent;
 
     if (contentChanged) {
-      // Decouple from React's synchronous update queue to prevent 'Maximum update depth exceeded'
       setTimeout(() => {
         this.documents.setKey(filePath, {
           ...documentState,

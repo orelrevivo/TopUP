@@ -60,7 +60,7 @@ export function ConnectionsTable({ connections, isLoading, onAddConnection, onSe
             </thead>
             <tbody className="divide-y divide-falbor-elements-borderColor dark:divide-falbor-elements-borderColor-dark">
               {connections.map((conn) => {
-                // Extract MCP account info from config
+                
                 const isApiKey = conn.type === 'api_key';
                 const mcpName = conn.config?.authed_user?.name || conn.config?.user?.name || conn.name;
                 const mcpEmail = isApiKey

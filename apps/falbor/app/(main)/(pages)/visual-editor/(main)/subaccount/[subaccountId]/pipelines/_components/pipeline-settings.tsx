@@ -50,7 +50,7 @@ const PipelineSettings = ({
                 onClick={async () => {
                   try {
                     await deletePipeline(pipelineId)
-                    //Challenge: Activity log
+                    
                     toast({
                       title: 'Deleted',
                       description: 'Pipeline is deleted',

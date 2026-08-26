@@ -11,7 +11,6 @@ const githubConnectionAtom = atom<GitHubConnection>({
   tokenType: 'classic',
 });
 
-// Initialize connection from localStorage on startup
 function initializeConnection() {
   try {
     const savedConnection = localStorage.getItem('github_connection');
@@ -19,12 +18,10 @@ function initializeConnection() {
     if (savedConnection) {
       const parsed = JSON.parse(savedConnection);
 
-      // Ensure tokenType is set
       if (!parsed.tokenType) {
         parsed.tokenType = 'classic';
       }
 
-      // Only set if we have a valid user
       if (parsed.user) {
         githubConnectionAtom.set(parsed);
       }
@@ -35,15 +32,12 @@ function initializeConnection() {
   }
 }
 
-// Initialize on module load (client-side only)
 if (typeof window !== 'undefined') {
   initializeConnection();
 }
 
-// Computed store for checking if connected
 export const isGitHubConnected = computed(githubConnectionAtom, (connection) => !!connection.user);
 
-// Computed store for GitHub stats summary
 export const githubStatsSummary = computed(githubConnectionAtom, (connection) => {
   if (!connection.stats) {
     return null;
@@ -52,16 +46,12 @@ export const githubStatsSummary = computed(githubConnectionAtom, (connection) =>
   return calculateStatsSummary(connection.stats);
 });
 
-// Connection status atoms
 export const isGitHubConnecting = atom(false);
 export const isGitHubLoadingStats = atom(false);
 
-// GitHub connection store methods
 export const githubConnectionStore = {
-  // Get current connection
   get: () => githubConnectionAtom.get(),
 
-  // Connect to GitHub
   async connect(token: string, tokenType: 'classic' | 'fine-grained' = 'classic'): Promise<void> {
     if (isGitHubConnecting.get()) {
       throw new Error('Connection already in progress');
@@ -70,10 +60,8 @@ export const githubConnectionStore = {
     isGitHubConnecting.set(true);
 
     try {
-      // Fetch user data
       const { user, rateLimit } = await gitHubApiService.fetchUser(token, tokenType);
 
-      // Create connection object
       const connection: GitHubConnection = {
         user,
         token,
@@ -81,15 +69,12 @@ export const githubConnectionStore = {
         rateLimit,
       };
 
-      // Set cookies for client-side access
       Cookies.set('githubUsername', user.login);
       Cookies.set('githubToken', token);
       Cookies.set('git:github.com', JSON.stringify({ username: token, password: 'x-oauth-basic' }));
 
-      // Store connection details in localStorage
       localStorage.setItem('github_connection', JSON.stringify(connection));
 
-      // Update atom
       githubConnectionAtom.set(connection);
 
       logStore.logInfo('Connected to GitHub', {
@@ -97,7 +82,6 @@ export const githubConnectionStore = {
         message: `Connected to GitHub as ${user.login}`,
       });
 
-      // Fetch stats in background
       this.fetchStats().catch((error) => {
         console.error('Failed to fetch initial GitHub stats:', error);
       });
@@ -113,24 +97,19 @@ export const githubConnectionStore = {
     }
   },
 
-  // Disconnect from GitHub
   disconnect(): void {
-    // Clear atoms
     githubConnectionAtom.set({
       user: null,
       token: '',
       tokenType: 'classic',
     });
 
-    // Clear localStorage
     localStorage.removeItem('github_connection');
 
-    // Clear cookies
     Cookies.remove('githubUsername');
     Cookies.remove('githubToken');
     Cookies.remove('git:github.com');
 
-    // Clear API service cache
     gitHubApiService.clearCache();
 
     logStore.logInfo('Disconnected from GitHub', {
@@ -139,7 +118,6 @@ export const githubConnectionStore = {
     });
   },
 
-  // Fetch GitHub stats
   async fetchStats(): Promise<void> {
     const connection = githubConnectionAtom.get();
 
@@ -148,7 +126,7 @@ export const githubConnectionStore = {
     }
 
     if (isGitHubLoadingStats.get()) {
-      return; // Already loading
+      return;
     }
 
     isGitHubLoadingStats.set(true);
@@ -156,16 +134,13 @@ export const githubConnectionStore = {
     try {
       const stats = await gitHubApiService.fetchStats(connection.token, connection.tokenType);
 
-      // Update connection with stats
       const updatedConnection: GitHubConnection = {
         ...connection,
         stats,
       };
 
-      // Update localStorage
       localStorage.setItem('github_connection', JSON.stringify(updatedConnection));
 
-      // Update atom
       githubConnectionAtom.set(updatedConnection);
 
       logStore.logInfo('GitHub stats refreshed', {
@@ -175,7 +150,6 @@ export const githubConnectionStore = {
     } catch (error) {
       console.error('Failed to fetch GitHub stats:', error);
 
-      // If the error is due to expired token, disconnect
       if (error instanceof Error && error.message.includes('401')) {
         logStore.logError('GitHub token has expired', {
           type: 'system',
@@ -190,7 +164,6 @@ export const githubConnectionStore = {
     }
   },
 
-  // Update token type
   updateTokenType(tokenType: 'classic' | 'fine-grained'): void {
     const connection = githubConnectionAtom.get();
     const updatedConnection = {
@@ -202,7 +175,6 @@ export const githubConnectionStore = {
     localStorage.setItem('github_connection', JSON.stringify(updatedConnection));
   },
 
-  // Clear stats cache
   clearCache(): void {
     const connection = githubConnectionAtom.get();
 
@@ -211,9 +183,7 @@ export const githubConnectionStore = {
     }
   },
 
-  // Subscribe to connection changes
   subscribe: githubConnectionAtom.subscribe.bind(githubConnectionAtom),
 };
 
-// Export the atom for direct access
 export { githubConnectionAtom };

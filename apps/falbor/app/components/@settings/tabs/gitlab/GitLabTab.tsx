@@ -6,7 +6,7 @@ import GitLabConnection from './components/GitLabConnection';
 import { StatsDisplay } from './components/StatsDisplay';
 import { RepositoryList } from './components/RepositoryList';
 
-// GitLab logo SVG component
+
 const GitLabLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
     <path
@@ -67,7 +67,7 @@ export default function GitLabTab() {
     }
   };
 
-  // Loading state for initial connection check
+  
   if (isLoading) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
@@ -85,7 +85,7 @@ export default function GitLabTab() {
     );
   }
 
-  // Error state for connection issues
+  
   if (error && !connection) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
@@ -100,7 +100,7 @@ export default function GitLabTab() {
     );
   }
 
-  // Not connected state
+  
   if (!isConnected || !connection) {
     return (
       <div className="max-w-2xl mx-auto space-y-6">
@@ -119,7 +119,7 @@ export default function GitLabTab() {
 
   return (
     <div className="max-w-2xl mx-auto space-y-6">
-      {/* Header */}
+      {}
       <motion.div
         className="flex items-center justify-between gap-2"
         initial={{ opacity: 0, y: 20 }}
@@ -148,7 +148,7 @@ export default function GitLabTab() {
         Manage your GitLab integration with advanced repository features and comprehensive statistics
       </p>
 
-      {/* Connection Test Results */}
+      {}
       {connectionTest && (
         <div
           className={`p-3 rounded-lg border ${connectionTest.status === 'success'
@@ -189,10 +189,10 @@ export default function GitLabTab() {
         </div>
       )}
 
-      {/* GitLab Connection Component */}
+      {}
       <GitLabConnection connectionTest={connectionTest} onTestConnection={handleTestConnection} />
 
-      {/* User Profile Section */}
+      {}
       {connection?.user && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -246,7 +246,7 @@ export default function GitLabTab() {
         </motion.div>
       )}
 
-      {/* GitLab Stats Section */}
+      {}
       {connection?.stats && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -273,7 +273,7 @@ export default function GitLabTab() {
         </motion.div>
       )}
 
-      {/* GitLab Repositories Section */}
+      {}
       {connection?.stats?.projects && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}

@@ -10,7 +10,7 @@ import { verifyToken } from '~/lib/auth';
 import { inArray, and, eq } from 'drizzle-orm';
 import { stayupProjects } from '~/lib/db/schema';
 
-// Next.js Server Component
+
 export default async function IssuesPage({ params }: { params: { orgId: string } }) {
   const token = cookies().get('session')?.value;
   const payload = token ? await verifyToken(token) : null;
@@ -20,7 +20,7 @@ export default async function IssuesPage({ params }: { params: { orgId: string }
     return <div>Unauthorized. Please log in.</div>;
   }
 
-  // Validate the user has access to this organization
+  
   const organization = await db.query.stayupProjects.findFirst({
     where: and(
       eq(stayupProjects.id, params.orgId),

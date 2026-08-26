@@ -84,7 +84,7 @@ interface ModelManagerSkeletonProps {
 export function ModelManagerSkeleton({ className, cardCount = 3 }: ModelManagerSkeletonProps) {
   return (
     <div className={classNames('space-y-6', className)}>
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between">
         <div className="space-y-2">
           <LoadingSkeleton height="h-6" lines={1} className="w-48" />
@@ -96,7 +96,7 @@ export function ModelManagerSkeleton({ className, cardCount = 3 }: ModelManagerS
         </div>
       </div>
 
-      {/* Model Cards */}
+      {}
       <div className="space-y-4">
         {Array.from({ length: cardCount }).map((_, i) => (
           <ModelCardSkeleton key={i} />

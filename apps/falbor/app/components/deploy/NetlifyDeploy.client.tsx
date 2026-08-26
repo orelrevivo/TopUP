@@ -35,7 +35,7 @@ export function useNetlifyDeploy() {
         throw new Error('No active project found');
       }
 
-      // Create a deployment artifact for visual feedback
+      
       const deploymentId = `deploy-artifact`;
       workbenchStore.addArtifact({
         id: deploymentId,
@@ -46,10 +46,10 @@ export function useNetlifyDeploy() {
 
       const deployArtifact = workbenchStore.artifacts.get()[deploymentId];
 
-      // Notify that build is starting
+      
       deployArtifact.runner.handleDeployAction('building', 'running', { source: 'netlify' });
 
-      // Set up build action
+      
       const actionId = 'build-' + Date.now();
       const actionData: ActionCallbackData = {
         messageId: 'netlify build',
@@ -61,16 +61,16 @@ export function useNetlifyDeploy() {
         },
       };
 
-      // Add the action first
+      
       artifact.runner.addAction(actionData);
 
-      // Then run it
+      
       await artifact.runner.runAction(actionData);
 
       const buildOutput = artifact.runner.buildOutput;
 
       if (!buildOutput || buildOutput.exitCode !== 0) {
-        // Notify that build failed
+        
         deployArtifact.runner.handleDeployAction('building', 'failed', {
           error: formatBuildFailureOutput(buildOutput?.output),
           source: 'netlify',
@@ -78,29 +78,29 @@ export function useNetlifyDeploy() {
         throw new Error('Build failed');
       }
 
-      // Notify that build succeeded and deployment is starting
+      
       deployArtifact.runner.handleDeployAction('deploying', 'running', { source: 'netlify' });
 
-      // Get the build files
+      
       const container = await webcontainer;
 
-      // Check if the build path exists
+      
       let finalBuildPath = '';
       let buildPathExists = false;
 
-      // First trust the path returned by the action-runner
+      
       if (buildOutput.path) {
         try {
           await container.fs.readdir(buildOutput.path);
           finalBuildPath = buildOutput.path;
           buildPathExists = true;
         } catch (e) {
-          // Fall back to searching
+          
         }
       }
 
       if (!buildPathExists) {
-        // List of common output directories to check
+        
         const commonOutputDirs = ['dist', 'build', 'out', 'output', '.next', 'public'];
   
         for (const dir of commonOutputDirs) {
@@ -135,7 +135,7 @@ export function useNetlifyDeploy() {
               content = await container.fs.readFile(fullPath, 'utf-8');
             }
 
-            // Remove build path prefix from the path
+            
             const deployPath = fullPath.replace(finalBuildPath, '');
             files[deployPath] = { content, isBinary };
           } else if (entry.isDirectory()) {
@@ -149,7 +149,7 @@ export function useNetlifyDeploy() {
 
       const fileContents = await getAllFiles(finalBuildPath);
 
-      // Create file digests
+      
       const fileDigests: Record<string, string> = {};
       
       async function sha1(data: string | Uint8Array): Promise<string> {
@@ -165,7 +165,7 @@ export function useNetlifyDeploy() {
         fileDigests[normalizedPath] = hash;
       }
 
-      // Check existing site
+      
       let targetSiteId = localStorage.getItem(`netlify-site-${currentChatId}`);
       let siteInfo;
 
@@ -202,7 +202,7 @@ export function useNetlifyDeploy() {
         localStorage.setItem(`netlify-site-${currentChatId}`, newSite.id);
       }
 
-      // Create deploy
+      
       const deployResponse = await fetch(`https://api.netlify.com/api/v1/sites/${targetSiteId}/deploys`, {
         method: 'POST',
         headers: {
@@ -223,7 +223,7 @@ export function useNetlifyDeploy() {
 
       const deploy = await deployResponse.json();
 
-      // Poll until prepared
+      
       const MAX_WAIT_MS = 20_000;
       const POLL_INTERVAL_MS = 2_000;
       const startTime = Date.now();
@@ -242,7 +242,7 @@ export function useNetlifyDeploy() {
         }
 
         if (!filesUploaded && (deploymentStatus.state === 'prepared' || deploymentStatus.state === 'uploaded')) {
-          // Upload all files
+          
           for (const [filePath, { content }] of Object.entries(fileContents)) {
             const normalizedPath = filePath.startsWith('/') ? filePath : '/' + filePath;
             const encodedPath = normalizedPath
@@ -299,13 +299,13 @@ export function useNetlifyDeploy() {
         localStorage.setItem(`deploy-source-${currentChatId}`, 'netlify');
       }
 
-      // Notify that deployment completed successfully
+      
       deployArtifact.runner.handleDeployAction('complete', 'complete', {
         url: deployUrl,
         source: 'netlify',
       });
 
-      // Show success toast notification
+      
       toast.success(`🚀 Netlify deployment completed successfully!`);
 
       return true;

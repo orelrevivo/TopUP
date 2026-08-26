@@ -22,13 +22,15 @@ const FunnelStepCard = ({ activePage, funnelPage, index }: Props) => {
       {(provided, snapshot) => {
         if (snapshot.isDragging) {
           const offset = { x: 300 }
-          //@ts-ignore
-          const x = provided.draggableProps.style?.left - offset.x
-          //@ts-ignore
-          provided.draggableProps.style = {
-            ...provided.draggableProps.style,
-            //@ts-ignore
-            left: x,
+          const style = provided.draggableProps.style
+
+          if (style && 'left' in style) {
+            const x = style.left - offset.x
+
+            provided.draggableProps.style = {
+              ...style,
+              left: x,
+            }
           }
         }
         const component = (

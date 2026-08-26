@@ -43,8 +43,6 @@ export const FunnelPageSchema = z.object({
   pathName: z.string().optional(),
 })
 
-
-
 export type AuthUserWithAgencySigebarOptionsSubAccounts =
   Awaited<ReturnType<typeof getAuthUserDetails>>
 

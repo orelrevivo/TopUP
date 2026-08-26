@@ -32,7 +32,7 @@ export default function VercelConnection() {
   });
 
   useEffect(() => {
-    // Prevent multiple initializations
+    
     if (hasInitialized.current) {
       console.log('Vercel: Already initialized, skipping');
       return;
@@ -47,7 +47,7 @@ export default function VercelConnection() {
 
       hasInitialized.current = true;
 
-      // Auto-connect using environment variable if no existing connection but token exists
+      
       if (!connection.user && connection.token) {
         console.log('Vercel: Attempting auto-connection');
 
@@ -59,7 +59,7 @@ export default function VercelConnection() {
           console.error('Vercel auto-connection failed:', result.error);
         }
       } else if (connection.user && connection.token) {
-        // Fetch stats for existing connection
+        
         console.log('Vercel: Fetching stats for existing connection');
         await fetchVercelStats(connection.token);
       } else {
@@ -68,7 +68,7 @@ export default function VercelConnection() {
     };
 
     initializeConnection();
-  }, []); // Empty dependency array to run only once
+  }, []); 
 
   const handleConnect = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -88,7 +88,7 @@ export default function VercelConnection() {
 
       const userData = (await response.json()) as any;
       updateVercelConnection({
-        user: userData.user || userData, // Handle both possible structures
+        user: userData.user || userData, 
         token: connection.token,
       });
 
@@ -170,7 +170,7 @@ export default function VercelConnection() {
                     in your .env.local for automatic connection.
                   </p>
                 </div>
-                {/* Debug info - remove this later */}
+                {}
                 <div className="mt-2 text-xs text-gray-500">
                   <p>Debug: Token present: {connection.token ? '✅' : '❌'}</p>
                   <p>Debug: User present: {connection.user ? '✅' : '❌'}</p>
@@ -204,7 +204,7 @@ export default function VercelConnection() {
                 )}
               </button>
 
-              {/* Debug button - remove this later */}
+              {}
               <button
                 onClick={async () => {
                   console.log('Manual auto-connect test');
@@ -246,7 +246,7 @@ export default function VercelConnection() {
             </div>
 
             <div className="flex items-center gap-4 p-4 bg-[#F8F8F8] dark:bg-[#1A1A1A] rounded-lg">
-              {/* Debug output */}
+              {}
               <pre className="hidden">{JSON.stringify(connection.user, null, 2)}</pre>
 
               <img

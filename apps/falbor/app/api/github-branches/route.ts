@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 const json = NextResponse.json;
-import { getApiKeysFromCookie } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
 
 interface GitHubBranch {
@@ -50,8 +49,7 @@ async function githubBranchesLoader({ request, context }: { request: Request; co
       }
 
       // Get API keys from cookies (server-side only)
-      const cookieHeader = request.headers.get('Cookie');
-      const apiKeys = getApiKeysFromCookie(cookieHeader);
+      const apiKeys: Record<string, string> = {};
 
       // Try to get GitHub token from various sources
       githubToken =

@@ -22,7 +22,7 @@ export const SkillUploader: React.FC<SkillUploaderProps> = ({ onBack, onSkillCre
     if (!file) return;
 
     setFileName(file.name);
-    // Parse name from filename (e.g. "React Helper.md" -> "React Helper")
+    
     const parsedName = file.name.replace(/\.[^/.]+$/, "");
     setName(parsedName);
 

@@ -139,7 +139,6 @@ export class MCPService {
       throw new Error(`provided "type" is invalid, only "stdio", "sse" or "streamable-http" are valid options.`);
     }
 
-    // Check for type/field mismatch
     if (config.type === 'stdio' && !hasStdioField) {
       throw new Error(`missing "command" field.`);
     }
@@ -384,7 +383,6 @@ export class MCPService {
 
     const processedParts = await Promise.all(
       parts.map(async (part) => {
-        // Only process tool invocations parts
         if (part.type !== 'tool-invocation') {
           return part;
         }
@@ -392,7 +390,6 @@ export class MCPService {
         const { toolInvocation } = part;
         const { toolName, toolCallId } = toolInvocation;
 
-        // return part as-is if tool does not exist, or if it's not a tool call result
         if (!this.isValidToolName(toolName) || toolInvocation.state !== 'result') {
           return part;
         }
@@ -420,11 +417,9 @@ export class MCPService {
         } else if (toolInvocation.result === TOOL_EXECUTION_APPROVAL.REJECT) {
           result = TOOL_EXECUTION_DENIED;
         } else {
-          // For any unhandled responses, return the original part.
           return part;
         }
 
-        // Forward updated tool result to the client.
         dataStream.write(
           formatDataStreamPart('tool_result', {
             toolCallId,
@@ -432,7 +427,6 @@ export class MCPService {
           }),
         );
 
-        // Return updated toolInvocation with the actual result.
         return {
           ...part,
           toolInvocation: {
@@ -443,7 +437,6 @@ export class MCPService {
       }),
     );
 
-    // Finally return the processed messages
     return [...messages.slice(0, -1), { ...lastMessage, parts: processedParts }];
   }
 
@@ -464,7 +457,6 @@ export class MCPService {
     for (const [toolName, tool] of Object.entries(this._toolsWithoutExecute)) {
       const serverName = this._toolNamesToServerNames.get(toolName);
       if (serverName) {
-        // Allow exact matches or prefix matches (e.g. 'klipy' matches 'klipy-test')
         const isMatch = serverNames.some(req => serverName === req || serverName.startsWith(`${req}-`));
         if (isMatch) {
           tools[toolName] = tool;
@@ -472,7 +464,6 @@ export class MCPService {
       }
     }
 
-    // Check if any requested servers had 0 tools
     serverNames.forEach(reqServer => {
       const hasTools = Object.keys(tools).some(t => this._toolNamesToServerNames.get(t) === reqServer);
       if (!hasTools) {

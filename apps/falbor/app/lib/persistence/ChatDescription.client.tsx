@@ -3,7 +3,7 @@ import { TooltipProvider } from '@radix-ui/react-tooltip';
 import WithTooltip from '~/components/ui/Tooltip';
 import { useEditChatDescription } from '~/lib/hooks';
 import { description as descriptionStore } from '~/lib/persistence';
-import { ChatSettingsModal } from '~/components/chat/ChatSettingsModal';
+import { ChatSettingsModal } from '~/components/chat/modals/ChatSettingsModal';
 import { chatSettingsOpenStore } from '~/lib/stores/settings';
 
 export function ChatDescription() {
@@ -18,7 +18,7 @@ export function ChatDescription() {
   const settingsOpen = useStore(chatSettingsOpenStore);
 
   if (!initialDescription) {
-    // doing this to prevent showing edit button until chat description is set
+    
     return null;
   }
 

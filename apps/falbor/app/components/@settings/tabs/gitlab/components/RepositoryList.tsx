@@ -44,7 +44,7 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    setCurrentPage(1); // Reset to first page when searching
+    setCurrentPage(1); 
   };
 
   return (
@@ -71,7 +71,7 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
         )}
       </div>
 
-      {/* Search Input */}
+      {}
       <div className="relative">
         <input
           type="text"
@@ -89,7 +89,7 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
         </div>
       </div>
 
-      {/* Repository Grid */}
+      {}
       <div className="space-y-4">
         {filteredRepositories.length === 0 ? (
           <div className="text-center py-8 text-falbor-elements-textSecondary">
@@ -103,7 +103,7 @@ export function RepositoryList({ repositories, onClone, onRefresh, isRefreshing 
               ))}
             </div>
 
-            {/* Pagination Controls */}
+            {}
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-4 border-t border-falbor-elements-borderColor">
                 <div className="text-sm text-falbor-elements-textSecondary">

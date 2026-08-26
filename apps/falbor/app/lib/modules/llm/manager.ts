@@ -20,7 +20,6 @@ export class LLMManager {
     if (!LLMManager._instance) {
       LLMManager._instance = new LLMManager(env);
     } else if (Object.keys(env).length > 0) {
-      // Update env on subsequent calls so Cloudflare Workers get fresh bindings
       LLMManager._instance._env = env;
     }
 
@@ -32,12 +31,6 @@ export class LLMManager {
 
   private async _registerProvidersFromDirectory() {
     try {
-      /*
-       * Dynamically import all files from the providers directory
-       * const providerModules = import.meta.glob('./providers/*.ts', { eager: true });
-       */
-
-      // Look for exported classes that extend BaseProvider
       for (const exportedItem of Object.values(providers)) {
         if (typeof exportedItem === 'function' && exportedItem.prototype instanceof BaseProvider) {
           const provider = new exportedItem();
@@ -89,8 +82,6 @@ export class LLMManager {
     if (providerSettings && Object.keys(providerSettings).length > 0) {
       enabledProviders = enabledProviders.filter((p) => providerSettings[p].enabled);
     }
-
-    // Get dynamic models from all providers that support them
     const dynamicModels = await Promise.all(
       Array.from(this._providers.values())
         .filter((provider) => enabledProviders.includes(provider.name))
@@ -125,8 +116,6 @@ export class LLMManager {
     const dynamicModelsFlat = dynamicModels.flat();
     const dynamicModelKeys = dynamicModelsFlat.map((d) => `${d.name}-${d.provider}`);
     const filteredStaticModels = staticModels.filter((m) => !dynamicModelKeys.includes(`${m.name}-${m.provider}`));
-
-    // Combine static and dynamic models
     const modelList = [...dynamicModelsFlat, ...filteredStaticModels];
     modelList.sort((a, b) => a.name.localeCompare(b.name));
     this._modelList = modelList;
@@ -210,4 +199,3 @@ export class LLMManager {
     return firstProvider;
   }
 }
-// Trigger HMR

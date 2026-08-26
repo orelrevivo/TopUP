@@ -102,7 +102,7 @@ const SubaccountPageId = async ({ params, searchParams }: Props) => {
     ).toFixed(2)
   }
 
-  // Two-step query to avoid Drizzle relational query 'referencedTable' issue
+  
   const funnels = await db.query.veFunnels.findMany({
     where: (table, { eq }) => eq(table.subAccountId, params.subaccountId),
   })

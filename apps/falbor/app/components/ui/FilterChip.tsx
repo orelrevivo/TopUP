@@ -3,32 +3,28 @@ import { motion } from 'framer-motion';
 import { classNames } from '~/utils/classNames';
 
 interface FilterChipProps {
-  /** The label text to display */
+  
   label: string;
 
-  /** Optional value to display after the label */
+  
   value?: string | number;
 
-  /** Function to call when the remove button is clicked */
+  
   onRemove?: () => void;
 
-  /** Whether the chip is active/selected */
+  
   active?: boolean;
 
-  /** Optional icon to display before the label */
+  
   icon?: string;
 
-  /** Additional class name */
+  
   className?: string;
 }
 
-/**
- * FilterChip component
- *
- * A chip component for displaying filters with optional remove button.
- */
+
 export function FilterChip({ label, value, onRemove, active = false, icon, className }: FilterChipProps) {
-  // Animation variants
+  
   const variants = {
     initial: { opacity: 0, scale: 0.9 },
     animate: { opacity: 1, scale: 1 },
@@ -51,10 +47,10 @@ export function FilterChip({ label, value, onRemove, active = false, icon, class
         className,
       )}
     >
-      {/* Icon */}
+      {}
       {icon && <span className={classNames(icon, 'text-inherit')} />}
 
-      {/* Label and value */}
+      {}
       <span>
         {label}
         {value !== undefined && ': '}
@@ -71,7 +67,7 @@ export function FilterChip({ label, value, onRemove, active = false, icon, class
         )}
       </span>
 
-      {/* Remove button */}
+      {}
       {onRemove && (
         <button
           type="button"

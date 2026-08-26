@@ -54,12 +54,12 @@ export function Header() {
           'border-falbor-elements-borderColor': chat.started,
         })}
       >
-        {/* Mobile: always show hamburger button */}
+        {}
         <button
           onClick={toggleSidebar}
           className={classNames(
             'flex items-center justify-center p-2 -ml-2 text-falbor-elements-textPrimary',
-            // On desktop: only show when sidebar is closed and chat is not started, or when chat started and sidebar closed
+            
             'md:hidden'
           )}
           title="Toggle Sidebar"
@@ -67,7 +67,7 @@ export function Header() {
           <div className="i-ph:list w-6 h-6" />
         </button>
 
-        {/* Mobile: show logo next to hamburger when sidebar is closed */}
+        {}
         {!isOpen && (
           <a
             href={isHacking ? '/hacking' : '/'}
@@ -78,7 +78,7 @@ export function Header() {
           </a>
         )}
 
-        {/* Desktop: hamburger when no chat started and sidebar closed */}
+        {}
         {!chat.started && !isOpen && (
           <button
             onClick={toggleSidebar}
@@ -88,7 +88,7 @@ export function Header() {
             <div className="i-ph:list w-6 h-6" />
           </button>
         )}
-        {/* Desktop: logo+hamburger when chat started and sidebar closed */}
+        {}
         {chat.started && !isOpen && (
           <div
             className="hidden md:flex items-center gap-2 z-logo text-falbor-elements-textPrimary cursor-pointer"
@@ -110,7 +110,7 @@ export function Header() {
             <ClientOnly>
               {() => (
                 <div className="flex items-center gap-2">
-                  {/* <ExportChatButton exportChat={exportChat} /> */}
+                  {}
                   <HeaderActionButtons chatStarted={chat.started} />
                 </div>
               )}

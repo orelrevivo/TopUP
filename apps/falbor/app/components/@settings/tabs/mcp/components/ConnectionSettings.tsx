@@ -28,14 +28,14 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
   const [isSaving, setIsSaving] = useState(false);
   const saveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Extract scopes if they exist in config
+  
   let scopes: string[] = [];
   const scopeStr = connection.config?.scope || connection.config?.authed_user?.scope || '';
   if (scopeStr) {
     scopes = scopeStr.includes(',') ? scopeStr.split(',') : scopeStr.split(' ');
   }
 
-  // Extract MCP account info from config
+  
   const isApiKey = connection.type === 'api_key';
   const mcpName = connection.config?.authed_user?.name || connection.config?.user?.name || connection.name;
   const mcpEmail = isApiKey 
@@ -59,10 +59,10 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
       setIsSaving(true);
       try {
         if (isApiKey) {
-          // Note: Renaming an API key connection's ID is complex, so we just update its display name if we had one.
-          // Since the ID is derived from the name on creation, we leave the ID as is for now in local storage,
-          // but if we wanted to change the key we could delete the old and insert the new. 
-          // For now, we skip renaming the local ID.
+          
+          
+          
+          
         } else {
           await fetch(`/api/mcp/connections/${connection.id}`, {
             method: 'PATCH',
@@ -115,7 +115,7 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
 
   return (
     <div className="flex flex-col space-y-6">
-      {/* Top Nav */}
+      {}
       <div className="flex items-center gap-2 mb-2">
         <button 
           onClick={onBack}
@@ -125,10 +125,10 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
         </button>
       </div>
 
-      {/* Header Card */}
+      {}
       <div className="border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark rounded-xl bg-[#FAFAFA] dark:bg-[#1A1A1A] overflow-hidden">
         
-        {/* Upper section */}
+        {}
         <div className="p-6 border-b border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark flex items-start justify-between">
           <div className="flex items-center gap-4">
             <div className="relative">
@@ -148,7 +148,7 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
           </a>
         </div>
 
-        {/* Lower section (Metadata) */}
+        {}
         <div className="px-6 py-4 grid grid-cols-4 gap-4">
           <div>
             <h4 className="text-[11px] font-semibold text-falbor-elements-textSecondary uppercase tracking-wider mb-2">Created by</h4>
@@ -187,10 +187,10 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
         </div>
       </div>
 
-      {/* Settings Sections */}
+      {}
       <div className="border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark rounded-xl bg-[#FAFAFA] dark:bg-[#1A1A1A] p-6 space-y-8">
         
-        {/* Display Name Editor */}
+        {}
         <div>
           <h3 className="text-sm font-semibold text-falbor-elements-textPrimary mb-1">Display name</h3>
           <p className="text-xs text-falbor-elements-textSecondary mb-3">
@@ -213,7 +213,7 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
 
       </div>
 
-      {/* Scopes Section (if it's an OAuth connector) */}
+      {}
       {connector.method === 'oauth' && (
         <div className="grid grid-cols-[1fr_2fr] gap-8 pt-4">
           
@@ -241,7 +241,7 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
           </div>
 
           <div className="space-y-3">
-            {/* Scopes List */}
+            {}
             {scopes.length > 0 ? (
               scopes.map((scope, idx) => (
                 <div key={idx} className="flex items-start gap-3 p-4 rounded-xl border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark bg-[#FAFAFA] dark:bg-[#1A1A1A]">
@@ -267,7 +267,7 @@ export function ConnectionSettings({ connector, connection, onBack }: Connection
         </div>
       )}
       
-      {/* Danger Zone */}
+      {}
       <div className="pt-8 border-t border-red-500/20 mt-8">
         <h3 className="text-sm font-semibold text-red-500 mb-1">Danger Zone</h3>
         <p className="text-xs text-falbor-elements-textSecondary mb-4">

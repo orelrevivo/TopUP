@@ -29,7 +29,7 @@ import { Draggable, Droppable } from 'react-beautiful-dnd'
 import { Edit, MoreVertical, PlusCircleIcon, Trash } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import React, { Dispatch, SetStateAction, useMemo } from 'react'
-// import PipelineTicket from './pipeline-ticket'
+
 import CustomModal from '~/components/visual-editor/global/custom-modal'
 import TicketForm from '~/components/visual-editor/forms/ticket-form'
 import PipelineTicket from './pipeline-ticket'
@@ -126,17 +126,18 @@ const PipelineLane: React.FC<PipelaneLaneProps> = ({
     >
       {(provided, snapshot) => {
         if (snapshot.isDragging) {
-          //@ts-ignore
           const offset = { x: 300, y: 0 }
-          //@ts-ignore
-          const x = provided.draggableProps.style?.left - offset.x
-          //@ts-ignore
-          const y = provided.draggableProps.style?.top - offset.y
-          //@ts-ignore
-          provided.draggableProps.style = {
-            ...provided.draggableProps.style,
-            top: y,
-            left: x,
+          const style = provided.draggableProps.style
+
+          if (style && 'left' in style && 'top' in style) {
+            const x = style.left - offset.x
+            const y = style.top - offset.y
+
+            provided.draggableProps.style = {
+              ...style,
+              top: y,
+              left: x,
+            }
           }
         }
         return (
@@ -153,7 +154,7 @@ const PipelineLane: React.FC<PipelaneLaneProps> = ({
                     className=" h-14 backdrop-blur-lg dark:bg-background/40 bg-slate-200/60  absolute top-0 left-0 right-0 z-10 "
                   >
                     <div className="h-full flex items-center p-4 justify-between cursor-grab border-b-[1px] ">
-                      {/* {laneDetails.order} */}
+                      { }
                       <div className="flex items-center w-full gap-2">
                         <div
                           className={cn('w-4 h-4 rounded-full')}

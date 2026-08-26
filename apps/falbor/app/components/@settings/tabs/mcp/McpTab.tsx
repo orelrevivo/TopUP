@@ -51,7 +51,7 @@ export default function McpTab() {
   const [isCheckingServers, setIsCheckingServers] = useState(false);
   const [expandedServer, setExpandedServer] = useState<string | null>(null);
 
-  // Routing state
+  
   const [currentView, setCurrentView] = useState<'list' | 'details' | 'add' | 'custom'>('list');
   const [activeConnectorId, setActiveConnectorId] = useState<string | null>(null);
 
@@ -149,7 +149,7 @@ export default function McpTab() {
     if (!parsedConfig) return;
     
     if (config) {
-      // Create a new key for this server
+      
       const serverKey = `${activeConnectorId}-${connectionName.toLowerCase().replace(/[^a-z0-9]/g, '-')}`;
       
       const newConfig = {
@@ -168,7 +168,7 @@ export default function McpTab() {
           mcpEnabled: settings.mcpEnabled,
         });
         toast.success(`Successfully connected ${connectionName}`);
-        setCurrentView('details'); // Go back to details view
+        setCurrentView('details'); 
       } catch (e) {
         toast.error('Failed to save connection');
         console.error(e);
@@ -185,7 +185,7 @@ export default function McpTab() {
 
   return (
     <div className="max-w-3xl mx-auto space-y-6">
-      {/* Breadcrumb Navigation */}
+      {}
       {currentView !== 'list' && (
         <div className="flex items-center gap-2 mb-6 text-sm text-falbor-elements-textSecondary">
           <button onClick={() => { setCurrentView('list'); setActiveConnectorId(null); }} className="hover:text-falbor-elements-textPrimary hover:underline transition-colors">

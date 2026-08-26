@@ -16,14 +16,10 @@ export interface UseLocalModelHealthReturn {
   getOverallHealth: () => { healthy: number; unhealthy: number; checking: number; unknown: number };
 }
 
-/**
- * React hook for monitoring local model health
- */
 export function useLocalModelHealth(options: UseLocalModelHealthOptions = {}): UseLocalModelHealthReturn {
   const { checkInterval } = options;
   const [healthStatuses, setHealthStatuses] = useState<ModelHealthStatus[]>([]);
 
-  // Update health statuses when they change
   useEffect(() => {
     const handleStatusChanged = (status: ModelHealthStatus) => {
       setHealthStatuses((current) => {
@@ -42,7 +38,6 @@ export function useLocalModelHealth(options: UseLocalModelHealthOptions = {}): U
 
     localModelHealthMonitor.on('statusChanged', handleStatusChanged);
 
-    // Initialize with current statuses
     setHealthStatuses(localModelHealthMonitor.getAllHealthStatuses());
 
     return () => {
@@ -50,12 +45,10 @@ export function useLocalModelHealth(options: UseLocalModelHealthOptions = {}): U
     };
   }, []);
 
-  // Get health status for a specific provider
   const getHealthStatus = useCallback((provider: 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl: string) => {
     return localModelHealthMonitor.getHealthStatus(provider, baseUrl);
   }, []);
 
-  // Start monitoring a provider
   const startMonitoring = useCallback(
     (provider: 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl: string, interval?: number) => {
       console.log(`[Health Monitor] Starting monitoring for ${provider} at ${baseUrl}`);
@@ -69,16 +62,13 @@ export function useLocalModelHealth(options: UseLocalModelHealthOptions = {}): U
     console.log(`[Health Monitor] Stopping monitoring for ${provider} at ${baseUrl}`);
     localModelHealthMonitor.stopMonitoring(provider, baseUrl);
 
-    // Remove from local state
     setHealthStatuses((current) => current.filter((s) => !(s.provider === provider && s.baseUrl === baseUrl)));
   }, []);
 
-  // Perform manual health check
   const performHealthCheck = useCallback(async (provider: 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl: string) => {
     await localModelHealthMonitor.performHealthCheck(provider, baseUrl);
   }, []);
 
-  // Check if a provider is healthy
   const isHealthy = useCallback(
     (provider: 'Ollama' | 'LMStudio' | 'OpenAILike', baseUrl: string) => {
       const status = getHealthStatus(provider, baseUrl);
@@ -87,7 +77,6 @@ export function useLocalModelHealth(options: UseLocalModelHealthOptions = {}): U
     [getHealthStatus],
   );
 
-  // Get overall health statistics
   const getOverallHealth = useCallback(() => {
     const stats = { healthy: 0, unhealthy: 0, checking: 0, unknown: 0 };
 
@@ -109,9 +98,6 @@ export function useLocalModelHealth(options: UseLocalModelHealthOptions = {}): U
   };
 }
 
-/**
- * Hook for monitoring a specific provider
- */
 export function useProviderHealth(
   provider: 'Ollama' | 'LMStudio' | 'OpenAILike',
   baseUrl: string,
@@ -122,7 +108,6 @@ export function useProviderHealth(
 
   const [status, setStatus] = useState<ModelHealthStatus | undefined>();
 
-  // Update status when it changes
   useEffect(() => {
     const updateStatus = () => {
       setStatus(getHealthStatus(provider, baseUrl));
@@ -142,7 +127,6 @@ export function useProviderHealth(
     };
   }, [provider, baseUrl, getHealthStatus]);
 
-  // Auto-start monitoring if enabled
   useEffect(() => {
     if (autoStart && baseUrl) {
       startMonitoring(provider, baseUrl, checkInterval);

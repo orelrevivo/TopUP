@@ -69,7 +69,7 @@ export function SourcesResultCard({ result, index, isFiltered, scrapeStatus }: S
         : 'bg-white/[0.02] dark:bg-white/[0.02] border-white/5 opacity-70 hover:opacity-90'
     )}>
       <div className="p-3 flex flex-col gap-1.5">
-        {/* Header row */}
+        {}
         <div className="flex items-start gap-2">
           <span className="mt-0.5 flex-shrink-0 w-5 h-5 rounded-md bg-black/20 dark:bg-white/[0.06] flex items-center justify-center text-[10px] text-gray-500 font-mono">
             {index + 1}
@@ -92,14 +92,14 @@ export function SourcesResultCard({ result, index, isFiltered, scrapeStatus }: S
           </div>
         </div>
 
-        {/* Snippet */}
+        {}
         {result.snippet && (
           <p className="text-[12px] text-gray-500 leading-relaxed pl-7 line-clamp-2">
             {result.snippet}
           </p>
         )}
 
-        {/* Scraped content (expandable) */}
+        {}
         {result.scraped_content && (
           <div className="pl-7">
             <button

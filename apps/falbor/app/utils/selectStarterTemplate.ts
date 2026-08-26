@@ -15,16 +15,16 @@ Available templates:
   <tags>basic, script</tags>
 </template>
 ${templates
-  .map(
-    (template) => `
+    .map(
+      (template) => `
 <template>
   <name>${template.name}</name>
   <description>${template.description}</description>
   ${template.tags ? `<tags>${template.tags.join(', ')}</tags>` : ''}
 </template>
 `,
-  )
-  .join('\n')}
+    )
+    .join('\n')}
 
 Response Format:
 <selection>
@@ -67,7 +67,6 @@ const templates: Template[] = STARTER_TEMPLATES.filter((t) => !t.name.includes('
 
 const parseSelectedTemplate = (llmOutput: string): { template: string; title: string } | null => {
   try {
-    // Extract content between <templateName> tags
     const templateNameMatch = llmOutput.match(/<templateName>(.*?)<\/templateName>/);
     const titleMatch = llmOutput.match(/<title>(.*?)<\/title>/);
 
@@ -114,17 +113,12 @@ export const selectStarterTemplate = async (options: { message: string; model: s
 
 const getGitHubRepoContent = async (repoName: string): Promise<{ name: string; path: string; content: string }[]> => {
   try {
-    // Instead of directly fetching from GitHub, use our own API endpoint as a proxy
     const response = await fetch(`/api/github-template?repo=${encodeURIComponent(repoName)}`);
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(`HTTP error! status: ${response.status}. Details: ${errorData.details || 'Unknown error'}`);
     }
-
-    // Our API will return the files in the format we need
     const files = (await response.json()) as any;
-
     return files;
   } catch (error) {
     console.error('Error fetching release contents:', error);
@@ -143,28 +137,8 @@ export async function getTemplates(templateName: string, title?: string) {
   const files = await getGitHubRepoContent(githubRepo);
 
   let filteredFiles = files;
-
-  /*
-   * ignoring common unwanted files
-   * exclude    .git
-   */
   filteredFiles = filteredFiles.filter((x) => x.path.startsWith('.git') == false);
-
-  /*
-   * exclude    lock files
-   * WE NOW INCLUDE LOCK FILES FOR IMPROVED INSTALL TIMES
-   */
-  {
-    /*
-     *const comminLockFiles = ['package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'];
-     *filteredFiles = filteredFiles.filter((x) => comminLockFiles.includes(x.name) == false);
-     */
-  }
-
-  // exclude    .falbor
   filteredFiles = filteredFiles.filter((x) => x.path.startsWith('.falbor') == false);
-
-  // check for ignore file in .falbor folder
   const templateIgnoreFile = files.find((x) => x.path.startsWith('.falbor') && x.name == 'ignore');
 
   const filesToImport = {
@@ -173,13 +147,9 @@ export async function getTemplates(templateName: string, title?: string) {
   };
 
   if (templateIgnoreFile) {
-    // redacting files specified in ignore file
     const ignorepatterns = templateIgnoreFile.content.split('\n').map((x) => x.trim());
     const ig = ignore().add(ignorepatterns);
-
-    // filteredFiles = filteredFiles.filter(x => !ig.ignores(x.path))
     const ignoredFiles = filteredFiles.filter((x) => ig.ignores(x.path));
-
     filesToImport.files = filteredFiles;
     filesToImport.ignoreFile = ignoredFiles;
   }
@@ -188,13 +158,13 @@ export async function getTemplates(templateName: string, title?: string) {
 Falbor is initializing your project with the required files using the ${template.name} template.
 <falborArtifact id="imported-files" title="${title || 'Create initial files'}" type="bundled">
 ${filesToImport.files
-  .map(
-    (file) =>
-      `<falborAction type="file" filePath="${file.path}">
+      .map(
+        (file) =>
+          `<falborAction type="file" filePath="${file.path}">
 ${file.content}
 </falborAction>`,
-  )
-  .join('\n')}
+      )
+      .join('\n')}
 </falborArtifact>
 `;
   let userMessage = ``;

@@ -35,7 +35,7 @@ export function useVercelDeploy() {
         throw new Error('No active project found');
       }
 
-      // Create a deployment artifact for visual feedback
+      
       const deploymentId = `deploy-vercel-project`;
       workbenchStore.addArtifact({
         id: deploymentId,
@@ -46,7 +46,7 @@ export function useVercelDeploy() {
 
       const deployArtifact = workbenchStore.artifacts.get()[deploymentId];
 
-      // Notify that build is starting
+      
       deployArtifact.runner.handleDeployAction('building', 'running', { source: 'vercel' });
 
       const actionId = 'build-' + Date.now();
@@ -60,16 +60,16 @@ export function useVercelDeploy() {
         },
       };
 
-      // Add the action first
+      
       artifact.runner.addAction(actionData);
 
-      // Then run it
+      
       await artifact.runner.runAction(actionData);
 
       const buildOutput = artifact.runner.buildOutput;
 
       if (!buildOutput || buildOutput.exitCode !== 0) {
-        // Notify that build failed
+        
         deployArtifact.runner.handleDeployAction('building', 'failed', {
           error: formatBuildFailureOutput(buildOutput?.output),
           source: 'vercel',
@@ -77,22 +77,22 @@ export function useVercelDeploy() {
         throw new Error('Build failed');
       }
 
-      // Notify that build succeeded and deployment is starting
+      
       deployArtifact.runner.handleDeployAction('deploying', 'running', { source: 'vercel' });
 
-      // Get the build files
+      
       const container = await webcontainer;
 
-      // Remove /home/project from buildPath if it exists
+      
       const buildPath = buildOutput.path.replace('/home/project', '');
 
-      // Check if the build path exists
+      
       let finalBuildPath = buildPath;
 
-      // List of common output directories to check if the specified build path doesn't exist
+      
       const commonOutputDirs = [buildPath, '/dist', '/build', '/out', '/output', '/.next', '/public'];
 
-      // Verify the build path exists, or try to find an alternative
+      
       let buildPathExists = false;
 
       for (const dir of commonOutputDirs) {
@@ -102,7 +102,7 @@ export function useVercelDeploy() {
           buildPathExists = true;
           break;
         } catch {
-          // Directory doesn't exist, expected — just skip it
+          
           continue;
         }
       }
@@ -111,7 +111,7 @@ export function useVercelDeploy() {
         throw new Error('Could not find build output directory. Please check your build configuration.');
       }
 
-      // Get all files recursively
+      
       async function getAllFiles(dirPath: string): Promise<Record<string, string>> {
         const files: Record<string, string> = {};
         const entries = await container.fs.readdir(dirPath, { withFileTypes: true });
@@ -134,7 +134,7 @@ export function useVercelDeploy() {
               content = await container.fs.readFile(fullPath, 'utf-8');
             }
 
-            // Remove build path prefix from the path
+            
             const deployPath = fullPath.replace(finalBuildPath, '');
             files[deployPath] = content;
           } else if (entry.isDirectory()) {
@@ -148,7 +148,7 @@ export function useVercelDeploy() {
 
       const fileContents = await getAllFiles(finalBuildPath);
 
-      // Get all source project files for framework detection
+      
       const allProjectFiles: Record<string, string> = {};
 
       async function getAllProjectFiles(dirPath: string): Promise<void> {
@@ -173,7 +173,7 @@ export function useVercelDeploy() {
                 content = await container.fs.readFile(fullPath, 'utf-8');
               }
 
-              // Store with relative path from project root
+              
               let relativePath = fullPath;
 
               if (fullPath.startsWith('/home/project/')) {
@@ -184,7 +184,7 @@ export function useVercelDeploy() {
 
               allProjectFiles[relativePath] = content;
             } catch (error) {
-              // Skip binary files or files that can't be read as text
+              
               console.log(`Skipping file ${entry.name}: ${error}`);
             }
           } else if (entry.isDirectory() && !entry.name.startsWith('.') && entry.name !== 'node_modules') {
@@ -193,15 +193,15 @@ export function useVercelDeploy() {
         }
       }
 
-      // Try to read from the current directory first
+      
       try {
         await getAllProjectFiles('.');
       } catch {
-        // Fallback to /home/project if current directory doesn't work
+        
         await getAllProjectFiles('/home/project');
       }
 
-      // Use chatId instead of artifact.id
+      
       const existingProjectId = localStorage.getItem(`vercel-project-${currentChatId}`);
 
       const response = await fetch('/api/vercel-deploy', {
@@ -223,7 +223,7 @@ export function useVercelDeploy() {
       if (!response.ok || !data.deploy || !data.project) {
         console.error('Invalid deploy response:', data);
 
-        // Notify that deployment failed
+        
         deployArtifact.runner.handleDeployAction('deploying', 'failed', {
           error: data.error || 'Invalid deployment response',
           source: 'vercel',
@@ -240,13 +240,13 @@ export function useVercelDeploy() {
         localStorage.setItem(`deploy-source-${currentChatId}`, 'vercel');
       }
 
-      // Notify that deployment completed successfully
+      
       deployArtifact.runner.handleDeployAction('complete', 'complete', {
         url: data.deploy.url,
         source: 'vercel',
       });
 
-      // Show success toast notification
+      
       toast.success(`🚀 Vercel deployment completed successfully!`);
 
       return true;

@@ -1,7 +1,7 @@
 import { memo, Fragment, useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'framer-motion';
 import { cubicEasingFn } from '~/utils/easings';
-import { Markdown } from '~/components/chat/Markdown';
+import { Markdown } from '~/components/chat/messages/Markdown';
 import type { JSONValue } from 'ai';
 import Popover from '~/components/ui/Popover';
 import { workbenchStore } from '~/lib/stores/workbench';
@@ -17,7 +17,7 @@ import type {
   FileUIPart,
   StepStartUIPart,
 } from '@ai-sdk/ui-utils';
-import { ToolInvocations } from '~/components/chat/ToolInvocations';
+import { ToolInvocations } from '~/components/chat/messages/ToolInvocations';
 import type { ToolCallAnnotation } from '~/types/context';
 
 interface AssistantMessageProps {
@@ -377,7 +377,7 @@ function ScreenshotInvocations({ screenshots }: { screenshots: { url: string; ti
         </AnimatePresence>
       </div>
 
-      {/* Fullscreen Lightbox */}
+      {}
       <AnimatePresence>
         {fullscreenImage && (
           <motion.div
@@ -393,7 +393,7 @@ function ScreenshotInvocations({ screenshots }: { screenshots: { url: string; ti
               exit={{ scale: 0.9 }}
               src={fullscreenImage}
               className="max-w-full max-h-full object-contain rounded-md shadow-2xl"
-              onClick={(e) => e.stopPropagation()} // Let the user click the image itself without closing if they want to drag or just admire it
+              onClick={(e) => e.stopPropagation()} 
             />
             <button 
               className="absolute top-4 right-4 p-2 bg-black/50 text-white rounded-full hover:bg-black transition-colors"
@@ -446,13 +446,13 @@ export const HackingAssistantMessage = memo(
       (annotation) => annotation.type === 'toolCall',
     ) as ToolCallAnnotation[];
 
-    // NEW PARSER INTEGRATION
+    
     const { navigations, cleanContent: contentWithoutNav } = parseBrowserNavigations(content);
     const { searches, cleanContent: contentWithoutSearches } = parseInternetSearches(contentWithoutNav);
     const { skills, cleanContent: contentWithoutSkills } = parseSkillUsages(contentWithoutSearches);
     const { screenshots, cleanContent } = parseScreenshots(contentWithoutSkills);
 
-    // Notify parent about browser navigations
+    
     useEffect(() => {
       if (navigations.length > 0 && onNavigate) {
         const lastScreenshot = screenshots.length > 0 ? screenshots[screenshots.length - 1].url : undefined;
@@ -507,7 +507,7 @@ export const HackingAssistantMessage = memo(
             </div>
           </>
           
-          {/* CUSTOM INTERNET SEARCH ACCORDION */}
+          {}
           <InternetSearchInvocations searches={searches} />
           <ScreenshotInvocations screenshots={screenshots} />
           

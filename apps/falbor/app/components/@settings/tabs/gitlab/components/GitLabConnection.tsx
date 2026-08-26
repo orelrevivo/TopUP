@@ -33,7 +33,7 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
     });
 
     if (!token.trim()) {
-      // Token is empty, not attempting connection
+      
       return;
     }
 
@@ -41,11 +41,11 @@ export default function GitLabConnection({ connectionTest, onTestConnection }: G
       console.log('Calling connect function...');
       await connect(token, gitlabUrl);
       console.log('Connect function completed successfully');
-      setToken(''); // Clear token on successful connection
+      setToken(''); 
     } catch (error) {
       console.error('GitLab connect failed:', error);
 
-      // Error handling is done in the hook
+      
     }
   };
 

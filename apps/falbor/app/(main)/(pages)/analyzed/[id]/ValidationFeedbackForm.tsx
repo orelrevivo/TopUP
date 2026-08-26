@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "react-toastify";
-// Let's use standard React state and simple styles
+
 export function ValidationFeedbackForm({ reportId }: { reportId: string }) {
   const [wouldUse, setWouldUse] = useState<boolean | null>(null);
   const [feedbackText, setFeedbackText] = useState("");

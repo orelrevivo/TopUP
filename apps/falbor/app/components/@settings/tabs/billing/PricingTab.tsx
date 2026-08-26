@@ -72,7 +72,7 @@ export default function PricingTab() {
   useEffect(() => {
     fetchTier()
 
-    // Listen for successful payments from the checkout tab
+    
     const bc = new BroadcastChannel('paypal_checkout');
     bc.onmessage = (event) => {
       if (event.data && event.data.type === 'PAYMENT_SUCCESS') {
@@ -106,7 +106,7 @@ export default function PricingTab() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Free Tier */}
+        {}
         <div className="p-1 bg-[#E5E5E5] dark:bg-[#262626] rounded-xl">
           <div className={`border rounded-xl p-6 flex flex-col
             ${subscriptionTier === 'free'
@@ -145,7 +145,7 @@ export default function PricingTab() {
           </div>
         </div>
 
-        {/* Pro Tier */}
+        {}
         <div className={`rounded-xl p-6 flex flex-col relative ${subscriptionTier === 'pro' ? 'bg-purple-200/20 dark:bg-[#242424]' : 'border-purple-500/30 bg-gray-50 dark:bg-gray-950'}`}>
           {subscriptionTier === 'free' && (
             <div className="absolute top-0 right-6 -translate-y-1/2 bg-purple-500 text-white text-xs px-3 py-1 rounded-full font-semibold shadow-md">
@@ -191,7 +191,7 @@ export default function PricingTab() {
         </div>
       </div>
 
-      {/* Add Balance Section */}
+      {}
       <div className="mt-4 mb-8 bg-purple-200/20 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-2">
           Add AI Balance
@@ -225,7 +225,7 @@ export default function PricingTab() {
         </div>
       </div>
     </div>
-      {/* Code Line - Redeem Promo Code */}
+      {}
       <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm">
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-2">
           Redeem Promo Code

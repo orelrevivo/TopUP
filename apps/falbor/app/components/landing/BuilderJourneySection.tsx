@@ -22,7 +22,7 @@ export default function BuilderJourneySection() {
   return (
     <section className="relative w-full bg-black py-24 flex flex-col items-center justify-center overflow-hidden border-t border-white/5 z-10">
 
-      {/* Background Glow */}
+      { }
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none opacity-20">
         <div className="absolute inset-0 rounded-full" style={{ background: 'radial-gradient(circle, #FF5800 0%, transparent 60%)', filter: 'blur(100px)' }} />
       </div>
@@ -30,7 +30,7 @@ export default function BuilderJourneySection() {
       <div className="relative z-10 max-w-6xl w-full px-6 flex flex-col items-center">
 
         <div className="flex flex-col lg:flex-row items-center justify-between w-full gap-16 mb-24">
-          {/* Header Text */}
+          { }
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -46,7 +46,7 @@ export default function BuilderJourneySection() {
             </p>
           </motion.div>
 
-          {/* Circular Design */}
+          { }
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -56,12 +56,12 @@ export default function BuilderJourneySection() {
           >
             <div className="absolute inset-4 rounded-full border border-white/5 border-dashed" />
 
-            {/* Center 'Build' Circle */}
+            { }
             <div className="relative z-20 w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br to-[#ff8c42] flex items-center justify-center shadow-[0_0_40px_rgba(255,88,0,0.4)]">
               <span className="text-xl md:text-2xl font-bold text-white tracking-wide">Build</span>
             </div>
 
-            {/* Orbiting Tools */}
+            { }
             {TOOLS.map((tool, i) => {
               return (
                 <motion.div
@@ -74,7 +74,7 @@ export default function BuilderJourneySection() {
                     transform: `rotate(${tool.angle}deg)`,
                   }}
                 >
-                  <div 
+                  <div
                     className="absolute top-0 left-1/2 flex items-center justify-center pointer-events-auto"
                     style={{
                       transform: `translate(-50%, -50%) rotate(-${tool.angle}deg)`,
@@ -94,7 +94,7 @@ export default function BuilderJourneySection() {
           </motion.div>
         </div>
 
-        {/* Process Flow */}
+        { }
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
@@ -103,7 +103,7 @@ export default function BuilderJourneySection() {
           className="w-full relative"
         >
           <div className="relative flex flex-col md:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4 md:gap-0">
-            {/* Connecting Line (Desktop) */}
+            { }
             <div className="hidden md:block absolute top-1/2 left-[5%] right-[5%] h-[2px] bg-white/10 -translate-y-1/2 z-0" />
 
             {PROCESS_STEPS.map((step, index) => (

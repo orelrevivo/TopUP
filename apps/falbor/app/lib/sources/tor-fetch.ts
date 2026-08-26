@@ -1,8 +1,3 @@
-/**
- * Tor-proxied fetch for Node.js.
- * Routes all HTTP/HTTPS through the Tor SOCKS5 proxy at 127.0.0.1:9050.
- * Uses socks-proxy-agent to attach the proxy to native http/https agents.
- */
 import { SocksProxyAgent } from 'socks-proxy-agent';
 import * as http from 'http';
 import * as https from 'https';
@@ -25,11 +20,6 @@ export interface TorFetchOptions {
   timeoutMs?: number;
   maxBytes?: number;
 }
-
-/**
- * Fetch a URL through the Tor SOCKS5 proxy.
- * Returns { ok, status, text, error }.
- */
 export async function torFetch(
   url: string,
   opts: TorFetchOptions = {}
@@ -92,10 +82,6 @@ export async function torFetch(
     req.end();
   });
 }
-
-/**
- * Quick check — can we reach the Tor SOCKS5 proxy?
- */
 export async function isTorAvailable(): Promise<boolean> {
   return new Promise((resolve) => {
     const net = require('net');

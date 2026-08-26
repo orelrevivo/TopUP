@@ -14,7 +14,7 @@ export interface SourcesBaseChatProps {
   isSearching: boolean;
   providers: ProviderStatus[];
   availableModels: string[];
-  history?: any[]; // For the grid
+  history?: any[]; 
   isDetailsView?: boolean;
   searchMode: 'osint' | 'websites';
   setSearchMode: (mode: 'osint' | 'websites') => void;
@@ -36,7 +36,7 @@ export function SourcesBaseChat({
   const [selectedModel, setSelectedModel] = useState('gpt-4.1');
   const [scrapingThreads, setScrapingThreads] = useState(16);
 
-  // Set default model once availableModels is loaded
+  
   useEffect(() => {
     if (availableModels.length > 0 && !availableModels.includes(selectedModel)) {
       setSelectedModel(availableModels[0]);

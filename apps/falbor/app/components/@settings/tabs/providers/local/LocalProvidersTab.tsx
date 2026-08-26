@@ -20,7 +20,7 @@ import { OLLAMA_API_URL } from './types';
 import type { OllamaModel, LMStudioModel } from './types';
 import { Cpu, Server, BookOpen, Activity, PackageOpen, Monitor, Loader2, RotateCw, ExternalLink } from 'lucide-react';
 
-// Type definitions
+
 type ViewMode = 'dashboard' | 'guide' | 'status';
 
 export default function LocalProvidersTab() {
@@ -34,7 +34,7 @@ export default function LocalProvidersTab() {
   const { toast } = useToast();
   const { startMonitoring, stopMonitoring } = useLocalModelHealth();
 
-  // Memoized filtered providers to prevent unnecessary re-renders
+  
   const filteredProviders = useMemo(() => {
     return Object.entries(providers || {})
       .filter(([key]) => [...LOCAL_PROVIDERS, 'OpenAILike'].includes(key))
@@ -43,7 +43,7 @@ export default function LocalProvidersTab() {
         const envKey = providerBaseUrlEnvKeys[key]?.baseUrlKey;
         const envUrl = envKey ? (process.env[envKey] as string | undefined) : undefined;
 
-        // Set default base URLs for local providers
+        
         let defaultBaseUrl = provider.settings.baseUrl || envUrl;
 
         if (!defaultBaseUrl) {
@@ -68,7 +68,7 @@ export default function LocalProvidersTab() {
         } as IProviderConfig;
       })
       .sort((a, b) => {
-        // Custom sort: Ollama first, then LMStudio, then OpenAILike
+        
         const order = { Ollama: 0, LMStudio: 1, OpenAILike: 2 };
         return (order[a.name as keyof typeof order] || 3) - (order[b.name as keyof typeof order] || 3);
       });
@@ -78,7 +78,7 @@ export default function LocalProvidersTab() {
     return filteredProviders.length > 0 && filteredProviders.every((p) => p.settings.enabled);
   }, [filteredProviders]);
 
-  // Start/stop health monitoring for enabled providers
+  
   useEffect(() => {
     filteredProviders.forEach((provider) => {
       const baseUrl = provider.settings.baseUrl;
@@ -93,7 +93,7 @@ export default function LocalProvidersTab() {
     });
   }, [filteredProviders, startMonitoring, stopMonitoring]);
 
-  // Fetch Ollama models when enabled
+  
   useEffect(() => {
     const ollamaProvider = filteredProviders.find((p) => p.name === 'Ollama');
 
@@ -102,7 +102,7 @@ export default function LocalProvidersTab() {
     }
   }, [filteredProviders]);
 
-  // Fetch LM Studio models when enabled
+  
   useEffect(() => {
     const lmStudioProvider = filteredProviders.find((p) => p.name === 'LMStudio');
 
@@ -205,7 +205,7 @@ export default function LocalProvidersTab() {
         throw new Error(`Failed to update ${modelName}`);
       }
 
-      // Handle streaming response
+      
       const reader = response.body?.getReader();
 
       if (!reader) {
@@ -243,7 +243,7 @@ export default function LocalProvidersTab() {
               );
             }
           } catch {
-            // Ignore parsing errors
+            
           }
         }
       }
@@ -283,7 +283,7 @@ export default function LocalProvidersTab() {
     }
   };
 
-  // Render different views based on viewMode
+  
   if (viewMode === 'guide') {
     return (
       <ErrorBoundary>
@@ -303,7 +303,7 @@ export default function LocalProvidersTab() {
   return (
     <ErrorBoundary>
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-8">
           <div className="flex items-center gap-4">
             <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-purple-500/20 to-blue-500/20 flex items-center justify-center ring-1 ring-purple-500/30">
@@ -346,7 +346,7 @@ export default function LocalProvidersTab() {
           </div>
         </div>
 
-        {/* Provider Cards */}
+        {}
         <div className="space-y-6">
           {filteredProviders.map((provider) => (
             <div key={provider.name} className="space-y-4">
@@ -359,7 +359,7 @@ export default function LocalProvidersTab() {
                 onStopEditing={() => setEditingProvider(null)}
               />
 
-              {/* Ollama Models Section */}
+              {}
               {provider.name === 'Ollama' && provider.settings.enabled && (
                 <Card className="mt-4 bg-falbor-elements-background-depth-2">
                   <CardHeader className="pb-3">
@@ -441,7 +441,7 @@ export default function LocalProvidersTab() {
                 </Card>
               )}
 
-              {/* LM Studio Models Section */}
+              {}
               {provider.name === 'LMStudio' && provider.settings.enabled && (
                 <Card className="mt-4 bg-falbor-elements-background-depth-2">
                   <CardHeader className="pb-3">

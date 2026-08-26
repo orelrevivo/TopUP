@@ -291,7 +291,7 @@ export function EventLogsTab() {
     });
   }, [logs, selectedLevel, searchQuery]);
 
-  // Add performance tracking on mount
+  
   useEffect(() => {
     const startTime = performance.now();
 
@@ -307,7 +307,7 @@ export function EventLogsTab() {
     };
   }, []);
 
-  // Log filter changes
+  
   const handleLevelFilterChange = useCallback(
     (newLevel: string) => {
       logStore.logInfo('Log level filter changed', {
@@ -323,7 +323,7 @@ export function EventLogsTab() {
     [selectedLevel],
   );
 
-  // Log search changes with debounce
+  
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (searchQuery) {
@@ -340,7 +340,7 @@ export function EventLogsTab() {
     return () => clearTimeout(timeoutId);
   }, [searchQuery, filteredLogs.length]);
 
-  // Enhanced refresh handler
+  
   const handleRefresh = useCallback(async () => {
     const startTime = performance.now();
     setIsRefreshing(true);
@@ -368,7 +368,7 @@ export function EventLogsTab() {
     }
   }, [logs]);
 
-  // Log preference changes
+  
   const handlePreferenceChange = useCallback((type: string, value: boolean) => {
     logStore.logInfo('Log preference changed', {
       type: 'preference_change',
@@ -391,7 +391,7 @@ export function EventLogsTab() {
     }
   }, []);
 
-  // Close filters when clicking outside
+  
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (levelFilterRef.current && !levelFilterRef.current.contains(event.target as Node)) {
@@ -408,7 +408,7 @@ export function EventLogsTab() {
 
   const selectedLevelOption = logLevelOptions.find((opt) => opt.value === selectedLevel);
 
-  // Export functions
+  
   const exportAsJSON = () => {
     try {
       const exportData = {
@@ -443,7 +443,7 @@ export function EventLogsTab() {
 
   const exportAsCSV = () => {
     try {
-      // Convert logs to CSV format
+      
       const headers = ['Timestamp', 'Level', 'Category', 'Message', 'Details'];
       const csvData = [
         headers,
@@ -477,7 +477,7 @@ export function EventLogsTab() {
 
   const exportAsPDF = () => {
     try {
-      // Create new PDF document
+      
       const doc = new jsPDF();
       const lineHeight = 7;
       let yPos = 20;
@@ -485,9 +485,9 @@ export function EventLogsTab() {
       const pageWidth = doc.internal.pageSize.getWidth();
       const maxLineWidth = pageWidth - 2 * margin;
 
-      // Helper function to add section header
+      
       const addSectionHeader = (title: string) => {
-        // Check if we need a new page
+        
         if (yPos > doc.internal.pageSize.getHeight() - 30) {
           doc.addPage();
           yPos = margin;
@@ -502,7 +502,7 @@ export function EventLogsTab() {
         yPos += lineHeight * 2;
       };
 
-      // Add title and header
+      
       doc.setFillColor('#6366F1');
       doc.rect(0, 0, pageWidth, 50, 'F');
       doc.setTextColor('#FFFFFF');
@@ -510,13 +510,13 @@ export function EventLogsTab() {
       doc.setFont('helvetica', 'bold');
       doc.text('Event Logs Report', margin, 35);
 
-      // Add subtitle with falbor
+      
       doc.setFontSize(12);
       doc.setFont('helvetica', 'normal');
       doc.text('falbor - AI Development Platform', margin, 45);
       yPos = 70;
 
-      // Add report summary section
+      
       addSectionHeader('Report Summary');
 
       doc.setFontSize(10);
@@ -541,10 +541,10 @@ export function EventLogsTab() {
 
       yPos += lineHeight * 2;
 
-      // Add statistics section
+      
       addSectionHeader('Log Statistics');
 
-      // Calculate statistics
+      
       const stats = {
         error: filteredLogs.filter((log) => log.level === 'error').length,
         warning: filteredLogs.filter((log) => log.level === 'warning').length,
@@ -554,7 +554,7 @@ export function EventLogsTab() {
         api: filteredLogs.filter((log) => log.category === 'api').length,
       };
 
-      // Create two columns for statistics
+      
       const leftStats = [
         { label: 'Error Logs', value: stats.error, color: '#DC2626' },
         { label: 'Warning Logs', value: stats.warning, color: '#F59E0B' },
@@ -569,7 +569,7 @@ export function EventLogsTab() {
 
       const colWidth = (pageWidth - 2 * margin) / 2;
 
-      // Draw statistics in two columns
+      
       leftStats.forEach((stat, index) => {
         doc.setTextColor(stat.color);
         doc.setFont('helvetica', 'bold');
@@ -592,20 +592,20 @@ export function EventLogsTab() {
 
       yPos += lineHeight * 2;
 
-      // Add logs section
+      
       addSectionHeader('Event Logs');
 
-      // Helper function to add a log entry with improved formatting
+      
       const addLogEntry = (log: LogEntry) => {
-        const entryHeight = 20 + (log.details ? 40 : 0); // Estimate entry height
+        const entryHeight = 20 + (log.details ? 40 : 0); 
 
-        // Check if we need a new page
+        
         if (yPos + entryHeight > doc.internal.pageSize.getHeight() - 20) {
           doc.addPage();
           yPos = margin;
         }
 
-        // Add timestamp and level
+        
         const timestamp = new Date(log.timestamp).toLocaleString(undefined, {
           year: 'numeric',
           month: '2-digit',
@@ -616,7 +616,7 @@ export function EventLogsTab() {
           hour12: !use24Hour,
         });
 
-        // Draw log level badge background
+        
         const levelColors: Record<string, string> = {
           error: '#FEE2E2',
           warning: '#FEF3C7',
@@ -635,19 +635,19 @@ export function EventLogsTab() {
         doc.setFillColor(levelColors[log.level] || '#F3F4F6');
         doc.roundedRect(margin, yPos - 4, levelWidth, lineHeight + 4, 1, 1, 'F');
 
-        // Add log level text
+        
         doc.setTextColor(textColors[log.level] || '#6B7280');
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(8);
         doc.text(log.level.toUpperCase(), margin + 5, yPos);
 
-        // Add timestamp
+        
         doc.setTextColor('#6B7280');
         doc.setFont('helvetica', 'normal');
         doc.setFontSize(9);
         doc.text(timestamp, margin + levelWidth + 10, yPos);
 
-        // Add category if present
+        
         if (log.category) {
           const categoryX = margin + levelWidth + doc.getTextWidth(timestamp) + 20;
           doc.setFillColor('#F3F4F6');
@@ -660,7 +660,7 @@ export function EventLogsTab() {
 
         yPos += lineHeight * 1.5;
 
-        // Add message
+        
         doc.setTextColor('#111827');
         doc.setFontSize(10);
 
@@ -668,7 +668,7 @@ export function EventLogsTab() {
         doc.text(messageLines, margin + 5, yPos);
         yPos += messageLines.length * lineHeight;
 
-        // Add details if present
+        
         if (log.details) {
           doc.setTextColor('#6B7280');
           doc.setFontSize(8);
@@ -676,7 +676,7 @@ export function EventLogsTab() {
           const detailsStr = JSON.stringify(log.details, null, 2);
           const detailsLines = doc.splitTextToSize(detailsStr, maxLineWidth - 15);
 
-          // Add details background
+          
           doc.setFillColor('#F9FAFB');
           doc.roundedRect(margin + 5, yPos - 2, maxLineWidth - 10, detailsLines.length * lineHeight + 8, 1, 1, 'F');
 
@@ -684,19 +684,19 @@ export function EventLogsTab() {
           yPos += detailsLines.length * lineHeight + 10;
         }
 
-        // Add separator line
+        
         doc.setDrawColor('#E5E7EB');
         doc.setLineWidth(0.1);
         doc.line(margin, yPos, pageWidth - margin, yPos);
         yPos += lineHeight * 1.5;
       };
 
-      // Add all logs
+      
       filteredLogs.forEach((log) => {
         addLogEntry(log);
       });
 
-      // Add footer to all pages
+      
       const totalPages = doc.internal.pages.length - 1;
 
       for (let i = 1; i <= totalPages; i++) {
@@ -704,19 +704,19 @@ export function EventLogsTab() {
         doc.setFontSize(8);
         doc.setTextColor('#9CA3AF');
 
-        // Add page numbers
+        
         doc.text(`Page ${i} of ${totalPages}`, pageWidth / 2, doc.internal.pageSize.getHeight() - 10, {
           align: 'center',
         });
 
-        // Add footer text
+        
         doc.text('Generated by falbor', margin, doc.internal.pageSize.getHeight() - 10);
 
         const dateStr = new Date().toLocaleDateString();
         doc.text(dateStr, pageWidth - margin, doc.internal.pageSize.getHeight() - 10, { align: 'right' });
       }
 
-      // Save the PDF
+      
       doc.save(`falbor-event-logs-${new Date().toISOString()}.pdf`);
       toast.success('Event logs exported successfully as PDF');
     } catch (error) {

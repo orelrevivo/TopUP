@@ -22,11 +22,11 @@ import {
   Wifi,
 } from 'lucide-react';
 
-// Setup Guide Component
+
 function SetupGuide({ onBack }: { onBack: () => void }) {
   return (
     <div className="space-y-6">
-      {/* Header with Back Button */}
+      {}
       <div className="flex items-center gap-4 mb-6">
         <Button
           variant="ghost"
@@ -45,7 +45,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         </div>
       </div>
 
-      {/* Hardware Requirements Overview */}
+      {}
       <Card className="bg-gradient-to-r from-blue-500/10 to-purple-500/10 border border-blue-500/20 shadow-sm">
         <CardContent className="p-6">
           <div className="flex items-center gap-3 mb-4">
@@ -83,7 +83,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         </CardContent>
       </Card>
 
-      {/* Ollama Setup Section */}
+      {}
       <Card className="bg-falbor-elements-background-depth-2 shadow-sm">
         <CardHeader className="pb-6">
           <div className="flex items-center gap-4">
@@ -102,14 +102,14 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Installation Options */}
+          {}
           <div className="space-y-4">
             <h4 className="font-medium text-falbor-elements-textPrimary flex items-center gap-2">
               <Download className="w-4 h-4" />
               1. Choose Installation Method
             </h4>
 
-            {/* Desktop App - New and Recommended */}
+            {}
             <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/20">
               <div className="flex items-center gap-2 mb-3">
                 <Monitor className="w-5 h-5 text-green-500" />
@@ -178,7 +178,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
               </div>
             </div>
 
-            {/* CLI Installation */}
+            {}
             <div className="p-4 rounded-lg bg-falbor-elements-background-depth-3">
               <div className="flex items-center gap-2 mb-3">
                 <Terminal className="w-5 h-5 text-falbor-elements-textPrimary" />
@@ -216,7 +216,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          {/* Latest Model Recommendations */}
+          {}
           <div className="space-y-4">
             <h4 className="font-medium text-falbor-elements-textPrimary flex items-center gap-2">
               <Package className="w-4 h-4" />
@@ -278,7 +278,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          {/* Desktop App Features */}
+          {}
           <div className="space-y-4">
             <h4 className="font-medium text-falbor-elements-textPrimary flex items-center gap-2">
               <Monitor className="w-4 h-4" />
@@ -308,7 +308,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          {/* Troubleshooting */}
+          {}
           <div className="space-y-4">
             <h4 className="font-medium text-falbor-elements-textPrimary flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -346,7 +346,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         </CardContent>
       </Card>
 
-      {/* LM Studio Setup Section */}
+      {}
       <Card className="bg-falbor-elements-background-depth-2 shadow-sm">
         <CardHeader className="pb-6">
           <div className="flex items-center gap-4">
@@ -362,7 +362,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Installation */}
+          {}
           <div className="space-y-4">
             <h4 className="font-medium text-falbor-elements-textPrimary flex items-center gap-2">
               <Download className="w-4 h-4" />
@@ -392,7 +392,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          {/* Configuration */}
+          {}
           <div className="space-y-4">
             <h4 className="font-medium text-falbor-elements-textPrimary flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -432,7 +432,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          {/* Advantages */}
+          {}
           <div className="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="w-4 h-4 text-blue-500" />
@@ -449,7 +449,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         </CardContent>
       </Card>
 
-      {/* LocalAI Setup Section */}
+      {}
       <Card className="bg-falbor-elements-background-depth-2 shadow-sm">
         <CardHeader className="pb-6">
           <div className="flex items-center gap-4">
@@ -465,7 +465,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Installation */}
+          {}
           <div className="space-y-4">
             <h4 className="font-medium text-falbor-elements-textPrimary flex items-center gap-2">
               <Download className="w-4 h-4" />
@@ -489,7 +489,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          {/* Configuration */}
+          {}
           <div className="space-y-4">
             <h4 className="font-medium text-falbor-elements-textPrimary flex items-center gap-2">
               <Settings className="w-4 h-4" />
@@ -510,7 +510,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
             </div>
           </div>
 
-          {/* Advantages */}
+          {}
           <div className="p-4 rounded-lg bg-green-500/10 border border-green-500/20">
             <div className="flex items-center gap-2 mb-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
@@ -527,7 +527,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         </CardContent>
       </Card>
 
-      {/* Performance Optimization */}
+      {}
       <Card className="bg-gradient-to-r from-purple-500/10 to-pink-500/10 border border-purple-500/20 shadow-sm">
         <CardHeader className="pb-4">
           <div className="flex items-center gap-3">
@@ -588,7 +588,7 @@ function SetupGuide({ onBack }: { onBack: () => void }) {
         </CardContent>
       </Card>
 
-      {/* Alternative Options */}
+      {}
       <Card className="bg-falbor-elements-background-depth-2 shadow-sm">
         <CardHeader className="pb-6">
           <div className="flex items-center gap-4">

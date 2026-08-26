@@ -5,7 +5,7 @@ export default function AboutFalborSection() {
   return (
     <section className="relative w-full bg-black py-24 md:py-32 flex flex-col items-center justify-center overflow-hidden border-t border-white/5 z-10">
 
-      {/* Background Image */}
+      {}
       <img
         src="/background/forest_bg.png"
         alt=""

@@ -188,10 +188,10 @@ export async function POST(request: Request) {
 
     // Get GitHub configuration
     const githubToken = process.env.GITHUB_BUG_REPORT_TOKEN;
-    const targetRepo = process.env.BUG_REPORT_REPO || 'stackblitz-labs/falbor';
+    const targetRepo = process.env.BUG_REPORT_REPO;
 
-    if (!githubToken) {
-      console.error('GitHub bug report token not configured');
+    if (!githubToken || !targetRepo) {
+      console.error('GitHub bug report token or repo not configured');
       return json(
         { error: 'Bug reporting is not properly configured. Please contact the administrators.' },
         { status: 500 },

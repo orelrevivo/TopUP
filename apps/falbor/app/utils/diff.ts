@@ -29,17 +29,14 @@ export function computeFileModifications(files: FileMap, modifiedFiles: Map<stri
     const unifiedDiff = diffFiles(filePath, originalContent, file.content);
 
     if (!unifiedDiff) {
-      // files are identical
       continue;
     }
 
     hasModifiedFiles = true;
 
     if (unifiedDiff.length > file.content.length) {
-      // if there are lots of changes we simply grab the current file content since it's smaller than the diff
       modifications[filePath] = { type: 'file', content: file.content };
     } else {
-      // otherwise we use the diff since it's smaller
       modifications[filePath] = { type: 'diff', content: unifiedDiff };
     }
   }
@@ -50,14 +47,6 @@ export function computeFileModifications(files: FileMap, modifiedFiles: Map<stri
 
   return modifications;
 }
-
-/**
- * Computes a diff in the unified format. The only difference is that the header is omitted
- * because it will always assume that you're comparing two versions of the same file and
- * it allows us to avoid the extra characters we send back to the llm.
- *
- * @see https://www.gnu.org/software/diffutils/manual/html_node/Unified-Format.html
- */
 export function diffFiles(fileName: string, oldFileContent: string, newFileContent: string) {
   let unifiedDiff = createTwoFilesPatch(fileName, fileName, oldFileContent, newFileContent);
 
@@ -76,28 +65,9 @@ export function diffFiles(fileName: string, oldFileContent: string, newFileConte
 }
 
 const regex = new RegExp(`^${WORK_DIR}\/`);
-
-/**
- * Strips out the work directory from the file path.
- */
 export function extractRelativePath(filePath: string) {
   return filePath.replace(regex, '');
 }
-
-/**
- * Converts the unified diff to HTML.
- *
- * Example:
- *
- * ```html
- * <falbor_file_modifications>
- * <diff path="/home/project/index.js">
- * - console.log('Hello, World!');
- * + console.log('Hello, Falbor!');
- * </diff>
- * </falbor_file_modifications>
- * ```
- */
 export function fileModificationsToHTML(modifications: FileModifications) {
   const entries = Object.entries(modifications);
 

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
@@ -22,8 +20,6 @@ const server = new Server(
     },
   }
 );
-
-// Register tools
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
@@ -62,8 +58,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     ],
   };
 });
-
-// Handle tool execution
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
@@ -72,7 +66,7 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
       const limit = args?.limit || 10;
       const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/getUpdates?limit=${limit}`);
       const data = await response.json();
-      
+
       if (!data.ok) {
         throw new Error(data.description || 'Failed to fetch updates');
       }
@@ -85,12 +79,12 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           }
         ]
       };
-    } 
-    
+    }
+
     if (name === 'send_message') {
       const chatId = args?.chat_id;
       const text = args?.text;
-      
+
       const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
         method: 'POST',
         headers: {
@@ -101,9 +95,9 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
           text: text
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (!data.ok) {
         throw new Error(data.description || 'Failed to send message');
       }

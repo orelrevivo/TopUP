@@ -32,11 +32,11 @@ export default function AddConnection({ connectorId, onCancel, onSaveConfig }: A
 
     try {
       if (connector.method === 'oauth') {
-        // Redirect the user to the backend auth init route
+        
         window.location.href = `/api/auth/${connector.id}?name=${encodeURIComponent(connectionName)}`;
       } else {
-        // API Key flow
-        // Validate all required fields
+        
+        
         const missingFields = connector.fields?.filter((f) => !formData[f.id]);
         if (missingFields && missingFields.length > 0) {
           alert(`Please fill in all fields: ${missingFields.map((f) => f.label).join(', ')}`);
@@ -44,15 +44,15 @@ export default function AddConnection({ connectorId, onCancel, onSaveConfig }: A
           return;
         }
 
-        // Save credentials to the database (same pattern as Gmail/Slack OAuth)
-        // This makes the credentials available server-side via NativeToolsService
+        
+        
         const dbRes = await fetch('/api/mcp/connections', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             connectorId: connector.id,
             name: connectionName,
-            config: formData, // Store raw field values (e.g. { bot_token: '...' })
+            config: formData, 
           }),
         });
 
@@ -61,8 +61,8 @@ export default function AddConnection({ connectorId, onCancel, onSaveConfig }: A
           throw new Error(err.error || 'Failed to save connection to database');
         }
 
-        // Also register as an MCP server config so it shows up in the server list
-        // (still useful for connectors that use the STDIO path)
+        
+        
         const env: Record<string, string> = {};
         Object.entries(formData).forEach(([key, value]) => {
           env[`${connector.id.toUpperCase()}_${key.toUpperCase()}`] = value;
@@ -73,7 +73,7 @@ export default function AddConnection({ connectorId, onCancel, onSaveConfig }: A
 
         let shouldSaveMcpConfig = true;
 
-        // Route specific predefined connectors to custom local MCP servers
+        
         if (connector.id === 'klipy') {
           args = ['-y', 'tsx', 'app/mcp-servers/klipy.ts'];
         } else if (connector.id === 'telegram') {

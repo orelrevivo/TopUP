@@ -40,7 +40,7 @@ export function GitHubProgressiveLoader({
 }: ProgressiveLoaderProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
-  // Calculate progress percentage
+  
   const progress = useMemo(() => {
     if (!showProgress || progressSteps.length === 0) {
       return 0;
@@ -55,7 +55,7 @@ export function GitHubProgressiveLoader({
     setIsExpanded((prev) => !prev);
   }, []);
 
-  // Loading state with progressive steps
+  
   if (isLoading) {
     return (
       <div className={classNames('flex flex-col items-center justify-center py-8', className)}>
@@ -73,7 +73,7 @@ export function GitHubProgressiveLoader({
 
           {showProgress && progressSteps.length > 0 && (
             <div className="w-full max-w-sm">
-              {/* Progress bar */}
+              {}
               <div className="w-full bg-falbor-elements-background-depth-2 rounded-full h-2 mb-3">
                 <motion.div
                   className="bg-falbor-elements-item-contentAccent h-2 rounded-full"
@@ -83,7 +83,7 @@ export function GitHubProgressiveLoader({
                 />
               </div>
 
-              {/* Steps toggle */}
+              {}
               <button
                 onClick={handleToggleExpanded}
                 className="flex items-center justify-center gap-2 text-xs text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary transition-colors"
@@ -97,7 +97,7 @@ export function GitHubProgressiveLoader({
                 />
               </button>
 
-              {/* Progress steps */}
+              {}
               <AnimatePresence>
                 {isExpanded && (
                   <motion.div
@@ -143,7 +143,7 @@ export function GitHubProgressiveLoader({
     );
   }
 
-  // Error state
+  
   if (error) {
     return (
       <div className={classNames('flex flex-col items-center justify-center py-8 text-center space-y-4', className)}>
@@ -174,7 +174,7 @@ export function GitHubProgressiveLoader({
     );
   }
 
-  // Success state - render children with optional refresh indicator
+  
   return (
     <div className={classNames('relative', className)}>
       {isRefreshing && (
@@ -191,7 +191,7 @@ export function GitHubProgressiveLoader({
   );
 }
 
-// Hook for managing progressive loading steps
+
 export function useProgressiveLoader() {
   const [steps, setSteps] = useState<
     Array<{

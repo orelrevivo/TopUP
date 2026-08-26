@@ -71,11 +71,7 @@ export default async function SetupPage() {
                 <div className="h-40"></div>
               </div>
               <div className="relative bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl p-6 rounded-2xl border border-gray-100/50 dark:border-gray-800/50">
-                {/* <DashboardMetrics
-                  totalErrors={0}
-                  unresolvedIssues={0}
-                  activeProjects={1}
-                /> */}
+                {}
                 <ErrorPreview />
                 <div className="mt-8">
                   <ActivityChart events={mockEvents} />

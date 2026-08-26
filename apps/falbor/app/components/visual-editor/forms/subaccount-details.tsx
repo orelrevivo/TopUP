@@ -39,7 +39,7 @@ const formSchema = z.object({
   companyPhone: z.string().min(1, 'Phone number is required'),
   address: z.string().min(1, 'Address is required'),
   city: z.string().min(1, 'City is required'),
-  subAccountLogo: z.string().optional(), // Made optional
+  subAccountLogo: z.string().optional(), 
   zipCode: z.string().min(1, 'Zip code is required'),
   state: z.string().min(1, 'State is required'),
   country: z.string().min(1, 'Country is required'),
@@ -82,7 +82,7 @@ const SubAccountDetails: React.FC<SubAccountDetailsProps> = ({
     console.log('🟡 CLIENT SIDE FORM VALUES:', values)
     console.log('🟡 SUBMITTED VALUES:', submittedValues)
     try {
-      // Strip base64 logo — only pass through if it's already a URL (from UploadThing)
+      
       const logoValue = values.subAccountLogo || ''
       const safeLogo = logoValue.startsWith('data:') ? '' : logoValue
 
@@ -149,7 +149,7 @@ const SubAccountDetails: React.FC<SubAccountDetailsProps> = ({
       <CardContent>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            {/* Logo - Optional */}
+            {}
             <FormField
               disabled={isLoading}
               control={form.control}

@@ -43,7 +43,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
   const { setOpen } = useModal()
   const [pagesState, setPagesState] = useState(pages)
   const onDragStart = (event: DragStart) => {
-    //current chosen page
+    
     const { draggableId } = event
     const value = pagesState.find((page) => page.id === draggableId)
   }
@@ -51,7 +51,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
   const onDragEnd = (dropResult: DropResult) => {
     const { destination, source } = dropResult
 
-    //no destination or same position
+    
     if (
       !destination ||
       (destination.droppableId === source.droppableId &&
@@ -59,7 +59,7 @@ const FunnelSteps = ({ funnel, funnelId, pages, subaccountId }: Props) => {
     ) {
       return
     }
-    //change state
+    
     const newPageOrder = [...pagesState]
       .toSpliced(source.index, 1)
       .toSpliced(destination.index, 0, pagesState[source.index])

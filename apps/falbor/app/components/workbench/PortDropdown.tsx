@@ -22,12 +22,12 @@ export const PortDropdown = memo(
   }: PortDropdownProps) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
 
-    // sort previews, preserving original index
+    
     const sortedPreviews = previews
       .map((previewInfo, index) => ({ ...previewInfo, index }))
       .sort((a, b) => a.port - b.port);
 
-    // close dropdown if user clicks outside
+    
     useEffect(() => {
       const handleClickOutside = (event: MouseEvent) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -48,7 +48,7 @@ export const PortDropdown = memo(
 
     return (
       <div className="relative z-port-dropdown" ref={dropdownRef}>
-        {/* Display the active port if available, otherwise show the plug icon */}
+        {}
         <button
           className="flex items-center group-focus-within:text-falbor-elements-preview-addressBar-text bg-white group-focus-within:bg-falbor-elements-preview-addressBar-background dark:bg-falbor-elements-preview-addressBar-backgroundHover rounded-full px-2 py-1 gap-1.5"
           onClick={() => setIsDropdownOpen(!isDropdownOpen)}

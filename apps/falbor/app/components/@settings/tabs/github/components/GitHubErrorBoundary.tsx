@@ -82,22 +82,19 @@ export class GitHubErrorBoundary extends Component<Props, State> {
   }
 }
 
-// Higher-order component for wrapping components with error boundary
+
 export function withGitHubErrorBoundary<P extends object>(component: React.ComponentType<P>) {
   return function WrappedComponent(props: P) {
     return <GitHubErrorBoundary>{React.createElement(component, props)}</GitHubErrorBoundary>;
   };
 }
 
-// Hook for handling async errors in GitHub operations
+
 export function useGitHubErrorHandler() {
   const handleError = React.useCallback((error: unknown, context?: string) => {
     console.error(`GitHub Error ${context ? `(${context})` : ''}:`, error);
 
-    /*
-     * You could integrate with error tracking services here
-     * For example: Sentry, LogRocket, etc.
-     */
+    
 
     return error instanceof Error ? error.message : 'An unknown error occurred';
   }, []);

@@ -56,12 +56,6 @@ export function useGit() {
       if (url.includes('#')) {
         [baseUrl, branch] = url.split('#');
       }
-
-      /*
-       * Skip Git initialization for now - let isomorphic-git handle it
-       * This avoids potential issues with our manual initialization
-       */
-
       const headers: {
         [x: string]: string;
       } = {
@@ -73,8 +67,6 @@ export function useGit() {
       if (auth) {
         headers.Authorization = `Basic ${Buffer.from(`${auth.username}:${auth.password}`).toString('base64')}`;
       }
-
-      // Auto-inject GitHub token from env for github.com URLs
       const githubToken = process.env.NEXT_PUBLIC_GITHUB_ACCESS_TOKEN;
       const isGitHubUrl = baseUrl.includes('github.com');
 
@@ -83,7 +75,6 @@ export function useGit() {
       }
 
       try {
-        // Add a small delay before retrying to allow for network recovery
         if (retryCount > 0) {
           await new Promise((resolve) => setTimeout(resolve, 1000 * retryCount));
           console.log(`Retrying git clone (attempt ${retryCount + 1})...`);
@@ -103,23 +94,17 @@ export function useGit() {
             console.log('Git clone progress:', event);
           },
           onAuth: (authUrl) => {
-            // 1. Check cookies first (previously saved creds)
             const saved = lookupSavedPassword(authUrl);
 
             if (saved) {
               console.log('Using saved authentication for', authUrl);
               return saved;
             }
-
-            // 2. Auto-use GitHub token from env for github.com
             const ghToken = process.env.NEXT_PUBLIC_GITHUB_ACCESS_TOKEN;
 
             if (authUrl.includes('github.com') && ghToken && !ghToken.startsWith('your_')) {
-              // Using GitHub token from environment
               return { username: 'oauth2', password: ghToken };
             }
-
-            // 3. Last resort — ask the user
             console.log('Repository requires authentication:', authUrl);
 
             if (confirm('This repository requires authentication. Would you like to enter your GitHub credentials?')) {
@@ -156,11 +141,7 @@ export function useGit() {
         return { workdir: webcontainer.workdir, data };
       } catch (error) {
         console.error('Git clone error:', error);
-
-        // Handle specific error types
         const errorMessage = error instanceof Error ? error.message : String(error);
-
-        // Check for common error patterns
         if (errorMessage.includes('Authentication failed')) {
           toast.error(`Authentication failed. Please check your GitHub credentials and try again.`);
           throw error;
@@ -170,8 +151,6 @@ export function useGit() {
           errorMessage.includes('ECONNREFUSED')
         ) {
           toast.error(`Network error while connecting to repository. Please check your internet connection.`);
-
-          // Retry for network errors, up to 3 times
           if (retryCount < 3) {
             return gitClone(url, retryCount + 1);
           }
@@ -224,13 +203,10 @@ const getFs = (
       }
 
       try {
-        // Handle encoding properly based on data type
         if (data instanceof Uint8Array) {
-          // For binary data, don't pass encoding
           const result = await webcontainer.fs.writeFile(relativePath, data);
           return result;
         } else {
-          // For text data, use the encoding if provided
           const encoding = options?.encoding || 'utf8';
           const result = await webcontainer.fs.writeFile(relativePath, data, encoding);
 
@@ -298,15 +274,13 @@ const getFs = (
         const relativePath = pathUtils.relative(webcontainer.workdir, path);
         const dirPath = pathUtils.dirname(relativePath);
         const fileName = pathUtils.basename(relativePath);
-
-        // Special handling for .git/index file
         if (relativePath === '.git/index') {
           return {
             isFile: () => true,
             isDirectory: () => false,
             isSymbolicLink: () => false,
-            size: 12, // Size of our empty index
-            mode: 0o100644, // Regular file
+            size: 12,
+            mode: 0o100644,
             mtimeMs: Date.now(),
             ctimeMs: Date.now(),
             birthtimeMs: Date.now(),
@@ -343,7 +317,7 @@ const getFs = (
           isDirectory: () => fileInfo.isDirectory(),
           isSymbolicLink: () => false,
           size: fileInfo.isDirectory() ? 4096 : 1,
-          mode: fileInfo.isDirectory() ? 0o040755 : 0o100644, // Directory or regular file
+          mode: fileInfo.isDirectory() ? 0o040755 : 0o100644,
           mtimeMs: Date.now(),
           ctimeMs: Date.now(),
           birthtimeMs: Date.now(),
@@ -379,18 +353,10 @@ const getFs = (
       throw new Error(`EINVAL: invalid argument, readlink '${path}'`);
     },
     symlink: async (target: string, path: string) => {
-      /*
-       * Since WebContainer doesn't support symlinks,
-       * we'll throw a "operation not supported" error
-       */
       throw new Error(`EPERM: operation not permitted, symlink '${target}' -> '${path}'`);
     },
 
     chmod: async (_path: string, _mode: number) => {
-      /*
-       * WebContainer doesn't support changing permissions,
-       * but we can pretend it succeeded for compatibility
-       */
       return await Promise.resolve();
     },
   },
@@ -398,26 +364,16 @@ const getFs = (
 
 const pathUtils = {
   dirname: (path: string) => {
-    // Handle empty or just filename cases
     if (!path || !path.includes('/')) {
       return '.';
     }
-
-    // Remove trailing slashes
     path = path.replace(/\/+$/, '');
-
-    // Get directory part
     return path.split('/').slice(0, -1).join('/') || '/';
   },
 
   basename: (path: string, ext?: string) => {
-    // Remove trailing slashes
     path = path.replace(/\/+$/, '');
-
-    // Get the last part of the path
     const base = path.split('/').pop() || '';
-
-    // If extension is provided, remove it from the result
     if (ext && base.endsWith(ext)) {
       return base.slice(0, -ext.length);
     }
@@ -425,18 +381,13 @@ const pathUtils = {
     return base;
   },
   relative: (from: string, to: string): string => {
-    // Handle empty inputs
     if (!from || !to) {
       return '.';
     }
-
-    // Normalize paths by removing trailing slashes and splitting
     const normalizePathParts = (p: string) => p.replace(/\/+$/, '').split('/').filter(Boolean);
 
     const fromParts = normalizePathParts(from);
     const toParts = normalizePathParts(to);
-
-    // Find common parts at the start of both paths
     let commonLength = 0;
     const minLength = Math.min(fromParts.length, toParts.length);
 
@@ -447,17 +398,9 @@ const pathUtils = {
 
       commonLength++;
     }
-
-    // Calculate the number of "../" needed
     const upCount = fromParts.length - commonLength;
-
-    // Get the remaining path parts we need to append
     const remainingPath = toParts.slice(commonLength);
-
-    // Construct the relative path
     const relativeParts = [...Array(upCount).fill('..'), ...remainingPath];
-
-    // Handle empty result case
     return relativeParts.length === 0 ? '.' : relativeParts.join('/');
   },
 };

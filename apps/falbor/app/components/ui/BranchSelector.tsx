@@ -10,14 +10,14 @@ interface BranchInfo {
   sha: string;
   protected: boolean;
   isDefault: boolean;
-  canPush?: boolean; // GitLab specific
+  canPush?: boolean; 
 }
 
 interface BranchSelectorProps {
   provider: 'github' | 'gitlab';
   repoOwner: string;
   repoName: string;
-  projectId?: string | number; // GitLab specific
+  projectId?: string | number; 
   token: string;
   gitlabUrl?: string;
   defaultBranch?: string;
@@ -66,7 +66,7 @@ export function BranchSelector({
           }),
         });
       } else {
-        // GitLab
+        
         if (!projectId) {
           throw new Error('Project ID is required for GitLab repositories');
         }
@@ -90,7 +90,7 @@ export function BranchSelector({
       const data: any = await response.json();
       setBranches(data.branches || []);
 
-      // Set default selected branch
+      
       const defaultBranchToSelect = data.defaultBranch || defaultBranch || 'main';
       setSelectedBranch(defaultBranchToSelect);
     } catch (err) {
@@ -117,7 +117,7 @@ export function BranchSelector({
     }
   }, [isOpen, repoOwner, repoName, projectId]);
 
-  // Reset search when closing
+  
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('');
@@ -141,7 +141,7 @@ export function BranchSelector({
             className,
           )}
         >
-          {/* Header */}
+          {}
           <div className="p-6 border-b border-falbor-elements-borderColor flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center">
@@ -162,7 +162,7 @@ export function BranchSelector({
             </button>
           </div>
 
-          {/* Content */}
+          {}
           <div className="flex-1 overflow-hidden flex flex-col">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center p-8 space-y-4">
@@ -182,7 +182,7 @@ export function BranchSelector({
               </div>
             ) : (
               <>
-                {/* Search */}
+                {}
                 {branches.length > 10 && (
                   <div className="p-4 border-b border-falbor-elements-borderColor">
                     <input
@@ -195,7 +195,7 @@ export function BranchSelector({
                   </div>
                 )}
 
-                {/* Branch List */}
+                {}
                 <div className="flex-1 overflow-y-auto">
                   {filteredBranches.length > 0 ? (
                     <div className="p-4 space-y-1">
@@ -239,7 +239,7 @@ export function BranchSelector({
             )}
           </div>
 
-          {/* Footer */}
+          {}
           {!isLoading && !error && branches.length > 0 && (
             <div className="p-6 border-t border-falbor-elements-borderColor flex items-center justify-between">
               <div className="text-sm text-falbor-elements-textSecondary">

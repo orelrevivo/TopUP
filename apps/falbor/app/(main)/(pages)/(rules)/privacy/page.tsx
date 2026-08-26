@@ -8,7 +8,7 @@ export default function PrivacyAndTerms() {
       <ThemeHandler force="light" />
       <LandingScrollHandler />
 
-      {/* Global Sticky Navbar */}
+      {}
       <div className="sticky top-0 left-0 right-0 w-full z-[100] bg-white/80 backdrop-blur-md">
         <DefaultDemo />
       </div>

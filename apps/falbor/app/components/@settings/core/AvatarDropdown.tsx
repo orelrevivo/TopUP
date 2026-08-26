@@ -60,7 +60,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
           avoidCollisions
           collisionPadding={16}
         >
-          {/* ── User info header ── */}
+          {}
           <div
             className={classNames(
               'px-4 py-3 flex items-center gap-3',
@@ -90,7 +90,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             </div>
           </div>
 
-          {/* ── Navigation items ── */}
+          {}
           <DropdownMenu.Item
             className={classNames(
               'flex items-center gap-2 px-4 py-2.5',
@@ -169,7 +169,7 @@ export const AvatarDropdown = ({ onSelectTab }: AvatarDropdownProps) => {
             {t('download_debug_log')}
           </DropdownMenu.Item>
 
-          {/* ── Logout — destructive, visually separated ── */}
+          {}
           <div className="my-1 border-t border-gray-200/50 dark:border-gray-800/50" />
 
           <DropdownMenu.Item

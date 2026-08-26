@@ -37,9 +37,9 @@ export const Terminal = memo(
         let resizeObserver: ResizeObserver | undefined;
         let disposed = false;
 
-        // xterm and its addons reference browser-only globals (e.g. `self`) at
-        // module load time, so we import them lazily on the client to avoid
-        // breaking server-side rendering.
+        
+        
+        
         (async () => {
           const [{ Terminal: XTermCtor }, { FitAddon }, { WebLinksAddon }] = await Promise.all([
             import('@xterm/xterm'),
@@ -65,13 +65,13 @@ export const Terminal = memo(
             allowProposedApi: true,
             scrollback: 1000,
 
-            // Enable better clipboard handling
+            
             rightClickSelectsWord: true,
           });
 
           terminalRef.current = terminal;
 
-          // Error handling for addon loading
+          
           try {
             terminal.loadAddon(fitAddon);
             terminal.loadAddon(webLinksAddon);
@@ -79,7 +79,7 @@ export const Terminal = memo(
           } catch (error) {
             logger.error(`Failed to initialize terminal [${id}]:`, error);
 
-            // Attempt recovery
+            
             setTimeout(() => {
               try {
                 terminal?.open(element);
@@ -91,11 +91,11 @@ export const Terminal = memo(
           }
 
           resizeObserver = new ResizeObserver((entries) => {
-            // Debounce resize events and ensure terminal is visible
+            
             if (entries.length > 0 && terminal && element.clientWidth > 0 && element.clientHeight > 0) {
               requestAnimationFrame(() => {
                 try {
-                  // Additional safeguard check for renderer initialization
+                  
                   if ((terminal as any)._core?._renderService?._renderer?.value === undefined) {
                     return;
                   }
@@ -135,7 +135,7 @@ export const Terminal = memo(
           return;
         }
 
-        // we render a transparent cursor in case the terminal is readonly
+        
         terminal.options.theme = getTerminalTheme(readonly ? { cursor: '#00000000' } : {});
 
         terminal.options.disableStdin = readonly;

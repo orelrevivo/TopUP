@@ -19,7 +19,6 @@ export async function joinWaitlistAction(email: string) {
 export async function getWaitlistCount() {
   try {
     const client = await clerkClient()
-    // getWaitlistEntryList returns { data: WaitlistEntry[], totalCount: number }
     const { totalCount } = await client.waitlistEntries.list()
     return totalCount + 80
   } catch (error) {

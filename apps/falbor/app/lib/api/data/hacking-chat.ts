@@ -1,17 +1,7 @@
-/**
- * Client-side data helper for the Hacking section.
- * Mirrors app/lib/api/data/chat.ts but talks to /api/data/hacking-chats
- * which reads/writes the isolated hackingChats / hackingMessages / hackingChatSnapshots tables.
- */
 const BASE = "/api/data/hacking-chats";
 
 async function api(path: string, options?: RequestInit): Promise<any> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
-
-  if (typeof window !== "undefined") {
-    const token = localStorage.getItem("session_token");
-    if (token) headers["x-session-token"] = token;
-  }
 
   if (options?.headers) {
     const optHeaders = options.headers as Record<string, string>;

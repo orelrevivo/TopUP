@@ -2,7 +2,7 @@ import React from 'react';
 import { motion } from 'framer-motion';
 import { classNames } from '~/utils/classNames';
 
-// Predefined gradient colors
+
 const GRADIENT_COLORS = [
   'from-purple-500/10 to-blue-500/5',
   'from-blue-500/10 to-cyan-500/5',
@@ -15,33 +15,29 @@ const GRADIENT_COLORS = [
 ];
 
 interface GradientCardProps {
-  /** Custom gradient class (overrides seed-based gradient) */
+  
   gradient?: string;
 
-  /** Seed string to determine gradient color */
+  
   seed?: string;
 
-  /** Whether to apply hover animation effect */
+  
   hoverEffect?: boolean;
 
-  /** Whether to apply border effect */
+  
   borderEffect?: boolean;
 
-  /** Card content */
+  
   children: React.ReactNode;
 
-  /** Additional class name */
+  
   className?: string;
 
-  /** Additional props */
+  
   [key: string]: any;
 }
 
-/**
- * GradientCard component
- *
- * A card with a gradient background that can be determined by a seed string.
- */
+
 export function GradientCard({
   gradient,
   seed,
@@ -51,10 +47,10 @@ export function GradientCard({
   children,
   ...props
 }: GradientCardProps) {
-  // Get gradient color based on seed or use provided gradient
+  
   const gradientClass = gradient || getGradientColorFromSeed(seed);
 
-  // Animation variants for hover effect
+  
   const hoverAnimation = hoverEffect
     ? {
         whileHover: {
@@ -86,9 +82,7 @@ export function GradientCard({
   );
 }
 
-/**
- * Calculate a gradient color based on the seed string for visual variety
- */
+
 function getGradientColorFromSeed(seedString?: string): string {
   if (!seedString) {
     return GRADIENT_COLORS[0];

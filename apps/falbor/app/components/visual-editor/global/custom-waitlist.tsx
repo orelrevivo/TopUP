@@ -44,11 +44,11 @@ export const CustomWaitlist = () => {
 
   return (
     <div className="max-w-md w-full relative group animate-in fade-in slide-in-from-bottom-4 duration-1000">
-      {/* Background Glow */}
-      {/* <div className="absolute -inset-1 bg-gradient-to-r from-primary to-purple-600 rounded-[2.5rem] blur opacity-20 group-hover:opacity-40 transition duration-1000" /> */}
+      {}
+      {}
 
       <div className="relative dark:bg-black/90 bg-white backdrop-blur-3xl border border-black/30 p-10 rounded-sm overflow-hidden">
-        {/* Decorative elements */}
+        {}
         <div className="absolute top-0 right-0 w-32 h-32 bg-primary/10 rounded-full blur-3xl -mr-16 -mt-16" />
 
         <div className="relative z-10 space-y-8">
@@ -73,7 +73,7 @@ export const CustomWaitlist = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 disabled={loading}
-                className="pr-32" // space for button
+                className="pr-32" 
               />
 
               <Button

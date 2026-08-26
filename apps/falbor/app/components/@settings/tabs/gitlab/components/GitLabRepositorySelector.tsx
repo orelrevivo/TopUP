@@ -32,7 +32,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
 
   const REPOS_PER_PAGE = 12;
 
-  // Fetch repositories
+  
   const fetchRepositories = async (refresh = false) => {
     if (!isConnected || !connection?.token) {
       return;
@@ -65,38 +65,38 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
       console.error('Failed to fetch GitLab repositories:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch repositories');
 
-      // Fallback to empty array on error
+      
       setRepositories([]);
     } finally {
       loadingState(false);
     }
   };
 
-  // Filter and search repositories
+  
   const filteredRepositories = useMemo(() => {
     if (!repositories) {
       return [];
     }
 
     const filtered = repositories.filter((repo: GitLabProjectInfo) => {
-      // Search filter
+      
       const matchesSearch =
         !searchQuery ||
         repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         repo.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         repo.path_with_namespace.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Type filter
+      
       let matchesFilter = true;
 
       switch (filterBy) {
         case 'owned':
-          // This would need owner information from the API response
-          matchesFilter = true; // For now, show all
+          
+          matchesFilter = true; 
           break;
         case 'member':
-          // This would need member information from the API response
-          matchesFilter = true; // For now, show all
+          
+          matchesFilter = true; 
           break;
         case 'all':
         default:
@@ -107,7 +107,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
       return matchesSearch && matchesFilter;
     });
 
-    // Sort repositories
+    
     filtered.sort((a: GitLabProjectInfo, b: GitLabProjectInfo) => {
       switch (sortBy) {
         case 'name':
@@ -115,7 +115,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
         case 'stars':
           return b.star_count - a.star_count;
         case 'created':
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(); // Using updated_at as proxy
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(); 
         case 'updated':
         default:
           return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
@@ -125,7 +125,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
     return filtered;
   }, [repositories, searchQuery, sortBy, filterBy]);
 
-  // Pagination
+  
   const totalPages = Math.ceil(filteredRepositories.length / REPOS_PER_PAGE);
   const startIndex = (currentPage - 1) * REPOS_PER_PAGE;
   const currentRepositories = filteredRepositories.slice(startIndex, startIndex + REPOS_PER_PAGE);
@@ -152,12 +152,12 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
     setSelectedRepo(null);
   };
 
-  // Reset to first page when filters change
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortBy, filterBy]);
 
-  // Fetch repositories when connection is ready
+  
   useEffect(() => {
     if (isConnected && connection?.token) {
       fetchRepositories();
@@ -220,7 +220,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Header with stats */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-falbor-elements-textPrimary">Select Repository to Clone</h3>
@@ -246,9 +246,9 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
         </div>
       )}
 
-      {/* Search and Filters */}
+      {}
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search */}
+        {}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-falbor-elements-textTertiary" />
           <input
@@ -260,7 +260,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
           />
         </div>
 
-        {/* Sort */}
+        {}
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-falbor-elements-textTertiary" />
           <select
@@ -275,7 +275,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
           </select>
         </div>
 
-        {/* Filter */}
+        {}
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-falbor-elements-textTertiary" />
           <select
@@ -290,7 +290,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
         </div>
       </div>
 
-      {/* Repository Grid */}
+      {}
       {currentRepositories.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -301,7 +301,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
             ))}
           </div>
 
-          {/* Pagination */}
+          {}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4 border-t border-falbor-elements-borderColor">
               <div className="text-sm text-falbor-elements-textSecondary">
@@ -339,7 +339,7 @@ export function GitLabRepositorySelector({ onClone, className }: GitLabRepositor
         </div>
       )}
 
-      {/* Branch Selector Modal */}
+      {}
       {selectedRepo && (
         <BranchSelector
           provider="gitlab"

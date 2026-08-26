@@ -60,11 +60,10 @@ export function useChatHistory() {
                 if (rewindId && snapshots[rewindId]) {
                   validSnapshot = snapshots[rewindId];
                 } else {
-                  // Fallback to latest
+                  
                   const keys = Object.keys(snapshots);
                   if (keys.length > 0) {
-                    // This is not necessarily the latest in time, but JavaScript objects preserve insertion order for string keys generally.
-                    // A better way is to find the last message id in storedMessages that has a snapshot.
+
                     let found = false;
                     for (let i = storedMessages.messages.length - 1; i >= 0; i--) {
                        if (snapshots[storedMessages.messages[i].id]) {
@@ -82,7 +81,6 @@ export function useChatHistory() {
                 validSnapshot = (snapshotData || { chatIndex: '', files: {} }) as Snapshot;
               }
 
-              // We no longer slice the messages to hide old ones, because the user wants to see the full chat history.
               let filteredMessages = storedMessages.messages;
               let archivedMessages: Message[] = [];
 
@@ -93,7 +91,7 @@ export function useChatHistory() {
               if (validSnapshot && Object.keys(validSnapshot.files || {}).length > 0) {
                 restoreSnapshot(mixedId, validSnapshot);
                 hasSnapshot = true;
-                // Auto-open the workbench so cloned/restored chats show their files
+                
                 workbenchStore.showWorkbench.set(true);
               }
 
@@ -160,7 +158,6 @@ export function useChatHistory() {
 
     if (!validSnapshot?.files) return;
 
-    // Immediately populate the UI store so manual saves don't capture an incomplete file state
     workbenchStore.files.set(validSnapshot.files);
 
     await Promise.all(Object.entries(validSnapshot.files).map(async ([key, value]) => {

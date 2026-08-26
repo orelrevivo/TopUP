@@ -63,7 +63,7 @@ export function FeedbackWidget({ hasMessages = false }: FeedbackWidgetProps) {
   const [isMinimized, setIsMinimized] = useState(false);
   const [stepIndex, setStepIndex] = useState(0);
 
-  // Store answers for all steps. text is for text inputs or the email field.
+  
   const [answers, setAnswers] = useState<{ option: string; text: string }[]>(
     Array(STEPS.length).fill({ option: '', text: '' })
   );
@@ -73,7 +73,7 @@ export function FeedbackWidget({ hasMessages = false }: FeedbackWidgetProps) {
   useEffect(() => {
     if (!user) return;
     
-    // Check if the user has submitted feedback before, independent of hasMessages
+    
     if (loading) {
       fetch('/api/feedback')
         .then((res) => res.json())
@@ -86,10 +86,10 @@ export function FeedbackWidget({ hasMessages = false }: FeedbackWidgetProps) {
         .catch(() => setLoading(false));
     }
 
-    // Only open the widget automatically if they haven't submitted, it's not open yet, 
-    // and they have generated messages (analysis complete).
+    
+    
     if (!loading && !hasSubmitted && !isOpen && hasMessages) {
-      setTimeout(() => setIsOpen(true), 1500); // Small delay after analysis
+      setTimeout(() => setIsOpen(true), 1500); 
     }
   }, [user, hasMessages, loading, hasSubmitted, isOpen]);
 
@@ -111,7 +111,7 @@ export function FeedbackWidget({ hasMessages = false }: FeedbackWidgetProps) {
       return;
     }
 
-    // Submit data
+    
     try {
       await fetch('/api/feedback', {
         method: 'POST',
@@ -119,7 +119,7 @@ export function FeedbackWidget({ hasMessages = false }: FeedbackWidgetProps) {
         body: JSON.stringify({ answers }),
       });
     } catch (e) {
-      // ignore
+      
     }
 
     setShowThankYou(true);
@@ -133,7 +133,7 @@ export function FeedbackWidget({ hasMessages = false }: FeedbackWidgetProps) {
     if (stepIndex > 0) setStepIndex(stepIndex - 1);
   };
 
-  // Determine if next is disabled based on the step type
+  
   const isNextDisabled = () => {
     if (currentStep.type === 'text') return currentAnswer.text.trim().length === 0;
     if (currentStep.type === 'boolean-email') {

@@ -2,9 +2,6 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 import { loadProfileFromServer } from "~/lib/stores/profile";
-import { SESSION_DURATION_DAYS } from "~/lib/auth";
-
-const SESSION_KEY = "session_token";
 
 interface User {
   id: string;
@@ -120,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       await fetch("/api/auth/logout", { method: "POST" });
     } catch {
-      // ignore
+      
     }
     clearSessionCookie();
     setUser(null);
@@ -147,10 +144,10 @@ async function syncStorageFromServer() {
       try {
         localStorage.setItem(key, JSON.stringify(value));
       } catch {
-        // ignore
+        
       }
     }
   } catch {
-    // ignore
+    
   }
 }

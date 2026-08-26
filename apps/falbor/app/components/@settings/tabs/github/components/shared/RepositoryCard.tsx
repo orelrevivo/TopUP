@@ -205,7 +205,7 @@ export function RepositoryCard({
         interactiveProps.className,
       )}
     >
-      {/* Repository Health Indicator */}
+      {}
       {variant === 'detailed' && (
         <div
           className={`absolute top-2 right-2 w-2 h-2 rounded-full ${getHealthIndicatorColor()}`}
@@ -265,7 +265,7 @@ export function RepositoryCard({
             <p className="text-xs text-falbor-elements-textSecondary line-clamp-2">{repository.description}</p>
           )}
 
-          {/* Repository metrics bar */}
+          {}
           <div className="flex items-center gap-2 text-xs">
             {repository.license && (
               <span className="px-2 py-0.5 rounded-full bg-falbor-elements-background-depth-2 text-falbor-elements-textTertiary">
@@ -331,7 +331,7 @@ export function RepositoryCard({
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Repository Health Score */}
+            {}
             {health && (
               <div
                 className="flex items-center gap-1"

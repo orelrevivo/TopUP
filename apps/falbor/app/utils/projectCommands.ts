@@ -12,13 +12,8 @@ interface FileContent {
   content: string;
   path: string;
 }
-
-// Helper function to make any command non-interactive
 function makeNonInteractive(command: string): string {
-  // Set environment variables for non-interactive mode
   const envVars = 'export CI=true DEBIAN_FRONTEND=noninteractive FORCE_COLOR=0';
-
-  // Common interactive packages and their non-interactive flags
   const interactivePackages = [
     { pattern: /npx\s+([^@\s]+@?[^\s]*)\s+init/g, replacement: 'echo "y" | npx --yes $1 init --defaults --yes' },
     { pattern: /npx\s+create-([^\s]+)/g, replacement: 'npx --yes create-$1 --template default' },
@@ -27,10 +22,7 @@ function makeNonInteractive(command: string): string {
     { pattern: /yarn\s+add(?!\s+--)/g, replacement: 'yarn add --non-interactive' },
     { pattern: /pnpm\s+add(?!\s+--)/g, replacement: 'pnpm add --yes' },
   ];
-
   let processedCommand = command;
-
-  // Apply replacements for known interactive patterns
   interactivePackages.forEach(({ pattern, replacement }) => {
     processedCommand = processedCommand.replace(pattern, replacement);
   });
@@ -54,21 +46,13 @@ export async function detectProjectCommands(files: FileContent[]): Promise<Proje
       const packageJson = JSON.parse(packageJsonFile.content);
       const scripts = packageJson?.scripts || {};
       const dependencies = { ...packageJson.dependencies, ...packageJson.devDependencies };
-
-      // Check if this is a shadcn project
       const isShadcnProject =
         hasFileContent('components.json', 'shadcn') ||
         Object.keys(dependencies).some((dep) => dep.includes('shadcn')) ||
         hasFile('components.json');
-
-      // Check for preferred commands in priority order
       const preferredCommands = ['dev', 'start', 'preview'];
       const availableCommand = preferredCommands.find((cmd) => scripts[cmd]);
-
-      // Build setup command with non-interactive handling
       let baseSetupCommand = 'npx update-browserslist-db@latest && npm install';
-
-      // Add shadcn init if it's a shadcn project
       if (isShadcnProject) {
         baseSetupCommand += ' && npx shadcn@latest init';
       }
@@ -138,33 +122,19 @@ ${commandString}
 }
 
 export function escapeFalborArtifactTags(input: string) {
-  // Regular expression to match falborArtifact tags and their content
   const regex = /(<falborArtifact[^>]*>)([\s\S]*?)(<\/falborArtifact>)/g;
-
   return input.replace(regex, (match, openTag, content, closeTag) => {
-    // Escape the opening tag
     const escapedOpenTag = openTag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    // Escape the closing tag
     const escapedCloseTag = closeTag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    // Return the escaped version
     return `${escapedOpenTag}${content}${escapedCloseTag}`;
   });
 }
 
 export function escapeFalborAActionTags(input: string) {
-  // Regular expression to match falborArtifact tags and their content
   const regex = /(<falborAction[^>]*>)([\s\S]*?)(<\/falborAction>)/g;
-
   return input.replace(regex, (match, openTag, content, closeTag) => {
-    // Escape the opening tag
     const escapedOpenTag = openTag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    // Escape the closing tag
     const escapedCloseTag = closeTag.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-
-    // Return the escaped version
     return `${escapedOpenTag}${content}${escapedCloseTag}`;
   });
 }
@@ -172,11 +142,8 @@ export function escapeFalborAActionTags(input: string) {
 export function escapeFalborTags(input: string) {
   return escapeFalborArtifactTags(escapeFalborAActionTags(input));
 }
-
-// We have this seperate function to simplify the restore snapshot process in to one single artifact.
 export function createCommandActionsString(commands: ProjectCommands): string {
   if (!commands.setupCommand && !commands.startCommand) {
-    // Return empty string if no commands
     return '';
   }
 

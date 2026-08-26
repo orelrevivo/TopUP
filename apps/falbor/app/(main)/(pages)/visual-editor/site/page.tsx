@@ -27,18 +27,18 @@ export default async function Home() {
 
   return (
     <main className="w-full min-h-screen relative flex items-center justify-center flex-col">
-      {/* grid background */}
+      {}
       <div className="absolute bottom-0 left-0 right-0 top-0 bg-[linear-gradient(to_right,#161616_1px,transparent_1px),linear-gradient(to_bottom,#161616_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_110%)] -z-10" />
 
-      {/* Clerk Component in the middle */}
+      {}
       <div className="z-50 relative">
         <CustomWaitlist />
       </div>
 
-      {/* Hidden data for later use */}
+      {}
       <div className="hidden">
         <section className="h-full w-full md:pt-44 mt-[-70px] relative flex items-center justify-center flex-col ">
-          {/* grid */}
+          {}
           <div className="bg-gradient-to-r from-primary to-secondary-foreground text-transparent bg-clip-text relative">
             <h1 className="text-9xl font-bold text-center md:text-[300px]">
               Falbob
@@ -64,7 +64,7 @@ export default async function Home() {
           </p>
           <div className="flex  justify-center gap-4 flex-wrap mt-6">
             {prices.data.map((card) => (
-              //WIP: Wire up free product from stripe
+              
               <Card
                 key={card.nickname}
                 className={clsx('w-[300px] flex flex-col justify-between', {

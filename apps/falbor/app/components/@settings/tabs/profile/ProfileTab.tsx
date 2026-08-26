@@ -16,7 +16,7 @@ export default function ProfileTab() {
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [isEditingTimezone, setIsEditingTimezone] = useState(false);
 
-  // Get all valid timezones
+  
   const allTimezones = typeof Intl !== 'undefined' && Intl.supportedValuesOf
     ? Intl.supportedValuesOf('timeZone')
     : [profile.timezone || Intl.DateTimeFormat().resolvedOptions().timeZone];
@@ -29,7 +29,7 @@ export default function ProfileTab() {
     [],
   );
 
-  // Create debounced update functions
+  
   const debouncedUpdate = useCallback(
     debounce((field: keyof Profile, value: any) => {
       updateProfile({ [field]: value });
@@ -100,7 +100,7 @@ export default function ProfileTab() {
     <div className="max-w-2xl mx-auto pb-12">
       <div className="space-y-8">
         
-        {/* Cover Picture */}
+        {}
         <div className="relative w-full h-48 rounded-2xl overflow-hidden bg-gray-100 dark:bg-gray-800/50 group border border-gray-200 dark:border-gray-700/50">
           {profile.cover ? (
             <img src={profile.cover} alt="Cover" className="w-full h-full object-cover" />
@@ -137,7 +137,7 @@ export default function ProfileTab() {
           </label>
         </div>
 
-        {/* Profile Picture */}
+        {}
         <div className="flex items-start gap-6 relative -mt-16 ml-6">
           <div
             className={classNames(
@@ -229,7 +229,7 @@ export default function ProfileTab() {
         </div>
 
         <div className="space-y-6">
-          {/* Display Email Toggle */}
+          {}
           <div className="flex items-center justify-between p-4 rounded-xl border border-gray-200 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-800/30">
             <div>
               <h3 className="text-sm font-medium text-gray-900 dark:text-white">{t('display_account_email')}</h3>
@@ -247,7 +247,7 @@ export default function ProfileTab() {
           </div>
 
           <div className="w-full">
-            {/* Username */}
+            {}
             <div>
               <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">{t('username')}</label>
               <div className="relative group">
@@ -265,7 +265,7 @@ export default function ProfileTab() {
             </div>
           </div>
 
-          {/* Bio Input */}
+          {}
           <div>
             <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">{t('bio')}</label>
             <div className="relative group">
@@ -282,7 +282,7 @@ export default function ProfileTab() {
           </div>
         </div>
 
-        {/* Location & Status */}
+        {}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-gray-200 dark:border-gray-700/50">
           <div>
             <label className="block text-sm font-medium text-gray-900 dark:text-gray-100 mb-2">Location</label>
@@ -316,7 +316,7 @@ export default function ProfileTab() {
           </div>
         </div>
 
-        {/* Skills Section */}
+        {}
         <div className="pt-6 border-t border-gray-200 dark:border-gray-700/50">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Skills & Tech Stack</h3>
           <div className="space-y-4">
@@ -363,7 +363,7 @@ export default function ProfileTab() {
           </div>
         </div>
 
-        {/* Social Links Section */}
+        {}
         <div className="pt-6 border-t border-gray-200 dark:border-gray-700/50">
           <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">{t('social_links')}</h3>
           <div className="space-y-4">
@@ -410,7 +410,7 @@ export default function ProfileTab() {
           </div>
         </div>
 
-        {/* Custom Links Section */}
+        {}
         <div className="pt-6 border-t border-gray-200 dark:border-gray-700/50">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white">{t('custom_links')}</h3>

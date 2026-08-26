@@ -21,7 +21,7 @@ export interface IssueDetailData {
   severity: string;
   environment: string | null;
   lastSeen: Date;
-  aiAnalysis: any; // Using 'any' to handle the JSON schema flexibly
+  aiAnalysis: any; 
   events: IssueEventData[];
 }
 
@@ -209,7 +209,7 @@ export function IssueDetailView({ issue }: IssueDetailViewProps) {
                   </div>
                 </div>
                 
-                {/* Ask AI Section */}
+                {}
                 <div className="mt-6 border-t border-purple-500/20 pt-6">
                   <h3 className="text-sm font-bold uppercase tracking-wider text-purple-700 dark:text-purple-400 mb-2 flex items-center gap-2">
                     <div className="i-ph:chat-teardrop-text w-4 h-4" />

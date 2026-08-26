@@ -1,17 +1,11 @@
-#!/usr/bin/env node
-
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
-
-// Retrieve the API key from the environment
 const API_KEY = process.env.KLIPY_APIKEY;
-
 if (!API_KEY) {
   console.error("KLIPY_APIKEY environment variable is missing.");
   process.exit(1);
 }
-
 const server = new Server(
   {
     name: 'klipy-mcp-server',
@@ -23,8 +17,6 @@ const server = new Server(
     },
   }
 );
-
-// Register the tool
 server.setRequestHandler(ListToolsRequestSchema, async () => {
   return {
     tools: [
@@ -50,8 +42,6 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
     ],
   };
 });
-
-// Handle tool execution
 server.setRequestHandler(CallToolRequestSchema, async (request) => {
   const { name, arguments: args } = request.params;
 
@@ -64,31 +54,23 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
     }
 
     try {
-      // Endpoint syntax based on Klipy API docs
       const url = `https://api.klipy.com/api/v1/${API_KEY}/gifs/search?q=${encodeURIComponent(query)}&limit=${limit}`;
       const response = await fetch(url);
-      
+
       if (!response.ok) {
         throw new Error(`Klipy API returned status: ${response.status}`);
       }
-
       const data = await response.json();
-      
-      // Map the response to a clean format to return to the AI
-      // The Klipy API response usually contains a 'data' array
       const items = Array.isArray(data) ? data : (data.data || []);
-      
       if (items.length === 0) {
-         return {
-            content: [{ type: 'text', text: `No GIFs found for query: ${query}` }]
-         };
+        return {
+          content: [{ type: 'text', text: `No GIFs found for query: ${query}` }]
+        };
       }
-
       const gifsText = items.slice(0, limit).map((item: any) => {
-          const gifUrl = item.file?.hd?.gif?.url || item.file?.md?.gif?.url || item.images?.original?.url || item.url || item.media_url || 'Unknown URL';
-          return `- ![${item.title || 'GIF'}](${gifUrl})`;
+        const gifUrl = item.file?.hd?.gif?.url || item.file?.md?.gif?.url || item.images?.original?.url || item.url || item.media_url || 'Unknown URL';
+        return `- ![${item.title || 'GIF'}](${gifUrl})`;
       }).join('\n');
-
       return {
         content: [
           {
@@ -112,14 +94,11 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
 
   throw new Error(`Unknown tool: ${name}`);
 });
-
-// Start the server
 async function main() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error('Klipy MCP server running on stdio');
 }
-
 main().catch((error) => {
   console.error('Server failed to start:', error);
   process.exit(1);

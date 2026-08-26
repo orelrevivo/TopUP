@@ -3,10 +3,7 @@ import type { ProviderInfo, ProviderConfig, ModelInfo } from './types';
 import type { IProviderSetting } from '~/types/model';
 import { createOpenAI } from '@ai-sdk/openai';
 import { LLMManager } from './manager';
-
-/** Default timeout for model listing API calls (5 seconds) */
 const MODEL_FETCH_TIMEOUT = 5_000;
-
 export abstract class BaseProvider implements ProviderInfo {
   abstract name: string;
   abstract staticModels: ModelInfo[];
@@ -19,12 +16,6 @@ export abstract class BaseProvider implements ProviderInfo {
   getApiKeyLink?: string;
   labelForGetApiKey?: string;
   icon?: string;
-
-  /**
-   * Convert Cloudflare Env bindings to a plain Record<string, string>.
-   * Useful because provider methods expect Record<string, string> but
-   * Cloudflare Workers pass an Env interface.
-   */
   protected convertEnvToRecord(env?: Env): Record<string, string> {
     if (!env) {
       return {};
@@ -39,11 +30,6 @@ export abstract class BaseProvider implements ProviderInfo {
       {} as Record<string, string>,
     );
   }
-
-  /**
-   * Rewrite localhost / 127.0.0.1 URLs to host.docker.internal when
-   * running inside Docker. Only applies on the server side.
-   */
   protected resolveDockerUrl(baseUrl: string, serverEnv?: Record<string, string>): string {
     const isDocker = process?.env?.RUNNING_IN_DOCKER === 'true' || serverEnv?.RUNNING_IN_DOCKER === 'true';
 
@@ -53,11 +39,6 @@ export abstract class BaseProvider implements ProviderInfo {
 
     return baseUrl.replace('localhost', 'host.docker.internal').replace('127.0.0.1', 'host.docker.internal');
   }
-
-  /**
-   * Create an AbortSignal that times out after the given milliseconds.
-   * Used to prevent model-listing fetches from hanging indefinitely.
-   */
   protected createTimeoutSignal(ms: number = MODEL_FETCH_TIMEOUT): AbortSignal {
     return AbortSignal.timeout(ms);
   }
@@ -123,7 +104,6 @@ export abstract class BaseProvider implements ProviderInfo {
     providerSettings?: Record<string, IProviderSetting>;
     serverEnv?: Record<string, string>;
   }) {
-    // Only include provider-relevant env keys, not the entire server environment
     const relevantEnvKeys = [this.config.baseUrlKey, this.config.apiTokenKey].filter(Boolean) as string[];
     const relevantEnv: Record<string, string> = {};
 
@@ -154,8 +134,6 @@ export abstract class BaseProvider implements ProviderInfo {
       models,
     };
   }
-
-  // Declare the optional getDynamicModels method
   getDynamicModels?(
     apiKeys?: Record<string, string>,
     settings?: IProviderSetting,

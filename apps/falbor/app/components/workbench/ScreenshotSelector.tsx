@@ -17,7 +17,7 @@ export const ScreenshotSelector = memo(
     const videoRef = useRef<HTMLVideoElement | null>(null);
 
     useEffect(() => {
-      // Cleanup function to stop all tracks when component unmounts
+      
       return () => {
         if (videoRef.current) {
           videoRef.current.pause();
@@ -46,7 +46,7 @@ export const ScreenshotSelector = memo(
             },
           } as MediaStreamConstraints);
 
-          // Add handler for when sharing stops
+          
           stream.addEventListener('inactive', () => {
             if (videoRef.current) {
               videoRef.current.pause();
@@ -68,7 +68,7 @@ export const ScreenshotSelector = memo(
 
           mediaStreamRef.current = stream;
 
-          // Initialize video element if needed
+          
           if (!videoRef.current) {
             const video = document.createElement('video');
             video.style.opacity = '0';
@@ -79,7 +79,7 @@ export const ScreenshotSelector = memo(
             videoRef.current = video;
           }
 
-          // Set up video with the stream
+          
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
         } catch (error) {
@@ -106,10 +106,10 @@ export const ScreenshotSelector = memo(
           return;
         }
 
-        // Wait for video to be ready
+        
         await new Promise((resolve) => setTimeout(resolve, 300));
 
-        // Create temporary canvas for full screenshot
+        
         const tempCanvas = document.createElement('canvas');
         tempCanvas.width = videoRef.current.videoWidth;
         tempCanvas.height = videoRef.current.videoHeight;
@@ -120,25 +120,25 @@ export const ScreenshotSelector = memo(
           throw new Error('Failed to get temporary canvas context');
         }
 
-        // Draw the full video frame
+        
         tempCtx.drawImage(videoRef.current, 0, 0);
 
-        // Calculate scale factor between video and screen
+        
         const scaleX = videoRef.current.videoWidth / window.innerWidth;
         const scaleY = videoRef.current.videoHeight / window.innerHeight;
 
-        // Get window scroll position
+        
         const scrollX = window.scrollX;
         const scrollY = window.scrollY + 40;
 
-        // Get the container's position in the page
+        
         const containerRect = containerRef.current.getBoundingClientRect();
 
-        // Offset adjustments for more accurate clipping
-        const leftOffset = -9; // Adjust left position
-        const bottomOffset = -14; // Adjust bottom position
+        
+        const leftOffset = -9; 
+        const bottomOffset = -14; 
 
-        // Calculate the scaled coordinates with scroll offset and adjustments
+        
         const scaledX = Math.round(
           (containerRect.left + Math.min(selectionStart.x, selectionEnd.x) + scrollX + leftOffset) * scaleX,
         );
@@ -148,7 +148,7 @@ export const ScreenshotSelector = memo(
         const scaledWidth = Math.round(Math.abs(selectionEnd.x - selectionStart.x) * scaleX);
         const scaledHeight = Math.round(Math.abs(selectionEnd.y - selectionStart.y) * scaleY);
 
-        // Create final canvas for the cropped area
+        
         const canvas = document.createElement('canvas');
         canvas.width = Math.round(Math.abs(selectionEnd.x - selectionStart.x));
         canvas.height = Math.round(Math.abs(selectionEnd.y - selectionStart.y));
@@ -159,10 +159,10 @@ export const ScreenshotSelector = memo(
           throw new Error('Failed to get canvas context');
         }
 
-        // Draw the cropped area
+        
         ctx.drawImage(tempCanvas, scaledX, scaledY, scaledWidth, scaledHeight, 0, 0, canvas.width, canvas.height);
 
-        // Convert to blob
+        
         const blob = await new Promise<Blob>((resolve, reject) => {
           canvas.toBlob((blob) => {
             if (blob) {
@@ -173,24 +173,24 @@ export const ScreenshotSelector = memo(
           }, 'image/png');
         });
 
-        // Create a FileReader to convert blob to base64
+        
         const reader = new FileReader();
 
         reader.onload = (e) => {
           const base64Image = e.target?.result as string;
 
-          // Find the textarea element
+          
           const textarea = document.querySelector('textarea');
 
           if (textarea) {
-            // Get the setters from the BaseChat component
-            const setUploadedFiles = (window as any).__BOLT_SET_UPLOADED_FILES__;
-            const setImageDataList = (window as any).__BOLT_SET_IMAGE_DATA_LIST__;
-            const uploadedFiles = (window as any).__BOLT_UPLOADED_FILES__ || [];
-            const imageDataList = (window as any).__BOLT_IMAGE_DATA_LIST__ || [];
+            
+            const setUploadedFiles = (window as any).__FALBOR_SET_UPLOADED_FILES__;
+            const setImageDataList = (window as any).__FALBOR_SET_IMAGE_DATA_LIST__;
+            const uploadedFiles = (window as any).__FALBOR_UPLOADED_FILES__ || [];
+            const imageDataList = (window as any).__FALBOR_IMAGE_DATA_LIST__ || [];
 
             if (setUploadedFiles && setImageDataList) {
-              // Update the files and image data
+              
               const file = new File([blob], 'screenshot.png', { type: 'image/png' });
               setUploadedFiles([...uploadedFiles, file]);
               setImageDataList([...imageDataList, base64Image]);
@@ -213,7 +213,7 @@ export const ScreenshotSelector = memo(
         setIsCapturing(false);
         setSelectionStart(null);
         setSelectionEnd(null);
-        setIsSelectionMode(false); // Turn off selection mode after capture
+        setIsSelectionMode(false); 
       }
     }, [isSelectionMode, selectionStart, selectionEnd, containerRef, setIsSelectionMode]);
 

@@ -3,8 +3,6 @@ import type { VercelConnection } from '~/types/vercel';
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
 
-// Auto-connect using environment variable
-// envToken removed for security isolation
 const storedConnection = typeof window !== 'undefined' ? localStorage.getItem('vercel_connection') : null;
 let initialConnection: VercelConnection;
 
@@ -37,17 +35,14 @@ export const updateVercelConnection = (updates: Partial<VercelConnection>) => {
   const newState = { ...currentState, ...updates };
   vercelConnection.set(newState);
 
-  // Persist to localStorage
   if (typeof window !== 'undefined') {
     localStorage.setItem('vercel_connection', JSON.stringify(newState));
   }
 };
 
-// Auto-connect using environment token
 export async function autoConnectVercel() {
   const currentState = vercelConnection.get();
 
-  // If we don't have a token in state, we can't auto-connect
   if (!currentState.token) {
     return { success: false, error: 'No token' };
   }
@@ -56,7 +51,6 @@ export async function autoConnectVercel() {
     console.log('Setting isConnecting to true');
     isConnecting.set(true);
 
-    // Test the connection
     console.log('Making API call to Vercel');
 
     const response = await fetch('https://api.vercel.com/v2/user', {
@@ -75,7 +69,6 @@ export async function autoConnectVercel() {
     const userData = (await response.json()) as any;
     console.log('Vercel API response userData:', userData);
 
-    // Update connection
     console.log('Updating Vercel connection');
     updateVercelConnection({
       user: userData.user || userData,
@@ -86,7 +79,6 @@ export async function autoConnectVercel() {
       message: `Auto-connected to Vercel as ${userData.user?.username || userData.username}`,
     });
 
-    // Fetch stats
     console.log('Fetching Vercel stats');
     await fetchVercelStats(currentState.token);
 
@@ -111,7 +103,6 @@ export async function autoConnectVercel() {
 }
 
 export function initializeVercelConnection() {
-  // Try loading from localStorage first
 }
 
 export const fetchVercelStatsViaAPI = fetchVercelStats;
@@ -134,7 +125,6 @@ export async function fetchVercelStats(token: string) {
     const projectsData = (await projectsResponse.json()) as any;
     const projects = projectsData.projects || [];
 
-    // Fetch latest deployment for each project
     const projectsWithDeployments = await Promise.all(
       projects.map(async (project: any) => {
         try {

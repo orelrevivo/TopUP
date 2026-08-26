@@ -47,7 +47,7 @@ export default function TestimonialsSection() {
 
     return (
         <div className="relative w-full flex flex-col items-center justify-center bg-[#FAFAFB] border-t border-zinc-200">
-            {/* Section header */}
+            {}
             <div className="w-full max-w-5xl mx-auto px-12 pt-16 pb-8">
                 <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
                     <div>
@@ -90,7 +90,7 @@ export default function TestimonialsSection() {
                   ${i !== testimonials.length - 1 && !isActive ? "border-r border-zinc-200" : ""}
                 `}
                             >
-                                {/* The Picture Container */}
+                                {}
                                 <motion.div
                                     layout
                                     transition={{ duration: 0.5, ease: "easeInOut" }}
@@ -113,7 +113,7 @@ export default function TestimonialsSection() {
                                     />
                                 </motion.div>
 
-                                {/* The Content */}
+                                {}
                                 <AnimatePresence mode="wait">
                                     {isActive && (
                                         <motion.div
@@ -128,7 +128,7 @@ export default function TestimonialsSection() {
                                                 {t.logoPlaceholder}
                                             </div>
 
-                                            {/* Stat chip */}
+                                            {}
                                             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-zinc-100 border border-zinc-200 text-zinc-600 text-xs font-semibold mb-4 w-fit">
                                                 <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>
                                                 {t.stat}

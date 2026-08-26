@@ -18,7 +18,7 @@ export class StreamRecoveryManager {
   constructor(private _options: StreamRecoveryOptions = {}) {
     this._options = {
       maxRetries: 3,
-      timeout: 30000, // 30 seconds default
+      timeout: 30000,
       ..._options,
     };
   }
@@ -64,7 +64,6 @@ export class StreamRecoveryManager {
       this._options.onTimeout();
     }
 
-    // Reset monitoring after recovery attempt
     this._resetTimeout();
 
     if (this._options.onRecovery) {

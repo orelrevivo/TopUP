@@ -3,7 +3,6 @@ import { useEffect } from 'react';
 import { shortcutsStore, type Shortcuts } from '~/lib/stores/settings';
 import { isMac } from '~/utils/os';
 
-// List of keys that should not trigger shortcuts when typing in input/textarea
 const INPUT_ELEMENTS = ['input', 'textarea'];
 
 class ShortcutEventEmitter {
@@ -29,23 +28,21 @@ export function useShortcuts(): void {
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
-      // Don't trigger shortcuts when typing in input fields
+
       if (
         document.activeElement &&
         INPUT_ELEMENTS.includes(document.activeElement.tagName.toLowerCase()) &&
-        !event.altKey && // Allow Alt combinations even in input fields
-        !event.metaKey && // Allow Cmd/Win combinations even in input fields
-        !event.ctrlKey // Allow Ctrl combinations even in input fields
+        !event.altKey &&
+        !event.metaKey &&
+        !event.ctrlKey
       ) {
         return;
       }
 
-      // Handle shortcuts
       for (const [name, shortcut] of Object.entries(shortcuts)) {
         const keyMatches =
           shortcut.key.toLowerCase() === event.key.toLowerCase() || `Key${shortcut.key.toUpperCase()}` === event.code;
 
-        // Handle ctrlOrMetaKey based on OS
         const ctrlOrMetaKeyMatches = shortcut.ctrlOrMetaKey
           ? (isMac && event.metaKey) || (!isMac && event.ctrlKey)
           : true;
@@ -58,7 +55,7 @@ export function useShortcuts(): void {
           (shortcut.altKey === undefined || shortcut.altKey === event.altKey);
 
         if (keyMatches && modifiersMatch) {
-          // Prevent default browser behavior if specified
+
           if (shortcut.isPreventDefault) {
             event.preventDefault();
             event.stopPropagation();

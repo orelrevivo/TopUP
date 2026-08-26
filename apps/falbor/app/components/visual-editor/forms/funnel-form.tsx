@@ -159,7 +159,7 @@ const FunnelForm: React.FC<CreateFunnelProps> = ({
               )}
             />
 
-            {/* Optional Favicon Upload */}
+            {}
             <FormField
               disabled={isLoading}
               control={form.control}

@@ -12,9 +12,7 @@ export type AIPage = {
 }
 
 export async function publishAIToFunnel(chatId: string, subAccountId: string, pages: AIPage[]) {
-  // We'll create one funnel per chat, and one page inside it with the generated HTML
   const funnelId = v4()
-
   await db.insert(veFunnels).values({
     id: funnelId,
     name: `AI Site - ${chatId.substring(0, 8)}`,
@@ -24,14 +22,13 @@ export async function publishAIToFunnel(chatId: string, subAccountId: string, pa
     liveProducts: '[]',
   })
 
-  // We will iterate over the pages array
   const insertedPages = []
-  
+
   for (let i = 0; i < pages.length; i++) {
     const page = pages[i]
-    
+
     const parsedElements = parseHtmlToEditorElements(page.htmlContent)
-    
+
     const pageContentJson = JSON.stringify([
       {
         content: parsedElements,
@@ -53,11 +50,9 @@ export async function publishAIToFunnel(chatId: string, subAccountId: string, pa
       order: i,
       content: pageContentJson,
     })
-    
+
     insertedPages.push(pageId)
   }
-
-  // Return funnelId and the first pageId (for redirection)
   return { funnelId, pageId: insertedPages[0] }
 }
 

@@ -12,7 +12,7 @@ import { generateId } from '~/utils/fileUtils';
 import * as chatApi from '~/lib/api/data/chat';
 import type { Message } from 'ai';
 
-// Same ignore rules as GitCloneButton
+
 const IGNORE_PATTERNS = [
   'node_modules/**',
   '.git/**',
@@ -83,13 +83,13 @@ function GitPageContent() {
     const run = async () => {
       setStatus('cloning');
 
-      // Animate fake progress while cloning
+      
       const ticker = setInterval(() => {
         setProgress((p) => Math.min(p + Math.random() * 6, 80));
       }, 400);
 
       try {
-        // 1. Clone the repo
+        
         const { workdir, data } = await gitClone(repoUrl);
 
         if (cancelled) { clearInterval(ticker); return; }
@@ -97,7 +97,7 @@ function GitPageContent() {
         setProgress(82);
         setStatus('importing');
 
-        // 2. Build file list — same logic as GitCloneButton
+        
         const filePaths = Object.keys(data).filter((fp) => !ig.ignores(fp));
         const textDecoder = new TextDecoder('utf-8');
 
@@ -108,7 +108,7 @@ function GitPageContent() {
         for (const filePath of filePaths) {
           const { data: content, encoding } = data[filePath];
 
-          // Skip binary files that aren't text-like
+          
           if (
             content instanceof Uint8Array &&
             !filePath.match(/\.(txt|md|astro|mjs|js|jsx|ts|tsx|json|html|css|scss|less|yml|yaml|xml|svg|vue|svelte)$/i)
@@ -148,7 +148,7 @@ function GitPageContent() {
 
         setProgress(90);
 
-        // 3. Build chat messages — same format as GitCloneButton
+        
         const commands = await detectProjectCommands(fileContents);
         const commandsMessage = createCommandsMessage(commands);
 
@@ -180,7 +180,7 @@ ${escapeFalborTags(file.content)}
 
         setProgress(95);
 
-        // 4. Create a chat session and navigate into it
+        
         const projectName = repoUrl.split('/').slice(-1)[0].replace(/\.git$/, '');
         const newId = await chatApi.createChatFromMessages(
           `Git Project: ${projectName}`,
@@ -193,7 +193,7 @@ ${escapeFalborTags(file.content)}
         setProgress(100);
         setStatus('success');
 
-        // Small pause so user sees 100%
+        
         await new Promise((r) => setTimeout(r, 400));
 
         window.location.href = `/chat/${newId}`;
@@ -209,7 +209,7 @@ ${escapeFalborTags(file.content)}
     run();
 
     return () => { cancelled = true; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    
   }, [ready, repoUrl]);
 
   const repoName = repoUrl.split('/').pop()?.replace(/\.git$/, '') ?? repoUrl;
@@ -230,7 +230,7 @@ ${escapeFalborTags(file.content)}
       <div className="flex-1 flex items-center justify-center">
         <div className="w-full max-w-md mx-4 rounded-2xl border border-falbor-elements-borderColor bg-falbor-elements-background-depth-2 p-8 shadow-xl text-center">
 
-          {/* Icon */}
+          {}
           <div className="flex justify-center mb-6">
             {status === 'error' ? (
               <div className="i-ph:warning-circle text-red-400 text-6xl" />
@@ -241,17 +241,17 @@ ${escapeFalborTags(file.content)}
             )}
           </div>
 
-          {/* Title */}
+          {}
           <h1 className="text-xl font-semibold text-falbor-elements-textPrimary mb-1">
             {statusLabel[status]}
           </h1>
 
-          {/* Repo name */}
+          {}
           <p className="text-sm text-falbor-elements-textSecondary mb-6 truncate" title={repoUrl}>
             {repoName}
           </p>
 
-          {/* Progress bar */}
+          {}
           {status !== 'error' && (
             <div className="w-full bg-falbor-elements-background-depth-3 rounded-full h-2 mb-4 overflow-hidden">
               <div
@@ -261,7 +261,7 @@ ${escapeFalborTags(file.content)}
             </div>
           )}
 
-          {/* Step hint */}
+          {}
           {status === 'cloning' && (
             <p className="text-xs text-falbor-elements-textSecondary">
               Fetching files from GitHub…
@@ -276,7 +276,7 @@ ${escapeFalborTags(file.content)}
             <p className="text-xs text-green-400">Redirecting to your new chat…</p>
           )}
 
-          {/* Error state */}
+          {}
           {status === 'error' && (
             <>
               <p className="text-sm text-red-400 mb-5 break-words">{errorMsg}</p>

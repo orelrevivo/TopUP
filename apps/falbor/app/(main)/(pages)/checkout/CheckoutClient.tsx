@@ -14,7 +14,7 @@ export default function CheckoutClient({ clientId }: CheckoutClientProps) {
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   useEffect(() => {
-    // Parse URL params
+    
     const params = new URLSearchParams(window.location.search);
     const amtStr = params.get('amount');
     const tierStr = params.get('tier');
@@ -38,14 +38,10 @@ export default function CheckoutClient({ clientId }: CheckoutClientProps) {
     try {
       const details = await actions.order.capture()
 
-      // Read session token from localStorage — key matches useAuth.tsx SESSION_KEY
-      const sessionToken = localStorage.getItem('session_token') ||
-        document.cookie.match(/session=([^;]+)/)?.[1] || '';
-
+      
       const body: any = {
         orderId: details.id,
-        amount: amount * 100, // passed in cents
-        sessionToken,
+        amount: amount * 100, 
       }
 
       if (tier) body.tier = tier.toLowerCase()

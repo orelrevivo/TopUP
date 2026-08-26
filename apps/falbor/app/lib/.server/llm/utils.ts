@@ -17,38 +17,24 @@ export function extractPropertiesFromMessage(message: Omit<Message, 'id'> & { pa
   if (!textContent && message.parts && Array.isArray(message.parts)) {
     textContent = (message.parts.find((item: any) => item.type === 'text') as any)?.text || '';
   }
-
   const modelMatch = textContent.match(MODEL_REGEX);
   const providerMatch = textContent.match(PROVIDER_REGEX);
-
-  /*
-   * Extract provider
-   * const providerMatch = message.content.match(PROVIDER_REGEX);
-   */
   let model = modelMatch ? modelMatch[1] : DEFAULT_MODEL;
   let provider = providerMatch ? providerMatch[1] : DEFAULT_PROVIDER.name;
-
   const allProviders = LLMManager.getInstance().getAllProviders();
-
-  // Validate combination: does this provider have this model?
   const selectedProvider = allProviders.find(p => p.name === provider);
   const providerHasModel = selectedProvider?.staticModels?.some(m => m.name === model);
-
   if (!providerHasModel) {
-    // Failsafe: The DB has an invalid combination. Let's fix it.
-    // Try to find if the model belongs to a different provider
     const correctProvider = allProviders.find(p => p.staticModels?.some(m => m.name === model));
     if (correctProvider) {
       provider = correctProvider.name;
     } else if (selectedProvider?.staticModels?.length) {
-      // Model doesn't exist anywhere known, fallback to the provider's default model
       model = selectedProvider.staticModels[0].name;
     } else {
       model = DEFAULT_MODEL;
       provider = DEFAULT_PROVIDER.name;
     }
   }
-
   const cleanedContent = Array.isArray(message.content)
     ? message.content.map((item) => {
       if (item.type === 'text') {
@@ -58,7 +44,7 @@ export function extractPropertiesFromMessage(message: Omit<Message, 'id'> & { pa
         };
       }
 
-      return item; // Preserve image_url and other types as is
+      return item;
     })
     : (textContent || '').replace(MODEL_REGEX, '').replace(PROVIDER_REGEX, '');
 
@@ -67,11 +53,7 @@ export function extractPropertiesFromMessage(message: Omit<Message, 'id'> & { pa
 
 export function simplifyFalborActions(input: string | any[] | undefined | null): any {
   if (typeof input !== 'string') return input || '';
-  
-  // Using regex to match falborAction tags that have type="file"
   const regex = /(<falborAction[^>]*type="file"[^>]*>)([\s\S]*?)(<\/falborAction>)/g;
-
-  // Replace each matching occurrence
   return input.replace(regex, (_0, openingTag, _2, closingTag) => {
     return `${openingTag}\n<!-- [SYSTEM NOTE: The file content has been truncated from your conversation history to save tokens. However, in your own responses, YOU MUST STILL OUTPUT THE FULL FILE CONTENT without omitting anything. NEVER USE PLACEHOLDERS.] -->\n${closingTag}`;
   });
@@ -96,7 +78,6 @@ export function createFilesContext(files: FileMap, useRelativePath?: boolean) {
 
       const codeWithLinesNumbers = dirent.content
         .split('\n')
-        // .map((v, i) => `${i + 1}|${v}`)
         .join('\n');
 
       let filePath = path;

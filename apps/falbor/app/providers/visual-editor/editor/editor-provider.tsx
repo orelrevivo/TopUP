@@ -148,10 +148,10 @@ const editorReducer = (
         ...state.editor,
         elements: addAnElement(state.editor.elements, action),
       }
-      // Update the history to include the entire updated EditorState
+      
       const updatedHistory = [
         ...state.history.history.slice(0, state.history.currentIndex + 1),
-        { ...updatedEditorState }, // Save a copy of the updated state
+        { ...updatedEditorState }, 
       ]
 
       const newEditorState = {
@@ -167,7 +167,7 @@ const editorReducer = (
       return newEditorState
 
     case 'UPDATE_ELEMENT':
-      // Perform your logic to update the element in the state
+      
       const updatedElements = updateAnElement(state.editor.elements, action)
 
       const UpdatedElementIsSelected =
@@ -189,7 +189,7 @@ const editorReducer = (
 
       const updatedHistoryWithUpdate = [
         ...state.history.history.slice(0, state.history.currentIndex + 1),
-        { ...updatedEditorStateWithUpdate }, // Save a copy of the updated state
+        { ...updatedEditorStateWithUpdate }, 
       ]
       const updatedEditor = {
         ...state,
@@ -203,7 +203,7 @@ const editorReducer = (
       return updatedEditor
 
     case 'DELETE_ELEMENT':
-      // Perform your logic to delete the element from the state
+      
       const updatedElementsAfterDelete = deleteAnElement(
         state.editor.elements,
         action
@@ -214,7 +214,7 @@ const editorReducer = (
       }
       const updatedHistoryAfterDelete = [
         ...state.history.history.slice(0, state.history.currentIndex + 1),
-        { ...updatedEditorStateAfterDelete }, // Save a copy of the updated state
+        { ...updatedEditorStateAfterDelete }, 
       ]
 
       const deletedState = {
@@ -245,7 +245,7 @@ const editorReducer = (
           ...state.history,
           history: [
             ...state.history.history.slice(0, state.history.currentIndex + 1),
-            { ...state.editor }, // Save a copy of the current editor state
+            { ...state.editor }, 
           ],
           currentIndex: state.history.currentIndex + 1,
         },
@@ -334,7 +334,7 @@ const editorReducer = (
 
       const updatedHistoryWithFunnelPageId = [
         ...state.history.history.slice(0, state.history.currentIndex + 1),
-        { ...updatedEditorStateWithFunnelPageId }, // Save a copy of the updated state
+        { ...updatedEditorStateWithFunnelPageId }, 
       ]
 
       const funnelPageIdState = {

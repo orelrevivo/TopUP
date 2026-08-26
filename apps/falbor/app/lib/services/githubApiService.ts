@@ -34,10 +34,6 @@ export class GitHubApiServiceClass {
     this._config = config;
     this._baseURL = config.baseURL || 'https://api.github.com';
   }
-
-  /**
-   * Configure the service with authentication details
-   */
   configure(config: GitHubApiServiceConfig): void {
     this._config = { ...this._config, ...config };
     this._baseURL = config.baseURL || this._baseURL;
@@ -70,10 +66,6 @@ export class GitHubApiServiceClass {
 
     return response.json();
   }
-
-  /**
-   * Fetch all user repositories with pagination
-   */
   async getAuthenticatedUser(): Promise<GitHubUserResponse> {
     return this._makeRequestInternal<GitHubUserResponse>('/user');
   }
@@ -89,23 +81,17 @@ export class GitHubApiServiceClass {
       );
 
       allRepos.push(...repos);
-      hasMore = repos.length === 100; // If we got 100 repos, there might be more
+      hasMore = repos.length === 100;
       page++;
     }
 
     return allRepos;
   }
-
-  /**
-   * Fetch detailed information for a repository including additional metrics
-   */
   async getDetailedRepositoryInfo(owner: string, repo: string): Promise<DetailedRepoInfo> {
     const [repoInfo, branches] = await Promise.all([
       this._makeRequestInternal<GitHubRepoInfo>(`/repos/${owner}/${repo}`),
       this.getRepositoryBranches(owner, repo).catch(() => []),
     ]);
-
-    // Try to get additional metrics
     const [contributors, issues, pullRequests] = await Promise.allSettled([
       this._getRepositoryContributorsCount(owner, repo),
       this._getRepositoryIssuesCount(owner, repo),
@@ -123,16 +109,9 @@ export class GitHubApiServiceClass {
     return detailedInfo;
   }
 
-  /**
-   * Get repository branches
-   */
   async getRepositoryBranches(owner: string, repo: string): Promise<GitHubBranch[]> {
     return this._makeRequestInternal<GitHubBranch[]>(`/repos/${owner}/${repo}/branches`);
   }
-
-  /**
-   * Get contributors count using Link header pagination info
-   */
   private async _getRepositoryContributorsCount(owner: string, repo: string): Promise<number> {
     const response = await fetch(`${this._baseURL}/repos/${owner}/${repo}/contributors?per_page=1`, {
       headers: {
@@ -157,10 +136,6 @@ export class GitHubApiServiceClass {
 
     return Array.isArray(data) ? data.length : 0;
   }
-
-  /**
-   * Get issues count using Link header pagination info
-   */
   private async _getRepositoryIssuesCount(owner: string, repo: string): Promise<number> {
     const response = await fetch(`${this._baseURL}/repos/${owner}/${repo}/issues?state=all&per_page=1`, {
       headers: {
@@ -185,10 +160,6 @@ export class GitHubApiServiceClass {
 
     return Array.isArray(data) ? data.length : 0;
   }
-
-  /**
-   * Get pull requests count using Link header pagination info
-   */
   private async _getRepositoryPullRequestsCount(owner: string, repo: string): Promise<number> {
     const response = await fetch(`${this._baseURL}/repos/${owner}/${repo}/pulls?state=all&per_page=1`, {
       headers: {
@@ -213,10 +184,6 @@ export class GitHubApiServiceClass {
 
     return Array.isArray(data) ? data.length : 0;
   }
-
-  /**
-   * Fetch detailed information for multiple repositories in batches
-   */
   async getDetailedRepositoriesInfo(
     repos: GitHubRepoInfo[],
     batchSize: number = 5,
@@ -233,19 +200,14 @@ export class GitHubApiServiceClass {
         }),
       );
 
-      // Collect successful results
       batchResults.forEach((result, index) => {
         if (result.status === 'fulfilled') {
           detailedRepos.push(result.value);
         } else {
           console.error(`Failed to fetch details for ${batch[index].full_name}:`, result.reason);
-
-          // Fallback to original repo data
           detailedRepos.push(batch[index]);
         }
       });
-
-      // Add delay between batches to be respectful to the API
       if (i + batchSize < repos.length) {
         await new Promise((resolve) => setTimeout(resolve, delayMs));
       }
@@ -253,10 +215,6 @@ export class GitHubApiServiceClass {
 
     return detailedRepos;
   }
-
-  /**
-   * Calculate comprehensive statistics from repositories
-   */
   calculateRepositoryStats(repos: DetailedRepoInfo[]): {
     languages: GitHubLanguageStats;
     mostUsedLanguages: Array<{ language: string; bytes: number; repos: number }>;
@@ -286,22 +244,16 @@ export class GitHubApiServiceClass {
     let forkedRepos = 0;
 
     repos.forEach((repo) => {
-      // Language statistics
       if (repo.language) {
         languages[repo.language] = (languages[repo.language] || 0) + 1;
         languageBytes[repo.language] = (languageBytes[repo.language] || 0) + (repo.size || 0);
         languageRepos[repo.language] = (languageRepos[repo.language] || 0) + 1;
       }
-
-      // Aggregate metrics
       totalBranches += repo.branches_count || 0;
       totalContributors += repo.contributors_count || 0;
       totalIssues += repo.issues_count || 0;
       totalPullRequests += repo.pull_requests_count || 0;
-
-      // Repository health analysis
       const daysSinceUpdate = Math.floor((Date.now() - new Date(repo.updated_at).getTime()) / (1000 * 60 * 60 * 24));
-
       if (repo.archived) {
         archivedRepos++;
       } else if (repo.fork) {
@@ -312,8 +264,6 @@ export class GitHubApiServiceClass {
         healthyRepos++;
       }
     });
-
-    // Create most used languages array sorted by bytes
     const mostUsedLanguages = Object.entries(languageBytes)
       .map(([language, bytes]) => ({
         language,
@@ -322,7 +272,6 @@ export class GitHubApiServiceClass {
       }))
       .sort((a, b) => b.bytes - a.bytes)
       .slice(0, 20);
-
     return {
       languages,
       mostUsedLanguages,
@@ -338,43 +287,29 @@ export class GitHubApiServiceClass {
       },
     };
   }
-
-  /**
-   * Generate comprehensive GitHub stats for a user
-   */
   async generateComprehensiveStats(userData: GitHubUserResponse): Promise<GitHubStats> {
     try {
-      // Fetch all repositories
       const allRepos = await this.getAllUserRepositories();
-
-      // Get detailed information for repositories (in batches)
       const detailedRepos = await this.getDetailedRepositoriesInfo(allRepos);
-
-      // Calculate statistics
       const stats = this.calculateRepositoryStats(detailedRepos);
-
-      // Fetch additional data in parallel
       const [organizations, recentActivity] = await Promise.allSettled([
         this._makeRequestInternal<GitHubOrganization[]>('/user/orgs'),
         this._makeRequestInternal<any[]>(`/users/${userData.login}/events?per_page=10`),
       ]);
-
-      // Calculate aggregated metrics
       const totalStars = detailedRepos.reduce((sum, repo) => sum + repo.stargazers_count, 0);
       const totalForks = detailedRepos.reduce((sum, repo) => sum + repo.forks_count, 0);
       const privateRepos = detailedRepos.filter((repo) => repo.private).length;
-
       const githubStats: GitHubStats = {
         repos: detailedRepos,
         recentActivity:
           recentActivity.status === 'fulfilled'
             ? recentActivity.value.slice(0, 10).map((event: any) => ({
-                id: event.id,
-                type: event.type,
-                repo: { name: event.repo.name, url: event.repo.url },
-                created_at: event.created_at,
-                payload: event.payload || {},
-              }))
+              id: event.id,
+              type: event.type,
+              repo: { name: event.repo.name, url: event.repo.url },
+              created_at: event.created_at,
+              payload: event.payload || {},
+            }))
             : [],
         languages: stats.languages,
         totalGists: userData.public_gists || 0,
@@ -384,7 +319,7 @@ export class GitHubApiServiceClass {
         forks: totalForks,
         followers: userData.followers || 0,
         publicGists: userData.public_gists || 0,
-        privateGists: 0, // This would need additional API call
+        privateGists: 0,
         lastUpdated: new Date().toISOString(),
         totalStars,
         totalForks,
@@ -402,10 +337,6 @@ export class GitHubApiServiceClass {
       throw error;
     }
   }
-
-  /**
-   * Fetch authenticated user and rate limit info
-   */
   async fetchUser(
     token: string,
     tokenType: 'classic' | 'fine-grained' = 'classic',
@@ -419,10 +350,6 @@ export class GitHubApiServiceClass {
 
     return { user, rateLimit };
   }
-
-  /**
-   * Fetch comprehensive GitHub stats for authenticated user
-   */
   async fetchStats(token: string, tokenType: 'classic' | 'fine-grained' = 'classic'): Promise<GitHubStats> {
     this.configure({ token, tokenType });
 
@@ -430,21 +357,10 @@ export class GitHubApiServiceClass {
 
     return this.generateComprehensiveStats(user);
   }
-
-  /**
-   * Clear all cached data
-   */
   clearCache(): void {
-    // This is a placeholder - implement caching if needed
   }
-
-  /**
-   * Clear user-specific cache
-   */
   clearUserCache(_token: string): void {
-    // This is a placeholder - implement user-specific caching if needed
   }
 }
 
-// Export an instance of the service
 export const gitHubApiService = new GitHubApiServiceClass();

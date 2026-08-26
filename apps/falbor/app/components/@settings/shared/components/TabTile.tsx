@@ -55,7 +55,7 @@ export const TabTile: React.FC<TabTileProps> = ({
                   isLoading ? 'cursor-wait opacity-70 pointer-events-none' : '',
                 )}
               >
-                {/* Icon */}
+                {}
                 <div
                   className={classNames(
                     'relative',
@@ -86,7 +86,7 @@ export const TabTile: React.FC<TabTileProps> = ({
                   })()}
                 </div>
 
-                {/* Label and Description */}
+                {}
                 <div className="flex flex-col items-center mt-4 w-full">
                   <h3
                     className={classNames(
@@ -116,7 +116,7 @@ export const TabTile: React.FC<TabTileProps> = ({
                   )}
                 </div>
 
-                {/* Update Indicator with Tooltip */}
+                {}
                 {hasUpdate && (
                   <>
                     <div className="absolute top-4 right-4 w-2 h-2 rounded-full bg-purple-500 dark:bg-purple-400 animate-pulse" />
@@ -139,7 +139,7 @@ export const TabTile: React.FC<TabTileProps> = ({
                   </>
                 )}
 
-                {/* Children (e.g. Beta Label) */}
+                {}
                 {children}
               </div>
             </div>

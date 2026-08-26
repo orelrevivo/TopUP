@@ -8,12 +8,7 @@ interface CloseButtonProps {
   size?: 'sm' | 'md' | 'lg';
 }
 
-/**
- * CloseButton component
- *
- * A button with an X icon used for closing dialogs, modals, etc.
- * The button has a transparent background and only shows a background on hover.
- */
+
 export function CloseButton({ onClick, className, size = 'md' }: CloseButtonProps) {
   const sizeClasses = {
     sm: 'p-1',

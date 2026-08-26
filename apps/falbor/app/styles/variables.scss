@@ -1,4 +1,3 @@
-/* Color Tokens Light Theme */
 :root,
 :root[data-theme='light'] {
   --falbor-elements-borderColor: theme('colors.alpha.gray.10');
@@ -188,8 +187,6 @@
 
   --falbor-elements-cta-background: theme('colors.alpha.white.10');
   --falbor-elements-cta-text: theme('colors.white');
-
-  /* Terminal Colors */
   --falbor-terminal-background: var(--falbor-elements-terminals-background);
   --falbor-terminal-foreground: #eff0eb;
   --falbor-terminal-selection-background: #97979b33;
@@ -209,15 +206,10 @@
   --falbor-terminal-brightMagenta: #ff6ac1;
   --falbor-terminal-brightCyan: #9aedfe;
   --falbor-terminal-brightWhite: #f1f1f0;
-  --modern-scrollbar-thumb-background: rgba(100, 100, 100, 0.3); // Example dark theme color (adjust as needed)
+  --modern-scrollbar-thumb-background: rgba(100, 100, 100, 0.3);
   --modern-scrollbar-thumb-backgroundHover: rgba(10, 10, 10, 0.8);
 }
 
-/*
- * Element Tokens
- *
- * Hierarchy: Element Token -> (Element Token | Color Tokens) -> Primitives
- */
 :root {
   --header-height: 54px;
   --chat-max-width: 33rem;
@@ -226,12 +218,8 @@
   --workbench-width: min(calc(100% - var(--chat-min-width) - var(--workbench-gap)), 2536px);
   --workbench-inner-width: var(--workbench-width);
   --workbench-left: calc(100% - var(--workbench-width));
-
-  /* Toasts */
   --toastify-color-progress-success: var(--falbor-elements-icon-success);
   --toastify-color-progress-error: var(--falbor-elements-icon-error);
-
-  /* Terminal */
   --falbor-elements-terminal-backgroundColor: var(--falbor-terminal-background);
   --falbor-elements-terminal-textColor: var(--falbor-terminal-foreground);
   --falbor-elements-terminal-cursorColor: var(--falbor-terminal-foreground);

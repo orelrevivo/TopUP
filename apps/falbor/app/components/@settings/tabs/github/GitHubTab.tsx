@@ -20,7 +20,7 @@ interface ConnectionTestResult {
   timestamp?: number;
 }
 
-// GitHub logo SVG component
+
 const GithubLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
     <path
@@ -40,10 +40,10 @@ export default function GitHubTab() {
     connection,
     {
       autoFetch: true,
-      cacheTimeout: 30 * 60 * 1000, // 30 minutes
+      cacheTimeout: 30 * 60 * 1000, 
     },
     isConnected && connection ? !connection.token : false,
-  ); // Use server-side when no token but connected
+  ); 
 
   const [connectionTest, setConnectionTest] = useState<ConnectionTestResult | null>(null);
   const [isStatsExpanded, setIsStatsExpanded] = useState(false);
@@ -89,7 +89,7 @@ export default function GitHubTab() {
     }
   };
 
-  // Loading state for initial connection check
+  
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -102,7 +102,7 @@ export default function GitHubTab() {
     );
   }
 
-  // Error state for connection issues
+  
   if (error && !connection) {
     return (
       <div className="space-y-6">
@@ -120,7 +120,7 @@ export default function GitHubTab() {
     );
   }
 
-  // Not connected state
+  
   if (!isConnected || !connection) {
     return (
       <div className="space-y-6">
@@ -140,7 +140,7 @@ export default function GitHubTab() {
   return (
     <GitHubErrorBoundary>
       <div className="space-y-6">
-        {/* Header */}
+        {}
         <motion.div
           className="flex items-center justify-between gap-2"
           initial={{ opacity: 0, y: 20 }}
@@ -169,23 +169,23 @@ export default function GitHubTab() {
           Manage your GitHub integration with advanced repository features and comprehensive statistics
         </p>
 
-        {/* Connection Test Results */}
+        {}
         <ConnectionTestIndicator
           status={connectionTest?.status || null}
           message={connectionTest?.message}
           timestamp={connectionTest?.timestamp}
         />
 
-        {/* Connection Component */}
+        {}
         <GitHubConnection connectionTest={connectionTest} onTestConnection={handleTestConnection} />
 
-        {/* User Profile */}
+        {}
         {connection.user && <GitHubUserProfile user={connection.user} />}
 
-        {/* Stats Section */}
+        {}
         <GitHubStats connection={connection} isExpanded={isStatsExpanded} onToggleExpanded={setIsStatsExpanded} />
 
-        {/* Repositories Section */}
+        {}
         {stats?.repos && stats.repos.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -243,7 +243,7 @@ export default function GitHubTab() {
           </motion.div>
         )}
 
-        {/* Stats Error State */}
+        {}
         {statsError && !stats && (
           <ErrorState
             title="Failed to Load Statistics"
@@ -253,7 +253,7 @@ export default function GitHubTab() {
           />
         )}
 
-        {/* Stats Loading State */}
+        {}
         {isStatsLoading && !stats && (
           <GitHubProgressiveLoader
             isLoading={isStatsLoading}
@@ -270,7 +270,7 @@ export default function GitHubTab() {
           </GitHubProgressiveLoader>
         )}
 
-        {/* Cache Management Section - Only show when connected */}
+        {}
         {isConnected && connection && (
           <div className="mt-8 pt-6 border-t border-falbor-elements-borderColor">
             <GitHubCacheManager showStats={true} />

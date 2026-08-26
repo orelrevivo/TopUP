@@ -31,7 +31,7 @@ import { createEnvMaskingExtension } from './EnvMasking';
 
 const logger = createScopedLogger('CodeMirrorEditor');
 
-// Create a module-level reference to the current document for use in tooltip functions
+
 let currentDocRef: EditorDocument | undefined;
 
 export interface EditorDocument {
@@ -142,7 +142,7 @@ export const CodeMirrorEditor = memo(
 
     const [languageCompartment] = useState(new Compartment());
 
-    // Add a compartment for the env masking extension
+    
     const [envMaskingCompartment] = useState(new Compartment());
 
     const containerRef = useRef<HTMLDivElement | null>(null);
@@ -154,17 +154,14 @@ export const CodeMirrorEditor = memo(
     const onChangeRef = useRef(onChange);
     const onSaveRef = useRef(onSave);
 
-    /**
-     * This effect is used to avoid side effects directly in the render function
-     * and instead the refs are updated after each render.
-     */
+    
     useEffect(() => {
       onScrollRef.current = onScroll;
       onChangeRef.current = onChange;
       onSaveRef.current = onSave;
       docRef.current = doc;
 
-      // Update the module-level reference for use in tooltip functions
+      
       currentDocRef = doc;
       themeRef.current = theme;
     });
@@ -179,10 +176,10 @@ export const CodeMirrorEditor = memo(
         const column = doc.scroll.column ?? 0;
 
         try {
-          // Check if the line number is valid for the current document
+          
           const totalLines = viewRef.current.state.doc.lines;
 
-          // Only proceed if the line number is within the document's range
+          
           if (line < totalLines) {
             const linePos = viewRef.current.state.doc.line(line + 1).from + column;
             viewRef.current.dispatch({
@@ -300,7 +297,7 @@ export const CodeMirrorEditor = memo(
         doc as TextEditorDocument,
       );
 
-      // Check if the file is locked and update the editor state accordingly
+      
       const currentChatId = getCurrentChatId();
       const { locked } = isFileLocked(doc.filePath, currentChatId);
 
@@ -450,11 +447,11 @@ function setEditorDocument(
     });
   }
 
-  // Check if the file is locked
+  
   const currentChatId = getCurrentChatId();
   const { locked } = isFileLocked(doc.filePath, currentChatId);
 
-  // Set editable state based on both the editable prop and the file's lock state
+  
   view.dispatch({
     effects: [editableStateEffect.of(editable && !doc.isBinary && !locked)],
   });
@@ -479,10 +476,10 @@ function setEditorDocument(
         const column = doc.scroll.column ?? 0;
 
         try {
-          // Check if the line number is valid for the current document
+          
           const totalLines = view.state.doc.lines;
 
-          // Only proceed if the line number is within the document's range
+          
           if (line < totalLines) {
             const linePos = view.state.doc.line(line + 1).from + column;
             view.dispatch({
@@ -526,11 +523,11 @@ function getReadOnlyTooltip(state: EditorState) {
     return [];
   }
 
-  // Get the current document from the module-level reference
+  
   const currentDoc = currentDocRef;
   let tooltipMessage = 'Cannot edit file while AI response is being generated';
 
-  // If we have a current document, check if it's locked
+  
   if (currentDoc?.filePath) {
     const currentChatId = getCurrentChatId();
     const { locked } = isFileLocked(currentDoc.filePath, currentChatId);

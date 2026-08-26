@@ -3,7 +3,7 @@ const json = NextResponse.json;
 import { streamText } from '~/lib/.server/llm/stream-text';
 import { stripIndents } from '~/utils/stripIndent';
 import type { ProviderInfo } from '~/types/model';
-import { getApiKeysFromCookie, getProviderSettingsFromCookie } from '~/lib/api/cookies';
+import { getProviderSettingsFromCookie } from '~/lib/api/cookies';
 import { createScopedLogger } from '~/utils/logger';
 import type { RouteArgs } from '~/lib/security';
 
@@ -39,7 +39,7 @@ async function enhancerAction({ context, request }: RouteArgs) {
   }
 
   const cookieHeader = request.headers.get('Cookie');
-  const apiKeys = getApiKeysFromCookie(cookieHeader);
+  const apiKeys: Record<string, string> = {};
   const providerSettings = getProviderSettingsFromCookie(cookieHeader);
 
   try {

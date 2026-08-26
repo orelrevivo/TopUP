@@ -4,44 +4,40 @@ import { motion } from 'framer-motion';
 import { classNames } from '~/utils/classNames';
 
 interface Tab {
-  /** Unique identifier for the tab */
+  
   id: string;
 
-  /** Content to display in the tab */
+  
   label: React.ReactNode;
 
-  /** Optional icon to display before the label */
+  
   icon?: string;
 }
 
 interface TabsWithSliderProps {
-  /** Array of tab objects */
+  
   tabs: Tab[];
 
-  /** ID of the currently active tab */
+  
   activeTab: string;
 
-  /** Function called when a tab is clicked */
+  
   onChange: (tabId: string) => void;
 
-  /** Additional class name for the container */
+  
   className?: string;
 
-  /** Additional class name for inactive tabs */
+  
   tabClassName?: string;
 
-  /** Additional class name for the active tab */
+  
   activeTabClassName?: string;
 
-  /** Additional class name for the slider */
+  
   sliderClassName?: string;
 }
 
-/**
- * TabsWithSlider component
- *
- * A tabs component with an animated slider that moves to the active tab.
- */
+
 export function TabsWithSlider({
   tabs,
   activeTab,
@@ -51,13 +47,13 @@ export function TabsWithSlider({
   activeTabClassName,
   sliderClassName,
 }: TabsWithSliderProps) {
-  // State for slider dimensions
+  
   const [sliderDimensions, setSliderDimensions] = useState({ width: 0, left: 0 });
 
-  // Refs for tab elements
+  
   const tabsRef = useRef<(HTMLButtonElement | null)[]>([]);
 
-  // Update slider position when active tab changes
+  
   useEffect(() => {
     const activeIndex = tabs.findIndex((tab) => tab.id === activeTab);
 
@@ -75,7 +71,7 @@ export function TabsWithSlider({
 
   return (
     <div className={classNames('relative flex gap-2', className)}>
-      {/* Tab buttons */}
+      {}
       {tabs.map((tab, index) => (
         <button
           key={tab.id}
@@ -98,7 +94,7 @@ export function TabsWithSlider({
         </button>
       ))}
 
-      {/* Animated slider */}
+      {}
       <motion.div
         className={classNames('absolute bottom-0 left-0 h-10 rounded-lg bg-purple-500 -z-10', sliderClassName)}
         initial={false}

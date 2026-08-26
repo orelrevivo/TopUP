@@ -2,7 +2,6 @@ import { atom } from 'nanostores';
 import type { GitHubConnection } from '~/types/GitHub';
 import { logStore } from './logs';
 
-// Initialize with stored connection or defaults
 const storedConnection = typeof window !== 'undefined' ? localStorage.getItem('github_connection') : null;
 const initialConnection: GitHubConnection = storedConnection
   ? JSON.parse(storedConnection)
@@ -16,11 +15,9 @@ export const githubConnection = atom<GitHubConnection>(initialConnection);
 export const isConnecting = atom<boolean>(false);
 export const isFetchingStats = atom<boolean>(false);
 
-// Function to initialize GitHub connection via server-side API
 export async function initializeGitHubConnection() {
   const currentState = githubConnection.get();
 
-  // If we already have a connection, don't override it
   if (currentState.user) {
     return;
   }
@@ -32,7 +29,6 @@ export async function initializeGitHubConnection() {
 
     if (!response.ok) {
       if (response.status === 401) {
-        // No server-side token available, skip initialization
         return;
       }
 
@@ -41,22 +37,18 @@ export async function initializeGitHubConnection() {
 
     const userData = await response.json();
 
-    // Update the connection state (no token stored client-side)
     const connectionData: Partial<GitHubConnection> = {
       user: userData as any,
-      token: '', // Token stored server-side only
+      token: '',
       tokenType: 'classic',
     };
 
-    // Store in localStorage for persistence
     if (typeof window !== 'undefined') {
       localStorage.setItem('github_connection', JSON.stringify(connectionData));
     }
 
-    // Update the store
     updateGitHubConnection(connectionData);
 
-    // Fetch initial stats
     await fetchGitHubStatsViaAPI();
 
     logStore.logSystem('GitHub connection initialized successfully');
@@ -68,7 +60,6 @@ export async function initializeGitHubConnection() {
   }
 }
 
-// Function to fetch GitHub stats via server-side API
 export async function fetchGitHubStatsViaAPI() {
   try {
     isFetchingStats.set(true);
@@ -129,7 +120,6 @@ export const updateGitHubConnection = (updates: Partial<GitHubConnection>) => {
   const newState = { ...currentState, ...updates };
   githubConnection.set(newState);
 
-  // Persist to localStorage
   if (typeof window !== 'undefined') {
     localStorage.setItem('github_connection', JSON.stringify(newState));
   }

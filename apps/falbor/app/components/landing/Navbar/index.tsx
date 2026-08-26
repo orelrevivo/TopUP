@@ -3,11 +3,7 @@
 import React from 'react';
 import MacOSMenuBar from './navbar';
 
-/**
- * Default Demo - Basic MacOS Menu Bar
- *
- * Clean demo showing just the menu bar component.
- */
+
 export default function DefaultDemo() {
     return (
         <div>

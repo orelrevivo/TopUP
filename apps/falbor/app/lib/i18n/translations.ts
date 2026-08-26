@@ -1,6 +1,5 @@
 export const translations: Record<string, Record<string, string>> = {
   en: {
-    // Settings Tab
     preferences: "Preferences",
     language: "Language",
     notifications: "Notifications",
@@ -11,8 +10,6 @@ export const translations: Record<string, Record<string, string>> = {
     keyboard_shortcuts: "Keyboard Shortcuts",
     toggle_theme: "Toggle Theme",
     switch_theme_desc: "Switch between light and dark mode",
-
-    // Profile Tab
     your_profile: "Your Profile",
     update_photo_details: "Update your photo and personal details.",
     display_account_email: "Display Account Email",
@@ -31,8 +28,6 @@ export const translations: Record<string, Record<string, string>> = {
     link_title_example: "Link Title (e.g. Portfolio)",
     no_custom_links: "No custom links added yet.",
     upload_cover: "Upload Cover",
-    
-    // Sidebar / Menu
     chats: "Chats",
     search_chats: "Search chats...",
     new_chat: "New Chat",
@@ -59,7 +54,6 @@ export const translations: Record<string, Record<string, string>> = {
     keyboard_shortcuts: "Atajos de teclado",
     toggle_theme: "Cambiar tema",
     switch_theme_desc: "Cambiar entre modo claro y oscuro",
-
     your_profile: "Tu perfil",
     update_photo_details: "Actualiza tu foto y detalles personales.",
     display_account_email: "Mostrar correo electrónico de la cuenta",
@@ -78,7 +72,6 @@ export const translations: Record<string, Record<string, string>> = {
     link_title_example: "Título del enlace (ej. Portafolio)",
     no_custom_links: "Aún no se han añadido enlaces personalizados.",
     upload_cover: "Subir portada",
-    
     chats: "Chats",
     search_chats: "Buscar chats...",
     new_chat: "Nuevo Chat",
@@ -105,7 +98,6 @@ export const translations: Record<string, Record<string, string>> = {
     keyboard_shortcuts: "Raccourcis clavier",
     toggle_theme: "Changer de thème",
     switch_theme_desc: "Basculer entre le mode clair et sombre",
-
     your_profile: "Votre profil",
     update_photo_details: "Mettez à jour votre photo et vos informations personnelles.",
     display_account_email: "Afficher l'e-mail du compte",
@@ -124,7 +116,6 @@ export const translations: Record<string, Record<string, string>> = {
     link_title_example: "Titre du lien (ex. Portfolio)",
     no_custom_links: "Aucun lien personnalisé ajouté pour le moment.",
     upload_cover: "Télécharger une couverture",
-    
     chats: "Discussions",
     search_chats: "Rechercher des discussions...",
     new_chat: "Nouvelle discussion",
@@ -151,7 +142,6 @@ export const translations: Record<string, Record<string, string>> = {
     keyboard_shortcuts: "Tastaturkürzel",
     toggle_theme: "Design umschalten",
     switch_theme_desc: "Wechseln Sie zwischen hellem und dunklem Modus",
-
     your_profile: "Ihr Profil",
     update_photo_details: "Aktualisieren Sie Ihr Foto und persönliche Details.",
     display_account_email: "Konto-E-Mail anzeigen",
@@ -170,7 +160,6 @@ export const translations: Record<string, Record<string, string>> = {
     link_title_example: "Linktitel (z. B. Portfolio)",
     no_custom_links: "Noch keine benutzerdefinierten Links hinzugefügt.",
     upload_cover: "Titelbild hochladen",
-    
     chats: "Chats",
     search_chats: "Chats suchen...",
     new_chat: "Neuer Chat",
@@ -186,10 +175,7 @@ export const translations: Record<string, Record<string, string>> = {
     sign_out: "Abmelden",
     guest: "Gast",
   },
-  // Add fallback for others for now
 };
-
-// Fallback all other languages to English for missing keys
 ['it', 'pt', 'ru', 'zh', 'ja', 'ko'].forEach(lang => {
   translations[lang] = { ...translations.en };
 });

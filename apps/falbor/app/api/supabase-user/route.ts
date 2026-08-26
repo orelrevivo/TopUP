@@ -4,14 +4,12 @@ import { db } from '~/lib/db';
 import { users } from '~/lib/db/schema';
 import { eq } from 'drizzle-orm';
 const json = NextResponse.json;
-import { getApiKeysFromCookie } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
 
 async function supabaseUserLoader({ request, context }: { request: Request; context: any }) {
   try {
     // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
+    const apiKeys: Record<string, string> = {};
 
     // Try to get Supabase token from various sources
     const supabaseToken =
@@ -104,8 +102,7 @@ async function supabaseUserAction({ request, context }: { request: Request; cont
     const action = formData.get('action');
 
     // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
+    const apiKeys: Record<string, string> = {};
 
     // Try to get Supabase token from various sources
     const supabaseToken =

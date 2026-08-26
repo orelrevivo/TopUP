@@ -16,11 +16,10 @@ export interface LogEntryWithRead extends LogEntry {
 }
 
 export const getNotifications = async (): Promise<Notification[]> => {
-  // Get notifications from the log store
   const logs = Object.values(logStore.logs.get());
 
   return logs
-    .filter((log) => log.category !== 'system') // Filter out system logs
+    .filter((log) => log.category !== 'system')
     .map((log) => ({
       id: log.id,
       title: (log.details?.title as string) || log.message.split('\n')[0],

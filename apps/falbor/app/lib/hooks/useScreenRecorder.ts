@@ -7,12 +7,12 @@ export function useScreenRecorder() {
   const [status, setStatus] = useState<RecordingStatus>('idle');
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [timeRemaining, setTimeRemaining] = useState<number>(0);
-  
+
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const framesRef = useRef<string[]>([]);
-  
+
   const captureIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const countdownRef = useRef<NodeJS.Timeout | null>(null);
@@ -31,8 +31,7 @@ export function useScreenRecorder() {
 
   const startRecording = async (durationMinutes: number, onComplete: (prompt: string) => void) => {
     console.log('startRecording called with duration:', durationMinutes);
-    
-    // 1. Pre-check API Key & Quota before starting
+
     try {
       setStatus('testing');
       const testRes = await fetch('/api/analyze-screen', {
@@ -53,7 +52,7 @@ export function useScreenRecorder() {
 
     initCaptureElements();
     let stream: MediaStream;
-    
+
     try {
       stream = await navigator.mediaDevices.getDisplayMedia({
         video: { displaySurface: 'monitor' },
@@ -71,7 +70,7 @@ export function useScreenRecorder() {
       const video = videoRef.current!;
       video.srcObject = stream;
       framesRef.current = [];
-      
+
       // Wait for video metadata to load before playing
       await new Promise<void>((resolve) => {
         video.onloadedmetadata = () => {
@@ -92,7 +91,7 @@ export function useScreenRecorder() {
       const targetFrames = 30;
       const durationMs = durationMinutes * 60 * 1000;
       const intervalMs = Math.max(1000, Math.floor(durationMs / targetFrames));
-      
+
       console.log(`Setting capture interval to ${intervalMs}ms to cap frames at ${targetFrames}`);
 
       // Capture frames dynamically
@@ -101,7 +100,7 @@ export function useScreenRecorder() {
       }, intervalMs);
 
       setStatus('recording');
-      
+
       setTimeRemaining(durationMinutes * 60);
 
       countdownRef.current = setInterval(() => {
@@ -130,13 +129,13 @@ export function useScreenRecorder() {
     const video = videoRef.current;
     const canvas = canvasRef.current;
     if (!video || !canvas || video.videoWidth === 0 || video.videoHeight === 0) return;
-    
+
     // Scale down image to 1280px width max to save memory & payload size
     const targetWidth = 1280;
     const scale = Math.min(1, targetWidth / video.videoWidth);
     canvas.width = video.videoWidth * scale;
     canvas.height = video.videoHeight * scale;
-    
+
     const ctx = canvas.getContext('2d');
     if (ctx) {
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
@@ -166,7 +165,7 @@ export function useScreenRecorder() {
   const processRecording = async (onComplete: (prompt: string) => void) => {
     setStatus('processing');
     console.log(`Processing ${framesRef.current.length} captured frames`);
-    
+
     try {
       const response = await fetch('/api/analyze-screen', {
         method: 'POST',

@@ -13,6 +13,7 @@ import type {
   DbTable,
   TableData,
 } from './database/types';
+import { Badge } from '../ui';
 
 interface DatabaseViewProps {
   sendMessage?: (event: React.UIEvent, messageInput?: string) => void;
@@ -185,14 +186,15 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
             >
               SQL Query
             </button>
+            <Badge>Beta</Badge>
           </div>
-          
-          <button 
+
+          <button
             onClick={() => {
               if (pollingRef.current) clearInterval(pollingRef.current);
               fetchData();
               pollingRef.current = setInterval(fetchData, POLL_INTERVAL);
-            }} 
+            }}
             className="flex items-center gap-1.5 text-xs font-medium text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary bg-falbor-elements-background-depth-2 hover:bg-falbor-elements-background-depth-3 px-2 py-1 rounded-md border border-falbor-elements-borderColor transition-colors"
           >
             <div className={`i-ph:arrows-clockwise ${isLoading ? 'animate-spin text-accent-500' : ''}`} />
@@ -217,9 +219,9 @@ export const DatabaseView = memo(({ sendMessage }: DatabaseViewProps) => {
             />
           )}
           {activeTab === 'sql' && (
-            <SQLQueryTab 
-              databaseUrl={databaseUrl} 
-              chatId={currentChatId} 
+            <SQLQueryTab
+              databaseUrl={databaseUrl}
+              chatId={currentChatId}
               adminFetch={adminFetch}
             />
           )}

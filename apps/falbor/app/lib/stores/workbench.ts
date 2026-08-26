@@ -92,12 +92,10 @@ export class WorkbenchStore {
       import.meta.hot.data.browserDebugUrl = this.browserDebugUrl;
       import.meta.hot.data.fileHistory = this.fileHistory;
 
-      // Ensure binary files are properly preserved across hot reloads
       const filesMap = this.files.get();
 
       for (const [path, dirent] of Object.entries(filesMap)) {
         if (dirent?.type === 'file' && dirent.isBinary && dirent.content) {
-          // Make sure binary content is preserved
           this.files.setKey(path, { ...dirent });
         }
       }
@@ -188,7 +186,6 @@ export class WorkbenchStore {
     this.#editorStore.setDocuments(files);
 
     if (this.#filesStore.filesCount > 0 && this.currentDocument.get() === undefined) {
-      // we find the first file and select it
       for (const [filePath, dirent] of Object.entries(files)) {
         if (dirent?.type === 'file') {
           this.setSelectedFile(filePath);
@@ -259,12 +256,6 @@ export class WorkbenchStore {
       return;
     }
 
-    /*
-     * For scoped locks, we would need to implement diff checking here
-     * to determine if the user is modifying existing code or just adding new code
-     * This is a more complex feature that would be implemented in a future update
-     */
-
     await this.#filesStore.saveFile(filePath, document.value);
 
     const newUnsavedFiles = new Set(this.unsavedFiles.get());
@@ -318,56 +309,26 @@ export class WorkbenchStore {
     this.#filesStore.resetFileModifications();
   }
 
-  /**
-   * Lock a file to prevent edits
-   * @param filePath Path to the file to lock
-   * @returns True if the file was successfully locked
-   */
   lockFile(filePath: string) {
     return this.#filesStore.lockFile(filePath);
   }
 
-  /**
-   * Lock a folder and all its contents to prevent edits
-   * @param folderPath Path to the folder to lock
-   * @returns True if the folder was successfully locked
-   */
   lockFolder(folderPath: string) {
     return this.#filesStore.lockFolder(folderPath);
   }
 
-  /**
-   * Unlock a file to allow edits
-   * @param filePath Path to the file to unlock
-   * @returns True if the file was successfully unlocked
-   */
   unlockFile(filePath: string) {
     return this.#filesStore.unlockFile(filePath);
   }
 
-  /**
-   * Unlock a folder and all its contents to allow edits
-   * @param folderPath Path to the folder to unlock
-   * @returns True if the folder was successfully unlocked
-   */
   unlockFolder(folderPath: string) {
     return this.#filesStore.unlockFolder(folderPath);
   }
 
-  /**
-   * Check if a file is locked
-   * @param filePath Path to the file to check
-   * @returns Object with locked status, lock mode, and what caused the lock
-   */
   isFileLocked(filePath: string) {
     return this.#filesStore.isFileLocked(filePath);
   }
 
-  /**
-   * Check if a folder is locked
-   * @param folderPath Path to the folder to check
-   * @returns Object with locked status, lock mode, and what caused the lock
-   */
   isFolderLocked(folderPath: string) {
     return this.#filesStore.isFolderLocked(folderPath);
   }
@@ -379,10 +340,6 @@ export class WorkbenchStore {
       if (success) {
         this.setSelectedFile(filePath);
 
-        /*
-         * For empty files, we need to ensure they're not marked as unsaved
-         * Only check for empty string, not empty Uint8Array
-         */
         if (typeof content === 'string' && content === '') {
           const newUnsavedFiles = new Set(this.unsavedFiles.get());
           newUnsavedFiles.delete(filePath);
@@ -487,7 +444,6 @@ export class WorkbenchStore {
   }
 
   abortAllActions() {
-    // TODO: what do we wanna do and how do we wanna recover from this?
   }
 
   #hasSnapshot = false;
@@ -566,14 +522,11 @@ export class WorkbenchStore {
     this.artifacts.setKey(artifactId, { ...artifact, ...state });
   }
   addAction(data: ActionCallbackData) {
-    // Register the action in the runner immediately so the UI shows the file name right away,
-    // without waiting for the execution queue (which may be blocked by a long-running terminal).
     const artifact = this.#getArtifact(data.artifactId);
     if (artifact) {
       artifact.runner.addAction(data);
     }
 
-    // Queue the async side-effects (setting selected file / switching to code view) separately.
     this.addToExecutionQueue(() => this._addActionSideEffects(data));
   }
 
@@ -603,7 +556,6 @@ export class WorkbenchStore {
     }
   }
 
-  /** @deprecated Use addAction instead */
   async _addAction(data: ActionCallbackData) {
     return this._addActionSideEffects(data);
   }
@@ -653,7 +605,6 @@ export class WorkbenchStore {
 
       if (!isStreaming) {
         if (shouldSkipExecution) {
-          // If we skipped execution due to snapshot, still update UI state with content
           artifact.runner.actions.setKey(data.actionId, {
             ...action,
             ...data.action,
@@ -689,7 +640,7 @@ export class WorkbenchStore {
 
   actionStreamSampler = createSampler(async (data: ActionCallbackData, isStreaming: boolean = false) => {
     return await this._runAction(data, isStreaming);
-  }, 100); // TODO: remove this magic number to have it configurable
+  }, 100);
 
   #getArtifact(id: string) {
     const artifacts = this.artifacts.get();
@@ -700,10 +651,8 @@ export class WorkbenchStore {
     const zip = new JSZip();
     const files = this.files.get();
 
-    // Get the project name from the description input, or use a default name
     const projectName = (description.value ?? 'project').toLocaleLowerCase().split(' ').join('_');
 
-    // Generate a simple 6-character hash based on the current timestamp
     const timestampHash = Date.now().toString(36).slice(-6);
     const uniqueProjectName = `${projectName}_${timestampHash}`;
 
@@ -711,10 +660,8 @@ export class WorkbenchStore {
       if (dirent?.type === 'file' && !dirent.isBinary) {
         const relativePath = extractRelativePath(filePath);
 
-        // split the path into segments
         const pathSegments = relativePath.split('/');
 
-        // if there's more than one segment, we need to create folders
         if (pathSegments.length > 1) {
           let currentFolder = zip;
 
@@ -723,13 +670,11 @@ export class WorkbenchStore {
           }
           currentFolder.file(pathSegments[pathSegments.length - 1], dirent.content);
         } else {
-          // if there's only one segment, it's a file in the root
           zip.file(relativePath, dirent.content);
         }
       }
     }
 
-    // Generate the zip file and save it
     const content = await zip.generateAsync({ type: 'blob' });
     saveAs(content, `${uniqueProjectName}.zip`);
   }
@@ -748,12 +693,10 @@ export class WorkbenchStore {
           currentHandle = await currentHandle.getDirectoryHandle(pathSegments[i], { create: true });
         }
 
-        // create or get the file
         const fileHandle = await currentHandle.getFileHandle(pathSegments[pathSegments.length - 1], {
           create: true,
         });
 
-        // write the file content
         const writable = await fileHandle.createWritable();
         await writable.write(dirent.content);
         await writable.close();
@@ -792,10 +735,8 @@ export class WorkbenchStore {
       }
 
       if (isGitHub) {
-        // Initialize Octokit with the auth token
         const octokit = new Octokit({ auth: authToken });
 
-        // Check if the repository already exists before creating it
         let repo: RestEndpointMethodTypes['repos']['get']['response']['data'];
         let visibilityJustChanged = false;
 
@@ -804,14 +745,12 @@ export class WorkbenchStore {
           repo = resp.data;
           console.log('Repository already exists, using existing repo');
 
-          // Check if we need to update visibility of existing repo
           if (repo.private !== isPrivate) {
             console.log(
               `Updating repository visibility from ${repo.private ? 'private' : 'public'} to ${isPrivate ? 'private' : 'public'}`,
             );
 
             try {
-              // Update repository visibility using the update method
               const { data: updatedRepo } = await octokit.repos.update({
                 owner,
                 repo: repoName,
@@ -822,21 +761,17 @@ export class WorkbenchStore {
               repo = updatedRepo;
               visibilityJustChanged = true;
 
-              // Add a delay after changing visibility to allow GitHub to fully process the change
               console.log('Waiting for visibility change to propagate...');
-              await new Promise((resolve) => setTimeout(resolve, 3000)); // 3 second delay
+              await new Promise((resolve) => setTimeout(resolve, 3000));
             } catch (visibilityError) {
               console.error('Failed to update repository visibility:', visibilityError);
 
-              // Continue with push even if visibility update fails
             }
           }
         } catch (error) {
           if (error instanceof Error && 'status' in error && error.status === 404) {
-            // Repository doesn't exist, so create a new one
             console.log(`Creating new repository with private=${isPrivate}`);
 
-            // Create new repository with specified privacy setting
             const createRepoOptions = {
               name: repoName,
               private: isPrivate,
@@ -850,30 +785,26 @@ export class WorkbenchStore {
             console.log('Repository created:', newRepo.html_url, 'Private:', newRepo.private);
             repo = newRepo;
 
-            // Add a small delay after creating a repository to allow GitHub to fully initialize it
             console.log('Waiting for repository to initialize...');
-            await new Promise((resolve) => setTimeout(resolve, 2000)); // 2 second delay
+            await new Promise((resolve) => setTimeout(resolve, 2000));
           } else {
             console.error('Cannot create repo:', error);
-            throw error; // Some other error occurred
+            throw error;
           }
         }
 
-        // Get all files
         const files = this.files.get();
 
         if (!files || Object.keys(files).length === 0) {
           throw new Error('No files found to push');
         }
 
-        // Function to push files with retry logic
         const pushFilesToRepo = async (attempt = 1): Promise<string> => {
           const maxAttempts = 3;
 
           try {
             console.log(`Pushing files to repository (attempt ${attempt}/${maxAttempts})...`);
 
-            // Create blobs for each file
             const blobs = await Promise.all(
               Object.entries(files).map(async ([filePath, dirent]) => {
                 if (dirent?.type === 'file' && dirent.content) {
@@ -890,25 +821,22 @@ export class WorkbenchStore {
               }),
             );
 
-            const validBlobs = blobs.filter(Boolean); // Filter out any undefined blobs
+            const validBlobs = blobs.filter(Boolean);
 
             if (validBlobs.length === 0) {
               throw new Error('No valid files to push');
             }
 
-            // Refresh repository reference to ensure we have the latest data
             const repoRefresh = await octokit.repos.get({ owner, repo: repoName });
             repo = repoRefresh.data;
 
-            // Get the latest commit SHA (assuming main branch, update dynamically if needed)
             const { data: ref } = await octokit.git.getRef({
               owner: repo.owner.login,
               repo: repo.name,
-              ref: `heads/${repo.default_branch || 'main'}`, // Handle dynamic branch
+              ref: `heads/${repo.default_branch || 'main'}`,
             });
             const latestCommitSha = ref.object.sha;
 
-            // Create a new tree
             const { data: newTree } = await octokit.git.createTree({
               owner: repo.owner.login,
               repo: repo.name,
@@ -921,7 +849,6 @@ export class WorkbenchStore {
               })),
             });
 
-            // Create a new commit
             const { data: newCommit } = await octokit.git.createCommit({
               owner: repo.owner.login,
               repo: repo.name,
@@ -930,11 +857,10 @@ export class WorkbenchStore {
               parents: [latestCommitSha],
             });
 
-            // Update the reference
             await octokit.git.updateRef({
               owner: repo.owner.login,
               repo: repo.name,
-              ref: `heads/${repo.default_branch || 'main'}`, // Handle dynamic branch
+              ref: `heads/${repo.default_branch || 'main'}`,
               sha: newCommit.sha,
             });
 
@@ -944,23 +870,20 @@ export class WorkbenchStore {
           } catch (error) {
             console.error(`Error during push attempt ${attempt}:`, error);
 
-            // If we've just changed visibility and this is not our last attempt, wait and retry
             if ((visibilityJustChanged || attempt === 1) && attempt < maxAttempts) {
-              const delayMs = attempt * 2000; // Increasing delay with each attempt
+              const delayMs = attempt * 2000;
               console.log(`Waiting ${delayMs}ms before retry...`);
               await new Promise((resolve) => setTimeout(resolve, delayMs));
 
               return pushFilesToRepo(attempt + 1);
             }
 
-            throw error; // Rethrow if we're out of attempts
+            throw error;
           }
         };
 
-        // Execute the push function with retry logic
         const repoUrl = await pushFilesToRepo();
 
-        // Return the repository URL
         return repoUrl;
       }
 
@@ -968,19 +891,16 @@ export class WorkbenchStore {
         const { GitLabApiService: gitLabApiServiceClass } = await import('~/lib/services/gitlabApiService');
         const gitLabApiService = new gitLabApiServiceClass(authToken, 'https://gitlab.com');
 
-        // Check or create repo
         let repo = await gitLabApiService.getProject(owner, repoName);
 
         if (!repo) {
           repo = await gitLabApiService.createProject(repoName, isPrivate);
-          await new Promise((r) => setTimeout(r, 2000)); // Wait for repo initialization
+          await new Promise((r) => setTimeout(r, 2000));
         }
 
-        // Check if branch exists, create if not
         const branchRes = await gitLabApiService.getFile(repo.id, 'README.md', branchName).catch(() => null);
 
         if (!branchRes || !branchRes.ok) {
-          // Create branch from default
           await gitLabApiService.createBranch(repo.id, branchName, repo.default_branch);
           await new Promise((r) => setTimeout(r, 1000));
         }
@@ -1000,7 +920,6 @@ export class WorkbenchStore {
           [] as { action: 'create' | 'update'; file_path: string; content: string }[],
         );
 
-        // Check which files exist and update action accordingly
         for (const action of actions) {
           const fileCheck = await gitLabApiService.getFile(repo.id, action.file_path, branchName);
 
@@ -1009,7 +928,6 @@ export class WorkbenchStore {
           }
         }
 
-        // Commit all files
         await gitLabApiService.commitFiles(repo.id, {
           branch: branchName,
           commit_message: commitMessage || 'Commit multiple files',
@@ -1019,11 +937,10 @@ export class WorkbenchStore {
         return repo.web_url;
       }
 
-      // Should not reach here since we only handle GitHub and GitLab
       throw new Error(`Unsupported provider: ${provider}`);
     } catch (error) {
       console.error('Error pushing to repository:', error);
-      throw error; // Rethrow the error for further handling
+      throw error;
     }
   }
 }

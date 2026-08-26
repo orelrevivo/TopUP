@@ -1,4 +1,3 @@
-// GitLab API Response Types
 export interface GitLabUserResponse {
   id: number;
   username: string;

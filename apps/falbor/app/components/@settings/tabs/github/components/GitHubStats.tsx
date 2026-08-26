@@ -17,10 +17,10 @@ export function GitHubStats({ connection, isExpanded, onToggleExpanded }: GitHub
     connection,
     {
       autoFetch: true,
-      cacheTimeout: 30 * 60 * 1000, // 30 minutes
+      cacheTimeout: 30 * 60 * 1000, 
     },
     !connection?.token,
-  ); // Use server-side if no token
+  ); 
 
   return (
     <GitHubErrorBoundary>
@@ -120,7 +120,7 @@ function GitHubStatsContent({
 
         <CollapsibleContent className="overflow-hidden">
           <div className="space-y-4 mt-4">
-            {/* Languages Section */}
+            {}
             <div className="mb-6">
               <h4 className="text-sm font-medium text-falbor-elements-textPrimary mb-3">Top Languages</h4>
               {stats.mostUsedLanguages && stats.mostUsedLanguages.length > 0 ? (
@@ -157,7 +157,7 @@ function GitHubStatsContent({
               )}
             </div>
 
-            {/* GitHub Overview Summary */}
+            {}
             <div className="mb-6 p-4 bg-falbor-elements-background-depth-1 rounded-lg border border-falbor-elements-borderColor">
               <h4 className="text-sm font-medium text-falbor-elements-textPrimary mb-3">GitHub Overview</h4>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -186,7 +186,7 @@ function GitHubStatsContent({
               </div>
             </div>
 
-            {/* Activity Summary */}
+            {}
             <div className="mb-6">
               <h5 className="text-sm font-medium text-falbor-elements-textPrimary mb-2">Activity Summary</h5>
               <div className="grid grid-cols-4 gap-4">
@@ -230,7 +230,7 @@ function GitHubStatsContent({
               </div>
             </div>
 
-            {/* Organizations Section */}
+            {}
             {stats.organizations && stats.organizations.length > 0 && (
               <div>
                 <h5 className="text-sm font-medium text-falbor-elements-textPrimary mb-2">Organizations</h5>
@@ -277,7 +277,7 @@ function GitHubStatsContent({
               </div>
             )}
 
-            {/* Last Updated */}
+            {}
             <div className="pt-2 border-t border-falbor-elements-borderColor">
               <span className="text-xs text-falbor-elements-textSecondary">
                 Last updated: {stats.lastUpdated ? new Date(stats.lastUpdated).toLocaleString() : 'Never'}

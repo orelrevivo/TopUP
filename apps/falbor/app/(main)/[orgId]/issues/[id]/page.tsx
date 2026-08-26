@@ -5,7 +5,7 @@ import { IssueDetailView, IssueDetailData } from '~/components/stayup/IssueDetai
 import { notFound } from 'next/navigation';
 
 export default async function IssuePage({ params }: { params: { id: string } }) {
-  // Fetch real data from DB
+  
   const issue = await db.query.stayupIssues.findFirst({
     where: eq(stayupIssues.id, params.id)
   });

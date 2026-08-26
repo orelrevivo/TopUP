@@ -84,7 +84,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     pointerId: null as number | null,
   });
 
-  // Reduce scaling factor to make resizing less sensitive
+  
   const SCALING_FACTOR = 1;
 
   const [isWindowSizeDropdownOpen, setIsWindowSizeDropdownOpen] = useState(false);
@@ -218,7 +218,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   };
 
   useEffect(() => {
-    // Skip if not in device mode
+    
     if (!isDeviceModeOn) {
       return;
     }
@@ -241,19 +241,19 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         newWidthPercent = state.startWidthPercent - dxPercent;
       }
 
-      // Limit width percentage between 10% and 90%
+      
       newWidthPercent = Math.max(10, Math.min(newWidthPercent, 90));
 
-      // Force a synchronous update to ensure the UI reflects the change immediately
+      
       setWidthPercent(newWidthPercent);
 
-      // Calculate and update the actual pixel width
+      
       if (containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
         const newWidth = Math.round((containerWidth * newWidthPercent) / 100);
         setCurrentWidth(newWidth);
 
-        // Apply the width directly to the container for immediate feedback
+        
         const previewContainer = containerRef.current.querySelector('div[style*="width"]');
 
         if (previewContainer) {
@@ -269,17 +269,17 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         return;
       }
 
-      // Find all resize handles
+      
       const handles = document.querySelectorAll('.resize-handle-left, .resize-handle-right');
 
-      // Release pointer capture from any handle that has it
+      
       handles.forEach((handle) => {
         if ((handle as HTMLElement).hasPointerCapture?.(e.pointerId)) {
           (handle as HTMLElement).releasePointerCapture(e.pointerId);
         }
       });
 
-      // Reset state
+      
       resizingState.current = {
         ...resizingState.current,
         isResizing: false,
@@ -291,18 +291,18 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       document.body.style.cursor = '';
     };
 
-    // Add event listeners
+    
     document.addEventListener('pointermove', handlePointerMove, { passive: false });
     document.addEventListener('pointerup', handlePointerUp);
     document.addEventListener('pointercancel', handlePointerUp);
 
-    // Define cleanup function
+    
     function cleanupResizeListeners() {
       document.removeEventListener('pointermove', handlePointerMove);
       document.removeEventListener('pointerup', handlePointerUp);
       document.removeEventListener('pointercancel', handlePointerUp);
 
-      // Release any lingering pointer captures
+      
       if (resizingState.current.pointerId !== null) {
         const handles = document.querySelectorAll('.resize-handle-left, .resize-handle-right');
         handles.forEach((handle) => {
@@ -311,7 +311,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           }
         });
 
-        // Reset state
+        
         resizingState.current = {
           ...resizingState.current,
           isResizing: false,
@@ -324,17 +324,17 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       }
     }
 
-    // Return the cleanup function
-    // eslint-disable-next-line consistent-return
+    
+    
     return cleanupResizeListeners;
   }, [isDeviceModeOn, SCALING_FACTOR]);
 
   useEffect(() => {
     const handleWindowResize = () => {
-      // Update the window width in the resizing state
+      
       resizingState.current.windowWidth = window.innerWidth;
 
-      // Update the current width in pixels
+      
       if (containerRef.current && isDeviceModeOn) {
         const containerWidth = containerRef.current.clientWidth;
         setCurrentWidth(Math.round((containerWidth * widthPercent) / 100));
@@ -343,7 +343,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
     window.addEventListener('resize', handleWindowResize);
 
-    // Initial calculation of current width
+    
     if (containerRef.current && isDeviceModeOn) {
       const containerWidth = containerRef.current.clientWidth;
       setCurrentWidth(Math.round((containerWidth * widthPercent) / 100));
@@ -354,7 +354,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     };
   }, [isDeviceModeOn, widthPercent]);
 
-  // Update current width when device mode is toggled
+  
   useEffect(() => {
     if (containerRef.current && isDeviceModeOn) {
       const containerWidth = containerRef.current.clientWidth;
@@ -394,23 +394,23 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         const previewId = match[1];
         const previewUrl = `/webcontainer/preview/${previewId}`;
 
-        // Adjust dimensions for landscape mode if applicable
+        
         let width = size.width;
         let height = size.height;
 
         if (isLandscape && (size.frameType === 'mobile' || size.frameType === 'tablet')) {
-          // Swap width and height for landscape mode
+          
           width = size.height;
           height = size.width;
         }
 
-        // Create a window with device frame if enabled
+        
         if (showDeviceFrame && size.hasFrame) {
-          // Calculate frame dimensions
-          const frameWidth = size.frameType === 'mobile' ? (isLandscape ? 120 : 40) : 60; // Width padding on each side
-          const frameHeight = size.frameType === 'mobile' ? (isLandscape ? 80 : 80) : isLandscape ? 60 : 100; // Height padding on top and bottom
+          
+          const frameWidth = size.frameType === 'mobile' ? (isLandscape ? 120 : 40) : 60; 
+          const frameHeight = size.frameType === 'mobile' ? (isLandscape ? 80 : 80) : isLandscape ? 60 : 100; 
 
-          // Create a window with the correct dimensions first
+          
           const newWindow = window.open(
             '',
             '_blank',
@@ -422,7 +422,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             return;
           }
 
-          // Create the HTML content for the frame
+          
           const frameColor = getFrameColor();
           const frameRadius = size.frameType === 'mobile' ? '36px' : '20px';
           const framePadding =
@@ -434,7 +434,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                 ? '30px 50px'
                 : '50px 30px';
 
-          // Position notch and home button based on orientation
+          
           const notchTop = isLandscape ? '50%' : '20px';
           const notchLeft = isLandscape ? '30px' : '50%';
           const notchTransform = isLandscape ? 'translateY(-50%)' : 'translateX(-50%)';
@@ -447,7 +447,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           const homeWidth = isLandscape ? '4px' : '40px';
           const homeHeight = isLandscape ? '40px' : '4px';
 
-          // Create HTML content for the wrapper page
+          
           const htmlContent = `
             <!DOCTYPE html>
             <html>
@@ -538,12 +538,12 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             </html>
           `;
 
-          // Write the HTML content to the new window
+          
           newWindow.document.open();
           newWindow.document.write(htmlContent);
           newWindow.document.close();
         } else {
-          // Standard window without frame
+          
           const newWindow = window.open(
             previewUrl,
             '_blank',
@@ -566,7 +566,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     }
   };
 
-  // Function to get the correct frame padding based on orientation
+  
   const getFramePadding = useCallback(() => {
     if (!selectedWindowSize) {
       return '40px 20px';
@@ -575,49 +575,46 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     const isMobile = selectedWindowSize.frameType === 'mobile';
 
     if (isLandscape) {
-      // Increase horizontal padding in landscape mode to ensure full device frame is visible
+      
       return isMobile ? '40px 60px' : '30px 50px';
     }
 
     return isMobile ? '40px 20px' : '50px 30px';
   }, [isLandscape, selectedWindowSize]);
 
-  // Function to get the scale factor for the device frame
+  
   const getDeviceScale = useCallback(() => {
-    // Always return 1 to ensure the device frame is shown at its exact size
+    
     return 1;
   }, [isLandscape, selectedWindowSize, widthPercent]);
 
-  // Update the device scale when needed
+  
   useEffect(() => {
-    /*
-     * Intentionally disabled - we want to maintain scale of 1
-     * No dynamic scaling to ensure device frame matches external window exactly
-     */
-    // Intentionally empty cleanup function - no cleanup needed
+    
+    
     return () => {
-      // No cleanup needed
+      
     };
   }, [isDeviceModeOn, showDeviceFrameInPreview, getDeviceScale, isLandscape, selectedWindowSize]);
 
-  // Function to get the frame color based on dark mode
+  
   const getFrameColor = useCallback(() => {
-    // Check if the document has a dark class or data-theme="dark"
+    
     const isDarkMode =
       document.documentElement.classList.contains('dark') ||
       document.documentElement.getAttribute('data-theme') === 'dark' ||
       window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    // Return a darker color for light mode, lighter color for dark mode
+    
     return isDarkMode ? '#555' : '#111';
   }, []);
 
-  // Effect to handle color scheme changes
+  
   useEffect(() => {
     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleColorSchemeChange = () => {
-      // Force a re-render when color scheme changes
+      
       if (showDeviceFrameInPreview) {
         setShowDeviceFrameInPreview(true);
       }
@@ -682,11 +679,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       <div className="bg-falbor-elements-background-depth-2 p-2 flex items-center gap-2">
         <div className="flex items-center gap-2">
           <IconButton icon="i-ph:arrow-clockwise" onClick={reloadPreview} />
-          {/* <IconButton
-            icon="i-ph:selection"
-            onClick={() => setIsSelectionMode(!isSelectionMode)}
-            className={isSelectionMode ? 'bg-falbor-elements-background-depth-3' : ''}
-          /> */}
+          {}
           <div className="flex items-center gap-2">
             <IconButton
               icon="i-ph:devices"
@@ -719,11 +712,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             />
 
             <div className="flex items-center relative">
-              {/* <IconButton
-              icon="i-ph:list"
-              onClick={() => setIsWindowSizeDropdownOpen(!isWindowSizeDropdownOpen)}
-              title="New Window Options"
-            /> */}
+              {}
 
               {isWindowSizeDropdownOpen && (
                 <>
@@ -763,7 +752,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                             const previewId = match[1];
                             const previewUrl = `/webcontainer/preview/${previewId}`;
 
-                            // Open in a new window with simple parameters
+                            
                             window.open(
                               previewUrl,
                               `preview-${previewId}`,
@@ -951,7 +940,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                         : `${selectedWindowSize.height + (selectedWindowSize.frameType === 'mobile' ? 80 : 100)}px`,
                     }}
                   >
-                    {/* Notch - positioned based on orientation */}
+                    {}
                     <div
                       style={{
                         position: 'absolute',
@@ -966,7 +955,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                       }}
                     />
 
-                    {/* Home button - positioned based on orientation */}
+                    {}
                     <div
                       style={{
                         position: 'absolute',
@@ -1021,7 +1010,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
           {isDeviceModeOn && !showDeviceFrameInPreview && (
             <>
-              {/* Width indicator */}
+              {}
               <div
                 style={{
                   position: 'absolute',

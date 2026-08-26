@@ -61,7 +61,7 @@ const FullscreenOverlay = memo(({ isFullscreen, children }: { isFullscreen: bool
   );
 });
 
-const MAX_FILE_SIZE = 1024 * 1024; // 1MB
+const MAX_FILE_SIZE = 1024 * 1024; 
 const BINARY_REGEX = /[\x00-\x08\x0E-\x1F]/;
 
 const isBinaryFile = (content: string) => {
@@ -81,7 +81,7 @@ const processChanges = (beforeCode: string, afterCode: string) => {
       };
     }
 
-    // Normalize line endings and content
+    
     const normalizeContent = (content: string): string[] => {
       return content
         .replace(/\r\n/g, '\n')
@@ -92,7 +92,7 @@ const processChanges = (beforeCode: string, afterCode: string) => {
     const beforeLines = normalizeContent(beforeCode);
     const afterLines = normalizeContent(afterCode);
 
-    // Early return if files are identical
+    
     if (beforeLines.join('\n') === afterLines.join('\n')) {
       return {
         beforeLines,
@@ -111,13 +111,13 @@ const processChanges = (beforeCode: string, afterCode: string) => {
 
     const unifiedBlocks: DiffBlock[] = [];
 
-    // Compare lines directly for more accurate diff
+    
     let i = 0,
       j = 0;
 
     while (i < beforeLines.length || j < afterLines.length) {
       if (i < beforeLines.length && j < afterLines.length && beforeLines[i] === afterLines[j]) {
-        // Unchanged line
+        
         unifiedBlocks.push({
           lineNumber: j,
           content: afterLines[j],
@@ -127,14 +127,14 @@ const processChanges = (beforeCode: string, afterCode: string) => {
         i++;
         j++;
       } else {
-        // Look ahead for potential matches
+        
         let matchFound = false;
-        const lookAhead = 3; // Number of lines to look ahead
+        const lookAhead = 3; 
 
-        // Try to find matching lines ahead
+        
         for (let k = 1; k <= lookAhead && i + k < beforeLines.length && j + k < afterLines.length; k++) {
           if (beforeLines[i + k] === afterLines[j]) {
-            // Found match in after lines - mark lines as removed
+            
             for (let l = 0; l < k; l++) {
               lineChanges.before.add(i + l);
               unifiedBlocks.push({
@@ -149,7 +149,7 @@ const processChanges = (beforeCode: string, afterCode: string) => {
             matchFound = true;
             break;
           } else if (beforeLines[i] === afterLines[j + k]) {
-            // Found match in before lines - mark lines as added
+            
             for (let l = 0; l < k; l++) {
               lineChanges.after.add(j + l);
               unifiedBlocks.push({
@@ -167,12 +167,12 @@ const processChanges = (beforeCode: string, afterCode: string) => {
         }
 
         if (!matchFound) {
-          // No match found - try to find character-level changes
+          
           if (i < beforeLines.length && j < afterLines.length) {
             const beforeLine = beforeLines[i];
             const afterLine = afterLines[j];
 
-            // Find common prefix and suffix
+            
             let prefixLength = 0;
 
             while (
@@ -199,7 +199,7 @@ const processChanges = (beforeCode: string, afterCode: string) => {
             const suffix = beforeLine.slice(beforeLine.length - suffixLength);
 
             if (beforeMiddle || afterMiddle) {
-              // There are character-level changes
+              
               if (beforeMiddle) {
                 lineChanges.before.add(i);
                 unifiedBlocks.push({
@@ -232,7 +232,7 @@ const processChanges = (beforeCode: string, afterCode: string) => {
                 j++;
               }
             } else {
-              // No character-level changes found, treat as regular line changes
+              
               if (i < beforeLines.length) {
                 lineChanges.before.add(i);
                 unifiedBlocks.push({
@@ -258,7 +258,7 @@ const processChanges = (beforeCode: string, afterCode: string) => {
               }
             }
           } else {
-            // Handle remaining lines
+            
             if (i < beforeLines.length) {
               lineChanges.before.add(i);
               unifiedBlocks.push({
@@ -287,7 +287,7 @@ const processChanges = (beforeCode: string, afterCode: string) => {
       }
     }
 
-    // Sort blocks by line number
+    
     const processedBlocks = unifiedBlocks.sort((a, b) => a.lineNumber - b.lineNumber);
 
     return {
@@ -318,7 +318,7 @@ const lineContentStyles =
   'px-1 py-1 font-mono whitespace-pre flex-1 group-hover:bg-falbor-elements-background-depth-2 text-falbor-elements-textPrimary';
 const diffPanelStyles = 'h-full overflow-auto diff-panel-content';
 
-// Updated color styles for better consistency
+
 const diffLineStyles = {
   added: 'bg-green-500/10 dark:bg-green-500/20 border-l-4 border-green-500',
   removed: 'bg-red-500/10 dark:bg-red-500/20 border-l-4 border-red-500',
@@ -395,12 +395,12 @@ const NoChangesView = memo(
   ),
 );
 
-// Otimização do processamento de diferenças com memoização
+
 const useProcessChanges = (beforeCode: string, afterCode: string) => {
   return useMemo(() => processChanges(beforeCode, afterCode), [beforeCode, afterCode]);
 };
 
-// Componente otimizado para renderização de linhas de código
+
 const CodeLine = memo(
   ({
     lineNumber,
@@ -469,7 +469,7 @@ const CodeLine = memo(
   },
 );
 
-// Componente para exibir informações sobre o arquivo
+
 const FileInfo = memo(
   ({
     filename,
@@ -486,7 +486,7 @@ const FileInfo = memo(
     beforeCode: string;
     afterCode: string;
   }) => {
-    // Calculate additions and deletions from the current document
+    
     const { additions, deletions } = useMemo(() => {
       if (!hasChanges) {
         return { additions: 0, deletions: 0 };
@@ -541,7 +541,7 @@ const FileInfo = memo(
   },
 );
 
-// Create and manage a single highlighter instance at the module level
+
 let highlighterInstance: any = null;
 let highlighterPromise: Promise<any> | null = null;
 
@@ -580,14 +580,14 @@ const getSharedHighlighter = async () => {
   highlighterInstance = await highlighterPromise;
   highlighterPromise = null;
 
-  // Clear the promise once resolved
+  
   return highlighterInstance;
 };
 
 const InlineDiffComparison = memo(({ beforeCode, afterCode, filename, language }: CodeComparisonProps) => {
   const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Use state to hold the shared highlighter instance
+  
   const [highlighter, setHighlighter] = useState<any>(null);
   const theme = useStore(themeStore);
 
@@ -598,24 +598,17 @@ const InlineDiffComparison = memo(({ beforeCode, afterCode, filename, language }
   const { unifiedBlocks, hasChanges, isBinary, error } = useProcessChanges(beforeCode, afterCode);
 
   useEffect(() => {
-    // Fetch the shared highlighter instance
+    
     getSharedHighlighter().then(setHighlighter);
 
-    /*
-     * No cleanup needed here for the highlighter instance itself,
-     * as it's managed globally. Shiki instances don't typically
-     * need disposal unless you are dynamically loading/unloading themes/languages.
-     * If you were dynamically loading, you might need a more complex
-     * shared instance manager with reference counting or similar.
-     * For static themes/langs, a single instance is sufficient.
-     */
-  }, []); // Empty dependency array ensures this runs only once on mount
+    
+  }, []); 
 
   if (isBinary || error) {
     return renderContentWarning(isBinary ? 'binary' : 'error');
   }
 
-  // Render a loading state or null while highlighter is not ready
+  
   if (!highlighter) {
     return (
       <div className="h-full flex items-center justify-center">
@@ -644,7 +637,7 @@ const InlineDiffComparison = memo(({ beforeCode, afterCode, filename, language }
                   lineNumber={block.lineNumber}
                   content={block.content}
                   type={block.type}
-                  highlighter={highlighter} // Pass the shared instance
+                  highlighter={highlighter} 
                   language={language}
                   block={block}
                   theme={theme}
@@ -682,13 +675,13 @@ export const DiffView = memo(({ fileHistory, setFileHistory }: DiffViewProps) =>
       const existingHistory = fileHistory[selectedFile];
       const currentContent = currentDocument.value;
 
-      // Normalizar o conteúdo para comparação
+      
       const normalizedCurrentContent = currentContent.replace(/\r\n/g, '\n').trim();
       const normalizedOriginalContent = (existingHistory?.originalContent || file.content)
         .replace(/\r\n/g, '\n')
         .trim();
 
-      // Se não há histórico existente, criar um novo apenas se houver diferenças
+      
       if (!existingHistory) {
         if (normalizedCurrentContent !== normalizedOriginalContent) {
           const newChanges = diffLines(file.content, currentContent);
@@ -712,22 +705,22 @@ export const DiffView = memo(({ fileHistory, setFileHistory }: DiffViewProps) =>
         return;
       }
 
-      // Se já existe histórico, verificar se há mudanças reais desde a última versão
+      
       const lastVersion = existingHistory.versions[existingHistory.versions.length - 1];
       const normalizedLastContent = lastVersion?.content.replace(/\r\n/g, '\n').trim();
 
       if (normalizedCurrentContent === normalizedLastContent) {
-        return; // Não criar novo histórico se o conteúdo é o mesmo
+        return; 
       }
 
-      // Verificar se há mudanças significativas usando diffFiles
+      
       const relativePath = extractRelativePath(selectedFile);
       const unifiedDiff = diffFiles(relativePath, existingHistory.originalContent, currentContent);
 
       if (unifiedDiff) {
         const newChanges = diffLines(existingHistory.originalContent, currentContent);
 
-        // Verificar se as mudanças são significativas
+        
         const hasSignificantChanges = newChanges.some(
           (change) => (change.added || change.removed) && change.value.trim().length > 0,
         );
@@ -736,14 +729,14 @@ export const DiffView = memo(({ fileHistory, setFileHistory }: DiffViewProps) =>
           const newHistory: FileHistory = {
             originalContent: existingHistory.originalContent,
             lastModified: Date.now(),
-            changes: [...existingHistory.changes, ...newChanges].slice(-100), // Limitar histórico de mudanças
+            changes: [...existingHistory.changes, ...newChanges].slice(-100), 
             versions: [
               ...existingHistory.versions,
               {
                 timestamp: Date.now(),
                 content: currentContent,
               },
-            ].slice(-10), // Manter apenas as 10 últimas versões
+            ].slice(-10), 
             changeSource: 'auto-save',
           };
 

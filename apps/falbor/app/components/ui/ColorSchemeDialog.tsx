@@ -325,7 +325,7 @@ export const ColorSchemeDialog: React.FC<ColorSchemeDialogProps> = ({ setDesignS
               </DialogDescription>
             </div>
 
-            {/* Navigation Tabs */}
+            {}
             <div className="flex gap-1 p-1 bg-zinc-100 rounded-xl">
               {[
                 { key: 'templates', label: 'Templates', icon: 'i-ph:swatches' },
@@ -348,7 +348,7 @@ export const ColorSchemeDialog: React.FC<ColorSchemeDialogProps> = ({ setDesignS
               ))}
             </div>
 
-            {/* Content Area */}
+            {}
             <div className="min-h-92 overflow-y-auto">
               {activeSection === 'templates' && renderTemplatesSection()}
               {activeSection === 'colors' && renderColorSection()}
@@ -356,7 +356,7 @@ export const ColorSchemeDialog: React.FC<ColorSchemeDialogProps> = ({ setDesignS
               {activeSection === 'features' && renderFeaturesSection()}
             </div>
             
-            {/* Action Buttons */}
+            {}
             <div className="flex justify-between items-center pt-2 border-t border-zinc-100">
               <div className="text-sm text-zinc-500 flex items-center gap-2">
                 <span className="i-ph:check-circle text-green-500" />

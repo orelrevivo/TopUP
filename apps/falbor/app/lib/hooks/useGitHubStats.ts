@@ -13,8 +13,8 @@ export interface UseGitHubStatsState {
 
 export interface UseGitHubStatsOptions {
   autoFetch?: boolean;
-  refreshInterval?: number; // in milliseconds
-  cacheTimeout?: number; // in milliseconds
+  refreshInterval?: number;
+  cacheTimeout?: number;
 }
 
 export interface UseGitHubStatsReturn extends UseGitHubStatsState {
@@ -25,7 +25,7 @@ export interface UseGitHubStatsReturn extends UseGitHubStatsState {
 }
 
 const STATS_CACHE_KEY = 'github_stats_cache';
-const DEFAULT_CACHE_TIMEOUT = 30 * 60 * 1000; // 30 minutes
+const DEFAULT_CACHE_TIMEOUT = 30 * 60 * 1000;
 
 export function useGitHubStats(
   connection: GitHubConnection | null,
@@ -42,13 +42,11 @@ export function useGitHubStats(
     lastUpdated: null,
   });
 
-  // Configure API service when connection is available
   const apiService = useMemo(() => {
     if (!connection?.token) {
       return null;
     }
 
-    // Configure the singleton instance with the current connection
     gitHubApiService.configure({
       token: connection.token,
       tokenType: connection.tokenType,
@@ -57,7 +55,6 @@ export function useGitHubStats(
     return gitHubApiService;
   }, [connection?.token, connection?.tokenType]);
 
-  // Check if stats are stale
   const isStale = useMemo(() => {
     if (!state.lastUpdated || !state.stats) {
       return true;
@@ -66,25 +63,19 @@ export function useGitHubStats(
     return Date.now() - state.lastUpdated.getTime() > cacheTimeout;
   }, [state.lastUpdated, state.stats, cacheTimeout]);
 
-  // Load cached stats on mount
   useEffect(() => {
     loadCachedStats();
   }, []);
 
-  // Auto-fetch stats when connection changes - with better handling
   useEffect(() => {
     if (autoFetch && connection && (!state.stats || isStale)) {
-      /*
-       * For server-side connections, always try to fetch
-       * For client-side connections, only fetch if we have an API service
-       */
+
       if (isServerSide || apiService) {
-        // Use a timeout to prevent immediate fetching on mount
+
         const timeoutId = setTimeout(() => {
           fetchStats().catch((error) => {
             console.warn('Failed to auto-fetch stats:', error);
 
-            // Don't throw error on auto-fetch to prevent crashes
           });
         }, 100);
 
@@ -95,7 +86,6 @@ export function useGitHubStats(
     return undefined;
   }, [autoFetch, connection, apiService, state.stats, isStale, isServerSide]);
 
-  // Set up refresh interval if provided
   useEffect(() => {
     if (!refreshInterval || !connection) {
       return undefined;
@@ -117,7 +107,6 @@ export function useGitHubStats(
       if (cached) {
         const { stats, timestamp, userLogin } = JSON.parse(cached);
 
-        // Only use cached data if it's for the current user
         if (userLogin === connection?.user?.login) {
           setState((prev) => ({
             ...prev,
@@ -129,7 +118,6 @@ export function useGitHubStats(
     } catch (error) {
       console.error('Error loading cached stats:', error);
 
-      // Clear corrupted cache
       localStorage.removeItem(STATS_CACHE_KEY);
     }
   }, [connection?.user?.login]);
@@ -160,8 +148,8 @@ export function useGitHubStats(
 
     setState((prev) => ({
       ...prev,
-      isLoading: !prev.stats, // Show loading only if no stats yet
-      isRefreshing: !!prev.stats, // Show refreshing if stats exist
+      isLoading: !prev.stats,
+      isRefreshing: !!prev.stats,
       error: null,
     }));
 
@@ -169,7 +157,7 @@ export function useGitHubStats(
       let stats: GitHubStats;
 
       if (isServerSide || !connection.token) {
-        // Use server-side API for stats
+
         const response = await fetch('/api/github-stats');
 
         if (!response.ok) {
@@ -183,7 +171,7 @@ export function useGitHubStats(
 
         stats = await response.json();
       } else {
-        // Use client-side API service for stats
+
         if (!apiService) {
           throw new Error('GitHub API service not available');
         }
@@ -202,10 +190,8 @@ export function useGitHubStats(
         error: null,
       }));
 
-      // Cache the stats
       saveCachedStats(stats, connection.user.login);
 
-      // Update the connection object with stats if needed
       if (connection.stats?.lastUpdated !== stats.lastUpdated) {
         const updatedConnection = {
           ...connection,
@@ -214,7 +200,6 @@ export function useGitHubStats(
         localStorage.setItem('github_connection', JSON.stringify(updatedConnection));
       }
 
-      // Only show success toast for manual refreshes, not auto-fetches
       if (state.isRefreshing) {
         toast.success('GitHub stats updated successfully');
       }
@@ -230,7 +215,6 @@ export function useGitHubStats(
         error: errorMessage,
       }));
 
-      // Only show error toast for manual actions, not auto-fetches
       if (state.isRefreshing) {
         toast.error(`Failed to update GitHub stats: ${errorMessage}`);
       }
@@ -241,7 +225,7 @@ export function useGitHubStats(
 
   const refreshStats = useCallback(async () => {
     if (state.isRefreshing || state.isLoading) {
-      return; // Prevent multiple simultaneous requests
+      return;
     }
 
     await fetchStats();
@@ -256,7 +240,6 @@ export function useGitHubStats(
       lastUpdated: null,
     });
 
-    // Clear cache
     localStorage.removeItem(STATS_CACHE_KEY);
   }, []);
 
@@ -269,7 +252,6 @@ export function useGitHubStats(
   };
 }
 
-// Helper hook for lightweight stats fetching (just repositories)
 export function useGitHubRepositories(connection: GitHubConnection | null) {
   const [repositories, setRepositories] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -280,7 +262,6 @@ export function useGitHubRepositories(connection: GitHubConnection | null) {
       return null;
     }
 
-    // Configure the singleton instance with the current connection
     gitHubApiService.configure({
       token: connection.token,
       tokenType: connection.tokenType,

@@ -25,11 +25,11 @@ export function GitHubAuthDialog({ isOpen, onClose, onSuccess }: GitHubAuthDialo
 
     try {
       await connect(token, tokenType);
-      setToken(''); // Clear token on successful connection
+      setToken(''); 
       onSuccess?.();
       onClose();
     } catch {
-      // Error handling is done in the hook
+      
     }
   };
 

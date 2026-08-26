@@ -1,14 +1,3 @@
-/**
- * useHackingChatHistory
- *
- * Mirrors useChatHistory from ~/lib/persistence but talks exclusively to
- * /api/data/hacking-chats and the isolated hackingChats / hackingMessages DB tables.
- *
- * Key differences vs the main useChatHistory:
- *  - No workbench / snapshot restoration (hacking chats are pure text)
- *  - Navigates to /hacking/[id] instead of /chat/[id]
- *  - Uses hackingChatApi instead of chatApi
- */
 import { useRouter, useParams, useSearchParams } from 'next/navigation';
 import { useState, useEffect, useCallback } from 'react';
 import { atom } from 'nanostores';
@@ -18,8 +7,6 @@ import { logStore } from '~/lib/stores/logs';
 import * as hackingChatApi from '~/lib/api/data/hacking-chat';
 import { description, chatId } from '~/lib/persistence';
 
-// Shared atom — reuse the global description / chatId atoms so the sidebar
-// description display works without changes.
 export { description, chatId };
 
 export function useHackingChatHistory() {
@@ -41,7 +28,7 @@ export function useHackingChatHistory() {
         .then((storedChat) => {
           if (cancelled) return;
           if (storedChat && storedChat.messages.length > 0) {
-            // Respect optional rewindTo param
+            
             const rewindId = searchParams?.get('rewindTo');
             const endingIdx = rewindId
               ? storedChat.messages.findIndex((m: any) => m.id === rewindId) + 1
@@ -75,18 +62,15 @@ export function useHackingChatHistory() {
     async (messages: Message[]) => {
       if (messages.length === 0) return;
 
-      // Strip messages that should not be persisted
       const filteredMessages = messages.filter(
         (m) => !m.annotations?.includes('no-store')
       );
 
-      // Generate a chat ID if we don't have one yet
       if (!chatId.get()) {
         const nextId = await hackingChatApi.getNextId();
         chatId.set(nextId);
       }
 
-      // Update URL to /hacking/[id] after the first message is saved
       if (initialMessages.length === 0 && !urlId) {
         const currentId = chatId.get()!;
         const nextUrlId = await hackingChatApi.getUrlId(currentId);

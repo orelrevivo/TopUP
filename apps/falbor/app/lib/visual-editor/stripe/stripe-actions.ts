@@ -30,12 +30,10 @@ export const subscriptionCreated = async (
       //@ts-ignore
       plan: subscription.plan.id,
     }
-
-    // veSubscriptions table not yet implemented in Drizzle schema
     const res = data
-    console.log(`🟢 Created Subscription for ${subscription.id}`)
+    console.log(`Created Subscription for ${subscription.id}`)
   } catch (error) {
-    console.log('🔴 Error from Create action', error)
+    console.log('Error from Create action', error)
   }
 }
 

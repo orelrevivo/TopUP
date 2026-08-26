@@ -21,7 +21,7 @@ interface ProfileAppsSectionProps {
 export function ProfileAppsSection({ apps, isCurrentUser }: ProfileAppsSectionProps) {
   const [manageOpen, setManageOpen] = useState(false);
 
-  // Do not render anything if no apps and not current user
+  
   if ((!apps || apps.length === 0) && !isCurrentUser) {
     return null;
   }

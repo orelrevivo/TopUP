@@ -1,28 +1,19 @@
-import { db } from '../app/lib/db';
-import { stayupProjects, stayupIssues, stayupEvents } from '../app/lib/db/schema';
-import { users } from '../app/lib/db/schema';
+import { db } from '../apps/falbor/app/lib/db';
+import { stayupProjects, stayupIssues, stayupEvents } from '../apps/falbor/app/lib/db/schema';
 import { v4 as uuidv4 } from 'uuid';
-
 async function seed() {
   console.log("Seeding StayUp dummy data...");
-  
-  // Get first user
   const firstUser = await db.query.users.findFirst();
   if (!firstUser) {
     console.error("No users found. Create a user first.");
     process.exit(1);
   }
-
-  // Create Project
   const newProjects = await db.insert(stayupProjects).values({
     userId: firstUser.id,
     name: "Production Web App",
     apiKey: `su_${uuidv4()}`
   }).returning();
-  
   const project = newProjects[0];
-
-  // Create Issues
   const issue1 = await db.insert(stayupIssues).values({
     projectId: project.id,
     fingerprint: "err-404-api",
@@ -33,7 +24,6 @@ async function seed() {
     status: "unresolved",
     eventCount: 23,
   }).returning();
-
   const issue2 = await db.insert(stayupIssues).values({
     projectId: project.id,
     fingerprint: "err-type-undefined",
@@ -44,8 +34,6 @@ async function seed() {
     status: "unresolved",
     eventCount: 142,
   }).returning();
-
-  // Create Events
   await db.insert(stayupEvents).values({
     issueId: issue1[0].id,
     projectId: project.id,
@@ -54,7 +42,6 @@ async function seed() {
     browserInfo: { userAgent: "Mozilla/5.0 Chrome/114.0" },
     metadata: { userId: "user_123" }
   });
-
   await db.insert(stayupEvents).values({
     issueId: issue2[0].id,
     projectId: project.id,
@@ -63,9 +50,7 @@ async function seed() {
     browserInfo: { userAgent: "Mozilla/5.0 Safari/605.1.15" },
     metadata: { component: "DashboardList" }
   });
-
   console.log("Seeding complete! You can now view the dashboard.");
   process.exit(0);
 }
-
 seed().catch(console.error);

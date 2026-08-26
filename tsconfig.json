@@ -5,8 +5,13 @@
     "moduleResolution": "bundler",
     "baseUrl": ".",
     "paths": {
-      "~/*": ["apps/falbor/app/*"]
+      "~/*": [
+        "apps/falbor/app/*"
+      ]
     }
   },
-  "include": []
+  "files": [],
+  "references": [
+    { "path": "./apps/falbor" }
+  ]
 }

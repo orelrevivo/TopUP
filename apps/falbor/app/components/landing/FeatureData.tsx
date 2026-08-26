@@ -124,49 +124,49 @@ export const featuresData: FeatureData[] = [
         primaryCta: { text: "View Workflow", href: "/signup" },
         secondaryCta: { text: "View Docs", href: "/docs/workflow" },
     },
-    // {
-    //     id: "darknet",
-    //     number: "05",
-    //     backgroundColor: "bg-[#050505]",
-    //     glowColor: "#EF4444",
-    //     badgeText: "Darknet Intel",
-    //     badgePulse: true,
-    //     badgeContainerClass: "border-[#EF4444]/40 text-[#f87171] bg-[#EF4444]/10",
-    //     badgeDotClass: "bg-[#f87171]",
-    //     title: <React.Fragment>Darknet data checking<br />&amp; security insights.</React.Fragment>,
-    //     description: "Go beyond the surface web. Falbor's advanced agents continuously scan darknet sources — forums, paste sites, and underground markets — to verify whether your organization's data, credentials, or IP has been compromised. Get actionable security intelligence, not raw noise.",
-    //     imageSrc: "/landing/FeatureDarknet.png",
-    //     imageAlt: "Darknet Security Interface",
-    //     statPills: [
-    //         { text: "500k+ sources indexed", className: "bg-red-950/60 border-red-900/60 text-red-300" },
-    //         { text: "< 15 min detection" },
-    //     ],
-    //     subFeatures: [
-    //         {
-    //             icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>,
-    //             label: "Breach Monitoring",
-    //             desc: "Continuously scan darknet marketplaces and paste sites for your organization's exposed credentials.",
-    //         },
-    //         {
-    //             icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg>,
-    //             label: "Real-Time Alerts",
-    //             desc: "Instant notifications the moment your data surfaces anywhere on the dark web.",
-    //         },
-    //         {
-    //             icon: <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>,
-    //             label: "Zero Personal Exposure",
-    //             desc: "Falbor's agents operate through anonymized proxies. You get the intel, not the risk.",
-    //         },
-    //     ],
-    //     subFeatureIconClass: "text-[#f87171]",
-    //     primaryCta: { text: "Discover More", href: "/signup" },
-    //     secondaryCta: { text: "View Docs", href: "/docs/darknet" },
-    //     customEffect: (
-    //         <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-5">
-    //             {Array.from({ length: 12 }).map((_, i) => (
-    //                 <div key={i} className="absolute w-full h-px bg-red-500" style={{ top: `${8 + i * 8}%` }} />
-    //             ))}
-    //         </div>
-    //     )
-    // },
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 ];

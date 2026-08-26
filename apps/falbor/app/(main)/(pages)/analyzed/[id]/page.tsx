@@ -21,7 +21,7 @@ export default async function AnalyzedValidationPage({ params }: PageProps) {
 
   const report = records[0];
 
-  // If not public, require ownership
+  
   if (!report.isPublic) {
     const cookieStore = cookies();
     const token = cookieStore.get(COOKIE_NAME)?.value;
@@ -32,7 +32,7 @@ export default async function AnalyzedValidationPage({ params }: PageProps) {
     }
 
     if (!userId || userId !== report.userId) {
-      redirect("/unauthorized"); // or we can just render a forbidden message
+      redirect("/unauthorized"); 
     }
   }
 

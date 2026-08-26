@@ -55,7 +55,6 @@ import { clerkClient } from '@clerk/nextjs/server'
   if (userData) {
     let agency = null
     if (userData.agencyId) {
-      // Fetch agency then SubAccounts separately (avoids Drizzle relational query issue)
       const agencyData = await db.query.veAgencies.findFirst({
         where: eq(veAgencies.id, userData.agencyId),
       })
@@ -104,7 +103,6 @@ export const saveActivityLogsNotification = async ({
   const userId = await getCurrentUserId()
   let userData
   if (!userId) {
-    // If no user, mock for now
     console.log('No user for activity log')
   } else {
     userData = await db.query.users.findFirst({
@@ -129,7 +127,6 @@ export const saveActivityLogsNotification = async ({
     })
     if (response) foundAgencyId = response.agencyId
   }
-  // Activity logging will be re-implemented with Drizzle relations
   console.log(`Log Activity: ${userData.displayName || userData.email} | ${description}`)
 }
 
@@ -193,7 +190,6 @@ export const initUser = async (newUser: Partial<User>) => {
     where: eq(users.id, userId),
   })
 
-  // We skip UPSERT for now since Drizzle doesn't do Prisma-style upserts easily
   return userData
 }
 
@@ -246,8 +242,6 @@ export const upsertAgency = async (agency: Agency, price?: Plan) => {
 
 const _getNotificationAndUser = cache(async (agencyId: string) => {
   try {
-    // TODO: Re-implement with Drizzle when veNotifications is added to schema.ts
-    // For now, return empty array to prevent layout crash
     return []
   } catch (error) {
     console.log(error)
@@ -260,7 +254,6 @@ export const getNotificationAndUser = async (agencyId: string) => {
 
 export const deleteNotification = async (notificationId: string) => {
   try {
-  // veNotifications table not yet implemented in Drizzle schema
   const response = { id: notificationId } as any
   return response
   } catch (error) {
@@ -270,7 +263,6 @@ export const deleteNotification = async (notificationId: string) => {
 
 export const deleteAllNotifications = async (agencyId: string) => {
   try {
-    // veNotifications table not yet implemented in Drizzle schema
     const response = { count: 0 } as any
     return response
   } catch (error) {
@@ -280,14 +272,12 @@ export const deleteAllNotifications = async (agencyId: string) => {
 
 export const markNotificationAsRead = async (notificationId: string) => {
   try {
-    // veNotifications table not yet implemented in Drizzle schema
     const response = { id: notificationId, isRead: true } as any
     return response
   } catch (error) {
     console.log(error)
   }
 }
-
 
 export const upsertSubAccount = async (subAccount: SubAccount) => {
   console.log('🔴 RECEIVED SUBACCOUNT DATA:', subAccount)
@@ -444,7 +434,6 @@ export const sendInvitation = async (
   email: string,
   agencyId: string
 ) => {
-  // invitations table not yet implemented in Drizzle schema
   const resposne = { id: v4(), email, agencyId, role } as any
 
   try {
@@ -457,12 +446,10 @@ export const sendInvitation = async (
       },
     })
   } catch (error: any) {
-    // If Clerk says they're already invited, we just ignore the error
     if (error?.errors?.[0]?.code === 'already_invited') {
       console.log('User already invited in Clerk')
     } else {
       console.log('Clerk Invitation Error:', error)
-      // We don't re-throw here to allow the database record to stay successful
     }
   }
 
@@ -470,7 +457,6 @@ export const sendInvitation = async (
 }
 
 export const getMedia = async (subaccountId: string) => {
-  // Media table not yet implemented in Drizzle schema — return stub
   return { Media: [] as any[] }
 }
 
@@ -478,12 +464,10 @@ export const createMedia = async (
   subaccountId: string,
   mediaFile: CreateMediaType
 ) => {
-  // Media table not yet implemented in Drizzle schema — return stub
   return mediaFile as any
 }
 
 export const deleteMedia = async (mediaId: string) => {
-  // Media table not yet implemented in Drizzle schema — return stub
   return { id: mediaId } as any
 }
 
@@ -495,7 +479,6 @@ export const getPipelineDetails = async (pipelineId: string) => {
 }
 
 export const getLanesWithTicketAndTags = async (pipelineId: string) => {
-  // Two-step plain query — Tags/Assigned/Customer relations not yet in schema
   const lanes = await db.query.veLanes.findMany({
     where: (table, { eq }) => eq(table.pipelineId, pipelineId),
   })
@@ -621,7 +604,6 @@ export const deleteLane = async (laneId: string) => {
 }
 
 export const getTicketsWithTags = async (pipelineId: string) => {
-  // Tags/Assigned/Customer relations not yet in schema — return plain tickets
   const lanes = await db.query.veLanes.findMany({
     where: (table, { eq }) => eq(table.pipelineId, pipelineId),
   })

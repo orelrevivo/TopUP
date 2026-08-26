@@ -1,8 +1,5 @@
 'use client';
-/*
- * @ts-nocheck
- * Preventing TS checks with files presented in the video for a better presentation.
- */
+
 import type { JSONValue, Message } from 'ai';
 import React, { type RefCallback, useEffect, useState } from 'react';
 import { ClientOnly } from '~/components/ui/ClientOnly';
@@ -10,26 +7,25 @@ import { HackingWorkbench } from './HackingWorkbench.client';
 import { classNames } from '~/utils/classNames';
 import { PROVIDER_LIST } from '~/utils/constants';
 import { HackingMessages } from './HackingMessages.client';
-import { getApiKeysFromCookies } from '~/components/chat/APIKeyManager';
 import Cookies from 'js-cookie';
 import * as Tooltip from '@radix-ui/react-tooltip';
-import styles from '~/components/chat/BaseChat.module.scss';
+import styles from '~/components/chat/core/BaseChat.module.scss';
 import type { ProviderInfo } from '~/types/model';
 import type { ActionAlert, SupabaseAlert, DeployAlert, LlmErrorAlertType } from '~/types/actions';
 import DeployChatAlert from '~/components/deploy/DeployAlert';
-import ChatAlert from '~/components/chat/ChatAlert';
+import ChatAlert from '~/components/chat/alerts/ChatAlert';
 import type { ModelInfo } from '~/lib/modules/llm/types';
-import ProgressCompilation from '~/components/chat/ProgressCompilation';
+import ProgressCompilation from '~/components/chat/messages/ProgressCompilation';
 import type { ProgressAnnotation } from '~/types/context';
-import { SupabaseChatAlert } from '~/components/chat/SupabaseAlert';
+import { SupabaseChatAlert } from '~/components/chat/alerts/SupabaseAlert';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
 import { useStore } from '@nanostores/react';
 import { StickToBottom, useStickToBottomContext } from '~/lib/hooks';
 import { HackingChatBox } from './HackingChatBox';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
-import LlmErrorAlert from '~/components/chat/LLMApiAlert';
-import ViewErrorAlert from '~/components/chat/ViewErrorAlert';
+import LlmErrorAlert from '~/components/chat/alerts/LLMApiAlert';
+import ViewErrorAlert from '~/components/chat/alerts/ViewErrorAlert';
 import { useDesignSystem } from '~/lib/hooks/useDesignSystem';
 import { workbenchStore } from '~/lib/stores/workbench';
 import Link from 'next/link';
@@ -103,7 +99,7 @@ export const HackingBaseChat = React.forwardRef<HTMLDivElement, HackingBaseChatP
       enhancingPrompt,
       handleInputChange,
 
-      // promptEnhanced,
+      
       enhancePrompt,
       sendMessage,
       handleStop,
@@ -140,7 +136,7 @@ export const HackingBaseChat = React.forwardRef<HTMLDivElement, HackingBaseChatP
     ref,
   ) => {
     const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
-    const [apiKeys, setApiKeys] = useState<Record<string, string>>(getApiKeysFromCookies());
+    const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
     const [modelList, setModelList] = useState<ModelInfo[]>([]);
     const [isModelSettingsCollapsed, setIsModelSettingsCollapsed] = useState(false);
     const [isListening, setIsListening] = useState(false);
@@ -217,16 +213,6 @@ export const HackingBaseChat = React.forwardRef<HTMLDivElement, HackingBaseChatP
 
     useEffect(() => {
       if (typeof window !== 'undefined') {
-        let parsedApiKeys: Record<string, string> | undefined = {};
-
-        try {
-          parsedApiKeys = getApiKeysFromCookies();
-          setApiKeys(parsedApiKeys);
-        } catch (error) {
-          console.error('Error loading API keys from cookies:', error);
-          Cookies.remove('apiKeys');
-        }
-
         setIsModelLoading('all');
         fetch('/api/models')
           .then((response) => response.json())
@@ -244,9 +230,12 @@ export const HackingBaseChat = React.forwardRef<HTMLDivElement, HackingBaseChatP
     }, [providerList, provider]);
 
     const onApiKeysChange = async (providerName: string, apiKey: string) => {
-      const newApiKeys = { ...apiKeys, [providerName]: apiKey };
-      setApiKeys(newApiKeys);
-      Cookies.set('apiKeys', JSON.stringify(newApiKeys));
+      await fetch('/api/provider-settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ providerName, apiKey }),
+      });
+      setApiKeys({ ...apiKeys, [providerName]: 'configured' });
 
       setIsModelLoading(providerName);
 
@@ -260,7 +249,7 @@ export const HackingBaseChat = React.forwardRef<HTMLDivElement, HackingBaseChatP
         console.error('Error loading dynamic models for:', providerName, error);
       }
 
-      // Only update models for the specific provider
+      
       setModelList((prevModels) => {
         const otherModels = prevModels.filter((model) => model.provider !== providerName);
         return [...otherModels, ...providerModels];
@@ -288,11 +277,11 @@ export const HackingBaseChat = React.forwardRef<HTMLDivElement, HackingBaseChatP
         setSelectedElement?.(null);
 
         if (recognition) {
-          recognition.abort(); // Stop current recognition
-          setTranscript(''); // Clear transcript
+          recognition.abort(); 
+          setTranscript(''); 
           setIsListening(false);
 
-          // Clear the input by triggering handleInputChange with empty value
+          
           if (handleInputChange) {
             const syntheticEvent = {
               target: { value: '' },
@@ -365,23 +354,23 @@ export const HackingBaseChat = React.forwardRef<HTMLDivElement, HackingBaseChatP
           <div className={classNames(styles.Chat, 'flex flex-col flex-grow lg:min-w-[var(--chat-min-width)] h-full relative')}>
             {!chatStarted && (
               <div id="intro" className="mt-[10vh] w-full max-w-3xl mx-auto flex flex-col items-center justify-center px-4 lg:px-0 font-medium tracking-tight animate-fade-in">
-                {/* Container for alignment */}
+                {}
                 <div className="flex flex-col">
-                  {/* Top line */}
+                  {}
                   <div className="text-5xl lg:text-[64px] text-[#1A1A1A] dark:text-white mb-2 ml-[80px]">
                     Give your
                   </div>
-                  {/* Bottom line */}
+                  {}
                   <div className="flex items-center gap-6">
-                    {/* Asterisk */}
+                    {}
                     <img className="text-[#2792f5] text-[80px] -mt-4 w-20 h-20" src="/favicon.ico" alt="" />
-                    {/* Security agent (stacked) */}
+                    {}
                     <div className="flex flex-col text-5xl lg:text-[64px] text-[#2792f5] leading-[1.1]">
                       <span>Super</span>
                       <span>agent</span>
                     </div>
 
-                    {/* its first task (stacked) */}
+                    {}
                     <div className="flex flex-col text-5xl lg:text-[64px] text-[#1A1A1A] dark:text-white leading-[1.1]">
                       <span>its first</span>
                       <span>task.</span>
@@ -513,7 +502,7 @@ export const HackingBaseChat = React.forwardRef<HTMLDivElement, HackingBaseChatP
           </div>
           <ClientOnly>
             {() => (
-              /* Hacking Workspace */
+              
               <HackingWorkbench />
             )}
           </ClientOnly>

@@ -12,5 +12,9 @@
   },
   "dependencies": {
     "uuid": "^14.0.1"
+  },
+  "devDependencies": {
+    "@babel/parser": "^8.0.4",
+    "decomment": "^0.9.5"
   }
 }

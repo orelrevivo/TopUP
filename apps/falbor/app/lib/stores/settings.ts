@@ -20,8 +20,8 @@ export interface Shortcut {
   metaKey?: boolean;
   ctrlOrMetaKey?: boolean;
   action: () => void;
-  description?: string; // Description of what the shortcut does
-  isPreventDefault?: boolean; // Whether to prevent default browser behavior
+  description?: string;
+  isPreventDefault?: boolean;
 }
 
 export interface Shortcuts {
@@ -34,7 +34,6 @@ export const LOCAL_PROVIDERS = ['OpenAILike', 'LMStudio', 'Ollama'];
 
 export type ProviderSetting = Record<string, IProviderConfig>;
 
-// Simplified shortcuts store with only theme toggle
 export const shortcutsStore = map<Shortcuts>({
   toggleTheme: {
     key: 'd',
@@ -49,28 +48,23 @@ export const shortcutsStore = map<Shortcuts>({
     key: '`',
     ctrlOrMetaKey: true,
     action: () => {
-      // This will be handled by the terminal component
     },
     description: 'Toggle terminal',
     isPreventDefault: true,
   },
 });
 
-// Create a single key for provider settings
 const PROVIDER_SETTINGS_KEY = 'provider_settings';
 const AUTO_ENABLED_KEY = 'auto_enabled_providers';
 
-// Add this helper function at the top of the file
 const isBrowser = typeof window !== 'undefined';
 
-// Interface for configured provider info from server
 interface ConfiguredProvider {
   name: string;
   isConfigured: boolean;
   configMethod: 'environment' | 'none';
 }
 
-// Fetch configured providers from server
 const fetchConfiguredProviders = async (): Promise<ConfiguredProvider[]> => {
   try {
     const response = await fetch('/api/configured-providers');
@@ -88,22 +82,18 @@ const fetchConfiguredProviders = async (): Promise<ConfiguredProvider[]> => {
   }
 };
 
-// Initialize provider settings from both localStorage and server-detected configuration
 const getInitialProviderSettings = (): ProviderSetting => {
   const initialSettings: ProviderSetting = {};
 
-  // Start with default settings
   PROVIDER_LIST.forEach((provider) => {
     initialSettings[provider.name] = {
       ...provider,
       settings: {
-        // Local providers should be disabled by default
         enabled: !LOCAL_PROVIDERS.includes(provider.name),
       },
     };
   });
 
-  // Only try to load from localStorage in the browser
   if (isBrowser) {
     const savedSettings = localStorage.getItem(PROVIDER_SETTINGS_KEY);
 
@@ -124,7 +114,6 @@ const getInitialProviderSettings = (): ProviderSetting => {
   return initialSettings;
 };
 
-// Auto-enable providers that are configured on the server
 const autoEnableConfiguredProviders = async () => {
   if (!isBrowser) {
     return;
@@ -136,7 +125,6 @@ const autoEnableConfiguredProviders = async () => {
     const savedSettings = localStorage.getItem(PROVIDER_SETTINGS_KEY);
     const autoEnabledProviders = localStorage.getItem(AUTO_ENABLED_KEY);
 
-    // Track which providers were auto-enabled to avoid overriding user preferences
     const previouslyAutoEnabled = autoEnabledProviders ? JSON.parse(autoEnabledProviders) : [];
     const newlyAutoEnabled: string[] = [];
 
@@ -147,11 +135,6 @@ const autoEnableConfiguredProviders = async () => {
         const currentProvider = currentSettings[name];
 
         if (currentProvider) {
-          /*
-           * Only auto-enable if:
-           * 1. Provider is not already enabled, AND
-           * 2. Either we haven't saved settings yet (first time) OR provider was previously auto-enabled
-           */
           const hasUserSettings = savedSettings !== null;
           const wasAutoEnabled = previouslyAutoEnabled.includes(name);
           const shouldAutoEnable = !currentProvider.settings.enabled && (!hasUserSettings || wasAutoEnabled);
@@ -172,13 +155,10 @@ const autoEnableConfiguredProviders = async () => {
     });
 
     if (hasChanges) {
-      // Update the store
       providersStore.set(currentSettings);
 
-      // Save to localStorage
       localStorage.setItem(PROVIDER_SETTINGS_KEY, JSON.stringify(currentSettings));
 
-      // Update the auto-enabled providers list
       const allAutoEnabled = [...new Set([...previouslyAutoEnabled, ...newlyAutoEnabled])];
       localStorage.setItem(AUTO_ENABLED_KEY, JSON.stringify(allAutoEnabled));
 
@@ -191,22 +171,17 @@ const autoEnableConfiguredProviders = async () => {
 
 export const providersStore = map<ProviderSetting>(getInitialProviderSettings());
 
-// Export the auto-enable function for use in components
 export const initializeProviders = autoEnableConfiguredProviders;
 
-// Initialize providers when the module loads (in browser only)
 if (isBrowser) {
-  // Use a small delay to ensure DOM and other resources are ready
   setTimeout(() => {
     autoEnableConfiguredProviders();
   }, 100);
 }
 
-// Create a function to update provider settings that handles both store and persistence
 export const updateProviderSettings = (provider: string, settings: ProviderSetting) => {
   const currentSettings = providersStore.get();
 
-  // Create new provider config with updated settings
   const updatedProvider = {
     ...currentSettings[provider],
     settings: {
@@ -215,20 +190,16 @@ export const updateProviderSettings = (provider: string, settings: ProviderSetti
     },
   };
 
-  // Update the store with new settings
   providersStore.setKey(provider, updatedProvider);
 
-  // Save to localStorage
   const allSettings = providersStore.get();
   localStorage.setItem(PROVIDER_SETTINGS_KEY, JSON.stringify(allSettings));
 
-  // If this is a local provider, update the auto-enabled tracking
   if (LOCAL_PROVIDERS.includes(provider) && updatedProvider.settings.enabled !== undefined) {
     updateAutoEnabledTracking(provider, updatedProvider.settings.enabled);
   }
 };
 
-// Update auto-enabled tracking when user manually changes provider settings
 const updateAutoEnabledTracking = (providerName: string, isEnabled: boolean) => {
   if (!isBrowser) {
     return;
@@ -239,13 +210,11 @@ const updateAutoEnabledTracking = (providerName: string, isEnabled: boolean) => 
     const currentAutoEnabled = autoEnabledProviders ? JSON.parse(autoEnabledProviders) : [];
 
     if (isEnabled) {
-      // If user enables provider, add to auto-enabled list (for future detection)
       if (!currentAutoEnabled.includes(providerName)) {
         currentAutoEnabled.push(providerName);
         localStorage.setItem(AUTO_ENABLED_KEY, JSON.stringify(currentAutoEnabled));
       }
     } else {
-      // If user disables provider, remove from auto-enabled list (respect user choice)
       const updatedAutoEnabled = currentAutoEnabled.filter((name: string) => name !== providerName);
       localStorage.setItem(AUTO_ENABLED_KEY, JSON.stringify(updatedAutoEnabled));
     }
@@ -256,7 +225,6 @@ const updateAutoEnabledTracking = (providerName: string, isEnabled: boolean) => 
 
 export const isDebugMode = atom(false);
 
-// Define keys for localStorage
 const SETTINGS_KEYS = {
   LATEST_BRANCH: 'isLatestBranch',
   AUTO_SELECT_TEMPLATE: 'autoSelectTemplate',
@@ -268,7 +236,6 @@ const SETTINGS_KEYS = {
   IMAGE_GENERATION: 'isImageGenerationEnabled',
 } as const;
 
-// Initialize settings from localStorage or defaults
 const getInitialSettings = () => {
   const getStoredBoolean = (key: string, defaultValue: boolean): boolean => {
     if (!isBrowser) {
@@ -300,7 +267,6 @@ const getInitialSettings = () => {
   };
 };
 
-// Initialize stores with persisted values
 const initialSettings = getInitialSettings();
 
 export const latestBranchStore = atom<boolean>(initialSettings.latestBranch);
@@ -311,7 +277,6 @@ export const promptStore = atom<string>(initialSettings.promptId);
 export const dynamicReasoningStore = atom<boolean>(initialSettings.dynamicReasoning);
 export const imageGenerationStore = atom<boolean>(initialSettings.imageGeneration);
 
-// Helper functions to update settings with persistence
 export const updateLatestBranch = (enabled: boolean) => {
   latestBranchStore.set(enabled);
   localStorage.setItem(SETTINGS_KEYS.LATEST_BRANCH, JSON.stringify(enabled));
@@ -347,7 +312,6 @@ export const updateImageGeneration = (enabled: boolean) => {
   localStorage.setItem(SETTINGS_KEYS.IMAGE_GENERATION, JSON.stringify(enabled));
 };
 
-// Initialize tab configuration from localStorage or defaults
 const getInitialTabConfiguration = (): TabWindowConfig => {
   const defaultConfig: TabWindowConfig = {
     userTabs: DEFAULT_TAB_CONFIG.filter((tab): tab is UserTabConfig => tab.window === 'user'),
@@ -370,10 +334,8 @@ const getInitialTabConfiguration = (): TabWindowConfig => {
       return defaultConfig;
     }
 
-    // Merge parsed tabs with any new defaults that might be missing
     const parsedUserTabs = parsed.userTabs.filter((tab: TabVisibilityConfig): tab is UserTabConfig => tab.window === 'user');
     
-    // Find missing tabs from default config
     const parsedIds = new Set(parsedUserTabs.map((t: UserTabConfig) => t.id));
     const missingDefaults = defaultConfig.userTabs.filter(t => !parsedIds.has(t.id));
 
@@ -386,11 +348,8 @@ const getInitialTabConfiguration = (): TabWindowConfig => {
   }
 };
 
-// console.log('Initial tab configuration:', getInitialTabConfiguration());
-
 export const tabConfigurationStore = map<TabWindowConfig>(getInitialTabConfiguration());
 
-// Helper function to reset tab configuration
 export const resetTabConfiguration = () => {
   const defaultConfig: TabWindowConfig = {
     userTabs: DEFAULT_TAB_CONFIG.filter((tab): tab is UserTabConfig => tab.window === 'user'),
@@ -400,7 +359,6 @@ export const resetTabConfiguration = () => {
   localStorage.setItem('falbor_tab_configuration', JSON.stringify(defaultConfig));
 };
 
-// First, let's define the SettingsStore interface
 interface SettingsStore {
   isOpen: boolean;
   selectedTab: string;
@@ -411,19 +369,19 @@ interface SettingsStore {
 
 export const useSettingsStore = create<SettingsStore>((set) => ({
   isOpen: false,
-  selectedTab: 'user', // Default tab
+  selectedTab: 'user',
 
   openSettings: () => {
     set({
       isOpen: true,
-      selectedTab: 'user', // Always open to user tab
+      selectedTab: 'user',
     });
   },
 
   closeSettings: () => {
     set({
       isOpen: false,
-      selectedTab: 'user', // Reset to user tab when closing
+      selectedTab: 'user',
     });
   },
 

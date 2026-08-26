@@ -1,6 +1,7 @@
-/**
- * Dark web search via Tor.
- * Queries multiple .onion search engines in parallel and returns combined results.
+/*
+ *!---------------------------------------------------------------------------------------------
+ *  This feature is not implemented yet and its built for testing!
+ *--------------------------------------------------------------------------------------------
  */
 import { load } from 'cheerio';
 import { torFetch } from './tor-fetch';

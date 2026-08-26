@@ -133,23 +133,6 @@ export const readPageContent = tool({
   },
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// LIVE USER-ACQUISITION RESEARCH TOOLS
-//
-// All three tools use DuckDuckGo site: searches as the primary source.
-// This is the same engine that powers the existing webSearch tool and is:
-//   ✅ Reliable from server-side (no bot detection)
-//   ✅ No API key required
-//   ✅ Returns current, indexed results
-//
-// Why NOT direct APIs:
-//   ❌ Reddit JSON API — blocks server-side requests / returns empty results
-//   ❌ Nitter (Twitter mirror) — most instances shut down in 2024
-// ─────────────────────────────────────────────────────────────────────────────
-
-/**
- * Core DuckDuckGo Lite search — shared by all three research tools.
- */
 async function ddgSearch(query: string): Promise<{ url: string; title: string; snippet: string }[]> {
   try {
     const response = await fetch('https://lite.duckduckgo.com/lite/', {
@@ -183,9 +166,6 @@ async function ddgSearch(query: string): Promise<{ url: string; title: string; s
   }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// searchReddit
-// ─────────────────────────────────────────────────────────────────────────────
 export const searchReddit = tool({
   description:
     'Search Reddit for recent posts and discussions about a topic, problem, or keyword. Returns real post titles, subreddits, snippets, and direct URLs. Use this to find real people who are experiencing the problem your product solves.',
@@ -198,7 +178,6 @@ export const searchReddit = tool({
   }),
   execute: async ({ query, subreddit }) => {
     try {
-      // Primary: DuckDuckGo site:reddit.com — most reliable
       const siteQuery = subreddit
         ? `site:reddit.com/r/${subreddit} ${query}`
         : `site:reddit.com ${query}`;
@@ -220,7 +199,6 @@ export const searchReddit = tool({
         );
       }
 
-      // Fallback: broader query without site: restriction
       const broadResults = await ddgSearch(`reddit "${query}"`);
       const broadReddit = broadResults.filter(r => r.url.includes('reddit.com')).slice(0, 5);
 
@@ -252,9 +230,6 @@ export const searchReddit = tool({
   },
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// searchGitHubIssues
-// ─────────────────────────────────────────────────────────────────────────────
 export const searchGitHubIssues = tool({
   description:
     'Search GitHub for open issues and discussions that mention a specific problem, keyword, or technology. Returns issue title, repository name, URL, and comment count. Use this to find developers actively experiencing the problem your product addresses.',
@@ -268,7 +243,6 @@ export const searchGitHubIssues = tool({
   }),
   execute: async ({ query, maxAgeDays = 90 }) => {
     try {
-      // Primary: GitHub public search API
       const since = new Date(Date.now() - maxAgeDays * 24 * 60 * 60 * 1000)
         .toISOString()
         .slice(0, 10);
@@ -309,7 +283,6 @@ export const searchGitHubIssues = tool({
         }
       }
 
-      // Fallback: DuckDuckGo site:github.com
       const ddgResults = await ddgSearch(`site:github.com/issues "${query}"`);
       const githubResults = ddgResults
         .filter(r => r.url.includes('github.com') && r.url.includes('/issues/'))
@@ -338,9 +311,6 @@ export const searchGitHubIssues = tool({
   },
 });
 
-// ─────────────────────────────────────────────────────────────────────────────
-// searchTwitter
-// ─────────────────────────────────────────────────────────────────────────────
 export const searchTwitter = tool({
   description:
     'Search for recent tweets and Twitter/X discussions about a topic, problem, or keyword. Returns tweet previews and URLs. Use this to find people publicly talking about the problem your product solves.',
@@ -349,7 +319,6 @@ export const searchTwitter = tool({
   }),
   execute: async ({ query }) => {
     try {
-      // Primary: DuckDuckGo site:x.com search
       const ddgResults = await ddgSearch(`site:x.com OR site:twitter.com ${query}`);
       const twitterResults = ddgResults
         .filter(r => r.url.includes('x.com') || r.url.includes('twitter.com'))
@@ -372,7 +341,6 @@ export const searchTwitter = tool({
         );
       }
 
-      // Fallback: broader query
       const broadResults = await ddgSearch(`"${query}" tweet OR twitter`);
       const broadTwitter = broadResults
         .filter(r => r.url.includes('x.com') || r.url.includes('twitter.com'))

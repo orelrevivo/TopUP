@@ -85,7 +85,7 @@ export default function FeaturesTab() {
     enableImageGeneration,
   } = useSettings();
 
-  // Enable features by default on first load
+  
   React.useEffect(() => {
     if (isLatestBranch === undefined) enableLatestBranch(false);
     if (contextOptimizationEnabled === undefined) enableContextOptimization(true);
@@ -167,7 +167,7 @@ export default function FeaturesTab() {
 
   return (
     <div className="flex flex-col gap-10 w-full max-w-4xl mx-auto p-4 md:p-6 text-falbor-elements-textPrimary">
-      {/* Combined Features Section */}
+      {}
       <div className="flex flex-col gap-6">
         <div>
           <h2 className="text-xl font-bold mb-2 flex items-center gap-2">
@@ -192,7 +192,7 @@ export default function FeaturesTab() {
           >Upgrade</button> to a paid account to get access.
         </div>
 
-        {/* Unified List Container */}
+        {}
         <motion.div
           layout
           className={classNames(
@@ -203,7 +203,7 @@ export default function FeaturesTab() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.3 }}
         >
-          {/* Add-on Feature 1: Dynamic Reasoning */}
+          {}
           <div className="p-5 flex items-start justify-between gap-6 border-b border-falbor-elements-borderColor">
             <div className="flex flex-col gap-1.5 flex-1">
               <div className="flex items-center gap-2">
@@ -223,7 +223,7 @@ export default function FeaturesTab() {
             </div>
           </div>
 
-          {/* Add-on Feature 2: Image Generation */}
+          {}
           <div className="p-5 flex items-start justify-between gap-6 border-b border-falbor-elements-borderColor">
             <div className="flex flex-col gap-1.5 flex-1">
               <div className="flex items-center gap-2">
@@ -245,7 +245,7 @@ export default function FeaturesTab() {
             </div>
           </div>
 
-          {/* Core Features Mapped below in the same container */}
+          {}
           {features.map((feature, index) => (
             <div key={feature.id} className={classNames(
               "p-5 flex items-start justify-between gap-6",
@@ -275,7 +275,7 @@ export default function FeaturesTab() {
         </motion.div>
       </div>
 
-      {/* Prompt Library */}
+      {}
       <motion.div
         layout
         className={classNames(

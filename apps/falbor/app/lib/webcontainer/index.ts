@@ -71,8 +71,7 @@ if (typeof window !== 'undefined') {
     }
   }
 } else {
-  // SSR fallback
-  webcontainerPromise = new Promise(() => {});
+  webcontainerPromise = new Promise(() => { });
 }
 
 export const webcontainer = webcontainerPromise as Promise<WebContainer>;

@@ -124,13 +124,12 @@ const browserPost = withSecurity(async ({ request }) => {
     return NextResponse.json({ result });
 
   } catch (error: any) {
-    console.error('Browser API Error:', error);
+    console.error('Browser API Error');
     if ((error as any).status) return handleAuthError(error);
-    return NextResponse.json({ error: error.message || 'Browser action failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Browser action failed' }, { status: 500 });
   }
 });
 
 export async function POST(request: Request) {
   return browserPost({ request, context: { env: process.env as any } });
 }
-

@@ -196,13 +196,13 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
 
     return (
         <div className="relative">
-            {/* Desktop navbar */}
+            {}
             <div
                 className={`hidden md:block backdrop-blur-md bg-white border-b border-zinc-200 ${className}`}
                 style={{ height: '50px' }}
             >
                 <div className="w-full max-w-5xl mx-auto flex justify-between items-center h-full px-4 border-l border-r border-zinc-200">
-                    {/* Left section */}
+                    {}
                     <div className="flex items-center space-x-4">
                         <div
                             ref={(el) => { triggerRefs.current['apple'] = el; }}
@@ -230,22 +230,22 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                         ))}
                     </div>
 
-                    {/* Right section */}
+                    {}
                     <div className="flex items-center space-x-4">
                         <HeroButtons />
                     </div>
                 </div>
             </div>
 
-            {/* Mobile navbar */}
+            {}
             <div className={`md:hidden backdrop-blur-md bg-white border-b border-zinc-200 ${className}`}>
                 <div className="flex items-center justify-between h-14 px-4">
-                    {/* Logo */}
+                    {}
                     <Link href="/">
                         <img src="/logo-dark-styled.png" width={110} alt="Logo" />
                     </Link>
 
-                    {/* Mobile right: Sign In + Start + Hamburger */}
+                    {}
                     <div className="flex items-center gap-3">
                         <Link href="/login">
                             <span className="text-sm font-medium text-black/80">Sign In</span>
@@ -276,7 +276,7 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                     </div>
                 </div>
 
-                {/* Mobile dropdown menu */}
+                {}
                 {mobileMenuOpen && (
                     <div className="border-t border-zinc-200 backdrop-blur-md bg-white px-4 py-4 flex flex-col gap-3">
                         <Link href="/pricing" onClick={() => setMobileMenuOpen(false)}>
@@ -294,7 +294,7 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                                 About
                             </div>
                         </Link>
-                        {/* Social icons row */}
+                        {}
                         <div className="flex items-center gap-4 pt-1">
                             <a href="https://x.com/WrRbybw84381" target="_blank" rel="noopener noreferrer">
                                 <img src="/landing/social/X.png" alt="X" className="w-5 h-5 object-contain" />
@@ -313,7 +313,7 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                 )}
             </div>
 
-            {/* Desktop Dropdowns */}
+            {}
             <div className="hidden md:block">
                 <MenuDropdown
                     isOpen={activeMenu === 'apple'}

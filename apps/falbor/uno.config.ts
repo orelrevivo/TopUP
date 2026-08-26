@@ -109,17 +109,6 @@ const COLOR_PRIMITIVES = {
     accent: generateAlphaPalette(BASE_COLORS.accent[500]),
   },
 };
-
-/**
- * Explicit spacing scale (Tailwind-equivalent, rem-based assuming a 16px root).
- *
- * UnoCSS's presetUno generates spacing utilities dynamically instead of from a
- * static theme.spacing map, so calls like `theme('spacing.4')` inside CSS
- * (via transformerDirectives) have nothing concrete to resolve against and
- * throw "theme of spacing.X did not found". Defining this map explicitly
- * fixes that, and also keeps regular utility classes (p-4, gap-2, etc.)
- * consistent with the values below.
- */
 const SPACING = {
   '0': '0px',
   px: '1px',
@@ -182,10 +171,6 @@ export default defineConfig({
     'max-w-chat': 'max-w-[var(--chat-max-width)]',
   },
   rules: [
-    /**
-     * This shorthand doesn't exist in Tailwind and we overwrite it to avoid
-     * any conflicts with minified CSS classes.
-     */
     ['b', {}],
   ],
   theme: {
@@ -362,23 +347,6 @@ export default defineConfig({
     }),
   ],
 });
-
-/**
- * Generates an alpha palette for a given hex color.
- *
- * @param hex - The hex color code (without alpha) to generate the palette from.
- * @returns An object where keys are opacity percentages and values are hex colors with alpha.
- *
- * Example:
- *
- * ```
- * {
- *   '1': '#FFFFFF03',
- *   '2': '#FFFFFF05',
- *   '3': '#FFFFFF08',
- * }
- * ```
- */
 function generateAlphaPalette(hex: string) {
   return [1, 2, 3, 4, 5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100].reduce(
     (acc, opacity) => {

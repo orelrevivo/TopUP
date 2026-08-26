@@ -3,11 +3,6 @@ const BASE = "/api/data/chats";
 async function api(path: string, options?: RequestInit): Promise<any> {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
 
-  if (typeof window !== 'undefined') {
-    const token = localStorage.getItem("session_token");
-    if (token) headers["x-session-token"] = token;
-  }
-
   if (options?.headers) {
     const optHeaders = options.headers as Record<string, string>;
     Object.assign(headers, optHeaders);
@@ -16,7 +11,7 @@ async function api(path: string, options?: RequestInit): Promise<any> {
   const res = await fetch(`${BASE}${path}`, {
     credentials: 'include',
     ...options,
-    headers, // re-apply merged headers after spread
+    headers,
   });
   if (!res.ok) {
     const body = (await res.json().catch(() => ({}))) as { error?: string };
@@ -113,7 +108,6 @@ export async function deleteSnapshot(chatId: string): Promise<void> {
   try {
     await api(`/${encodeURIComponent(chatId)}/snapshot`, { method: "DELETE" });
   } catch {
-    // ignore
   }
 }
 

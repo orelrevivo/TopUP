@@ -14,7 +14,7 @@ export default function StartFreeSection() {
     return (
         <div className="relative w-full py-32 flex items-center justify-center bg-[#FAFAFB] overflow-hidden border-t border-zinc-200">
             <div className="w-full max-w-5xl mx-auto px-12 z-10 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
-                {/* Left side */}
+                {}
                 <div className="flex flex-col items-start justify-center">
                     <h2 className="leading-[1.2] font-semibold text-[#1a1a1a] mb-6 tracking-tight">
                         <span className="text-[2.2rem] block">Start with $6 in your balance</span>
@@ -28,7 +28,7 @@ export default function StartFreeSection() {
                         no commitment, no hidden fees. Upgrade when you're ready to scale.
                     </p>
 
-                    {/* Perks checklist */}
+                    {}
                     <ul className="flex flex-col gap-3 mb-10">
                         {PERKS.map((perk) => (
                             <li key={perk} className="flex items-center gap-2.5 text-sm text-zinc-600">
@@ -40,7 +40,7 @@ export default function StartFreeSection() {
                         ))}
                     </ul>
 
-                    {/* CTAs */}
+                    {}
                     <div className="flex items-center gap-3">
                         <Link href="/signup">
                             <button className="bg-[#1a1a1a] hover:bg-black text-white text-sm font-semibold cursor-pointer px-6 py-3 rounded-md transition-colors">
@@ -55,7 +55,7 @@ export default function StartFreeSection() {
                     </div>
                 </div>
 
-                {/* Right side: Graphic */}
+                {}
                 <div className="flex items-center justify-end relative h-full min-h-[300px]">
                     <img
                         src="/landing/Gradient3D.png"

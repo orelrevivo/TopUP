@@ -28,9 +28,6 @@ PROVIDER_LIST.forEach((provider) => {
     apiTokenKey: provider.config.apiTokenKey,
   };
 });
-
-// starter Templates
-
 export const STARTER_TEMPLATES: Template[] = [
   {
     name: 'Vite React TS',

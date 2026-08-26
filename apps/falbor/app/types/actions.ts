@@ -53,7 +53,7 @@ export interface ActionAlert {
   title: string;
   description: string;
   content: string;
-  source?: 'terminal' | 'preview'; // Add source to differentiate between terminal and preview errors
+  source?: 'terminal' | 'preview';
 }
 
 export interface SupabaseAlert {
@@ -93,7 +93,5 @@ export interface FileHistory {
     timestamp: number;
     content: string;
   }[];
-
-  // Novo campo para rastrear a origem das mudanças
   changeSource?: 'user' | 'auto-save' | 'external';
 }

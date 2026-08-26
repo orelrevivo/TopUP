@@ -23,9 +23,9 @@ import { FileBreadcrumb } from './FileBreadcrumb';
 import { FileTree } from './FileTree';
 import { DEFAULT_TERMINAL_SIZE, TerminalTabs } from './terminal/TerminalTabs';
 import { workbenchStore } from '~/lib/stores/workbench';
-import { Search } from './Search'; // <-- Ensure Search is imported
-import { classNames } from '~/utils/classNames'; // <-- Import classNames if not already present
-import { LockManager } from './LockManager'; // <-- Import LockManager
+import { Search } from './Search'; 
+import { classNames } from '~/utils/classNames'; 
+import { LockManager } from './LockManager'; 
 
 interface EditorPanelProps {
   files?: FileMap;
@@ -77,7 +77,7 @@ export const EditorPanel = memo(
         return false;
       }
 
-      // Make sure unsavedFiles is a Set before calling has()
+      
       return unsavedFiles instanceof Set && unsavedFiles.has(editorDocument.filePath);
     }, [editorDocument, unsavedFiles]);
 

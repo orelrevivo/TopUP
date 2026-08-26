@@ -9,7 +9,6 @@ const getInitialLanguage = () => {
         const parsed = JSON.parse(savedProfile);
         if (parsed.language) return parsed.language;
       } catch (e) {
-        // ignore
       }
     }
     const savedLang = localStorage.getItem(STORE_KEY);
@@ -25,14 +24,12 @@ export const setLanguage = (lang: string) => {
   if (typeof window !== 'undefined') {
     localStorage.setItem(STORE_KEY, lang);
     
-    // Also sync back to user profile for backward compatibility
     try {
       const savedProfile = localStorage.getItem('falbor_user_profile');
       const profile = savedProfile ? JSON.parse(savedProfile) : {};
       profile.language = lang;
       localStorage.setItem('falbor_user_profile', JSON.stringify(profile));
     } catch (e) {
-      // ignore
     }
   }
 };

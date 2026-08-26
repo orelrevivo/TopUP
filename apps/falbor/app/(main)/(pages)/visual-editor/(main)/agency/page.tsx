@@ -12,7 +12,7 @@ const Page = async ({
   const agencyId = await verifyAndAcceptInvitation()
   console.log(agencyId)
 
-  //get the users details
+  
   const user = await getAuthUserDetails()
   if (agencyId) {
     if (user?.role === 'SUBACCOUNT_GUEST' || user?.role === 'SUBACCOUNT_USER') {

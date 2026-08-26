@@ -62,10 +62,10 @@ const processSampledMessages = createSampler(
     if (messages.length > initialMessages.length) {
       const lastMessage = messages[messages.length - 1];
       if (isLoading && lastMessage?.role === 'assistant') {
-        // Only save up to the user message so we can auto-reconnect on refresh
+        
         storeMessageHistory(messages.slice(0, -1)).catch((error) => toast.error(error.message));
       } else {
-        // Save everything when finished
+        
         storeMessageHistory(messages).catch((error) => toast.error(error.message));
       }
     }
@@ -186,15 +186,15 @@ export const HackingChatImpl = memo(
         messages,
         initialMessages,
         isLoading,
-        parseMessages: (_msgs: any, _loading: any) => { /* no-op: no artifact parsing needed */ },
+        parseMessages: (_msgs: any, _loading: any) => {  },
         storeMessageHistory,
       });
     }, [messages, isLoading]);
 
     useEffect(() => {
-      // If the chat loads from DB and the last message is from the user,
-      // it means the assistant's reply was cut off by a page reload.
-      // We automatically call reload() to reconnect to the persistent backend stream.
+      
+      
+      
       if (messages.length > 0 && !isLoading && !fakeLoading) {
         const lastMessage = messages[messages.length - 1];
         if (lastMessage.role === 'user') {
@@ -320,7 +320,7 @@ export const HackingChatImpl = memo(
       setChatStarted(true);
     };
 
-    // Helper function to create message parts array from text and images
+    
     const createMessageParts = (text: string, images: string[] = []): Array<TextUIPart | FileUIPart> => {
       const parts: Array<TextUIPart | FileUIPart> = [{ type: 'text', text }];
       images.forEach((imageData) => {
@@ -462,7 +462,7 @@ export const HackingChatImpl = memo(
         messages={messages.map((message) => {
           const initMsg = initialMessages.find((m) => m.id === message.id);
           const annotations = message.annotations || initMsg?.annotations;
-          // Use message.content directly — no artifact parsing needed for hacking chat
+          
           const content = Array.isArray(message.content)
             ? (message.content.find((p: any) => p.type === 'text') as any)?.text || ''
             : message.content || '';

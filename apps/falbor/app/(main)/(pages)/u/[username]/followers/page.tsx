@@ -12,7 +12,7 @@ async function getFollowers(username: string) {
   }
   const decodedUsername = decodeURIComponent(rawUsername);
 
-  // First, find the target user
+  
   const [targetUser] = await db
     .select({ id: users.id })
     .from(users)
@@ -21,7 +21,7 @@ async function getFollowers(username: string) {
 
   if (!targetUser) return null;
 
-  // Then fetch their followers by joining follows and users tables
+  
   const followersList = await db
     .select({
       id: users.id,

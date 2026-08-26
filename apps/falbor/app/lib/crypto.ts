@@ -1,10 +1,7 @@
 import crypto from 'crypto';
-
-// Deriving a 32-byte key from ENCRYPTION_SECRET or JWT_SECRET
-const ENCRYPTION_KEY = process.env.ENCRYPTION_SECRET 
+const ENCRYPTION_KEY = process.env.ENCRYPTION_SECRET
   ? crypto.createHash('sha256').update(process.env.ENCRYPTION_SECRET).digest()
   : crypto.createHash('sha256').update(process.env.JWT_SECRET || 'fallback-secret-for-development-32bytes-long').digest();
-
 const ALGORITHM = 'aes-256-gcm';
 const IV_LENGTH = 12;
 
@@ -14,7 +11,6 @@ export function encrypt(text: string): string {
   let encrypted = cipher.update(text, 'utf8', 'hex');
   encrypted += cipher.final('hex');
   const authTag = cipher.getAuthTag().toString('hex');
-  // Combine IV, authTag, and ciphertext separated by colons
   return `${iv.toString('hex')}:${authTag}:${encrypted}`;
 }
 

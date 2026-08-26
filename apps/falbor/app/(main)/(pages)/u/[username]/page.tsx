@@ -1,6 +1,6 @@
 import React from 'react';
 import { notFound } from 'next/navigation';
-import { cookies, headers } from 'next/headers';
+import { cookies } from 'next/headers';
 import { classNames } from '~/utils/classNames';
 import { verifyToken, COOKIE_NAME } from '~/lib/auth';
 
@@ -15,7 +15,7 @@ import Link from 'next/link';
 
 async function getCurrentUserId() {
   const cookieStore = cookies();
-  const token = cookieStore.get(COOKIE_NAME)?.value || headers().get("x-session-token");
+  const token = cookieStore.get(COOKIE_NAME)?.value;
   if (token) {
     const payload = await verifyToken(token);
     return payload?.userId || null;
@@ -78,7 +78,7 @@ async function getProfile(username: string) {
       if (followRecord) isFollowing = true;
     }
 
-    // Get actual followers and following counts
+    
     const { sql } = await import('drizzle-orm');
 
     const [followersCountRes] = await db

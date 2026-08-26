@@ -12,9 +12,9 @@ interface TerminalManagerProps {
 }
 
 export const TerminalManager = memo(({ terminal, isActive }: TerminalManagerProps) => {
-  // Simplified terminal manager - removed aggressive health checking that was causing issues
+  
 
-  // Basic terminal event handling - no aggressive monitoring
+  
   useEffect(() => {
     if (!terminal) {
       return undefined;
@@ -22,15 +22,15 @@ export const TerminalManager = memo(({ terminal, isActive }: TerminalManagerProp
 
     const disposables: Array<{ dispose: () => void }> = [];
 
-    // Set up paste handler via terminal's onKey
+    
     const onPasteKeyDisposable = terminal.onKey((e) => {
-      // Detect Ctrl+V or Cmd+V
+      
       if ((e.domEvent.ctrlKey || e.domEvent.metaKey) && e.domEvent.key === 'v') {
         if (!isActive) {
           return;
         }
 
-        // Read from clipboard if available
+        
         if (navigator.clipboard && navigator.clipboard.readText) {
           navigator.clipboard
             .readText()
@@ -53,17 +53,17 @@ export const TerminalManager = memo(({ terminal, isActive }: TerminalManagerProp
     };
   }, [terminal, isActive]);
 
-  // Auto-focus terminal when it becomes active
+  
   useEffect(() => {
     if (isActive && terminal) {
-      // Small delay to ensure DOM is ready
+      
       setTimeout(() => {
         terminal.focus();
       }, 100);
     }
   }, [isActive, terminal]);
 
-  return null; // This is a utility component, no UI
+  return null; 
 });
 
 TerminalManager.displayName = 'TerminalManager';

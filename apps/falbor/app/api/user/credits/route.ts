@@ -1,29 +1,16 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { getUserId, verifyToken, COOKIE_NAME } from '~/lib/auth';
+import { getUserId } from '~/lib/auth';
 import { db } from '~/lib/db';
 import { users, payments } from '~/lib/db/schema';
 import { eq, sql, desc } from 'drizzle-orm';
 
-async function getUserIdFromRequestOrToken(
-  req: Request,
-  sessionToken?: string
-): Promise<string | null> {
-  // Try standard cookie/header based auth first
-  const userId = await getUserId(req as unknown as NextRequest);
-  if (userId) return userId;
-
-  // Fallback: accept session token passed explicitly in body
-  if (sessionToken) {
-    const payload = await verifyToken(sessionToken);
-    if (payload?.userId) return payload.userId;
-  }
-
-  return null;
+async function getUserIdFromRequest(req: Request): Promise<string | null> {
+  return getUserId(req as unknown as NextRequest);
 }
 
 export async function GET(req: Request) {
   try {
-    const userId = await getUserIdFromRequestOrToken(req);
+    const userId = await getUserIdFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -72,13 +59,13 @@ export async function GET(req: Request) {
 export async function POST(req: Request) {
   try {
     const body = await req.json();
-    const { orderId, amount, tier, sessionToken } = body;
+    const { orderId, amount, tier } = body;
 
     if (!orderId || amount === undefined) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
     }
 
-    const userId = await getUserIdFromRequestOrToken(req, sessionToken);
+    const userId = await getUserIdFromRequest(req);
     if (!userId) {
       return NextResponse.json({ error: 'Unauthorized — please log in and try again.' }, { status: 401 });
     }
@@ -117,11 +104,8 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true });
-  } catch (error: any) {
-    console.error('Error adding credits:', error);
-    return NextResponse.json(
-      { error: 'Internal server error', detail: error?.message || String(error) },
-      { status: 500 }
-    );
+  } catch (error: unknown) {
+    console.error('Error adding credits');
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

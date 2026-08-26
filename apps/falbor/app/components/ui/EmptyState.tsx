@@ -3,7 +3,7 @@ import { classNames } from '~/utils/classNames';
 import { Button } from './Button';
 import { motion } from 'framer-motion';
 
-// Variant-specific styles
+
 const VARIANT_STYLES = {
   default: {
     container: 'py-8 p-6',
@@ -30,39 +30,35 @@ const VARIANT_STYLES = {
 };
 
 interface EmptyStateProps {
-  /** Icon class name */
+  
   icon?: string;
 
-  /** Title text */
+  
   title: string;
 
-  /** Optional description text */
+  
   description?: string;
 
-  /** Primary action button label */
+  
   actionLabel?: string;
 
-  /** Primary action button callback */
+  
   onAction?: () => void;
 
-  /** Secondary action button label */
+  
   secondaryActionLabel?: string;
 
-  /** Secondary action button callback */
+  
   onSecondaryAction?: () => void;
 
-  /** Additional class name */
+  
   className?: string;
 
-  /** Component size variant */
+  
   variant?: 'default' | 'compact';
 }
 
-/**
- * EmptyState component
- *
- * A component for displaying empty states with optional actions.
- */
+
 export function EmptyState({
   icon = 'i-ph:folder-simple-dashed',
   title,
@@ -74,10 +70,10 @@ export function EmptyState({
   className,
   variant = 'default',
 }: EmptyStateProps) {
-  // Get styles based on variant
+  
   const styles = VARIANT_STYLES[variant];
 
-  // Animation variants for buttons
+  
   const buttonAnimation = {
     whileHover: { scale: 1.02 },
     whileTap: { scale: 0.98 },
@@ -93,7 +89,7 @@ export function EmptyState({
         className,
       )}
     >
-      {/* Icon */}
+      {}
       <div
         className={classNames(
           'rounded-full bg-falbor-elements-background-depth-3 dark:bg-falbor-elements-background-depth-4 flex items-center justify-center',
@@ -109,10 +105,10 @@ export function EmptyState({
         />
       </div>
 
-      {/* Title */}
+      {}
       <p className={classNames('font-medium', styles.title)}>{title}</p>
 
-      {/* Description */}
+      {}
       {description && (
         <p
           className={classNames(
@@ -124,7 +120,7 @@ export function EmptyState({
         </p>
       )}
 
-      {/* Action buttons */}
+      {}
       {(actionLabel || secondaryActionLabel) && (
         <div className={classNames('flex items-center gap-2', styles.actions)}>
           {actionLabel && onAction && (

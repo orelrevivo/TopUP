@@ -24,7 +24,7 @@ import { useAuth } from '~/hooks/useAuth';
 import { sidebarOpen, sidebarPinned } from '~/lib/stores/sidebar';
 import { chatStore } from '~/lib/stores/chat';
 import { DropdownSeparator, Dropdown } from '../ui/Dropdown';
-import { McpTools } from '../chat/MCPTools';
+import { McpTools } from '../chat/tools/MCPTools';
 import { MCP_CONNECTORS } from '../@settings/tabs/mcp/connectors';
 import { useMCPStore } from '~/lib/stores/mcp';
 import { Badge } from '../ui';
@@ -151,7 +151,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [skillsDialogOpen, setSkillsDialogOpen] = useState(false);
 
-  // Load from IndexedDB or Postgres depending on route
+  
   const loadEntries = useCallback(() => {
     if (isHacking) {
       hackingChatApi.getAllChats()
@@ -174,8 +174,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
     }
   }, [isHacking]);
 
-  // We don't need to filter anymore since loadEntries is route-specific,
-  // but we can just map the list directly
+  
+  
   const { filteredItems, handleSearchChange } = useSearchFilter({
     items: list,
     searchFields: ['description'],
@@ -186,7 +186,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const deleteChat = useCallback(
     async (id: string): Promise<void> => {
       if (isHacking) {
-        // Assume hacking chat deletion is handled elsewhere or implement basic remove from list
+        
         setList(prev => prev.filter(c => c.id !== id));
         return;
       }
@@ -351,7 +351,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
     }
   }, [open, loadEntries]);
 
-  // Sync tab state from URL
+  
   useEffect(() => {
     if (searchParams) {
       const tab = searchParams.get('tab');
@@ -373,16 +373,16 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
 
   useEffect(() => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    // If the layout is 'square' and we haven't seen it before (e.g. initial mount or transition to it), open it by default
+    
     if (variant === 'square' && prevVariant.current !== 'square') {
       if (isMobile) {
-        // On mobile, start closed
+        
         sidebarOpen.set(false);
       } else {
         sidebarOpen.set(true);
       }
     } else if (variant !== 'square') {
-      // On mobile, always start closed regardless of pin state
+      
       if (isMobile) {
         sidebarOpen.set(false);
       } else if (!chat.started && isPinned) {
@@ -441,7 +441,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const handleSettingsClose = () => {
     settingsOpenStore.set(false);
 
-    // Remove tab from URL
+    
     if (typeof window !== 'undefined') {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('tab');
@@ -472,14 +472,14 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   }, []);
   return (
     <>
-      {/* Mobile backdrop for square variant */}
+      {}
       {open && variant === 'square' && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => sidebarOpen.set(false)}
         />
       )}
-      {/* Mobile backdrop for full variant */}
+      {}
       {open && variant === 'full' && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-40"
@@ -501,10 +501,10 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
             )
             : classNames(
               'flex selection-accent flex-col side-menu shrink-0 h-full bg-white dark:bg-[#111114] border-r border-falbor-elements-borderColor shadow-sm text-sm',
-              // On mobile: fixed overlay that covers the full screen when open
+              
               'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-xl',
               !open && 'max-md:!w-0 max-md:!opacity-0 max-md:overflow-hidden max-md:pointer-events-none',
-              // Restore relative positioning on desktop
+              
               'md:relative'
             ),
           variant === 'full' && isSettingsOpen ? 'z-40' : (variant === 'full' ? 'z-sidebar max-md:z-50' : '')
@@ -585,7 +585,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                     key={tab.id}
                     onClick={() => {
                       settingsTabStore.set(tab.id as TabType);
-                      // Update URL without triggering a full page reload
+                      
                       const newUrl = new URL(window.location.href);
                       newUrl.searchParams.set('tab', tab.id);
                       window.history.pushState({}, '', newUrl.toString());
@@ -662,19 +662,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                     <span>Chat Settings</span>
                   </button>
                 )}
-                {/* <Link href={'/sources'} className='relative w-full'>
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
-                    <div className={classNames(
-                      "i-ph:spider-web w-4 h-4 mr-2 transition-colors",
-                      isSource ? "text-violet-500" : "dark:text-white text-gray-700"
-                    )} />
-                  </div>
-                  <button
-                    className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1"
-                  >
-                    <div className="i-ph:network text-xl text-falbor-elements-textSecondary mr-2" />
-                    Sources
-                </Link> */}
+                {}
                 <Link href={'/visual-editor'} className='relative w-full hidden md:block'>
                   <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
                     <div className="i-ph:paint-brush w-4 h-4 mr-2 dark:text-white text-gray-700" />

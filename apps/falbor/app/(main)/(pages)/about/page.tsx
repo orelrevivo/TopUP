@@ -11,7 +11,7 @@ export default function AboutPage() {
       <ThemeHandler force="dark" />
       <LandingScrollHandler />
 
-      {/* Navbar wrapper to match landing page styling */}
+      {}
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-48px)] max-w-5xl pointer-events-auto">
         <div
           className="w-full rounded-xl overflow-hidden shadow-2xl border border-white/10 [&_.backdrop-blur-md]:bg-transparent [&_.border-b]:border-white/10 [&_.text-black]:text-white [&_.text-black\/80]:text-white/80 [&_.hover\\:text-black\/70]:hover:text-white/70 [&_.border-zinc-200]:border-white/10"

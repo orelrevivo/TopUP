@@ -38,7 +38,7 @@ export const TerminalTabs = memo(() => {
     (index: number) => {
       if (index === 0) {
         return;
-      } // Can't close falbor terminal
+      } 
 
       const terminalRef = terminalRefs.current.get(index);
 
@@ -50,10 +50,10 @@ export const TerminalTabs = memo(() => {
         }
       }
 
-      // Remove the terminal from refs
+      
       terminalRefs.current.delete(index);
 
-      // Adjust terminal count and active terminal
+      
       setTerminalCount(terminalCount - 1);
 
       if (activeTerminal === index) {

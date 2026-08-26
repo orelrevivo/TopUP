@@ -29,7 +29,7 @@ interface ProjectAction {
   variant?: 'default' | 'destructive' | 'outline';
 }
 
-// Vercel logo SVG component
+
 const VercelLogo = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5">
     <path fill="currentColor" d="m12 2 10 18H2z" />
@@ -53,7 +53,7 @@ export default function VercelTab() {
       .catch(() => { });
   }, []);
 
-  // Use shared connection test hook
+  
   const {
     testResult: connectionTest,
     testConnection,
@@ -65,7 +65,7 @@ export default function VercelTab() {
       data.username || data.user?.username || data.email || data.user?.email || 'Vercel User',
   });
 
-  // Memoize project actions to prevent unnecessary re-renders
+  
   const projectActions: ProjectAction[] = useMemo(
     () => [
       {
@@ -178,16 +178,16 @@ export default function VercelTab() {
       },
     ],
     [connection.token],
-  ); // Only re-create when token changes
+  ); 
 
-  // Initialize connection on component mount - check server-side token first
+  
   useEffect(() => {
     const initializeConnection = async () => {
       try {
-        // First try to initialize using server-side token
+        
         await initializeVercelConnection();
 
-        // If no connection was established, the user will need to manually enter a token
+        
         const currentState = vercelConnection.get();
 
         if (!currentState.user) {
@@ -203,11 +203,11 @@ export default function VercelTab() {
   useEffect(() => {
     const fetchProjects = async () => {
       if (connection.user) {
-        // Use server-side API if we have a connected user
+        
         try {
           await fetchVercelStatsViaAPI(connection.token);
         } catch {
-          // Fallback to direct API if server-side fails and we have a token
+          
           if (connection.token) {
             await fetchVercelStats(connection.token);
           }
@@ -228,7 +228,7 @@ export default function VercelTab() {
         throw new Error('Token is required');
       }
 
-      // First test the token directly with Vercel API
+      
       const testResponse = await fetch('https://api.vercel.com/v2/user', {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -246,10 +246,10 @@ export default function VercelTab() {
 
       const userData = (await testResponse.json()) as VercelUserResponse;
 
-      // Set cookies for server-side API access
+      
       Cookies.set('NEXT_PUBLIC_VERCEL_ACCESS_TOKEN', token, { expires: 365 });
 
-      // Normalize the user data structure
+      
       const normalizedUser = userData.user || {
         id: userData.id || '',
         username: userData.username || '',
@@ -278,7 +278,7 @@ export default function VercelTab() {
   };
 
   const handleDisconnect = () => {
-    // Clear Vercel-related cookies
+    
     Cookies.remove('NEXT_PUBLIC_VERCEL_ACCESS_TOKEN');
 
     updateVercelConnection({ user: null, token: '' });
@@ -327,7 +327,7 @@ export default function VercelTab() {
         </CollapsibleTrigger>
         <CollapsibleContent className="overflow-hidden">
           <div className="space-y-4 mt-4">
-            {/* Vercel Overview Dashboard */}
+            {}
             {connection.stats?.projects?.length ? (
               <div className="mb-6 p-4 bg-falbor-elements-background-depth-1 rounded-lg border border-falbor-elements-borderColor">
                 <h4 className="text-sm font-medium text-falbor-elements-textPrimary mb-3">Vercel Overview</h4>
@@ -364,7 +364,7 @@ export default function VercelTab() {
               </div>
             ) : null}
 
-            {/* Performance Analytics */}
+            {}
             {connection.stats?.projects?.length ? (
               <div className="mb-6 space-y-4">
                 <h4 className="text-sm font-medium text-falbor-elements-textPrimary">Performance Analytics</h4>
@@ -474,7 +474,7 @@ export default function VercelTab() {
               </div>
             ) : null}
 
-            {/* Project Health Overview */}
+            {}
             {connection.stats?.projects?.length ? (
               <div className="mb-6">
                 <h4 className="text-sm font-medium text-falbor-elements-textPrimary mb-2">Project Health Overview</h4>
@@ -596,11 +596,11 @@ export default function VercelTab() {
                           ) : null}
                         </div>
 
-                        {/* Project Details Grid */}
+                        {}
                         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mt-3 pt-3 border-t border-falbor-elements-borderColor">
                           <div className="text-center">
                             <div className="text-sm font-semibold text-falbor-elements-textPrimary">
-                              {/* Deployments - This would be fetched from API */}
+                              {}
                               --
                             </div>
                             <div className="text-xs text-falbor-elements-textSecondary flex items-center justify-center gap-1">
@@ -610,7 +610,7 @@ export default function VercelTab() {
                           </div>
                           <div className="text-center">
                             <div className="text-sm font-semibold text-falbor-elements-textPrimary">
-                              {/* Domains - This would be fetched from API */}
+                              {}
                               --
                             </div>
                             <div className="text-xs text-falbor-elements-textSecondary flex items-center justify-center gap-1">
@@ -620,7 +620,7 @@ export default function VercelTab() {
                           </div>
                           <div className="text-center">
                             <div className="text-sm font-semibold text-falbor-elements-textPrimary">
-                              {/* Team Members - This would be fetched from API */}
+                              {}
                               --
                             </div>
                             <div className="text-xs text-falbor-elements-textSecondary flex items-center justify-center gap-1">
@@ -630,7 +630,7 @@ export default function VercelTab() {
                           </div>
                           <div className="text-center">
                             <div className="text-sm font-semibold text-falbor-elements-textPrimary">
-                              {/* Bandwidth - This would be fetched from API */}
+                              {}
                               --
                             </div>
                             <div className="text-xs text-falbor-elements-textSecondary flex items-center justify-center gap-1">
@@ -736,7 +736,7 @@ export default function VercelTab() {
 
       <ConnectionTestIndicator testResult={connectionTest} />
 
-      {/* Main Connection Component */}
+      {}
       <motion.div
         className="bg-falbor-elements-background dark:bg-falbor-elements-background border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor rounded-lg"
         initial={{ opacity: 0, y: 20 }}
@@ -867,14 +867,14 @@ export default function VercelTab() {
                       </span>
                       <span className="flex items-center gap-1">
                         <div className="i-ph:users w-3 h-3" />
-                        {/* Team size would be fetched from API */}
+                        {}
                         --
                       </span>
                     </div>
                   </div>
                 </div>
 
-                {/* Usage Metrics */}
+                {}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <div className="p-3 bg-falbor-elements-background-depth-1 rounded-lg border border-falbor-elements-borderColor">
                     <div className="flex items-center gap-2 mb-2">
@@ -896,7 +896,7 @@ export default function VercelTab() {
                       <span className="text-xs font-medium text-falbor-elements-textPrimary">Domains</span>
                     </div>
                     <div className="text-sm text-falbor-elements-textSecondary">
-                      {/* Domain usage would be fetched from API */}
+                      {}
                       <div>Custom: --</div>
                       <div>Vercel: --</div>
                     </div>
@@ -907,7 +907,7 @@ export default function VercelTab() {
                       <span className="text-xs font-medium text-falbor-elements-textPrimary">Usage</span>
                     </div>
                     <div className="text-sm text-falbor-elements-textSecondary">
-                      {/* Usage metrics would be fetched from API */}
+                      {}
                       <div>Bandwidth: --</div>
                       <div>Requests: --</div>
                     </div>

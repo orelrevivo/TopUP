@@ -25,7 +25,7 @@ interface ConnectionFormProps {
   selectedTokenType?: string;
   onTokenTypeChange?: (type: string) => void;
   connectedMessage?: string;
-  children?: React.ReactNode; // For additional form fields
+  children?: React.ReactNode; 
 }
 
 export function ConnectionForm({

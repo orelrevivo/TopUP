@@ -85,7 +85,7 @@ const MenuOptions = ({
         }
       )}
     >
-      {/* Top Section: Logo & Notifications */}
+      {}
       <div className="p-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Image
@@ -296,9 +296,9 @@ const MenuOptions = ({
         </Sheet>
       </div>
 
-      {/* Middle Section: Switcher & Nav (Scrollable) */}
+      {}
       <div className="flex-1 overflow-y-auto px-4">
-        {/* Account Switcher */}
+        {}
         <Popover>
           <PopoverTrigger asChild>
             <Button
@@ -447,7 +447,7 @@ const MenuOptions = ({
           </PopoverContent>
         </Popover>
 
-        {/* Main Navigation */}
+        {}
         <nav>
           <div className="space-y-1">
             {sidebarOpt.map((sidebarOptions) => {

@@ -4,8 +4,8 @@ import { generateId, type Message } from 'ai';
 import ignore from 'ignore';
 import { useEffect, useState } from 'react';
 import { ClientOnly } from '~/components/ui/ClientOnly';
-import { BaseChat } from '~/components/chat/BaseChat';
-import { Chat } from '~/components/chat/Chat.client';
+import { BaseChat } from '~/components/chat/core/BaseChat';
+import { Chat } from '~/components/chat/core/Chat.client';
 import { useGit } from '~/lib/hooks/useGit';
 import { useChatHistory } from '~/lib/persistence';
 import { createCommandsMessage, detectProjectCommands, escapeFalborTags } from '~/utils/projectCommands';
@@ -33,7 +33,7 @@ const IGNORE_PATTERNS = [
   '**/yarn-debug.log*',
   '**/yarn-error.log*',
 
-  // Include this so npm install runs much faster '**/*lock.json',
+  
   '**/*lock.yaml',
 ];
 

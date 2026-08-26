@@ -1,7 +1,3 @@
-/**
- * Drizzle inferred types - safe to import in client components.
- * No runtime database code here.
- */
 import type { InferSelectModel, InferInsertModel } from 'drizzle-orm'
 import type {
   users,
@@ -18,9 +14,9 @@ import type {
   veFunnels,
   veFunnelPages,
   veFunnelsProduct,
+  templates,
+  templateReviews,
 } from './schema'
-
-// ---------- Core app types ----------
 export type Role = 'AGENCY_OWNER' | 'AGENCY_ADMIN' | 'SUBACCOUNT_USER' | 'SUBACCOUNT_GUEST'
 export type User = InferSelectModel<typeof users>
 export type Agency = InferSelectModel<typeof veAgencies>
@@ -36,15 +32,13 @@ export type Action = InferSelectModel<typeof veActions>
 export type Funnel = InferSelectModel<typeof veFunnels>
 export type FunnelPage = InferSelectModel<typeof veFunnelPages>
 export type FunnelProduct = InferSelectModel<typeof veFunnelsProduct>
-
-// ---------- Insert types (for forms) ----------
+export type Template = InferSelectModel<typeof templates>
+export type TemplateReview = InferSelectModel<typeof templateReviews>
 export type NewUser = InferInsertModel<typeof users>
 export type NewAgency = InferInsertModel<typeof veAgencies>
 export type NewSubAccount = InferInsertModel<typeof veSubAccounts>
 export type NewFunnel = InferInsertModel<typeof veFunnels>
 export type NewFunnelPage = InferInsertModel<typeof veFunnelPages>
-
-// ---------- Composite types used by components ----------
 export type AgencyWithSubAccounts = Agency & {
   SubAccount: SubAccount[]
 }
@@ -66,8 +60,6 @@ export type PipelineWithLanes = Pipeline & {
   Lanes: LaneWithTickets[]
 }
 
-// ---------- Stubs for types referenced by components but not in schema ----------
-// These are placeholder types for Prisma compat; extend as needed.
 export type Plan = 'price_1OYxkqFj9oKEERu1NbKUxXxN' | 'price_1OYxkqFj9oKEERu1KfJXJ7GH'
 export type AgencySidebarOption = {
   id: string
@@ -86,9 +78,6 @@ export type Contact = {
   updatedAt: Date
   subAccountId: string
 }
-
-// ---------- Prisma-compatible utility namespace ----------
-// Mimics `Prisma.PromiseReturnType<typeof fn>` pattern used in client components
 export namespace Prisma {
   export type PromiseReturnType<T extends (...args: any) => Promise<any>> =
     Awaited<ReturnType<T>>

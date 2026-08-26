@@ -25,7 +25,7 @@ export default async function DashboardOverview({ params }: { params: { orgId: s
     notFound();
   }
 
-  // Validate the user has access to this organization
+  
   const organization = await db.query.stayupProjects.findFirst({
     where: and(
       eq(stayupProjects.id, params.orgId),
@@ -37,11 +37,11 @@ export default async function DashboardOverview({ params }: { params: { orgId: s
     return <div>Organization not found or you do not have access.</div>;
   }
 
-  // Filter events and issues by this specific organization ID
+  
   const projectIds = [organization.id];
   const activeProjects = 1;
 
-  // Filter events and issues by the user's project IDs
+  
   let totalEvents = 0;
   let unresolvedIssues = 0;
   let recentEvents: any[] = [];

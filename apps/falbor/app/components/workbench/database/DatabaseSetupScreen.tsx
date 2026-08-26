@@ -12,7 +12,7 @@ export function DatabaseSetupScreen({ onConnectSupabase, onCreateDatabase }: Dat
   return (
     <div className="relative bg-[#FBFAFC] dark:bg-[#0B0B0B] flex flex-col lg:flex-row items-center justify-center gap-12 h-full p-8 text-center overflow-hidden">
       <div className="hidden lg:flex flex-1 max-w-2xl w-full items-center justify-center relative z-10">
-        {/* Placeholder images for user to replace */}
+        {}
         <img src="/background/database/image-database-setup-light.png" alt="Database Setup" className="w-full h-auto object-contain dark:hidden" />
         <img src="/background/database/image-database-setup-dark.png" alt="Database Setup" className="w-full h-auto object-contain hidden dark:block" />
       </div>

@@ -3,10 +3,7 @@ import type { NetlifyConnection, NetlifyUser } from '~/types/netlify';
 import { logStore } from './logs';
 import { toast } from 'react-toastify';
 
-// Initialize with stored connection
 const storedConnection = typeof window !== 'undefined' ? localStorage.getItem('netlify_connection') : null;
-
-// envToken removed for security isolation
 
 const initialConnection: NetlifyConnection = storedConnection
   ? JSON.parse(storedConnection)
@@ -20,11 +17,9 @@ export const netlifyConnection = atom<NetlifyConnection>(initialConnection);
 export const isConnecting = atom<boolean>(false);
 export const isFetchingStats = atom<boolean>(false);
 
-// Function to initialize Netlify connection
 export async function autoConnectNetlify() {
   const currentState = netlifyConnection.get();
 
-  // If user is already connected or no token in state, skip auto-connect
   if (currentState.user || !currentState.token) {
     return { success: false, error: 'Already connected or no token' };
   }
@@ -44,18 +39,14 @@ export async function autoConnectNetlify() {
 
     const userData = await response.json();
 
-    // Update the connection state
     const connectionData: Partial<NetlifyConnection> = {
       user: userData as NetlifyUser,
     };
 
-    // Store in localStorage for persistence
     localStorage.setItem('netlify_connection', JSON.stringify(connectionData));
 
-    // Update the store
     updateNetlifyConnection(connectionData);
 
-    // Fetch initial stats
     await fetchNetlifyStats(currentState.token);
   } catch (error) {
     console.error('Error initializing Netlify connection:', error);
@@ -70,7 +61,6 @@ export const updateNetlifyConnection = (updates: Partial<NetlifyConnection>) => 
   const newState = { ...currentState, ...updates };
   netlifyConnection.set(newState);
 
-  // Persist to localStorage
   if (typeof window !== 'undefined') {
     localStorage.setItem('netlify_connection', JSON.stringify(newState));
   }

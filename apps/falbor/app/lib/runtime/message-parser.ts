@@ -7,8 +7,8 @@ const ARTIFACT_TAG_OPEN = '<falborArtifact';
 const ARTIFACT_TAG_CLOSE = '</falborArtifact>';
 const ARTIFACT_ACTION_TAG_OPEN = '<falborAction';
 const ARTIFACT_ACTION_TAG_CLOSE = '</falborAction>';
-const BOLT_QUICK_ACTIONS_OPEN = '<falbor-quick-actions>';
-const BOLT_QUICK_ACTIONS_CLOSE = '</falbor-quick-actions>';
+const FALBOR_QUICK_ACTIONS_OPEN = '<falbor-quick-actions>';
+const FALBOR_QUICK_ACTIONS_CLOSE = '</falbor-quick-actions>';
 
 const logger = createScopedLogger('MessageParser');
 
@@ -61,11 +61,8 @@ interface MessageState {
 function cleanoutMarkdownSyntax(content: string) {
   const codeBlockRegex = /^\s*```\w*\n([\s\S]*?)\n\s*```\s*$/;
   const match = content.match(codeBlockRegex);
-
-  // console.log('matching', !!match, content);
-
   if (match) {
-    return match[1]; // Remove common leading 4-space indent
+    return match[1];
   } else {
     return content;
   }
@@ -81,10 +78,7 @@ function cleanEscapedTags(content: string) {
 }
 export class StreamingMessageParser {
   #messages = new Map<string, MessageState>();
-  #artifactCounter = 0;
-
   constructor(private _options: StreamingMessageParserOptions = {}) { }
-
   parse(messageId: string, input: string) {
     input = input || '';
     let state = this.#messages.get(messageId);
@@ -107,13 +101,11 @@ export class StreamingMessageParser {
     let earlyBreak = false;
 
     while (i < input.length) {
-      if (input.startsWith(BOLT_QUICK_ACTIONS_OPEN, i)) {
-        const actionsBlockEnd = input.indexOf(BOLT_QUICK_ACTIONS_CLOSE, i);
+      if (input.startsWith(FALBOR_QUICK_ACTIONS_OPEN, i)) {
+        const actionsBlockEnd = input.indexOf(FALBOR_QUICK_ACTIONS_CLOSE, i);
 
         if (actionsBlockEnd !== -1) {
-          const actionsBlockContent = input.slice(i + BOLT_QUICK_ACTIONS_OPEN.length, actionsBlockEnd);
-
-          // Find all <falbor-quick-action ...>label</falbor-quick-action> inside
+          const actionsBlockContent = input.slice(i + FALBOR_QUICK_ACTIONS_OPEN.length, actionsBlockEnd);
           const quickActionRegex = /<falbor-quick-action([^>]*)>([\s\S]*?)<\/falbor-quick-action>/g;
           let match;
           const buttons = [];
@@ -133,7 +125,7 @@ export class StreamingMessageParser {
             );
           }
           output += createQuickActionGroup(buttons);
-          i = actionsBlockEnd + BOLT_QUICK_ACTIONS_CLOSE.length;
+          i = actionsBlockEnd + FALBOR_QUICK_ACTIONS_CLOSE.length;
           continue;
         }
       }
@@ -156,7 +148,6 @@ export class StreamingMessageParser {
             let content = currentAction.content.trim();
 
             if ('type' in currentAction && currentAction.type === 'file') {
-              // Try to infer filePath from the first line if missing (e.g. // filename.js)
               if (!currentAction.filePath && content) {
                 const firstLine = content.split('\n')[0];
                 const match = firstLine.match(/(?:\/\/|#|<!--)\s*(?:file:?|filename:?)\s*([\/\w\-\.]+\.\w+)/i) ||
@@ -165,8 +156,6 @@ export class StreamingMessageParser {
                   currentAction.filePath = match[1];
                 }
               }
-
-              // Remove markdown code block syntax if present and file is not markdown
               if (!currentAction.filePath?.endsWith('.md')) {
                 content = cleanoutMarkdownSyntax(content);
                 content = cleanEscapedTags(content);
@@ -182,14 +171,7 @@ export class StreamingMessageParser {
             this._options.callbacks?.onActionClose?.({
               artifactId: currentArtifact.id,
               messageId,
-
-              /**
-               * We decrement the id because it's been incremented already
-               * when `onActionOpen` was emitted to make sure the ids are
-               * the same.
-               */
               actionId: String(state.actionId - 1),
-
               action: currentAction as FalborAction,
             });
 
@@ -346,14 +328,9 @@ export class StreamingMessageParser {
           break;
         }
       } else {
-        /*
-         * Note: Auto-file-creation from code blocks is now handled by EnhancedMessageParser
-         * to avoid duplicate processing and provide better shell command detection
-         */
         output += input[i];
         i++;
       }
-
       if (earlyBreak) {
         break;
       }
@@ -470,7 +447,7 @@ export class StreamingMessageParser {
       logger.warn(`Unknown action type '${actionType}'`);
     }
 
-    return actionAttributes as unknown as any; // Cast as any because it's inferred as BaseAction elsewhere
+    return actionAttributes as unknown as any;
   }
 
   #extractAttribute(tag: string, attributeName: string): string | undefined {

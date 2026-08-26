@@ -8,7 +8,7 @@ interface ProfileActivityProps {
 }
 
 export async function ProfileActivity({ username }: ProfileActivityProps) {
-  // Get user ID
+  
   const [user] = await db.select({ id: users.id }).from(users).where(eq(users.username, username)).limit(1);
 
   const heatmapData: { count: number, dateStr: string }[][] = [];
@@ -18,20 +18,20 @@ export async function ProfileActivity({ username }: ProfileActivityProps) {
 
   const startDate = startOfDay(subWeeks(new Date(), WEEKS));
 
-  // Fetch chats from the last 24 weeks
+  
   const userChats = await db
     .select({ createdAt: chats.createdAt })
     .from(chats)
     .where(and(eq(chats.userId, user.id), gte(chats.createdAt, startDate)));
 
-  // Map dates to counts
+  
   const activityMap = new Map<string, number>();
   userChats.forEach(chat => {
     const dateStr = format(chat.createdAt, 'yyyy-MM-dd');
     activityMap.set(dateStr, (activityMap.get(dateStr) || 0) + 1);
   });
 
-  // Build the 24-week grid
+  
   let currentDate = startDate;
   for (let w = 0; w < WEEKS; w++) {
     const week = [];

@@ -15,7 +15,7 @@ type Props = {
 }
 
 const Page = async ({ params }: Props) => {
-  // Catch undefined string passed via URL
+  
   if (params.funnelPageId === 'undefined' || !params.funnelPageId) {
     redirect(`/visual-editor/subaccount/${params.subaccountId}/funnels/${params.funnelId}`)
   }
@@ -26,7 +26,7 @@ const Page = async ({ params }: Props) => {
       where: (table, { eq }) => eq(table.id, params.funnelPageId),
     })
   } catch (err) {
-    // Catch invalid UUID errors quietly
+    
   }
   if (!funnelPageDetails) {
     return redirect(

@@ -32,7 +32,7 @@ interface ProjectAction {
   variant?: 'default' | 'destructive' | 'outline';
 }
 
-// Supabase logo SVG component
+
 const SupabaseLogo = () => (
   <svg viewBox="0 0 109 113" className="w-5 h-5">
     <path
@@ -63,7 +63,7 @@ export default function SupabaseTab() {
   const [isProjectActionLoading, setIsProjectActionLoading] = useState(false);
   const [selectedProjectId, setSelectedProjectId] = useState<string>('');
 
-  // Connection testing function - uses server-side API to test environment token
+  
   const testConnection = async () => {
     setConnectionTest({
       status: 'testing',
@@ -102,7 +102,7 @@ export default function SupabaseTab() {
     }
   };
 
-  // Project actions
+  
   const projectActions: ProjectAction[] = [
     {
       name: 'Get API Keys',
@@ -189,14 +189,14 @@ export default function SupabaseTab() {
     },
   ];
 
-  // Initialize connection on component mount - check server-side token first
+  
   useEffect(() => {
     const initializeConnection = async () => {
       try {
-        // First try to initialize using server-side token
+        
         await initializeSupabaseConnection();
 
-        // If no connection was established, the user will need to manually enter a token
+        
         const currentState = supabaseConnection.get();
 
         if (!currentState.user) {
@@ -313,7 +313,7 @@ export default function SupabaseTab() {
         </CollapsibleTrigger>
         <CollapsibleContent className="overflow-hidden">
           <div className="space-y-4 mt-4">
-            {/* Supabase Overview Dashboard */}
+            {}
             {connection.stats?.projects?.length ? (
               <div className="mb-6 p-4 bg-falbor-elements-background-depth-1 rounded-lg border border-falbor-elements-borderColor">
                 <h4 className="text-sm font-medium text-falbor-elements-textPrimary mb-3">Supabase Overview</h4>
@@ -404,7 +404,7 @@ export default function SupabaseTab() {
                           </span>
                         </div>
 
-                        {/* Project Details Grid */}
+                        {}
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-3 pt-3 border-t border-falbor-elements-borderColor">
                           <div className="text-center">
                             <div className="text-sm font-semibold text-falbor-elements-textPrimary">
@@ -467,7 +467,7 @@ export default function SupabaseTab() {
                           ))}
                         </div>
 
-                        {/* Project Details */}
+                        {}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div className="bg-falbor-elements-background-depth-2 p-3 rounded-lg space-y-2">
                             <h6 className="text-xs font-medium text-falbor-elements-textPrimary flex items-center gap-2">
@@ -609,7 +609,7 @@ export default function SupabaseTab() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
+      {}
       <motion.div
         className="flex items-center justify-between gap-2"
         initial={{ opacity: 0, y: 20 }}
@@ -653,7 +653,7 @@ export default function SupabaseTab() {
         Connect and manage your Supabase projects with database access, authentication, and storage controls
       </p>
 
-      {/* Connection Test Results */}
+      {}
       {connectionTest && (
         <motion.div
           className={classNames('p-4 rounded-lg border', {
@@ -691,7 +691,7 @@ export default function SupabaseTab() {
         </motion.div>
       )}
 
-      {/* Main Connection Component */}
+      {}
       <motion.div
         className="bg-falbor-elements-background dark:bg-falbor-elements-background border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor rounded-lg"
         initial={{ opacity: 0, y: 20 }}
@@ -820,7 +820,7 @@ export default function SupabaseTab() {
                     </div>
                   </div>
 
-                  {/* Advanced Analytics */}
+                  {}
                   <div className="mb-6 space-y-4">
                     <h4 className="text-sm font-medium text-falbor-elements-textPrimary">Performance Analytics</h4>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -924,7 +924,7 @@ export default function SupabaseTab() {
                     </div>
                   </div>
 
-                  {/* Resource Utilization */}
+                  {}
                   <div className="mb-6">
                     <h4 className="text-sm font-medium text-falbor-elements-textPrimary mb-2">Resource Overview</h4>
                     <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
@@ -1004,7 +1004,7 @@ export default function SupabaseTab() {
                     </div>
                   </div>
 
-                  {/* Usage Metrics */}
+                  {}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-3 bg-falbor-elements-background-depth-1 rounded-lg border border-falbor-elements-borderColor">
                       <div className="flex items-center gap-2 mb-2">

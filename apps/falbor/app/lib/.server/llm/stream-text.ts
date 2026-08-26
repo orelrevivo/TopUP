@@ -28,19 +28,16 @@ export interface StreamingOptions extends Omit<Parameters<typeof _streamText>[0]
 const logger = createScopedLogger('stream-text');
 
 function getCompletionTokenLimit(modelDetails: any): number {
-  // 1. If model specifies completion tokens, use that
   if (modelDetails.maxCompletionTokens && modelDetails.maxCompletionTokens > 0) {
     return modelDetails.maxCompletionTokens;
   }
 
-  // 2. Use provider-specific default
   const providerDefault = PROVIDER_COMPLETION_LIMITS[modelDetails.provider];
 
   if (providerDefault) {
     return providerDefault;
   }
 
-  // 3. Final fallback to MAX_TOKENS, but cap at reasonable limit for safety
   return Math.min(MAX_TOKENS, 16384);
 }
 
@@ -49,7 +46,6 @@ function sanitizeText(text: string | any[] | undefined | null): any {
   if (Array.isArray(text)) {
     return text.map((item) => {
       if (item && typeof item === 'object') {
-        // Fallback Guard Rail: if a part lacks a recognized type, stringify it
         if (!item.type || typeof item.type !== 'string') {
           return { type: 'text', text: JSON.stringify(item) };
         }
@@ -71,31 +67,17 @@ function sanitizeText(text: string | any[] | undefined | null): any {
   return result === '' ? ' ' : result;
 }
 
-/**
- * Known vision-capable model name patterns.
- * Any model whose name matches one of these patterns supports image inputs.
- */
 const VISION_MODEL_PATTERNS = [
-  // OpenAI
   /^gpt-4/i,
   /^gpt-5/i,
   /^o1/i,
   /^o3/i,
-  // Anthropic
   /^claude-/i,
-  // Google
   /^gemini/i,
-  // xAI
   /^grok/i,
-  // Moonshot vision models
   /vision/i,
 ];
 
-/**
- * Returns true if the given model name is known to support image/vision inputs.
- * Uses both the ModelInfo.vision flag (if set) and a name-based pattern check
- * so that dynamically fetched models are also covered.
- */
 function supportsVision(modelName: string, modelInfo?: any): boolean {
   if (modelInfo?.vision === true) return true;
   if (modelInfo?.vision === false) return false;
@@ -103,10 +85,6 @@ function supportsVision(modelName: string, modelInfo?: any): boolean {
   return VISION_MODEL_PATTERNS.some((pattern) => pattern.test(modelName));
 }
 
-/**
- * Deeply strips `image` and `image_url` parts from the messages array
- * and any `experimental_attachments` if the model is not vision-capable.
- */
 function stripImagesFromMessages(messages: any[], modelDetails: any): any[] {
   const isVisionCapable = supportsVision(modelDetails.name, modelDetails);
 
@@ -116,8 +94,6 @@ function stripImagesFromMessages(messages: any[], modelDetails: any): any[] {
 
   logger.info(`Model ${modelDetails.name} is not vision-capable. Stripping image parts.`);
 
-  // When images are stripped, tell the model the user attached an image so it
-  // acknowledges it instead of acting as if nothing was uploaded.
   const strippedImageNotice = (message: any) => {
     const hadImage =
       (Array.isArray(message?.content) && message.content.some((p: any) => p?.type === 'image' || p?.type === 'image_url')) ||
@@ -148,7 +124,6 @@ function stripImagesFromMessages(messages: any[], modelDetails: any): any[] {
     let newAttachments = message.experimental_attachments;
     let hadImage = false;
 
-    // 1. Strip images from string/array content
     if (Array.isArray(newContent)) {
       const filtered = newContent.filter(
         (part: any) => {
@@ -158,10 +133,9 @@ function stripImagesFromMessages(messages: any[], modelDetails: any): any[] {
         }
       );
       newContent = filtered;
-      if (newContent.length === 0) newContent = ''; // Prevent empty content array
+      if (newContent.length === 0) newContent = '';
     }
 
-    // 2. Strip images from parts array
     if (Array.isArray(newParts)) {
       const filtered = newParts.filter(
         (part: any) => {
@@ -174,7 +148,6 @@ function stripImagesFromMessages(messages: any[], modelDetails: any): any[] {
       if (newParts.length === 0) newParts = undefined;
     }
 
-    // 3. Strip image attachments
     if (Array.isArray(newAttachments)) {
       const filtered = newAttachments.filter(
         (attachment: any) => {
@@ -255,12 +228,10 @@ export async function streamText(props: {
       newMessage.content = sanitizeText(message.content);
     }
 
-    // Sanitize all text parts in parts array, if present
     if (Array.isArray(message.parts)) {
       newMessage.parts = message.parts
         .filter((part: any) => part && typeof part === 'object')
         .map((part: any) => {
-          // Fallback Guard Rail: if a part lacks a recognized type, stringify it
           if (!part.type || typeof part.type !== 'string') {
             return { type: 'text', text: JSON.stringify(part) };
           }
@@ -303,14 +274,12 @@ export async function streamText(props: {
     modelDetails = modelsList.find((m) => m.name === currentModel);
 
     if (!modelDetails) {
-      // Check if it's a Google provider and the model name looks like it might be incorrect
       if (provider.name === 'Google' && currentModel.includes('2.5')) {
         throw new Error(
           `Model "${currentModel}" not found. Gemini 2.5 Pro doesn't exist. Available Gemini models include: gemini-1.5-pro, gemini-2.0-flash, gemini-1.5-flash. Please select a valid model.`,
         );
       }
 
-      // Fallback to first model with warning
       logger.warn(
         `MODEL [${currentModel}] not found in provider [${provider.name}]. Falling back to first model. ${modelsList[0].name}`,
       );
@@ -320,7 +289,6 @@ export async function streamText(props: {
 
   const dynamicMaxTokens = modelDetails ? getCompletionTokenLimit(modelDetails) : Math.min(MAX_TOKENS, 16384);
 
-  // Use model-specific limits directly - no artificial cap needed
   const safeMaxTokens = dynamicMaxTokens;
 
   logger.info(
@@ -343,10 +311,10 @@ export async function streamText(props: {
       chatMode,
     }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData, undefined, neonProjectData);
 
-  // Prepend critical file-writing rules to every system prompt.
   const FILE_WRITING_ENFORCEMENT = `
 <CRITICAL_ENFORCEMENT_RULES>
   THESE ARE THE MOST IMPORTANT RULES FOR GENERATING ARTIFACTS AND CODE. YOU MUST FOLLOW THEM EXACTLY OR YOUR OUTPUT WILL BREAK.
+
 
   1. WRAP EVERYTHING IN AN ARTIFACT: ALL code files, shell commands, and questions MUST be placed inside a single \`<falborArtifact>\` block. NEVER output raw JSON or code outside of an artifact, UNLESS you are calling an available JSON tool/function. You are fully allowed to use the provided tools (like gmail_search_emails, slack_post_message, etc.) as needed.
   2. CONVERSATIONAL CONTEXT: ALWAYS provide a brief, friendly explanation or summary in plain text BEFORE the \`<falborArtifact>\` block. NEVER output just an artifact with no conversational context above it.
@@ -372,12 +340,12 @@ export async function streamText(props: {
      // ...
   10. INTERACTIVE QUESTIONS ONLY: You must NEVER use markdown lists for choices/questions (e.g. "1. Option A"). You must ALWAYS use the \`<falborAction type="question">\` block.
 
+
   CORRECT FORMAT EXAMPLE (HOW TO WRITE FILES AND ASK QUESTIONS):
   Here is the portfolio MVP you requested! I have set up the main page and included a question to finalize the design.
   <falborArtifact id="portfolio-mvp-setup" title="Portfolio MVP Setup">
     <falborAction type="file" filePath="app/page.tsx">
       import React from 'react';
-      
       export default function Page() {
         return (
           <div className="min-h-screen bg-black text-white">
@@ -396,12 +364,13 @@ export async function streamText(props: {
   </falborArtifact>
 </CRITICAL_ENFORCEMENT_RULES>
 
+
 `;
   systemPrompt = FILE_WRITING_ENFORCEMENT + systemPrompt;
 
-
   if (isSlidesMode) {
     systemPrompt += `
+
 
 ================================================================================
 You are in SLIDES PRESENTATION MODE.
@@ -427,6 +396,7 @@ IMPORTANT REQUIREMENTS FOR SLIDES MODE:
 3. NEVER use <function_calls>, <invoke>, or <parameter> tags. Output the <falborArtifact> DIRECTLY in your response.
 4. Separate every file using its own <falborAction type="file" filePath="path/to/file"> block. Do not combine multiple files into one.
 
+
 CORRECT EXAMPLE FORMAT:
 <falborArtifact id="my-project" title="My Project">
   <falborAction type="file" filePath="package.json">
@@ -439,6 +409,7 @@ console.log("Hello");
   </falborAction>
 </falborArtifact>
 
+
 ${systemPrompt}`;
   }
 
@@ -447,10 +418,11 @@ ${systemPrompt}`;
 
     systemPrompt = `${systemPrompt}
 
+
     Below is the artifact containing the context loaded into context buffer for you to have knowledge of and might need changes to fullfill current user request.
     CONTEXT BUFFER:
     ---
-    ${codeContext}
+${codeContext}
     ---
     `;
 
@@ -459,7 +431,7 @@ ${systemPrompt}`;
       below is the chat history till now
       CHAT SUMMARY:
       ---
-      ${props.summary}
+${props.summary}
       ---
       `;
 
@@ -491,8 +463,9 @@ ${systemPrompt}`;
       .join('\n');
     systemPrompt = `${systemPrompt}
 
+
     IMPORTANT: The following files are locked and MUST NOT be modified in any way. Do not suggest or make any changes to these files. You can proceed with the request but DO NOT make any changes to these files specifically:
-    ${lockedFilesListString}
+${lockedFilesListString}
     ---
     `;
   } else {
@@ -500,27 +473,19 @@ ${systemPrompt}`;
   }
 
   logger.info(`Sending llm call to ${provider.name} with model ${modelDetails.name}`);
-  console.log('\n\n======================================================');
-  console.log('✅ 100% VERIFIED: You are talking to model:', modelDetails.name);
-  console.log('======================================================\n\n');
-
-  // Log reasoning model detection and token parameters
   const isReasoning = isReasoningModel(modelDetails.name);
   logger.info(
     `Model "${modelDetails.name}" is reasoning model: ${isReasoning}, using ${isReasoning ? 'maxCompletionTokens' : 'maxTokens'}: ${safeMaxTokens}`,
   );
 
-  // Validate token limits before API call
   if (safeMaxTokens > (modelDetails.maxTokenAllowed || 128000)) {
     logger.warn(
       `Token limit warning: requesting ${safeMaxTokens} tokens but model supports max ${modelDetails.maxTokenAllowed || 128000}`,
     );
   }
 
-  // Use maxCompletionTokens for reasoning models (o1, GPT-5), maxTokens for traditional models
   const tokenParams = isReasoning ? { maxCompletionTokens: safeMaxTokens } : { maxTokens: safeMaxTokens };
 
-  // Filter out unsupported parameters for reasoning models
   const filteredOptions =
     isReasoning && options
       ? Object.fromEntries(
@@ -539,7 +504,6 @@ ${systemPrompt}`;
       )
       : options || {};
 
-  // DEBUG: Log filtered options
   logger.info(
     `DEBUG STREAM: Options filtering for model "${modelDetails.name}":`,
     JSON.stringify(
@@ -556,22 +520,8 @@ ${systemPrompt}`;
     ),
   );
 
-  // Strip image/file parts from messages for models that don't support vision.
-  // This prevents the "unknown variant `image_url`" error from non-vision APIs like DeepSeek.
   const visionSafeMessages = stripImagesFromMessages(processedMessages, modelDetails);
 
-  /**
-   * Sanitize core messages before each step so the provider adapter never
-   * receives an unsupported part type (e.g. 'reasoning', 'step-start').
-   *
-   * Root cause: when `experimental_continueSteps` is true the AI SDK
-   * accumulates *all* parts produced by previous steps (including internal
-   * 'reasoning' and 'step-start' parts) and replays them to the model on
-   * every subsequent step.  The @ai-sdk/openai-compatible adapter used by
-   * DeepSeek only handles 'text' and 'tool-call' for assistant messages;
-   * everything else hits the `default:` branch and throws
-   * "Unsupported part: [object Object]".
-   */
   function sanitizeCoreMessages(msgs: any[]): any[] {
     return msgs.map((msg: any) => {
       if (!msg || typeof msg !== 'object') return msg;
@@ -580,7 +530,6 @@ ${systemPrompt}`;
         return {
           ...msg,
           content: msg.content.filter((part: any) => {
-            // Only keep part types the openai-compatible adapter can handle
             const supported = ['text', 'tool-call'];
             return part && typeof part === 'object' && supported.includes(part.type);
           }),
@@ -602,11 +551,6 @@ ${systemPrompt}`;
   }
 
   const streamParams = {
-    // Sanitize accumulated step messages before each step executes.
-    // This is the definitive fix for "Unsupported part: [object Object]"
-    // which happens when experimental_continueSteps replays internal SDK
-    // message parts (reasoning, step-start, etc.) that providers like
-    // DeepSeek's openai-compatible adapter can't handle.
     model: wrapLanguageModel({
       model: provider.getModelInstance({
         model: modelDetails.name,
@@ -616,8 +560,6 @@ ${systemPrompt}`;
       }),
       middleware: {
         wrapStream: async ({ doStream, params }) => {
-          // The set of tool names actually available to the model.
-          // params.tools can be either an object (dict) or an array depending on SDK version.
           const rawTools = (params as any).tools;
           let availableToolNames: Set<string>;
           if (Array.isArray(rawTools)) {
@@ -628,16 +570,12 @@ ${systemPrompt}`;
             availableToolNames = new Set();
           }
 
-          // Track stripped tool-call IDs so we can also remove orphaned tool-result parts.
           const strippedToolCallIds = new Set<string>();
 
-          // Pass 1: Strip tool-call parts from assistant messages when the tool isn't available.
           const promptAfterStrip = params.prompt.map((msg) => {
             if (msg.role === 'assistant' && Array.isArray(msg.content)) {
               const filtered = msg.content.filter((part: any) => {
                 if (part.type === 'tool-call') {
-                  // Only strip if tools ARE configured but this specific tool is missing.
-                  // If availableToolNames is empty, tools aren't loaded — don't strip valid tool calls.
                   if (availableToolNames.size > 0 && !availableToolNames.has(part.toolName)) {
                     console.warn(`[stream-text] Stripping unavailable tool call: ${part.toolName} (id: ${part.toolCallId})`);
                     if (part.toolCallId) strippedToolCallIds.add(part.toolCallId);
@@ -651,11 +589,7 @@ ${systemPrompt}`;
             return msg;
           });
 
-          // Pass 2: Remove orphaned tool-result parts from user messages, and remove
-          // entire messages that become empty after stripping.
           params.prompt = promptAfterStrip.map((msg) => {
-            // In AI SDK internal format, tool results are stored as 'tool-result' parts
-            // inside 'user' role messages — NOT as separate 'role: tool' messages.
             if (msg.role === 'user' && Array.isArray(msg.content) && strippedToolCallIds.size > 0) {
               const filtered = msg.content.filter((part: any) => {
                 if (part.type === 'tool-result' && strippedToolCallIds.has(part.toolCallId)) {
@@ -664,11 +598,9 @@ ${systemPrompt}`;
                 }
                 return true;
               });
-              // If a user message becomes completely empty after removing tool results, drop it.
               if (filtered.length === 0) return null;
               return { ...msg, content: filtered };
             }
-            // Also handle explicit role:'tool' messages (some SDK versions use this format).
             if ((msg as any).role === 'tool') {
               const toolCallId = (msg as any).tool_call_id || (msg as any).toolCallId;
               if (toolCallId && strippedToolCallIds.has(toolCallId)) {
@@ -679,9 +611,6 @@ ${systemPrompt}`;
             return msg;
           }).filter(Boolean) as typeof params.prompt;
 
-          // Detect continuation step: if the last message is an assistant message, 
-          // the AI SDK is trying to auto-continue. Many models (like DeepSeek) 
-          // will repeat themselves if they don't explicitly know they are continuing.
           const lastMsg = params.prompt[params.prompt.length - 1];
           if (lastMsg && lastMsg.role === 'assistant') {
             params.prompt.push({
@@ -747,13 +676,8 @@ CRITICAL RULES:
     messages: (() => {
       let coreMsgs = sanitizeCoreMessages(convertToCoreMessages(visionSafeMessages as any));
 
-      // Token optimization: replace large <falborArtifact> contents in past assistant messages with a placeholder.
-      // This prevents models from wasting completion tokens repeating the exact same file content on subsequent messages,
-      // and drastically reduces prompt tokens (e.g. from 12k to 1k).
       coreMsgs = coreMsgs.map(msg => {
         if (msg.role === 'assistant') {
-          // Match falborArtifact blocks, orphan falborAction blocks, and large markdown code blocks
-          // We make closing tags optional because the model might have hit the token limit
           const replacePatternArtifact = /<falborArtifact[^>]*>[\s\S]*?(?:<\/falborArtifact>|$)/gi;
           const replacePatternAction = /<falborAction[^>]*type="file"[^>]*>[\s\S]*?(?:<\/falborAction>|$)/gi;
           const replacePatternMarkdown = /```(?:jsx?|tsx?|typescript|javascript|html?|css|python|py|json|vue|svelte|php|ruby|go|rust|java|kotlin|swift|c|cpp|csharp)\n([\s\S]{200,}?)(?:```|$)/gi;
@@ -805,7 +729,6 @@ CRITICAL RULES:
     })(),
     ...filteredOptions,
 
-    // Set temperature to 1 for reasoning models (required by OpenAI API)
     ...(isReasoning ? { temperature: 1 } : {}),
 
     ...(isGameMode ? {
@@ -832,7 +755,7 @@ CRITICAL RULES:
                     'Authorization': `Bearer ${openaiKey}`,
                   },
                   body: JSON.stringify({
-                    model: attempt > 1 && lastError.includes('model_not_found') ? 'dall-e-3' : 'gpt-image-2', // User's API key uses gpt-image-2
+                    model: attempt > 1 && lastError.includes('model_not_found') ? 'dall-e-3' : 'gpt-image-2',
                     prompt,
                     n: 1,
                     size: '1024x1024',
@@ -863,7 +786,6 @@ CRITICAL RULES:
                     continue;
                   }
 
-                  // Download the image and convert to base64
                   const imageResponse = await fetch(imageUrl);
                   if (!imageResponse.ok) {
                     lastError = `Failed to download generated image: ${imageResponse.statusText}`;
@@ -890,7 +812,6 @@ CRITICAL RULES:
     } : {}),
   };
 
-  // DEBUG: Log final streaming parameters
   logger.info(
     `DEBUG STREAM: Final streaming params for model "${modelDetails.name}":`,
     JSON.stringify(

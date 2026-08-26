@@ -8,7 +8,7 @@ export function ThemeSync() {
   const theme = useStore(themeStore);
 
   useEffect(() => {
-    // Ensures that the theme attribute survives React hydration and stays synced
+    
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 

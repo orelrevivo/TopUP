@@ -17,7 +17,6 @@ export async function autoSetupVisualEditorWorkspace() {
   })
 
   if (!user) {
-    // If the user isn't in DB yet, create them.
     await db.insert(users).values({
       id: v4(),
       displayName: authUser.displayName || 'Unknown',
@@ -27,16 +26,13 @@ export async function autoSetupVisualEditorWorkspace() {
       createdAt: new Date(),
       updatedAt: new Date(),
     });
-    
+
     user = await db.query.users.findFirst({
       where: (table, { eq }) => eq(table.email, authUser.email),
     });
     if (!user) throw new Error('Failed to create user record');
   }
-
-  // Check if they already have an agency
   if (user.agencyId) {
-    // They have an agency. Check if they have a subaccount
     const agency = await db.query.veAgencies.findFirst({
       where: (table, { eq }) => eq(table.id, user!.agencyId as string),
       with: { SubAccount: true },
@@ -46,8 +42,6 @@ export async function autoSetupVisualEditorWorkspace() {
       if (agency.SubAccount && agency.SubAccount.length > 0) {
         return { agencyId: agency.id, subAccountId: agency.SubAccount[0].id }
       }
-      
-      // Has agency, no subaccount, let's create one
       const subAccountId = v4()
       await db.insert(veSubAccounts).values({
         id: subAccountId,
@@ -118,8 +112,6 @@ export async function autoSetupVisualEditorWorkspace() {
 export async function getUserLatestSubaccount() {
   const authUser = await getAuthUserDetails()
   if (!authUser) throw new Error('Not authenticated')
-
-  // We need to find the user's agency, then their subaccounts
   const user = await db.query.users.findFirst({
     where: (table, { eq }) => eq(table.email, authUser.email),
   })
@@ -136,7 +128,5 @@ export async function getUserLatestSubaccount() {
   if (!agency || !agency.SubAccount || agency.SubAccount.length === 0) {
     throw new Error('No subaccount found')
   }
-
-  // Return the latest one (or just the first one)
   return agency.SubAccount[0].id
 }

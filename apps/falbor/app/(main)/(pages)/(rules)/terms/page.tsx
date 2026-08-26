@@ -36,12 +36,12 @@ export default function TermsOfService() {
       <ThemeHandler force="light" />
       <LandingScrollHandler />
 
-      {/* Sticky Navbar */}
+      {}
       <div className="sticky top-0 left-0 right-0 w-full z-[100] bg-white/80 backdrop-blur-md">
         <DefaultDemo />
       </div>
 
-      {/* Hero Section */}
+      {}
       <div className="relative overflow-hidden bg-gradient-to-b from-[#FFF7F3] to-white border-b border-zinc-100">
         <div
           aria-hidden="true"
@@ -87,9 +87,9 @@ export default function TermsOfService() {
         </div>
       </div>
 
-      {/* Main Content */}
+      {}
       <div className="mx-auto max-w-5xl w-full px-6 py-16 flex flex-col lg:flex-row gap-12">
-        {/* Sidebar TOC */}
+        {}
         <aside className="hidden lg:block w-56 shrink-0">
           <div className="sticky top-28">
             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-4">
@@ -121,9 +121,9 @@ export default function TermsOfService() {
           </div>
         </aside>
 
-        {/* Sections */}
+        {}
         <div className="flex-1 min-w-0">
-          {/* Mobile TOC */}
+          {}
           <div className="lg:hidden mb-10 rounded-2xl border border-zinc-100 bg-zinc-50 p-5">
             <p className="text-xs font-semibold uppercase tracking-widest text-zinc-400 mb-3">
               Quick Navigation
@@ -145,14 +145,14 @@ export default function TermsOfService() {
           </div>
 
           <div className="space-y-12 text-zinc-700 leading-relaxed">
-            {/* 1 */}
+            {}
             <Section id="acceptance" number={1} title="Acceptance of Terms">
               <p>
                 By accessing or using Falbor ("the Service," "we," "us," or "our"), you agree to be legally bound by these Terms of Service ("Terms"). If you do not agree to these Terms, please do not use the Service. Your continued use of Falbor constitutes your ongoing acceptance of any updates to these Terms.
               </p>
             </Section>
 
-            {/* 2 */}
+            {}
             <Section id="description" number={2} title="Description of Service">
               <p>
                 Falbor is an AI-powered chat platform that provides access to large language models and AI tools. The Service is currently in <strong className="text-zinc-900">beta</strong>, meaning features may be incomplete, subject to change, or temporarily unavailable. We make no guarantee of uninterrupted or error-free service during this period.
@@ -162,7 +162,7 @@ export default function TermsOfService() {
               </Callout>
             </Section>
 
-            {/* 3 */}
+            {}
             <Section id="accounts" number={3} title="User Accounts">
               <p>
                 To access most features of Falbor, you must create an account. You are responsible for maintaining the confidentiality of your credentials and for all activity that occurs under your account. You agree to:
@@ -189,7 +189,7 @@ export default function TermsOfService() {
               </p>
             </Section>
 
-            {/* 4 */}
+            {}
             <Section id="credits" number={4} title="Credits & Subscriptions">
               <p>
                 Falbor operates on a credit-based billing system. Here is what you need to know:
@@ -213,7 +213,7 @@ export default function TermsOfService() {
               </p>
             </Section>
 
-            {/* 5 */}
+            {}
             <Section id="acceptable-use" number={5} title="Acceptable Use">
               <p>
                 You agree to use Falbor only for lawful purposes and in a manner that does not infringe on the rights of others. The following activities are strictly prohibited:
@@ -246,7 +246,7 @@ export default function TermsOfService() {
               </p>
             </Section>
 
-            {/* 6 */}
+            {}
             <Section id="ip" number={6} title="Intellectual Property">
               <p>
                 All content, trademarks, logos, and intellectual property associated with Falbor are owned by or licensed to us. You may not copy, distribute, or create derivative works from our proprietary materials without explicit written permission.
@@ -256,7 +256,7 @@ export default function TermsOfService() {
               </p>
             </Section>
 
-            {/* 7 */}
+            {}
             <Section id="privacy" number={7} title="Privacy & Data">
               <p>
                 Your use of Falbor is also governed by our{' '}
@@ -287,7 +287,7 @@ export default function TermsOfService() {
               </p>
             </Section>
 
-            {/* 8 */}
+            {}
             <Section id="disclaimer" number={8} title="Disclaimer of Warranties">
               <p>
                 The Service is provided <strong className="text-zinc-900">"as is"</strong> and{' '}
@@ -313,7 +313,7 @@ export default function TermsOfService() {
               </ul>
             </Section>
 
-            {/* 9 */}
+            {}
             <Section id="liability" number={9} title="Limitation of Liability">
               <p>
                 To the fullest extent permitted by applicable law, Falbor and its affiliates, officers, directors, employees, or agents shall not be liable for any indirect, incidental, special, consequential, or punitive damages arising from your use of or inability to use the Service, even if we have been advised of the possibility of such damages.
@@ -323,7 +323,7 @@ export default function TermsOfService() {
               </p>
             </Section>
 
-            {/* 10 */}
+            {}
             <Section id="termination" number={10} title="Termination">
               <p>
                 We reserve the right to suspend or terminate your access to the Service at any time, with or without notice, for any violation of these Terms or for any other reason at our sole discretion. Upon termination:
@@ -349,14 +349,14 @@ export default function TermsOfService() {
               </p>
             </Section>
 
-            {/* 11 */}
+            {}
             <Section id="changes" number={11} title="Changes to Terms">
               <p>
                 We may update these Terms from time to time. When we make material changes, we will notify you via email or a prominent notice on the platform. Continued use of the Service after changes take effect constitutes acceptance of the updated Terms. We encourage you to review these Terms periodically.
               </p>
             </Section>
 
-            {/* 12 */}
+            {}
             <Section id="contact" number={12} title="Contact Us">
               <p>
                 If you have questions, concerns, or feedback about these Terms of Service, we encourage you to reach out to us:
@@ -375,7 +375,7 @@ export default function TermsOfService() {
               </p>
             </Section>
 
-            {/* Footer note */}
+            {}
             <div className="pt-10 mt-4 border-t border-zinc-100 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <p className="text-sm text-zinc-400">
                 Last updated:{' '}
@@ -404,7 +404,7 @@ export default function TermsOfService() {
   );
 }
 
-// ─── Sub-components ───────────────────────────────────────────────────────────
+
 
 function Section({
   id,

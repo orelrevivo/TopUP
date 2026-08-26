@@ -11,7 +11,7 @@ interface DeployAlertProps {
 export default function DeployChatAlert({ alert, clearAlert, postMessage }: DeployAlertProps) {
   const { type, title, description, content, url, stage, buildStatus, deployStatus } = alert;
 
-  // Determine if we should show the deployment progress
+  
   const showProgress = stage && (buildStatus || deployStatus);
 
   return (
@@ -29,7 +29,7 @@ export default function DeployChatAlert({ alert, clearAlert, postMessage }: Depl
         )}
       >
         <div className="flex items-start">
-          {/* Icon */}
+          {}
           <motion.div
             className="flex-shrink-0"
             initial={{ scale: 0 }}
@@ -47,7 +47,7 @@ export default function DeployChatAlert({ alert, clearAlert, postMessage }: Depl
               )}
             ></div>
           </motion.div>
-          {/* Content */}
+          {}
           <div className="ml-3 flex-1">
             <motion.h3
               initial={{ opacity: 0 }}
@@ -65,11 +65,11 @@ export default function DeployChatAlert({ alert, clearAlert, postMessage }: Depl
             >
               <p>{description}</p>
 
-              {/* Deployment Progress Visualization */}
+              {}
               {showProgress && (
                 <div className="mt-4 mb-2">
                   <div className="flex items-center space-x-2 mb-3">
-                    {/* Build Step */}
+                    {}
                     <div className="flex items-center">
                       <div
                         className={classNames(
@@ -96,7 +96,7 @@ export default function DeployChatAlert({ alert, clearAlert, postMessage }: Depl
                       <span className="ml-2">Build</span>
                     </div>
 
-                    {/* Connector Line */}
+                    {}
                     <div
                       className={classNames(
                         'h-0.5 w-8',
@@ -104,7 +104,7 @@ export default function DeployChatAlert({ alert, clearAlert, postMessage }: Depl
                       )}
                     ></div>
 
-                    {/* Deploy Step */}
+                    {}
                     <div className="flex items-center">
                       <div
                         className={classNames(
@@ -154,7 +154,7 @@ export default function DeployChatAlert({ alert, clearAlert, postMessage }: Depl
               )}
             </motion.div>
 
-            {/* Actions */}
+            {}
             <motion.div
               className="mt-4"
               initial={{ opacity: 0, y: 10 }}

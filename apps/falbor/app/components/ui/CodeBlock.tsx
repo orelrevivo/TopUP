@@ -45,7 +45,7 @@ export function CodeBlock({
         className,
       )}
     >
-      {/* Header */}
+      {}
       <div className="flex items-center justify-between px-4 py-2 bg-falbor-elements-background-depth-3 dark:bg-falbor-elements-background-depth-4 border-b border-falbor-elements-borderColor dark:border-falbor-elements-borderColor-dark">
         <div className="flex items-center gap-2">
           {filename && (
@@ -74,7 +74,7 @@ export function CodeBlock({
         </Tooltip>
       </div>
 
-      {/* Code content */}
+      {}
       <div className={classNames('overflow-auto', 'font-mono text-sm', 'custom-scrollbar')} style={{ maxHeight }}>
         <table className="min-w-full border-collapse">
           <tbody>

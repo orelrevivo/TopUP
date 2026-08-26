@@ -29,11 +29,11 @@ const SubaccountLayout = async ({ children, params }: Props) => {
 
   let notifications: any = []
 
-  // Agency owners and admins have access to all subaccounts — no permission row needed
+  
   const isAgencyLevel = user.role === 'AGENCY_OWNER' || user.role === 'AGENCY_ADMIN'
 
   if (!isAgencyLevel) {
-    // Subaccount-level users need an explicit Permissions row
+    
     const hasPermission = user.Permissions?.find(
       (permissions: any) =>
         permissions.access && permissions.subAccountId === params.subaccountId

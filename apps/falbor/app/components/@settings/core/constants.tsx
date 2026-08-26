@@ -1,7 +1,7 @@
 import type { TabType } from './types';
 import { User, Settings, Sliders, Bell, Star, Database, Cloud, Laptop, Github, Wrench, List, LogOut, Brain, CreditCard, Receipt } from 'lucide-react';
 
-// GitLab icon component
+
 const GitLabIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4">
     <path
@@ -11,14 +11,14 @@ const GitLabIcon = () => (
   </svg>
 );
 
-// Vercel icon component
+
 const VercelIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4">
     <path fill="currentColor" d="M12 2L2 19.777h20L12 2z" />
   </svg>
 );
 
-// Netlify icon component
+
 const NetlifyIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4">
     <path
@@ -28,7 +28,7 @@ const NetlifyIcon = () => (
   </svg>
 );
 
-// Supabase icon component
+
 const SupabaseIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4">
     <path
@@ -102,7 +102,7 @@ export const TAB_DESCRIPTIONS: Record<TabType, string> = {
 };
 
 export const DEFAULT_TAB_CONFIG = [
-  // User Window Tabs (Always visible by default)
+  
   { id: 'settings', visible: true, window: 'user' as const, order: -6 },
   { id: 'profile', visible: true, window: 'user' as const, order: -5 },
   { id: 'pricing', visible: true, window: 'user' as const, order: -3 },
@@ -110,11 +110,11 @@ export const DEFAULT_TAB_CONFIG = [
   { id: 'memories', visible: true, window: 'user' as const, order: -1 },
   { id: 'features', visible: true, window: 'user' as const, order: 0 },
   { id: 'data', visible: true, window: 'user' as const, order: 1 },
-  // { id: 'cloud-providers', visible: true, window: 'user' as const, order: 2 },
-  // { id: 'local-providers', visible: true, window: 'user' as const, order: 3 },
+  
+  
   { id: 'notifications', visible: true, window: 'user' as const, order: 9 },
   { id: 'event-logs', visible: true, window: 'user' as const, order: 10 },
   { id: 'mcp', visible: true, window: 'user' as const, order: 11 },
 
-  // User Window Tabs (In dropdown, initially hidden)
+  
 ];

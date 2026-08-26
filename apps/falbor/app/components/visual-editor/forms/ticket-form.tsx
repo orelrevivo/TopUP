@@ -101,8 +101,7 @@ const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
 
       const fetchData = async () => {
         const response = await searchContacts(
-          //@ts-ignore
-          defaultData.ticket?.Customer?.name
+          defaultData.ticket?.Customer?.name || ''
         )
         setContactList(response)
       }
@@ -238,28 +237,7 @@ const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
                 />
               </SelectTrigger>
               <SelectContent>
-                {/* {allTeamMembers.map((teamMember) => (
-                  <SelectItem
-                    key={teamMember.id}
-                    value={teamMember.id}
-                  >
-                    <div className="flex items-center gap-2">
-                      <Avatar className="w-8 h-8">
-                        <AvatarImage
-                          alt="contact"
-                          src={teamMember.avatarUrl}
-                        />
-                        <AvatarFallback className="bg-primary text-sm text-white">
-                          <User2 size={14} />
-                        </AvatarFallback>
-                      </Avatar>
-
-                      <span className="text-sm text-muted-foreground">
-                        {teamMember.name}
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))} */}
+                { }
               </SelectContent>
             </Select>
             <FormLabel>Customer</FormLabel>
@@ -286,14 +264,15 @@ const TicketForm = ({ getNewTicket, laneId, subaccountId }: Props) => {
                     className="h-9"
                     value={search}
                     onChangeCapture={async (value) => {
-                      //@ts-ignore
-                      setSearch(value.target.value)
+
+                      const inputValue = (value.target as HTMLInputElement).value
+                      setSearch(inputValue)
                       if (saveTimerRef.current)
                         clearTimeout(saveTimerRef.current)
                       saveTimerRef.current = setTimeout(async () => {
                         const response = await searchContacts(
-                          //@ts-ignore
-                          value.target.value
+
+                          inputValue
                         )
                         setContactList(response)
                         setSearch('')

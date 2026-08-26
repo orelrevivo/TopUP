@@ -20,7 +20,7 @@ const NAV_ITEMS: { id: ActiveTab; label: string; icon: string }[] = [
 ];
 
 export function StudioSidebar({ isLoading, lastUpdated, dbTables, selectedTable, onSelectTable }: StudioSidebarProps) {
-  // Group tables by schema
+  
   const schemas = dbTables.reduce((acc, table) => {
     if (!acc[table.schema]) acc[table.schema] = [];
     acc[table.schema].push(table);
@@ -29,7 +29,7 @@ export function StudioSidebar({ isLoading, lastUpdated, dbTables, selectedTable,
 
   const [expandedSchemas, setExpandedSchemas] = React.useState<Record<string, boolean>>({});
 
-  // Expand public schema by default if it exists
+  
   React.useEffect(() => {
     if (dbTables.length > 0 && !expandedSchemas['public'] && schemas['public']) {
       setExpandedSchemas(prev => ({ ...prev, 'public': true }));

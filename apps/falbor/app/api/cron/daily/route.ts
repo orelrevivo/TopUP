@@ -5,9 +5,9 @@ import { eq, lt } from 'drizzle-orm';
 
 export async function POST(request: Request) {
   const authHeader = request.headers.get('Authorization');
-  const cronSecret = process.env.CRON_SECRET || 'fallback-cron-secret';
+  const cronSecret = process.env.CRON_SECRET;
 
-  if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
+  if (!cronSecret || !authHeader || authHeader !== `Bearer ${cronSecret}`) {
     return new Response(JSON.stringify({ error: 'Unauthorized' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' },
@@ -45,8 +45,8 @@ export async function POST(request: Request) {
         deletedSessions: deletedSessions.length,
       },
     });
-  } catch (error: any) {
-    console.error('Daily cron failed:', error);
-    return NextResponse.json({ error: error.message || 'Internal Server Error' }, { status: 500 });
+  } catch (error: unknown) {
+    console.error('Daily cron failed');
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

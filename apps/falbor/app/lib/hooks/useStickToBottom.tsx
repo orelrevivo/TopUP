@@ -41,27 +41,11 @@ export interface StickToBottomState {
 }
 
 const DEFAULT_SPRING_ANIMATION = {
-  /**
-   * A value from 0 to 1, on how much to damp the animation.
-   * 0 means no damping, 1 means full damping.
-   *
-   * @default 0.7
-   */
+
   damping: 0.7,
 
-  /**
-   * The stiffness of how fast/slow the animation gets up to speed.
-   *
-   * @default 0.05
-   */
   stiffness: 0.05,
 
-  /**
-   * The inertial mass associated with the animation.
-   * Higher numbers make the animation slower.
-   *
-   * @default 1.25
-   */
   mass: 1.25,
 };
 
@@ -87,37 +71,12 @@ export type ScrollToBottomOptions =
   | {
       animation?: Animation;
 
-      /**
-       * Whether to wait for any existing scrolls to finish before
-       * performing this one. Or if a millisecond is passed,
-       * it will wait for that duration before performing the scroll.
-       *
-       * @default false
-       */
       wait?: boolean | number;
 
-      /**
-       * Whether to prevent the user from escaping the scroll,
-       * by scrolling up with their mouse.
-       */
       ignoreEscapes?: boolean;
 
-      /**
-       * Only scroll to the bottom if we're already at the bottom.
-       *
-       * @default false
-       */
       preserveScrollPosition?: boolean;
 
-      /**
-       * The extra duration in ms that this scroll event should persist for.
-       * (in addition to the time that it takes to get to the bottom)
-       *
-       * Not to be confused with the duration of the animation -
-       * for that you should adjust the animation option.
-       *
-       * @default 0
-       */
       duration?: number | Promise<void>;
     };
 
@@ -179,7 +138,6 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
     updateEscapedFromLock(escapedFromLock);
   }, []);
 
-  // biome-ignore lint/correctness/useExhaustiveDependencies: not needed
   const state = useMemo<StickToBottomState>(() => {
     let lastCalculation: { targetScrollTop: number; calculatedScrollTop: number } | undefined;
 
@@ -331,11 +289,6 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
 
           state.animation = undefined;
 
-          /**
-           * If we're still below the target, then queue
-           * up another scroll to the bottom with the last
-           * requested animatino.
-           */
           if (state.scrollTop < state.calculatedTargetScrollTop) {
             return scrollToBottom({
               animation: mergeAnimations(optionsRef.current, optionsRef.current.resize),
@@ -390,27 +343,14 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
       state.ignoreScrollToTop = undefined;
 
       if (ignoreScrollToTop && ignoreScrollToTop > scrollTop) {
-        /**
-         * When the user scrolls up while the animation plays, the `scrollTop` may
-         * not come in separate events; if this happens, to make sure `isScrollingUp`
-         * is correct, set the lastScrollTop to the ignored event.
-         */
+
         lastScrollTop = ignoreScrollToTop;
       }
 
       setIsNearBottom(state.isNearBottom);
 
-      /**
-       * Scroll events may come before a ResizeObserver event,
-       * so in order to ignore resize events correctly we use a
-       * timeout.
-       *
-       * @see https://github.com/WICG/resize-observer/issues/25#issuecomment-248757228
-       */
       setTimeout(() => {
-        /**
-         * When theres a resize difference ignore the resize event.
-         */
+
         if (state.resizeDifference || scrollTop === ignoreScrollToTop) {
           return;
         }
@@ -459,11 +399,6 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
         element = element.parentElement;
       }
 
-      /**
-       * The browser may cancel the scrolling from the mouse wheel
-       * if we update it from the animation in meantime.
-       * To prevent this, always escape when the wheel is scrolled up.
-       */
       if (
         element === scrollRef.current &&
         deltaY < 0 &&
@@ -499,10 +434,6 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
 
       state.resizeDifference = difference;
 
-      /**
-       * Sometimes the browser can overscroll past the target,
-       * so check for this and adjust appropriately.
-       */
       if (state.scrollTop > state.targetScrollTop) {
         state.scrollTop = state.targetScrollTop;
       }
@@ -510,10 +441,7 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
       setIsNearBottom(state.isNearBottom);
 
       if (difference >= 0) {
-        /**
-         * If it's a positive resize, scroll to the bottom when
-         * we're already at the bottom.
-         */
+
         const animation = mergeAnimations(
           optionsRef.current,
           previousHeight ? optionsRef.current.resize : optionsRef.current.initial,
@@ -526,11 +454,7 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
           duration: animation === 'instant' ? undefined : RETAIN_ANIMATION_DURATION_MS,
         });
       } else {
-        /**
-         * Else if it's a negative resize, check if we're near the bottom
-         * if we are want to un-escape from the lock, because the resize
-         * could have caused the container to be at the bottom.
-         */
+
         if (state.isNearBottom) {
           setEscapedFromLock(false);
           setIsAtBottom(true);
@@ -539,13 +463,6 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
 
       previousHeight = height;
 
-      /**
-       * Reset the resize difference after the scroll event
-       * has fired. Requires a rAF to wait for the scroll event,
-       * and a setTimeout to wait for the other timeout we have in
-       * resizeObserver in case the scroll event happens after the
-       * resize event.
-       */
       requestAnimationFrame(() => {
         setTimeout(() => {
           if (state.resizeDifference === difference) {
@@ -571,7 +488,7 @@ export const useStickToBottom = (options: StickToBottomOptions = {}) => {
 };
 
 function useRefCallback<T extends (ref: HTMLElement | null) => any>(callback: T, deps: DependencyList) {
-  // biome-ignore lint/correctness/useExhaustiveDependencies: not needed
+
   const result = useCallback((ref: HTMLElement | null) => {
     result.current = ref;
     return callback(ref);

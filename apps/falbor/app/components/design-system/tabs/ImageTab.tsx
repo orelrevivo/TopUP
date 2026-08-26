@@ -43,7 +43,7 @@ export const ImageTab: React.FC<ImageTabProps> = ({
           </div>
           {src && (
             <div className="mt-4 p-2 border border-falbor-elements-borderColor rounded-lg bg-falbor-elements-background-depth-2 flex justify-center">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {}
               <img src={src} alt="Preview" className="max-h-64 object-contain rounded" />
             </div>
           )}

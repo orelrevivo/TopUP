@@ -23,9 +23,9 @@ function toFullUrl(raw: string): string {
   const trimmed = raw.trim();
   if (!trimmed) return '';
   if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed;
-  // If no spaces and has a dot, treat as domain
+  
   if (!trimmed.includes(' ') && trimmed.includes('.')) return 'https://' + trimmed;
-  // Otherwise treat as a search query
+  
   return `https://duckduckgo.com/?q=${encodeURIComponent(trimmed)}`;
 }
 
@@ -35,7 +35,7 @@ export function HackingBrowserPanel({ currentUrl, isStreaming, isSearching, sear
   const [isLoading, setIsLoading] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  // When the AI sends a NAVIGATE command, load that URL
+  
   useEffect(() => {
     if (currentUrl) {
       setIframeUrl(currentUrl);
@@ -44,7 +44,7 @@ export function HackingBrowserPanel({ currentUrl, isStreaming, isSearching, sear
     }
   }, [currentUrl]);
 
-  // When AI starts a web search, automatically navigate to DuckDuckGo
+  
   useEffect(() => {
     if (isSearching && searchQuery) {
       const searchUrl = `https://duckduckgo.com/?q=${encodeURIComponent(searchQuery)}`;
@@ -73,16 +73,16 @@ export function HackingBrowserPanel({ currentUrl, isStreaming, isSearching, sear
 
   return (
     <div className="flex flex-col h-full w-full bg-falbor-elements-background-depth-1 rounded-lg overflow-hidden border border-falbor-elements-borderColor">
-      {/* Browser Chrome */}
+      {}
       <div className="flex flex-col bg-falbor-elements-background-depth-2 border-b border-falbor-elements-borderColor select-none">
-        {/* Traffic Lights + Tabs Row */}
+        {}
         <div className="flex items-center gap-2 px-3 pt-2.5 pb-0">
           <div className="flex items-center gap-1.5 mr-2">
             <div className="w-3 h-3 rounded-full bg-red-500/80" />
             <div className="w-3 h-3 rounded-full bg-yellow-500/80" />
             <div className="w-3 h-3 rounded-full bg-green-500/80" />
           </div>
-          {/* Tab */}
+          {}
           <div className="flex items-center gap-2 bg-falbor-elements-background-depth-1 border border-falbor-elements-borderColor border-b-0 rounded-t-md px-3 py-1.5 min-w-0 max-w-[200px]">
             {favicon && iframeUrl ? (
               <img
@@ -100,7 +100,7 @@ export function HackingBrowserPanel({ currentUrl, isStreaming, isSearching, sear
           </div>
         </div>
 
-        {/* Address Bar Row */}
+        {}
         <div className="flex items-center gap-1.5 px-3 py-2">
           <button
             className="p-1 rounded hover:bg-falbor-elements-background-depth-3 transition-colors"
@@ -129,7 +129,7 @@ export function HackingBrowserPanel({ currentUrl, isStreaming, isSearching, sear
             })} />
           </button>
 
-          {/* URL Bar */}
+          {}
           <div className="flex-1 flex items-center gap-2 bg-falbor-elements-background-depth-3 border border-falbor-elements-borderColor rounded-md px-3 py-1">
             {isLoading ? (
               <div className="i-svg-spinners:3-dots-fade text-falbor-elements-item-contentAccent text-sm flex-shrink-0" />
@@ -157,7 +157,7 @@ export function HackingBrowserPanel({ currentUrl, isStreaming, isSearching, sear
             )}
           </div>
 
-          {/* AI Indicator */}
+          {}
           <AnimatePresence>
             {isSearching && (
               <motion.div
@@ -174,7 +174,7 @@ export function HackingBrowserPanel({ currentUrl, isStreaming, isSearching, sear
         </div>
       </div>
 
-      {/* Browser Viewport */}
+      {}
       <div className="flex-1 relative overflow-hidden bg-white">
         {!iframeUrl ? (
           <div className="flex flex-col items-center justify-center h-full bg-gradient-to-br from-falbor-elements-background-depth-1 to-falbor-elements-background-depth-2 gap-3">
@@ -215,7 +215,7 @@ export function HackingBrowserPanel({ currentUrl, isStreaming, isSearching, sear
           </>
         )}
 
-        {/* AI Browsing Overlay */}
+        {}
         <AnimatePresence>
           {isSearching && (
             <motion.div

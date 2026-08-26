@@ -35,23 +35,20 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const currentChatId = useStore(chatId);
 
-  /*
-   * Load GitHub connection on mount
-   * Helper function to sanitize repository name
-   */
+  
   const sanitizeRepoName = (name: string): string => {
     return (
       name
         .toLowerCase()
-        // Replace spaces and underscores with hyphens
+        
         .replace(/[\s_]+/g, '-')
-        // Remove special characters except hyphens and alphanumeric
+        
         .replace(/[^a-z0-9-]/g, '')
-        // Remove multiple consecutive hyphens
+        
         .replace(/-+/g, '-')
-        // Remove leading/trailing hyphens
+        
         .replace(/^-+|-+$/g, '')
-        // Ensure it's not empty and has reasonable length
+        
         .substring(0, 100) || 'my-project'
     );
   };
@@ -60,13 +57,13 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
     if (isOpen) {
       const connection = getLocalStorage('github_connection');
 
-      // Set a default repository name based on the project name with proper sanitization
+      
       setRepoName(sanitizeRepoName(projectName));
 
       if (connection?.user && connection?.token) {
         setUser(connection.user);
 
-        // Only fetch if we have both user and token
+        
         if (connection.token.trim()) {
           fetchRecentRepos(connection.token);
         }
@@ -74,7 +71,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
     }
   }, [isOpen, projectName]);
 
-  // Filter repositories based on search query
+  
   useEffect(() => {
     if (recentRepos.length === 0) {
       setFilteredRepos([]);
@@ -108,7 +105,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
     try {
       setIsFetchingRepos(true);
 
-      // Fetch ALL repos by paginating through all pages
+      
       let allRepos: GitHubRepoInfo[] = [];
       let page = 1;
       let hasMore = true;
@@ -134,7 +131,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           if (response.status === 401) {
             toast.error('GitHub token expired. Please reconnect your account.');
 
-            // Clear invalid token
+            
             const connection = getLocalStorage('github_connection');
 
             if (connection) {
@@ -142,7 +139,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
               setUser(null);
             }
           } else if (response.status === 403 && response.headers.get('x-ratelimit-remaining') === '0') {
-            // Rate limit exceeded
+            
             const resetTime = response.headers.get('x-ratelimit-reset');
             const resetDate = resetTime ? new Date(parseInt(resetTime) * 1000).toLocaleTimeString() : 'soon';
             toast.error(`GitHub API rate limit exceeded. Limit resets at ${resetDate}`);
@@ -185,7 +182,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
     }
   };
 
-  // Function to create a new repository or push to an existing one
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -201,7 +198,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       return;
     }
 
-    // Validate repository name
+    
     const sanitizedName = sanitizeRepoName(repoName);
 
     if (!sanitizedName || sanitizedName.length < 1) {
@@ -214,7 +211,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       return;
     }
 
-    // Update the repo name field with the sanitized version if it was changed
+    
     if (sanitizedName !== repoName) {
       setRepoName(sanitizedName);
       toast.info(`Repository name sanitized to: ${sanitizedName}`);
@@ -223,12 +220,12 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
     setIsLoading(true);
 
     try {
-      // Initialize Octokit with the GitHub token
+      
       const octokit = new Octokit({ auth: connection.token });
       let repoExists = false;
 
       try {
-        // Check if the repository already exists - ensure repo name is properly sanitized
+        
         const sanitizedRepoName = sanitizeRepoName(repoName);
         const { data: existingRepo } = await octokit.repos.get({
           owner: connection.user.login,
@@ -237,10 +234,10 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
         repoExists = true;
 
-        // If we get here, the repo exists - confirm overwrite
+        
         let confirmMessage = `Repository "${repoName}" already exists. Do you want to update it? This will add or modify files in the repository.`;
 
-        // Add visibility change warning if needed
+        
         if (existingRepo.private !== isPrivate) {
           const visibilityChange = isPrivate
             ? 'This will also change the repository from public to private.'
@@ -256,7 +253,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           return;
         }
 
-        // If visibility needs to be updated
+        
         if (existingRepo.private !== isPrivate) {
           await octokit.repos.update({
             owner: connection.user.login,
@@ -265,46 +262,46 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           });
         }
       } catch (error: any) {
-        // 404 means repo doesn't exist, which is what we want for new repos
+        
         if (error.status !== 404) {
           throw error;
         }
       }
 
-      // Create repository if it doesn't exist
+      
       if (!repoExists) {
         const sanitizedRepoName = sanitizeRepoName(repoName);
         const { data: newRepo } = await octokit.repos.createForAuthenticatedUser({
           name: sanitizedRepoName,
           private: isPrivate,
 
-          // Initialize with a README to avoid empty repository issues
+          
           auto_init: true,
 
-          // Create a .gitignore file for the project
+          
           gitignore_template: 'Node',
         });
 
-        // Set the URL for success dialog
+        
         setCreatedRepoUrl(newRepo.html_url);
 
-        // Since we created the repo with auto_init, we need to wait for GitHub to initialize it
+        
         console.log('Created new repository with auto_init, waiting for GitHub to initialize it...');
 
-        // Wait a moment for GitHub to set up the initial commit
+        
         await new Promise((resolve) => setTimeout(resolve, 2000));
       } else {
-        // Set URL for existing repo
+        
         const sanitizedRepoName = sanitizeRepoName(repoName);
         setCreatedRepoUrl(`https://github.com/${connection.user.login}/${sanitizedRepoName}`);
       }
 
-      // Process files to upload
+      
       const fileEntries = Object.entries(files);
 
-      // Filter out files and format them for display
+      
       const fileList = fileEntries.map(([filePath, content]) => {
-        // The paths are already properly formatted in the GitHubDeploy component
+        
         return {
           path: filePath,
           size: new TextEncoder().encode(content).length,
@@ -313,15 +310,12 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
       setPushedFiles(fileList);
 
-      /*
-       * Now we need to handle the repository, whether it's new or existing
-       * Get the default branch for the repository
-       */
+      
       let defaultBranch: string;
       let baseSha: string | null = null;
 
       try {
-        // For both new and existing repos, get the repository info
+        
         const sanitizedRepoName = sanitizeRepoName(repoName);
         const { data: repo } = await octokit.repos.get({
           owner: connection.user.login,
@@ -330,7 +324,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         defaultBranch = repo.default_branch || 'main';
         console.log(`Repository default branch: ${defaultBranch}`);
 
-        // For a newly created repo (or existing one), get the reference to the default branch
+        
         try {
           const { data: refData } = await octokit.git.getRef({
             owner: connection.user.login,
@@ -341,14 +335,14 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           baseSha = refData.object.sha;
           console.log(`Found existing reference with SHA: ${baseSha}`);
 
-          // Get the latest commit to use as a base for our tree
+          
           const { data: commitData } = await octokit.git.getCommit({
             owner: connection.user.login,
             repo: sanitizedRepoName,
             commit_sha: baseSha,
           });
 
-          // Store the base tree SHA for tree creation
+          
           baseSha = commitData.tree.sha;
           console.log(`Using base tree SHA: ${baseSha}`);
         } catch (refError) {
@@ -364,17 +358,17 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
       try {
         console.log('Creating tree for repository');
 
-        // Create a tree with all files
+        
         const tree = fileEntries.map(([filePath, content]) => ({
-          path: filePath, // We've already formatted the paths correctly
-          mode: '100644' as const, // Regular file
+          path: filePath, 
+          mode: '100644' as const, 
           type: 'blob' as const,
           content,
         }));
 
         console.log(`Creating tree with ${tree.length} files using base: ${baseSha || 'none'}`);
 
-        // Create a tree with all the files, using the base tree if available
+        
         const sanitizedRepoName = sanitizeRepoName(repoName);
         const { data: treeData } = await octokit.git.createTree({
           owner: connection.user.login,
@@ -385,7 +379,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
         console.log('Tree created successfully', treeData.sha);
 
-        // Get the current reference to use as parent for our commit
+        
         let parentCommitSha: string | null = null;
 
         try {
@@ -401,7 +395,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           parentCommitSha = null;
         }
 
-        // Create a commit with the tree
+        
         console.log('Creating commit');
 
         const { data: commitData } = await octokit.git.createCommit({
@@ -409,12 +403,12 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           repo: sanitizedRepoName,
           message: !repoExists ? 'Initial commit from Falbor' : 'Update from Falbor',
           tree: treeData.sha,
-          parents: parentCommitSha ? [parentCommitSha] : [], // Use parent if available
+          parents: parentCommitSha ? [parentCommitSha] : [], 
         });
 
         console.log('Commit created successfully', commitData.sha);
 
-        // Update the reference to point to the new commit
+        
         try {
           console.log(`Updating reference: heads/${defaultBranch} to ${commitData.sha}`);
           await octokit.git.updateRef({
@@ -422,13 +416,13 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
             repo: sanitizedRepoName,
             ref: `heads/${defaultBranch}`,
             sha: commitData.sha,
-            force: true, // Use force to ensure the update works
+            force: true, 
           });
           console.log('Reference updated successfully');
         } catch (refError) {
           console.log('Failed to update reference, attempting to create it', refError);
 
-          // If the reference doesn't exist, create it (shouldn't happen with auto_init, but just in case)
+          
           try {
             await octokit.git.createRef({
               owner: connection.user.login,
@@ -457,7 +451,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         throw new Error(`Failed during git operations: ${gitErrorMsg}`);
       }
 
-      // Save the repository information for this chat
+      
       const sanitizedRepoName = sanitizeRepoName(repoName);
       localStorage.setItem(
         `github-repo-${currentChatId}`,
@@ -468,12 +462,12 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         }),
       );
 
-      // Show success dialog
+      
       setShowSuccessDialog(true);
     } catch (error) {
       console.error('Error pushing to GitHub:', error);
 
-      // Attempt to extract more specific error information
+      
       let errorMessage = 'Failed to push to GitHub';
       let isRetryable = false;
 
@@ -507,22 +501,22 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           errorMessage = `GitHub error: ${error.message}`;
         }
       } else if (typeof error === 'object' && error !== null) {
-        // Octokit errors
+        
         if ('message' in error) {
           errorMessage = `GitHub API error: ${error.message as string}`;
         }
 
-        // GitHub API errors
+        
         if ('documentation_url' in error) {
           console.log('GitHub API documentation:', error.documentation_url);
         }
       }
 
-      // Show error with retry suggestion if applicable
+      
       const finalMessage = isRetryable ? `${errorMessage} Click to retry.` : errorMessage;
       toast.error(finalMessage);
 
-      // Log detailed error for debugging
+      
       console.error('Detailed GitHub deployment error:', {
         error,
         repoName: sanitizeRepoName(repoName),
@@ -545,7 +539,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
   const handleAuthDialogClose = () => {
     setShowAuthDialog(false);
 
-    // Refresh user data after auth
+    
     const connection = getLocalStorage('github_connection');
 
     if (connection?.user && connection?.token) {
@@ -554,7 +548,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
     }
   };
 
-  // Success Dialog
+  
   if (showSuccessDialog) {
     return (
       <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -762,7 +756,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
           </div>
         </Dialog.Portal>
 
-        {/* GitHub Auth Dialog */}
+        {}
         <GitHubAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
       </Dialog.Root>
     );
@@ -853,11 +847,11 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
                           const value = e.target.value;
                           setRepoName(value);
 
-                          // Show real-time feedback for invalid characters
+                          
                           const sanitized = sanitizeRepoName(value);
 
                           if (value && value !== sanitized) {
-                            // Show preview of sanitized name without being too intrusive
+                            
                             e.target.setAttribute('data-sanitized', sanitized);
                           } else {
                             e.target.removeAttribute('data-sanitized');
@@ -1035,7 +1029,7 @@ export function GitHubDeploymentDialog({ isOpen, onClose, projectName, files }: 
         </div>
       </Dialog.Portal>
 
-      {/* GitHub Auth Dialog */}
+      {}
       <GitHubAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
     </Dialog.Root>
   );

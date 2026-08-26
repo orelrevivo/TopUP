@@ -17,11 +17,6 @@ export interface NeonProjectData {
 export class NeonService {
   private static failedProvisionChats = new Set<string>();
 
-  /**
-   * Retrieves an existing Neon database for the chat, or creates a new one via the Neon API.
-   * Returns rich connection data (DATABASE_URL, projectId, etc.) so the AI can wire the
-   * generated website to the provisioned database using Drizzle ORM.
-   */
   static async getOrCreateNeonDatabase(chatId: string): Promise<NeonProjectData | null> {
     try {
       if (this.failedProvisionChats.has(chatId)) {
@@ -78,7 +73,6 @@ export class NeonService {
 
       const data = await res.json();
 
-      // Neon returns connection_uris array on project creation
       const connectionUri = data.connection_uris?.[0]?.connection_uri;
       const projectId = data.project?.id;
       const connectionParams = data.connection_uris?.[0]?.connection_parameters || {};

@@ -5,7 +5,7 @@ import { RotateCw, Trash2, Code, Database, Package, Loader2 } from 'lucide-react
 import { classNames } from '~/utils/classNames';
 import type { OllamaModel } from './types';
 
-// Model Card Component
+
 interface ModelCardProps {
   model: OllamaModel;
   onUpdate: () => void;

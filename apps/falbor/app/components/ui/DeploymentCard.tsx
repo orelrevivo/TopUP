@@ -14,7 +14,7 @@ export function DeploymentCard({ deployment, onEditSave }: DeploymentCardProps) 
   const [isSaving, setIsSaving] = useState(false);
 
   const handleCopy = () => {
-    // Determine the full URL based on relative or absolute
+    
     let fullUrl = deployment.url;
     if (fullUrl.startsWith('/')) {
       fullUrl = `${window.location.origin}${fullUrl}`;
@@ -45,7 +45,7 @@ export function DeploymentCard({ deployment, onEditSave }: DeploymentCardProps) 
     }
   };
 
-  // Determine full URL text to show
+  
   let displayUrl = deployment.url;
   if (displayUrl.startsWith('/')) {
     displayUrl = `${window.location.host}${displayUrl}`;

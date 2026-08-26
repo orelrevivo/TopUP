@@ -16,7 +16,7 @@ interface DropdownItemProps {
   onSelect?: (e: Event) => void;
   className?: string;
   asChild?: boolean;
-  active?: boolean; // marks item as the currently selected option
+  active?: boolean; 
 }
 
 export const DropdownItem = ({ children, onSelect, className, asChild, active }: DropdownItemProps) => (
@@ -26,7 +26,7 @@ export const DropdownItem = ({ children, onSelect, className, asChild, active }:
       'text-falbor-elements-textPrimary',
       'focus:bg-[#E3E3E3] dark:focus:bg-[#2A2A2A] hover:bg-[#E3E3E3] dark:hover:bg-[#2A2A2A]',
       'cursor-default',
-      active && 'bg-[#E3E3E3] dark:bg-[#2A2A2A]', // persistent highlight for selected item
+      active && 'bg-[#E3E3E3] dark:bg-[#2A2A2A]', 
       className,
     )}
     onSelect={onSelect}

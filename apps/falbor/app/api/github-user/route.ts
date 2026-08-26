@@ -1,13 +1,11 @@
 import { NextResponse } from "next/server";
 const json = NextResponse.json;
-import { getApiKeysFromCookie } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
 
 async function githubUserLoader({ request, context }: { request: Request; context: any }) {
   try {
     // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
+    const apiKeys: Record<string, string> = {};
 
     // Try to get GitHub token from various sources
     const githubToken =
@@ -100,8 +98,7 @@ async function githubUserAction({ request, context }: { request: Request; contex
     }
 
     // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
+    const apiKeys: Record<string, string> = {};
 
     // Try to get GitHub token from various sources
     const githubToken =

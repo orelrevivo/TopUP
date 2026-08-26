@@ -112,7 +112,7 @@ export function WorkflowTemplates({ creatingTemplate, onUseTemplate }: WorkflowT
             onClick={() => !creatingTemplate && onUseTemplate(template)}
             className="group flex flex-col bg-falbor-elements-background-depth-1 border-r border-b border-falbor-elements-borderColor overflow-hidden hover:bg-falbor-elements-background-depth-2 transition-all cursor-pointer relative rounded-none"
           >
-            {/* Template Visual */}
+            {}
             <div className="w-full aspect-square bg-falbor-elements-background-depth-3 flex items-center justify-center border-b border-falbor-elements-borderColor relative overflow-hidden group-hover:opacity-90 transition-opacity">
               {template.thumbnailUrl ? (
                 <img 
@@ -125,7 +125,7 @@ export function WorkflowTemplates({ creatingTemplate, onUseTemplate }: WorkflowT
               )}
             </div>
 
-            {/* Template Content */}
+            {}
             <div className="p-6 flex flex-col flex-1">
               <h3 className="font-semibold text-xl text-falbor-elements-textPrimary mb-2">{template.name}</h3>
               <p className="text-base text-falbor-elements-textSecondary line-clamp-2 mb-6 flex-1">

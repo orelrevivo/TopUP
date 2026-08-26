@@ -25,7 +25,7 @@ interface GitHubCacheManagerProps {
   showStats?: boolean;
 }
 
-// Cache management utilities
+
 class CacheManagerService {
   private static readonly _cachePrefix = 'github_';
   private static readonly _cacheKeys = [
@@ -112,7 +112,7 @@ class CacheManagerService {
 
     for (const entry of entries) {
       try {
-        // Re-serialize with minimal data
+        
         const compacted = {
           ...entry.data,
           lastAccessed: Date.now(),
@@ -160,7 +160,7 @@ export function GitHubCacheManager({ className = '', showStats = true }: GitHubC
       setLastClearTime(Date.now());
       refreshCacheData();
 
-      // Trigger a page refresh to update all components
+      
       setTimeout(() => {
         window.location.reload();
       }, 1000);
@@ -179,7 +179,7 @@ export function GitHubCacheManager({ className = '', showStats = true }: GitHubC
       refreshCacheData();
 
       if (removedCount > 0) {
-        // Show success message or trigger update
+        
         console.log(`Removed ${removedCount} expired cache entries`);
       }
     } catch (error) {

@@ -1,8 +1,5 @@
 import { useState, useEffect } from 'react';
 
-/**
- * Hook to initialize and provide access to the IndexedDB database
- */
 export function useIndexedDB() {
   const [db, setDb] = useState<IDBDatabase | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -18,7 +15,6 @@ export function useIndexedDB() {
         request.onupgradeneeded = (event) => {
           const db = (event.target as IDBOpenDBRequest).result;
 
-          // Create object stores if they don't exist
           if (!db.objectStoreNames.contains('chats')) {
             const chatStore = db.createObjectStore('chats', { keyPath: 'id' });
             chatStore.createIndex('updatedAt', 'updatedAt', { unique: false });

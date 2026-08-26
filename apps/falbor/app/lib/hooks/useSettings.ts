@@ -39,7 +39,7 @@ export interface Settings {
 }
 
 export interface UseSettingsReturn {
-  // Theme and UI settings
+
   setTheme: (theme: Settings['theme']) => void;
   setLanguage: (language: string) => void;
   setNotifications: (enabled: boolean) => void;
@@ -47,12 +47,10 @@ export interface UseSettingsReturn {
   setTimezone: (timezone: string) => void;
   settings: Settings;
 
-  // Provider settings
   providers: Record<string, IProviderConfig>;
   activeProviders: ProviderInfo[];
   updateProviderSettings: (provider: string, config: IProviderSetting) => void;
 
-  // Debug and development settings
   debug: boolean;
   enableDebugMode: (enabled: boolean) => void;
   eventLogs: boolean;
@@ -69,16 +67,13 @@ export interface UseSettingsReturn {
   imageGenerationEnabled: boolean;
   enableImageGeneration: (enabled: boolean) => void;
 
-  // Tab configuration
   tabConfiguration: TabWindowConfig;
   resetTabConfiguration: () => void;
 
-  // Design scheme
   applyDesignScheme: boolean;
   setApplyDesignScheme: (enabled: boolean) => void;
 }
 
-// Add interface to match ProviderSetting type
 interface ProviderSettingWithIndex extends IProviderSetting {
   [key: string]: any;
 }
@@ -205,7 +200,7 @@ export function useSettings(): UseSettingsReturn {
 
   useEffect(() => {
     const providers = providersStore.get();
-    const providerSetting: Record<string, IProviderSetting> = {}; // preserve the entire settings object for each provider
+    const providerSetting: Record<string, IProviderSetting> = {};
     Object.keys(providers).forEach((provider) => {
       providerSetting[provider] = providers[provider].settings;
     });

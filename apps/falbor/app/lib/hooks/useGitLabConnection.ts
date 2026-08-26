@@ -31,14 +31,12 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Create API instance - will update when connection changes
   useGitLabAPI(
     connection?.token
       ? { token: connection.token, baseUrl: connection.gitlabUrl || 'https://gitlab.com' }
       : { token: '', baseUrl: 'https://gitlab.com' },
   );
 
-  // Load saved connection on mount
   useEffect(() => {
     loadSavedConnection();
   }, []);
@@ -48,24 +46,22 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
     setError(null);
 
     try {
-      // Check if connection already exists in store (likely from initialization)
+
       if (connection?.user) {
         setIsLoading(false);
         return;
       }
 
-      // Load saved connection from localStorage
       const savedConnection = localStorage.getItem(STORAGE_KEY);
 
       if (savedConnection) {
         const parsed = JSON.parse(savedConnection);
 
         if (parsed.user && parsed.token) {
-          // Update the store with saved connection
+
           gitlabConnectionStore.setGitLabUrl(parsed.gitlabUrl || 'https://gitlab.com');
           gitlabConnectionStore.setToken(parsed.token);
 
-          // Test the connection to make sure it's still valid
           await refreshConnectionData(parsed);
         }
       }
@@ -76,7 +72,6 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
       setError('Failed to load saved connection');
       setIsLoading(false);
 
-      // Clean up corrupted data
       localStorage.removeItem(STORAGE_KEY);
     }
   }, [connection]);
@@ -87,7 +82,7 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
     }
 
     try {
-      // Make direct API call instead of using hook
+
       const baseUrl = connection.gitlabUrl || 'https://gitlab.com';
       const response = await fetch(`${baseUrl}/api/v4/user`, {
         headers: {
@@ -100,17 +95,7 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
         throw new Error(`API error: ${response.status}`);
       }
 
-      // const userData = (await response.json()) as GitLabUserResponse;
-      await response.json(); // Parse response but don't store - data handled by store
-
-      /*
-       * Update connection with user data - unused variable removed
-       * const updatedConnection: GitLabConnection = {
-       *   ...connection,
-       *   user: userData,
-       * };
-       */
-
+      await response.json();
       gitlabConnectionStore.setGitLabUrl(baseUrl);
       gitlabConnectionStore.setToken(connection.token);
     } catch (error) {
@@ -129,17 +114,12 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
 
     try {
       console.log('Calling GitLab store connect method...');
-
-      // Use the store's connect method which handles everything properly
       const result = await gitlabConnectionStore.connect(token, gitlabUrl);
-
       if (!result.success) {
         throw new Error(result.error || 'Connection failed');
       }
 
       console.log('GitLab connection successful, now fetching stats...');
-
-      // Fetch stats after successful connection
       try {
         const statsResult = await gitlabConnectionStore.fetchStats(true);
 
@@ -150,8 +130,6 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
         }
       } catch (statsError) {
         console.error('Failed to fetch GitLab stats:', statsError);
-
-        // Don't fail the connection if stats fail
       }
 
       toast.success('Connected to GitLab successfully!');
@@ -169,17 +147,11 @@ export function useGitLabConnection(): UseGitLabConnectionReturn {
   }, []);
 
   const disconnect = useCallback(() => {
-    // Clear localStorage
     localStorage.removeItem(STORAGE_KEY);
-
-    // Clear all GitLab-related cookies
     Cookies.remove('gitlabToken');
     Cookies.remove('gitlabUsername');
     Cookies.remove('gitlabUrl');
-
-    // Reset store
     gitlabConnectionStore.disconnect();
-
     setError(null);
     toast.success('Disconnected from GitLab');
   }, []);

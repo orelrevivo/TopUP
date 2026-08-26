@@ -36,18 +36,18 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const currentChatId = useStore(chatId);
 
-  // Load GitLab connection on mount
+  
   useEffect(() => {
     if (isOpen) {
       const connection = getLocalStorage('gitlab_connection');
 
-      // Set a default repository name based on the project name
+      
       setRepoName(projectName.replace(/\s+/g, '-').toLowerCase());
 
       if (connection?.user && connection?.token) {
         setUser(connection.user);
 
-        // Only fetch if we have both user and token
+        
         if (connection.token.trim()) {
           fetchRecentRepos(connection.token, connection.gitlabUrl || 'https://gitlab.com');
         }
@@ -55,7 +55,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
     }
   }, [isOpen, projectName]);
 
-  // Filter repositories based on search query
+  
   useEffect(() => {
     if (recentRepos.length === 0) {
       setFilteredRepos([]);
@@ -99,7 +99,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
     }
   };
 
-  // Function to create a new repository or push to an existing one
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -117,7 +117,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
 
     setIsLoading(true);
 
-    // Sanitize repository name to match what the API will create
+    
     const sanitizedRepoName = repoName
       .replace(/[^a-zA-Z0-9-_.]/g, '-')
       .replace(/-+/g, '-')
@@ -128,18 +128,18 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
       const gitlabUrl = connection.gitlabUrl || 'https://gitlab.com';
       const apiService = new GitLabApiService(connection.token, gitlabUrl);
 
-      // Warn user if repository name was changed
+      
       if (sanitizedRepoName !== repoName && sanitizedRepoName !== repoName.toLowerCase()) {
         toast.info(`Repository name sanitized to "${sanitizedRepoName}" to meet GitLab requirements`);
       }
 
-      // Check if project exists using the sanitized name
+      
       const projectPath = `${connection.user.username}/${sanitizedRepoName}`;
       const existingProject = await apiService.getProjectByPath(projectPath);
       const projectExists = existingProject !== null;
 
       if (projectExists && existingProject) {
-        // Confirm overwrite
+        
         const visibilityChange =
           existingProject.visibility !== (isPrivate ? 'private' : 'public')
             ? `\n\nThis will also change the repository from ${existingProject.visibility} to ${isPrivate ? 'private' : 'public'}.`
@@ -154,19 +154,19 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
           return;
         }
 
-        // Update visibility if needed
+        
         if (existingProject.visibility !== (isPrivate ? 'private' : 'public')) {
           toast.info('Updating repository visibility...');
           await apiService.updateProjectVisibility(existingProject.id, isPrivate ? 'private' : 'public');
         }
 
-        // Update project with files
+        
         toast.info('Uploading files to existing repository...');
         await apiService.updateProjectWithFiles(existingProject.id, files);
         setCreatedRepoUrl(existingProject.http_url_to_repo);
         toast.success('Repository updated successfully!');
       } else {
-        // Create new project with files
+        
         toast.info('Creating new repository...');
 
         const newProject = await apiService.createProjectWithFiles(sanitizedRepoName, isPrivate, files);
@@ -174,7 +174,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         toast.success('Repository created successfully!');
       }
 
-      // Set pushed files for display
+      
       const fileList = Object.entries(files).map(([filePath, content]) => ({
         path: filePath,
         size: new TextEncoder().encode(content).length,
@@ -183,7 +183,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
       setPushedFiles(fileList);
       setShowSuccessDialog(true);
 
-      // Save repository info
+      
       localStorage.setItem(
         `gitlab-repo-${currentChatId}`,
         JSON.stringify({
@@ -210,7 +210,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         projectPath: `${connection.user.username}/${sanitizedRepoName}`,
       });
 
-      // Provide specific error messages based on error type
+      
       let errorMessage = 'Failed to push to GitLab';
 
       if (error instanceof Error) {
@@ -252,7 +252,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
   const handleAuthDialogClose = () => {
     setShowAuthDialog(false);
 
-    // Refresh user data after auth
+    
     const connection = getLocalStorage('gitlab_connection');
 
     if (connection?.user && connection?.token) {
@@ -261,7 +261,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
     }
   };
 
-  // Success Dialog
+  
   if (showSuccessDialog) {
     return (
       <Dialog.Root open={isOpen} onOpenChange={(open) => !open && handleClose()}>
@@ -469,7 +469,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
           </div>
         </Dialog.Portal>
 
-        {/* GitLab Auth Dialog */}
+        {}
         <GitLabAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
       </Dialog.Root>
     );
@@ -533,7 +533,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
                         crossOrigin="anonymous"
                         referrerPolicy="no-referrer"
                         onError={(e) => {
-                          // Handle CORS/COEP errors by hiding the image and showing fallback
+                          
                           const target = e.target as HTMLImageElement;
                           target.style.display = 'none';
 
@@ -544,7 +544,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
                           }
                         }}
                         onLoad={(e) => {
-                          // Ensure fallback is hidden when image loads successfully
+                          
                           const target = e.target as HTMLImageElement;
 
                           const fallback = target.parentElement?.querySelector('.avatar-fallback') as HTMLElement;
@@ -758,7 +758,7 @@ export function GitLabDeploymentDialog({ isOpen, onClose, projectName, files }: 
         </div>
       </Dialog.Portal>
 
-      {/* GitLab Auth Dialog */}
+      {}
       <GitLabAuthDialog isOpen={showAuthDialog} onClose={handleAuthDialogClose} />
     </Dialog.Root>
   );

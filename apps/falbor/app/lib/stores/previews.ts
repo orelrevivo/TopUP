@@ -1,7 +1,6 @@
 import type { WebContainer } from '@webcontainer/api';
 import { atom } from 'nanostores';
 
-// Extend Window interface to include our custom property
 declare global {
   interface Window {
     _tabId?: string;
@@ -14,13 +13,10 @@ export interface PreviewInfo {
   baseUrl: string;
 }
 
-// Create a broadcast channel for preview updates
 const PREVIEW_CHANNEL = 'preview-updates';
 
-// Keys too large to broadcast (e.g. base64 avatars). Add any others here.
 const SYNC_BLOCKLIST = new Set(['falbor_profile', 'falbor_user_profile']);
 
-// Maximum byte size we'll include in a broadcast payload (~256 KB)
 const MAX_SYNC_VALUE_BYTES = 256 * 1024;
 
 export class PreviewsStore {
@@ -41,7 +37,6 @@ export class PreviewsStore {
     this.#storageChannel = this.#maybeCreateChannel('storage-sync-channel');
 
     if (this.#broadcastChannel) {
-      // Listen for preview updates from other tabs
       this.#broadcastChannel.onmessage = (event) => {
         const { type, previewId } = event.data;
 
@@ -58,7 +53,6 @@ export class PreviewsStore {
     }
 
     if (this.#storageChannel) {
-      // Listen for storage sync messages
       this.#storageChannel.onmessage = (event) => {
         const { storage, source } = event.data;
 
@@ -68,25 +62,21 @@ export class PreviewsStore {
       };
     }
 
-    // Override localStorage.setItem to broadcast changes to other tabs.
-    // Uses the prototype directly so our override never triggers itself recursively.
     if (typeof window !== 'undefined') {
       const originalSetItem = localStorage.setItem.bind(localStorage);
       const protoSetItem = Object.getPrototypeOf(localStorage).setItem;
 
       localStorage.setItem = (key: string, value: string) => {
-        // Always write to storage first — but guard against quota errors
         try {
           originalSetItem(key, value);
         } catch (err) {
           if (err instanceof DOMException && err.name === 'QuotaExceededError') {
             console.warn(`[Preview] localStorage quota exceeded writing "${key}" (${value.length} chars). Skipping broadcast.`);
-            return; // Don't crash; just skip
+            return;
           }
-          throw err; // Re-throw unexpected errors
+          throw err;
         }
 
-        // Only broadcast small, non-blocklisted keys so we don't explode the channel
         if (!SYNC_BLOCKLIST.has(key) && new Blob([value]).size <= MAX_SYNC_VALUE_BYTES) {
           this._broadcastStorageSync();
         }
@@ -119,7 +109,6 @@ export class PreviewsStore {
     }
   }
 
-  // Generate a unique ID for this tab
   private _getTabId(): string {
     if (typeof window !== 'undefined') {
       if (!window._tabId) {
@@ -132,7 +121,6 @@ export class PreviewsStore {
     return '';
   }
 
-  // Sync storage data between tabs
   private _syncStorage(storage: Record<string, string>) {
     if (typeof window !== 'undefined') {
       const protoSetItem = Object.getPrototypeOf(localStorage).setItem;
@@ -145,7 +133,6 @@ export class PreviewsStore {
         }
       });
 
-      // Force a refresh after syncing storage
       const previews = this.previews.get();
       previews.forEach((preview) => {
         const previewId = this.getPreviewId(preview.baseUrl);
@@ -155,7 +142,6 @@ export class PreviewsStore {
         }
       });
 
-      // Reload iframes
       const iframe = document.querySelector('iframe');
 
       if (iframe) {
@@ -164,7 +150,6 @@ export class PreviewsStore {
     }
   }
 
-  // Broadcast storage state to other tabs — skips blocklisted and oversized keys
   private _broadcastStorageSync() {
     if (typeof window !== 'undefined') {
       const storage: Record<string, string> = {};
@@ -200,16 +185,13 @@ export class PreviewsStore {
       return;
     }
 
-    // Listen for server ready events
     webcontainer.on('server-ready', (port, url) => {
       console.log('[Preview] Server ready on port:', port, url);
       this.broadcastUpdate(url);
 
-      // Initial storage sync when preview is ready
       this._broadcastStorageSync();
     });
 
-    // Listen for port events
     webcontainer.on('port', (port, type, url) => {
       let previewInfo = this.#availablePreviews.get(port);
 
@@ -239,13 +221,11 @@ export class PreviewsStore {
     });
   }
 
-  // Helper to extract preview ID from URL
   getPreviewId(url: string): string | null {
     const match = url.match(/^https?:\/\/([^.]+)\.local-credentialless\.webcontainer-api\.io/);
     return match ? match[1] : null;
   }
 
-  // Broadcast state change to all tabs
   broadcastStateChange(previewId: string) {
     const timestamp = Date.now();
     this.#lastUpdate.set(previewId, timestamp);
@@ -257,7 +237,6 @@ export class PreviewsStore {
     });
   }
 
-  // Broadcast file change to all tabs
   broadcastFileChange(previewId: string) {
     const timestamp = Date.now();
     this.#lastUpdate.set(previewId, timestamp);
@@ -269,7 +248,6 @@ export class PreviewsStore {
     });
   }
 
-  // Broadcast update to all tabs
   broadcastUpdate(url: string) {
     const previewId = this.getPreviewId(url);
 
@@ -285,16 +263,13 @@ export class PreviewsStore {
     }
   }
 
-  // Method to refresh a specific preview
   refreshPreview(previewId: string) {
-    // Clear any pending refresh for this preview
     const existingTimeout = this.#refreshTimeouts.get(previewId);
 
     if (existingTimeout) {
       clearTimeout(existingTimeout);
     }
 
-    // Set a new timeout for this refresh
     const timeout = setTimeout(() => {
       const previews = this.previews.get();
       const preview = previews.find((p) => this.getPreviewId(p.baseUrl) === previewId);
@@ -328,7 +303,6 @@ export class PreviewsStore {
   }
 }
 
-// Create a singleton instance
 let previewsStore: PreviewsStore | null = null;
 
 export function usePreviewStore() {

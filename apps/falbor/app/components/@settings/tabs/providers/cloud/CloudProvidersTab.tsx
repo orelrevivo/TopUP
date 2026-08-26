@@ -16,7 +16,7 @@ import { BiCodeBlock, BiChip } from 'react-icons/bi';
 import { FaCloud, FaBrain } from 'react-icons/fa';
 import type { IconType } from 'react-icons';
 
-// Add type for provider names to ensure type safety
+
 type ProviderName =
   | 'AmazonBedrock'
   | 'Anthropic'
@@ -34,7 +34,7 @@ type ProviderName =
   | 'Together'
   | 'XAI';
 
-// Update the PROVIDER_ICONS type to use the ProviderName type
+
 const PROVIDER_ICONS: Record<ProviderName, IconType> = {
   AmazonBedrock: BsCloud,
   Anthropic: FaBrain,
@@ -53,7 +53,7 @@ const PROVIDER_ICONS: Record<ProviderName, IconType> = {
   XAI: BsRobot,
 };
 
-// Update PROVIDER_DESCRIPTIONS to use the same type
+
 const PROVIDER_DESCRIPTIONS: Partial<Record<ProviderName, string>> = {
   Anthropic: 'Access Claude and other Anthropic models',
   Github: 'Use OpenAI models hosted through GitHub infrastructure',
@@ -66,7 +66,7 @@ const CloudProvidersTab = () => {
   const [filteredProviders, setFilteredProviders] = useState<IProviderConfig[]>([]);
   const [categoryEnabled, setCategoryEnabled] = useState<boolean>(false);
 
-  // Load and filter providers
+  
   useEffect(() => {
     const newFilteredProviders = Object.entries(settings.providers || {})
       .filter(([key]) => !['Ollama', 'LMStudio', 'OpenAILike'].includes(key))
@@ -83,14 +83,14 @@ const CloudProvidersTab = () => {
     const sorted = newFilteredProviders.sort((a, b) => a.name.localeCompare(b.name));
     setFilteredProviders(sorted);
 
-    // Update category enabled state
+    
     const allEnabled = newFilteredProviders.every((p) => p.settings.enabled);
     setCategoryEnabled(allEnabled);
   }, [settings.providers]);
 
   const handleToggleCategory = useCallback(
     (enabled: boolean) => {
-      // Update all providers
+      
       filteredProviders.forEach((provider) => {
         settings.updateProviderSettings(provider.name, { ...provider.settings, enabled });
       });
@@ -103,7 +103,7 @@ const CloudProvidersTab = () => {
 
   const handleToggleProvider = useCallback(
     (provider: IProviderConfig, enabled: boolean) => {
-      // Update the provider settings in the store
+      
       settings.updateProviderSettings(provider.name, { ...provider.settings, enabled });
 
       if (enabled) {
@@ -121,7 +121,7 @@ const CloudProvidersTab = () => {
     (provider: IProviderConfig, baseUrl: string) => {
       const newBaseUrl: string | undefined = baseUrl.trim() || undefined;
 
-      // Update the provider settings in the store
+      
       settings.updateProviderSettings(provider.name, { ...provider.settings, baseUrl: newBaseUrl });
 
       logStore.logProvider(`Base URL updated for ${provider.name}`, {

@@ -25,7 +25,7 @@ import { Collapsible, CollapsibleTrigger, CollapsibleContent } from '~/component
 import { formatDistanceToNow } from 'date-fns';
 import { Badge } from '~/components/ui/Badge';
 
-// Add the Netlify logo SVG component at the top of the file
+
 const NetlifyLogo = () => (
   <svg viewBox="0 0 40 40" className="w-5 h-5">
     <path
@@ -35,7 +35,7 @@ const NetlifyLogo = () => (
   </svg>
 );
 
-// Add new interface for site actions
+
 interface SiteAction {
   name: string;
   icon: React.ComponentType<any>;
@@ -69,14 +69,14 @@ export default function NetlifyConnection() {
   const [isActionLoading, setIsActionLoading] = useState(false);
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Add site actions
+  
   const siteActions: SiteAction[] = [
     {
       name: 'Clear Cache',
       icon: ArrowPathIcon,
       action: async (siteId: string) => {
         try {
-          // Try to get site details first to check for build hooks
+          
           const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -96,12 +96,12 @@ export default function NetlifyConnection() {
 
           const siteData = (await siteResponse.json()) as any;
 
-          // Check if this looks like a free account (limited features)
+          
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
-          // If site has build hooks, try triggering a build instead
+          
           if (siteData.build_settings && siteData.build_settings.repo_url) {
-            // Try to trigger a build by making a POST to the site's build endpoint
+            
             const buildResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/builds`, {
               method: 'POST',
               headers: {
@@ -117,13 +117,13 @@ export default function NetlifyConnection() {
               toast.success('Build triggered with cache clear');
               return;
             } else if (buildResponse.status === 422) {
-              // Often indicates free account limitation
+              
               toast.warning('Build trigger failed. This feature may not be available on free accounts.');
               return;
             }
           }
 
-          // Fallback: Try the standard cache purge endpoint
+          
           const cacheResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/purge_cache`, {
             method: 'POST',
             headers: {
@@ -158,7 +158,7 @@ export default function NetlifyConnection() {
       icon: CogIcon,
       action: async (siteId: string) => {
         try {
-          // Get site info first to check account type
+          
           const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -172,7 +172,7 @@ export default function NetlifyConnection() {
           const siteData = (await siteResponse.json()) as any;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
-          // Get environment variables
+          
           const envResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/env`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -228,7 +228,7 @@ export default function NetlifyConnection() {
       icon: CodeBracketIcon,
       action: async (siteId: string) => {
         try {
-          // Get site info first to check account type
+          
           const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -272,7 +272,7 @@ export default function NetlifyConnection() {
       icon: ChartBarIcon,
       action: async (siteId: string) => {
         try {
-          // Get site info first to check account type
+          
           const siteResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -286,7 +286,7 @@ export default function NetlifyConnection() {
           const siteData = (await siteResponse.json()) as any;
           const isFreeAccount = !siteData.plan || siteData.plan === 'free' || siteData.plan === 'starter';
 
-          // Get site traffic data (if available)
+          
           const analyticsResponse = await fetch(`https://api.netlify.com/api/v1/sites/${siteId}/traffic`, {
             headers: {
               Authorization: `Bearer ${connection.token}`,
@@ -294,14 +294,14 @@ export default function NetlifyConnection() {
           });
 
           if (analyticsResponse.ok) {
-            await analyticsResponse.json(); // Analytics data received
+            await analyticsResponse.json(); 
             toast.success('Site analytics loaded successfully');
           } else if (analyticsResponse.status === 404) {
             if (isFreeAccount) {
               toast.info('Analytics not available on free accounts. Showing basic site info instead.');
             }
 
-            // Fallback to basic site info
+            
             toast.info(`Site: ${siteData.name} - Status: ${siteData.state || 'Unknown'}`);
           } else {
             const errorText = await analyticsResponse.text();
@@ -349,7 +349,7 @@ export default function NetlifyConnection() {
     },
   ];
 
-  // Add deploy management functions
+  
   const handleDeploy = async (siteId: string, deployId: string, action: 'lock' | 'unlock' | 'publish') => {
     try {
       setIsActionLoading(true);
@@ -383,17 +383,17 @@ export default function NetlifyConnection() {
   useEffect(() => {
     console.log('Netlify: Running initialization useEffect');
 
-    // Initialize connection with environment token if available
+    
     autoConnectNetlify();
   }, []);
 
   useEffect(() => {
-    // Check if we have a connection with a token but no stats
+    
     if (connection.user && connection.token && (!connection.stats || !connection.stats.sites)) {
       fetchNetlifyStats(connection.token);
     }
 
-    // Update local state from connection
+    
     if (connection.stats) {
       setSites(connection.stats.sites || []);
       setDeploys(connection.stats.deploys || []);
@@ -424,7 +424,7 @@ export default function NetlifyConnection() {
 
       const userData = (await response.json()) as NetlifyUser;
 
-      // Update the connection store
+      
       updateNetlifyConnection({
         user: userData,
         token: tokenInput,
@@ -432,7 +432,7 @@ export default function NetlifyConnection() {
 
       toast.success('Connected to Netlify successfully');
 
-      // Fetch stats after successful connection
+      
       fetchNetlifyStats(tokenInput);
     } catch (error) {
       console.error('Error connecting to Netlify:', error);
@@ -444,13 +444,13 @@ export default function NetlifyConnection() {
   };
 
   const handleDisconnect = () => {
-    // Clear from localStorage
+    
     localStorage.removeItem('netlify_connection');
 
-    // Remove cookies
+    
     document.cookie = 'netlifyToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;';
 
-    // Update the store
+    
     updateNetlifyConnection({ user: null, token: '' });
     toast.success('Disconnected from Netlify');
   };
@@ -459,7 +459,7 @@ export default function NetlifyConnection() {
     setFetchingStats(true);
 
     try {
-      // Fetch sites
+      
       const sitesResponse = await fetch('https://api.netlify.com/api/v1/sites', {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -473,7 +473,7 @@ export default function NetlifyConnection() {
       const sitesData = (await sitesResponse.json()) as NetlifySite[];
       setSites(sitesData);
 
-      // Fetch recent deploys for the first site (if any)
+      
       let deploysData: NetlifyDeploy[] = [];
       let buildsData: NetlifyBuild[] = [];
       let lastDeployTime = '';
@@ -481,7 +481,7 @@ export default function NetlifyConnection() {
       if (sitesData && sitesData.length > 0) {
         const firstSite = sitesData[0];
 
-        // Fetch deploys
+        
         const deploysResponse = await fetch(`https://api.netlify.com/api/v1/sites/${firstSite.id}/deploys`, {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -493,12 +493,12 @@ export default function NetlifyConnection() {
           setDeploys(deploysData);
           setDeploymentCount(deploysData.length);
 
-          // Get the latest deploy time
+          
           if (deploysData.length > 0) {
             lastDeployTime = deploysData[0].created_at;
             setLastUpdated(lastDeployTime);
 
-            // Fetch builds for the site
+            
             const buildsResponse = await fetch(`https://api.netlify.com/api/v1/sites/${firstSite.id}/builds`, {
               headers: {
                 Authorization: `Bearer ${token}`,
@@ -513,7 +513,7 @@ export default function NetlifyConnection() {
         }
       }
 
-      // Update the stats in the store
+      
       updateNetlifyConnection({
         stats: {
           sites: sitesData,
@@ -920,7 +920,7 @@ export default function NetlifyConnection() {
                 <div className="i-ph:arrow-square-out w-4 h-4" />
               </a>
             </div>
-            {/* Debug info - remove this later */}
+            {}
             <div className="mt-2 text-xs text-gray-500">
               <p>Debug: Token present: {connection.token ? '✅' : '❌'}</p>
               <p>Debug: User present: {connection.user ? '✅' : '❌'}</p>
@@ -951,7 +951,7 @@ export default function NetlifyConnection() {
                 )}
               </button>
 
-              {/* Debug button - remove this later */}
+              {}
               <button
                 onClick={async () => {
                   console.log('Manual Netlify auto-connect test');

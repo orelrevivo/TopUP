@@ -23,7 +23,7 @@ export function OrganizationSetupForm() {
     setError('');
 
     try {
-      // Create the organization (project)
+      
       const res = await fetch('/api/stayup/projects', {
         method: 'POST',
         headers: {
@@ -35,7 +35,7 @@ export function OrganizationSetupForm() {
       const data = await res.json();
 
       if (res.ok && data.project?.id) {
-        // Redirect to the new organization dashboard
+        
         router.push(`/${data.project.id}`);
         router.refresh();
       } else {

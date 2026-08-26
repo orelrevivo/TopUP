@@ -25,7 +25,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
     refreshStats,
   } = useGitHubStats(connection, {
     autoFetch: true,
-    cacheTimeout: 30 * 60 * 1000, // 30 minutes
+    cacheTimeout: 30 * 60 * 1000, 
   });
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -40,21 +40,21 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
   const repositories = stats?.repos || [];
   const REPOS_PER_PAGE = 12;
 
-  // Filter and search repositories
+  
   const filteredRepositories = useMemo(() => {
     if (!repositories) {
       return [];
     }
 
     const filtered = repositories.filter((repo: GitHubRepoInfo) => {
-      // Search filter
+      
       const matchesSearch =
         !searchQuery ||
         repo.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         repo.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         repo.full_name.toLowerCase().includes(searchQuery.toLowerCase());
 
-      // Type filter
+      
       let matchesFilter = true;
 
       switch (filterBy) {
@@ -76,7 +76,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
       return matchesSearch && matchesFilter;
     });
 
-    // Sort repositories
+    
     filtered.sort((a: GitHubRepoInfo, b: GitHubRepoInfo) => {
       switch (sortBy) {
         case 'name':
@@ -84,7 +84,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
         case 'stars':
           return b.stargazers_count - a.stargazers_count;
         case 'created':
-          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(); // Using updated_at as proxy
+          return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(); 
         case 'updated':
         default:
           return new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime();
@@ -94,7 +94,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
     return filtered;
   }, [repositories, searchQuery, sortBy, filterBy]);
 
-  // Pagination
+  
   const totalPages = Math.ceil(filteredRepositories.length / REPOS_PER_PAGE);
   const startIndex = (currentPage - 1) * REPOS_PER_PAGE;
   const currentRepositories = filteredRepositories.slice(startIndex, startIndex + REPOS_PER_PAGE);
@@ -132,7 +132,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
     setSelectedRepo(null);
   };
 
-  // Reset to first page when filters change
+  
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, sortBy, filterBy]);
@@ -177,7 +177,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      {/* Header with stats */}
+      {}
       <div className="flex items-center justify-between">
         <div>
           <h3 className="text-lg font-semibold text-falbor-elements-textPrimary">Select Repository to Clone</h3>
@@ -203,9 +203,9 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
         </div>
       )}
 
-      {/* Search and Filters */}
+      {}
       <div className="flex flex-col sm:flex-row gap-4">
-        {/* Search */}
+        {}
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-falbor-elements-textTertiary" />
           <input
@@ -217,7 +217,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
           />
         </div>
 
-        {/* Sort */}
+        {}
         <div className="flex items-center gap-2">
           <Calendar className="w-4 h-4 text-falbor-elements-textTertiary" />
           <select
@@ -232,7 +232,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
           </select>
         </div>
 
-        {/* Filter */}
+        {}
         <div className="flex items-center gap-2">
           <Filter className="w-4 h-4 text-falbor-elements-textTertiary" />
           <select
@@ -248,7 +248,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
         </div>
       </div>
 
-      {/* Repository Grid */}
+      {}
       {currentRepositories.length > 0 ? (
         <>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -257,7 +257,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
             ))}
           </div>
 
-          {/* Pagination */}
+          {}
           {totalPages > 1 && (
             <div className="flex items-center justify-between pt-4 border-t border-falbor-elements-borderColor">
               <div className="text-sm text-falbor-elements-textSecondary">
@@ -295,7 +295,7 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
         </div>
       )}
 
-      {/* Branch Selector Modal */}
+      {}
       {selectedRepo && (
         <BranchSelector
           provider="github"

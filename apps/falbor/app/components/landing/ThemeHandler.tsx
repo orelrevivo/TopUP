@@ -11,11 +11,11 @@ export function ThemeHandler({ force }: { force?: "light" | "dark" }) {
         if (force) {
             setTheme(force);
             
-            // Force the HTML tag to dark theme for the landing page
+            
             document.documentElement.setAttribute('data-theme', force);
             document.documentElement.classList.add(force);
 
-            // Override next-themes and themeStore behavior on landing page
+            
             if (force === 'dark') {
                 document.documentElement.classList.remove('light');
                 document.documentElement.style.colorScheme = 'dark';
@@ -23,7 +23,7 @@ export function ThemeHandler({ force }: { force?: "light" | "dark" }) {
         }
         
         return () => {
-            // When unmounting (e.g. user logs in), restore the real theme
+            
             const persistedTheme = localStorage.getItem(kTheme) as Theme | undefined;
             const theme = persistedTheme ?? DEFAULT_THEME;
             let actualTheme = theme;

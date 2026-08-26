@@ -47,7 +47,7 @@ export function ProfileHeader({
   return (
     <div className="relative px-4 sm:px-8 -mt-12 sm:-mt-16 mb-6 flex flex-col sm:flex-row sm:items-end sm:justify-between">
       <div className="flex flex-col sm:flex-row sm:items-end gap-4 sm:gap-6">
-        {/* Avatar */}
+        {}
         <div className="relative w-24 h-24 sm:w-32 sm:h-32 rounded-xl overflow-hidden border-4 border-[#F1EEEA] dark:border-transparent bg-white flex-shrink-0">
           {avatarUrl ? (
             <img
@@ -61,14 +61,14 @@ export function ProfileHeader({
             </div>
           )}
 
-          {/* Status Indicator (online/working) */}
+          {}
           {statusMessage && (
             <div className="absolute bottom-1 right-1 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full" title={statusMessage} />
           )}
         </div>
 
         <div className="flex flex-col pb-2">
-          {/* Badges / Location */}
+          {}
           <div className="flex flex-wrap items-center gap-2 mb-1.5">
             {location && (
               <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 shadow-sm">
@@ -81,12 +81,11 @@ export function ProfileHeader({
           <div className='relative top-1'>
             <h1 className="text-xl sm:text-2xl leading-none font-semibold tracking-tight text-gray-900 dark:text-white flex items-center gap-1.5">
               {display}
-              {/* Badges for Pro users */}
+              {}
               {subscriptionTier !== 'free' && (
                 <div className="flex items-center gap-1">
                   <div className="i-ph:seal-check-fill text-blue-500 w-6 h-6" title="Verified Account" />
-                  {/* <img src="/premium-logo-dark.png" alt="Pro Subscription" className="w-6 h-6 object-contain dark:hidden" title="Pro Subscription" />
-                  <img src="/premium-logo-dark.png" alt="Pro Subscription" className="w-6 h-6 object-contain hidden dark:block" title="Pro Subscription" /> */}
+                  {}
                 </div>
               )}
             </h1>
@@ -103,7 +102,7 @@ export function ProfileHeader({
         </div>
       </div>
 
-      {/* Social Links & Actions */}
+      {}
       <div className="flex flex-col sm:items-end gap-3 sm:mt-0 self-start sm:self-end">
         {!isCurrentUser && (
           <button

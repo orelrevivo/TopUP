@@ -4,7 +4,7 @@ import Popover from '~/components/ui/Popover';
 import { Switch } from '~/components/ui/Switch';
 import { workbenchStore } from '~/lib/stores/workbench';
 import { Button, IconButton } from '../ui';
-import { VisualEditorExportModal } from '../chat/VisualEditorExportModal';
+import { VisualEditorExportModal } from '../chat/modals/VisualEditorExportModal';
 import { publishAIToFunnel } from '~/lib/actions/funnel-publish';
 import { useToast } from '~/components/ui/use-toast';
 import { useRouter } from 'next/navigation';
@@ -28,12 +28,12 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
 
   const handleWorkspaceSuccess = async (subAccountId: string) => {
     try {
-      // Grab all generated files from the workbench store
+      
       const files = workbenchStore.files.get();
       const pages = [];
       let combinedCss = '';
 
-      // First pass: collect all CSS
+      
       for (const [filePath, file] of Object.entries(files)) {
         if (!file) continue;
         if (filePath.endsWith('.css') && file.type === 'file' && typeof file.content === 'string') {
@@ -41,7 +41,7 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
         }
       }
 
-      // Second pass: collect HTML and inject CSS
+      
       for (const [filePath, file] of Object.entries(files)) {
         if (!file) continue;
         if (filePath.endsWith('.html') && file.type === 'file' && typeof file.content === 'string') {
@@ -52,7 +52,7 @@ export const DesignSystemToolbar: React.FC<DesignSystemToolbarProps> = ({
 
           let htmlContent = file.content;
 
-          // Inject styles into the <head> if possible, otherwise prepend
+          
           if (combinedCss) {
             const styleTag = `<style>\n${combinedCss}\n</style>`;
             if (htmlContent.includes('</head>')) {

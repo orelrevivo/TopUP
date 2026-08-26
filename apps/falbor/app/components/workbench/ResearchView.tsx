@@ -21,7 +21,7 @@ export const ResearchView = () => {
     if (!currentResearchData) return;
     setIsGenerating(true);
     try {
-      // Basic extraction from markdown for title/problem
+      
       const lines = currentResearchData.split('\n');
       const firstLine = lines.find(l => l.trim().length > 0) || "My Idea";
       let title = firstLine.replace(/^[#*\d.\s]+/, '').substring(0, 100);
@@ -114,7 +114,7 @@ export const ResearchView = () => {
                 {currentResearchData}
               </ReactMarkdown>
 
-              {/* Share Validation Page Section */}
+              {}
               <div className="mt-12 pt-8 border-t border-falbor-elements-borderColor flex flex-col items-center">
                 <div className="bg-falbor-elements-background-depth-2 border border-falbor-elements-borderColor p-6 rounded-xl w-full max-w-lg text-center flex flex-col gap-4">
                   <div>

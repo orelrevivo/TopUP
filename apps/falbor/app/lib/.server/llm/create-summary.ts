@@ -72,7 +72,6 @@ export async function createSummary(props: {
     modelDetails = modelsList.find((m) => m.name === currentModel);
 
     if (!modelDetails) {
-      // Fallback to first model
       logger.warn(
         `MODEL [${currentModel}] not found in provider [${provider.name}]. Falling back to first model. ${modelsList[0].name}`,
       );
@@ -110,8 +109,6 @@ ${summary.summary}`;
     Array.isArray(message.content)
       ? (message.content.find((item) => item.type === 'text')?.text as string) || ''
       : message.content;
-
-  // select files from the list of code file from the project that might be useful for the current request from the user
   const resp = await generateText({
     system: `
         You are a software engineer. You are working on a project. you need to summarize the work till now and provide a summary of the chat till now.

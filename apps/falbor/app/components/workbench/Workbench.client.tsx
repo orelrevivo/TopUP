@@ -185,7 +185,7 @@ export const Workbench = memo(
       workbenchStore
         .saveCurrentDocument()
         .then(() => {
-          // Explicitly refresh all previews after a file save
+          
           const previewStore = usePreviewStore();
           previewStore.refreshAllPreviews();
         })
@@ -358,7 +358,7 @@ export const Workbench = memo(
   },
 );
 
-// View component for rendering content with motion transitions
+
 interface ViewProps extends HTMLMotionProps<'div'> {
   children: JSX.Element;
 }

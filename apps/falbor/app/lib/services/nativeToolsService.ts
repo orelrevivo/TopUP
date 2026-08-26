@@ -8,16 +8,12 @@ import { createScopedLogger } from '~/utils/logger';
 const logger = createScopedLogger('native-tools-service');
 
 export class NativeToolsService {
-  /**
-   * Generates a Record of Vercel AI SDK tools based on the user's active connections.
-   */
   static async getToolsForConnectors(selectedMCPs: string[], userId: string): Promise<Record<string, any>> {
     const tools: Record<string, any> = {};
 
     if (!selectedMCPs || selectedMCPs.length === 0) return tools;
 
     try {
-      // Fetch all relevant connections in one query
       const connections = await db.select().from(mcpConnections).where(
         and(
           eq(mcpConnections.userId, userId),
@@ -66,10 +62,6 @@ export class NativeToolsService {
     return tools;
   }
 
-  /**
-   * Returns all active connector IDs for a given user from the DB.
-   * Used to auto-enable all connections when mcpEnabled global toggle is ON.
-   */
   static async getAllConnectorIdsForUser(userId: string): Promise<string[]> {
     try {
       const connections = await db
@@ -82,9 +74,6 @@ export class NativeToolsService {
     }
   }
 
-  // ==========================================
-  // GMAIL TOOLS
-  // ==========================================
   private static getGmailTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
@@ -186,15 +175,10 @@ export class NativeToolsService {
     return tools;
   }
 
-  // ==========================================
-  // SLACK TOOLS
-  // ==========================================
   private static getSlackTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
 
-    // Slack token is usually inside authed_user for user token, or access_token for bot token
-    // The Slack OAuth v2 callback typically returns authed_user.access_token for user tokens
     const accessToken = config.authed_user?.access_token || config.access_token;
 
     if (!accessToken) return tools;
@@ -265,9 +249,6 @@ export class NativeToolsService {
     return tools;
   }
 
-  // ==========================================
-  // GITHUB TOOLS
-  // ==========================================
   private static getGitHubTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
@@ -349,9 +330,6 @@ export class NativeToolsService {
     return tools;
   }
 
-  // ==========================================
-  // VERCEL TOOLS
-  // ==========================================
   private static getVercelTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
@@ -405,9 +383,6 @@ export class NativeToolsService {
     return tools;
   }
 
-  // ==========================================
-  // TELEGRAM TOOLS
-  // ==========================================
   private static getTelegramTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
@@ -473,9 +448,6 @@ export class NativeToolsService {
     return tools;
   }
 
-  // ==========================================
-  // KLIPY (GIF) TOOLS
-  // ==========================================
   private static getKlipyTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
@@ -511,9 +483,6 @@ export class NativeToolsService {
     return tools;
   }
 
-  // ==========================================
-  // DISCORD TOOLS
-  // ==========================================
   private static getDiscordTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
@@ -540,9 +509,6 @@ export class NativeToolsService {
     return tools;
   }
 
-  // ==========================================
-  // DISCORD BOT TOOLS
-  // ==========================================
   private static getDiscordBotTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
@@ -578,9 +544,6 @@ export class NativeToolsService {
     return tools;
   }
 
-  // ==========================================
-  // MIRO TOOLS
-  // ==========================================
   private static getMiroTools(connection: any) {
     const tools: Record<string, any> = {};
     const config = connection.config as any;
@@ -637,7 +600,6 @@ export class NativeToolsService {
       }
     });
 
-
     tools['preview_resource_poll'] = tool({
       description: 'Check whether a Miro create-result preview resource is ready.',
       parameters: z.object({
@@ -646,7 +608,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed preview_resource_poll successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing preview_resource_poll: ' + err.message;
@@ -662,7 +623,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed record_ui_feedback successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing record_ui_feedback: ' + err.message;
@@ -678,7 +638,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed user_who_am_i successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing user_who_am_i: ' + err.message;
@@ -694,7 +653,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed board_list_items successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing board_list_items: ' + err.message;
@@ -710,7 +668,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed context_explore successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing context_explore: ' + err.message;
@@ -726,7 +683,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed context_get successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing context_get: ' + err.message;
@@ -742,7 +698,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed diagram_get_dsl successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing diagram_get_dsl: ' + err.message;
@@ -758,7 +713,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed diagram_create successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing diagram_create: ' + err.message;
@@ -774,7 +728,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed table_create successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing table_create: ' + err.message;
@@ -790,7 +743,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed table_list_rows successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing table_list_rows: ' + err.message;
@@ -806,7 +758,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed table_get_latest_update_history successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing table_get_latest_update_history: ' + err.message;
@@ -822,7 +773,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed table_sync_rows successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing table_sync_rows: ' + err.message;
@@ -838,7 +788,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed table_update_view successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing table_update_view: ' + err.message;
@@ -854,7 +803,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed doc_get successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing doc_get: ' + err.message;
@@ -870,7 +818,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed doc_update successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing doc_update: ' + err.message;
@@ -886,7 +833,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed doc_create successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing doc_create: ' + err.message;
@@ -902,7 +848,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed image_get_url successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing image_get_url: ' + err.message;
@@ -918,7 +863,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed image_get_data successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing image_get_data: ' + err.message;
@@ -934,7 +878,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed image_get_upload_url successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing image_get_upload_url: ' + err.message;
@@ -950,7 +893,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed image_create successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing image_create: ' + err.message;
@@ -966,7 +908,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed comment_list_comments successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing comment_list_comments: ' + err.message;
@@ -982,7 +923,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed comment_create successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing comment_create: ' + err.message;
@@ -998,7 +938,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed layout_get_dsl successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing layout_get_dsl: ' + err.message;
@@ -1014,7 +953,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed layout_create successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing layout_create: ' + err.message;
@@ -1030,7 +968,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed layout_read successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing layout_read: ' + err.message;
@@ -1046,7 +983,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed layout_update successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing layout_update: ' + err.message;
@@ -1062,7 +998,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed code_widget_create successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing code_widget_create: ' + err.message;
@@ -1078,7 +1013,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed code_widget_get successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing code_widget_get: ' + err.message;
@@ -1094,7 +1028,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed code_widget_update successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing code_widget_update: ' + err.message;
@@ -1110,7 +1043,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed code_widget_delete successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing code_widget_delete: ' + err.message;
@@ -1126,7 +1058,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed code_widget_list_items successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing code_widget_list_items: ' + err.message;
@@ -1142,7 +1073,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed prototype_get_upload_url successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing prototype_get_upload_url: ' + err.message;
@@ -1158,7 +1088,6 @@ export class NativeToolsService {
       }),
       execute: async ({ boardId, data }) => {
         try {
-          // This is a native API wrapper implementation placeholder
           return 'Executed prototype_create successfully. Note: Native API implementation is in progress.';
         } catch (err: any) {
           return 'Error executing prototype_create: ' + err.message;

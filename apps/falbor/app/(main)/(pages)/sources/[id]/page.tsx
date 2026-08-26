@@ -25,7 +25,7 @@ export default function SourcesDetailsPage({ params }: { params: { id: string } 
         setIsFetching(false);
       })
       .catch(() => {
-        router.push('/sources'); // redirect if not found or error
+        router.push('/sources'); 
       });
   }, [user, params.id, router]);
 

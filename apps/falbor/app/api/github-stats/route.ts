@@ -1,14 +1,12 @@
 import { NextResponse } from "next/server";
 const json = NextResponse.json;
-import { getApiKeysFromCookie } from '~/lib/api/cookies';
 import { withSecurity } from '~/lib/security';
 import type { GitHubUserResponse, GitHubStats } from '~/types/GitHub';
 
 async function githubStatsLoader({ request, context }: { request: Request; context: any }) {
   try {
     // Get API keys from cookies (server-side only)
-    const cookieHeader = request.headers.get('Cookie');
-    const apiKeys = getApiKeysFromCookie(cookieHeader);
+    const apiKeys: Record<string, string> = {};
 
     // Try to get GitHub token from various sources
     const githubToken =

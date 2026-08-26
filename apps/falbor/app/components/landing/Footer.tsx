@@ -7,7 +7,7 @@ export default function Footer() {
       <footer className="rounded-lg border border-white/5 w-full bg-black order-white/5 pt-16 pb-8 px-6 text-white/60 relative z-20">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
 
-          {/* Brand */}
+          {}
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <img src="/logo-light-styled.png" alt="Falbor Logo" className="w-40 object-contain filter invert" />
@@ -18,7 +18,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {/* Links */}
+          {}
           <div className="flex flex-col md:flex-row gap-8 md:gap-16">
             <div className="flex flex-col gap-3">
               <h4 className="text-white font-medium mb-1">Product</h4>
@@ -28,7 +28,7 @@ export default function Footer() {
             <div className="flex flex-col gap-3">
               <h4 className="text-white font-medium mb-1">Company</h4>
               <Link href="/about" className="text-sm hover:text-white transition-colors">About</Link>
-              {/* <Link href="#" className="text-sm hover:text-white transition-colors">Blog</Link> */}
+              {}
             </div>
             <div className="flex flex-col gap-3">
               <h4 className="text-white font-medium mb-1">Legal</h4>

@@ -46,7 +46,7 @@ const SubAccountList = ({ subAccounts }: Props) => {
                 className="h-32 bg-background my-2 border border-border p-4 rounded-xl hover:bg-muted/80 transition-all group relative overflow-hidden pointer-events-auto"
                 onSelect={() => { }}
               >
-                {/* Clickable Card Area */}
+                {}
                 <Link
                   href={`/visual-editor/subaccount/${subaccount.id}`}
                   className="flex gap-4 w-full h-full pointer-events-auto"
@@ -69,7 +69,7 @@ const SubAccountList = ({ subAccounts }: Props) => {
                   </div>
                 </Link>
 
-                {/* Delete Button */}
+                {}
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button

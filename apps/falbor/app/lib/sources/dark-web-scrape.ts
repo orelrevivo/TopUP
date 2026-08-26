@@ -1,6 +1,7 @@
-/**
- * Concurrent .onion URL scraper via Tor.
- * Extracts clean text from dark web pages.
+/*
+ *!---------------------------------------------------------------------------------------------
+ *  This feature is not implemented yet and its built for testing!
+ *--------------------------------------------------------------------------------------------
  */
 import { load } from 'cheerio';
 import { torFetch } from './tor-fetch';
@@ -38,8 +39,6 @@ export async function scrapeUrls(
   timeoutMs = 15_000
 ): Promise<ScrapeResult[]> {
   const onionUrls = urls.filter((u) => u.includes('.onion'));
-
-  // Chunk into batches of maxWorkers
   const results: ScrapeResult[] = [];
   for (let i = 0; i < onionUrls.length; i += maxWorkers) {
     const batch = onionUrls.slice(i, i + maxWorkers);

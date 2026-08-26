@@ -13,7 +13,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
   };
 
   const getIconForExtension = (extension: string): string => {
-    // Code files
+    
     if (['js', 'jsx', 'ts', 'tsx'].includes(extension)) {
       return 'i-ph:file-js';
     }
@@ -74,7 +74,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'i-ph:file-code';
     }
 
-    // Config files
+    
     if (['yml', 'yaml'].includes(extension)) {
       return 'i-ph:file-cloud';
     }
@@ -95,7 +95,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'i-ph:file-lock';
     }
 
-    // Document files
+    
     if (['pdf'].includes(extension)) {
       return 'i-ph:file-pdf';
     }
@@ -116,12 +116,12 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'i-ph:file-text';
     }
 
-    // Image files
+    
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'ico', 'tiff'].includes(extension)) {
       return 'i-ph:file-image';
     }
 
-    // Audio/Video files
+    
     if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(extension)) {
       return 'i-ph:file-audio';
     }
@@ -130,12 +130,12 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'i-ph:file-video';
     }
 
-    // Archive files
+    
     if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(extension)) {
       return 'i-ph:file-zip';
     }
 
-    // Special files
+    
     if (filename === 'package.json') {
       return 'i-ph:package';
     }
@@ -160,12 +160,12 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'i-ph:file-code';
     }
 
-    // Default
+    
     return 'i-ph:file';
   };
 
   const getIconColorForExtension = (extension: string): string => {
-    // Code files
+    
     if (['js', 'jsx'].includes(extension)) {
       return 'text-yellow-500';
     }
@@ -230,7 +230,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'text-cyan-400';
     }
 
-    // Config files
+    
     if (['yml', 'yaml'].includes(extension)) {
       return 'text-purple-300';
     }
@@ -255,7 +255,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'text-green-500';
     }
 
-    // Document files
+    
     if (['pdf'].includes(extension)) {
       return 'text-red-500';
     }
@@ -276,12 +276,12 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'text-gray-500';
     }
 
-    // Image files
+    
     if (['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'ico', 'tiff'].includes(extension)) {
       return 'text-pink-500';
     }
 
-    // Audio/Video files
+    
     if (['mp3', 'wav', 'ogg', 'flac', 'aac'].includes(extension)) {
       return 'text-green-500';
     }
@@ -290,12 +290,12 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'text-blue-500';
     }
 
-    // Archive files
+    
     if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(extension)) {
       return 'text-yellow-600';
     }
 
-    // Special files
+    
     if (filename === 'package.json') {
       return 'text-red-400';
     }
@@ -320,7 +320,7 @@ export function FileIcon({ filename, size = 'md', className }: FileIconProps) {
       return 'text-blue-500';
     }
 
-    // Default
+    
     return 'text-gray-400';
   };
 

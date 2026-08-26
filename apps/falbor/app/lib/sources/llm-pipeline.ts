@@ -8,9 +8,6 @@ import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import type { SearchResult, ScrapeResult } from './types';
-
-// ── Model resolution ─────────────────────────────────────────────────────────
-
 export function resolveModel(modelId: string) {
   const m = modelId.toLowerCase();
 
@@ -26,8 +23,6 @@ export function resolveModel(modelId: string) {
     const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_API_KEY });
     return google(modelId);
   }
-
-  // Default: OpenAI
   const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY });
   return openai(modelId);
 }
@@ -36,7 +31,7 @@ export function autoDetectModel(): string {
   if (process.env.ANTHROPIC_API_KEY) return 'claude-haiku-4-5';
   if (process.env.OPENAI_API_KEY) return 'gpt-4o-mini';
   if (process.env.GOOGLE_API_KEY) return 'gemini-2.0-flash';
-  return 'gpt-4o-mini'; // fallback — will fail gracefully with auth error
+  return 'gpt-4o-mini';
 }
 
 export function getAvailableModels(): string[] {
@@ -55,8 +50,6 @@ export function getAvailableModels(): string[] {
   }
   return models;
 }
-
-// ── Pipeline steps ────────────────────────────────────────────────────────────
 
 export async function refineQuery(modelId: string, userQuery: string): Promise<string> {
   const model = resolveModel(modelId);
@@ -201,6 +194,6 @@ Original Query: ${query}`,
   try {
     const match = text.match(/\[.*?\]/s);
     if (match) return JSON.parse(match[0]);
-  } catch {}
+  } catch { }
   return [];
 }

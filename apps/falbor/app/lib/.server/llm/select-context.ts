@@ -7,8 +7,6 @@ import { createFilesContext, extractCurrentContext, extractPropertiesFromMessage
 import { createScopedLogger } from '~/utils/logger';
 import { LLMManager } from '~/lib/modules/llm/manager';
 
-// Common patterns to ignore, similar to .gitignore
-
 const ig = ignore().add(IGNORE_PATTERNS);
 const logger = createScopedLogger('select-context');
 
@@ -79,7 +77,6 @@ export async function selectContext(props: {
     modelDetails = modelsList.find((m) => m.name === currentModel);
 
     if (!modelDetails) {
-      // Fallback to first model
       logger.warn(
         `MODEL [${currentModel}] not found in provider [${provider.name}]. Falling back to first model. ${modelsList[0].name}`,
       );
@@ -129,7 +126,6 @@ export async function selectContext(props: {
     throw new Error('No user message found');
   }
 
-  // select files from the list of code file from the project that might be useful for the current request from the user
   const resp = await generateText({
     system: `
         You are a software engineer. You are working on a project. You have access to the following files:
@@ -192,7 +188,6 @@ export async function selectContext(props: {
 
   if (!updateContextBuffer) {
     logger.error('Failed to parse updateContextBuffer from response:', response);
-    // Graceful fallback: return empty FileMap instead of crashing the chat
     return {};
   }
 
@@ -219,8 +214,6 @@ export async function selectContext(props: {
     if (!filePaths.includes(fullPath)) {
       logger.error(`File ${path} is not in the list of files above.`);
       return;
-
-      // throw new Error(`File ${path} is not in the list of files above.`);
     }
 
     if (currrentFiles.includes(path)) {
@@ -238,8 +231,6 @@ export async function selectContext(props: {
   logger.info(`Total files: ${totalFiles}`);
 
   return filteredFiles;
-
-  // generateText({
 }
 
 export function getFilePaths(files: FileMap) {

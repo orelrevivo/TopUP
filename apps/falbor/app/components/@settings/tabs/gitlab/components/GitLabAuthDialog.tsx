@@ -30,7 +30,7 @@ export function GitLabAuthDialog({ isOpen, onClose }: GitLabAuthDialogProps) {
       setToken('');
       onClose();
     } catch (error) {
-      // Error handling is done in the hook
+      
       console.error('GitLab connect failed:', error);
     }
   };
