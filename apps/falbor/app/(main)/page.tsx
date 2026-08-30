@@ -29,17 +29,17 @@ import StartFreeSection from "~/components/landing/StartFreeSection";
 import AgentFeaturesSection from "~/components/landing/AgentFeaturesSection";
 
 const SECTIONS = ["Builder", "Database", "Organizations", "Workflow", "Darknet"];
-const TOTAL = SECTIONS.length; 
-const SECTION_SPAN = 1 / TOTAL; 
-const FADE_SPAN = 0.08; 
+const TOTAL = SECTIONS.length;
+const SECTION_SPAN = 1 / TOTAL;
+const FADE_SPAN = 0.08;
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * Math.max(0, Math.min(1, t));
 }
 
 function getOpacity(progress: number, sectionIndex: number): number {
-  
-  
+
+
   const start = sectionIndex * SECTION_SPAN;
   const end = start + FADE_SPAN;
   return lerp(0, 1, (progress - start) / FADE_SPAN);
@@ -65,21 +65,21 @@ function PageContent() {
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bookContainerRef = useRef<HTMLDivElement>(null);
 
-  
+
   const card2Ref = useRef<HTMLDivElement>(null);
   const card3Ref = useRef<HTMLDivElement>(null);
   const card4Ref = useRef<HTMLDivElement>(null);
   const card5Ref = useRef<HTMLDivElement>(null);
 
-  
+
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const [activeSection, setActiveSection] = useState(0);
 
   useEffect(() => {
-    if (user) return; 
+    if (user) return;
 
-    
+
     let attempts = 0;
     const attach = () => {
       const container = scrollContainerRef.current;
@@ -115,7 +115,7 @@ function PageContent() {
       };
 
       container.addEventListener('scroll', onScroll, { passive: true });
-      onScroll(); 
+      onScroll();
       return () => container.removeEventListener('scroll', onScroll);
     };
 
@@ -150,22 +150,22 @@ function PageContent() {
 
   if (!user) {
     return (
-      <div ref={scrollContainerRef} className="dark absolute inset-0 overflow-y-auto overflow-x-hidden bg-black text-white">
-        <ThemeHandler force="dark" />
+      <div ref={scrollContainerRef} className="absolute inset-0 overflow-y-auto overflow-x-hidden bg-white text-zinc-900 dark:bg-black dark:text-white transition-colors duration-200">
+        <ThemeHandler />
         <LandingScrollHandler />
         <div className="fixed top-2 md:top-4 left-1/2 -translate-x-1/2 z-[9999] w-[calc(100%-16px)] md:w-[calc(100%-48px)] max-w-5xl pointer-events-auto">
-          <div className="w-full rounded-xl overflow-hidden shadow-2xl border border-white/10 [&_.backdrop-blur-md]:bg-transparent [&_.border-b]:border-white/10 [&_.text-black]:text-white [&_.text-black\/80]:text-white/80 [&_.hover\\:text-black\/70]:hover:text-white/70 [&_.border-zinc-200]:border-white/10" style={{ backdropFilter: 'blur(20px)', background: 'rgba(10,10,10,0.8)' }}>
+          <div className="w-full rounded-xl border border-zinc-200 dark:border-white/10" style={{ backdropFilter: 'blur(20px)' }}>
             <DefaultDemo />
           </div>
         </div>
         <div className="relative w-full flex flex-col items-center z-20">
-          <div className="relative w-full flex items-center bg-black z-0">
+          <div className="relative w-full flex items-center bg-white dark:bg-black z-0">
             <FeaturesHero />
           </div>
-          {}
+          { }
           <AgentFeaturesSection />
-          <BuilderJourneySection />
-          <div ref={bookContainerRef} className="h-[900vh] w-full relative bg-black">
+          {/* <BuilderJourneySection /> */}
+          <div ref={bookContainerRef} className="h-[900vh] w-full relative bg-white dark:bg-black transition-colors duration-200">
             <div className="sticky top-0 h-screen w-full overflow-hidden">
               <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
                 <motion.div
@@ -193,12 +193,12 @@ function PageContent() {
               <div ref={card4Ref} className="absolute inset-0 w-full h-full z-[4]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
                 <FeatureCard data={featuresData[3]} />
               </div>
-              {}
-              {}
+              { }
+              { }
               <div className="absolute right-6 top-1/2 -translate-y-1/2 z-[100] flex flex-col gap-4 items-center">
                 {SECTIONS.map((label, i) => (
                   <div key={label} className="relative flex items-center group">
-                    <div className="absolute right-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-zinc-900 text-zinc-200 text-xs px-2 py-1 rounded whitespace-nowrap border border-zinc-800">
+                    <div className="absolute right-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 text-xs px-2 py-1 rounded whitespace-nowrap border border-zinc-200 dark:border-zinc-800">
                       {label}
                     </div>
                     <button
@@ -216,7 +216,7 @@ function PageContent() {
             </div>
           </div>
         </div>
-        {}
+        { }
         <IntegrationsSection />
         <PricingSection />
         <Footer />

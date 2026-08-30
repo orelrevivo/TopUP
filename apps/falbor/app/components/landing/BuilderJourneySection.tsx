@@ -20,7 +20,7 @@ const PROCESS_STEPS = [
 
 export default function BuilderJourneySection() {
   return (
-    <section className="relative w-full bg-black py-24 flex flex-col items-center justify-center overflow-hidden border-t border-white/5 z-10">
+    <section className="relative w-full bg-white dark:bg-black py-24 flex flex-col items-center justify-center overflow-hidden border-t border-zinc-200 dark:border-white/5 z-10 transition-colors duration-200">
 
       { }
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] pointer-events-none opacity-20">
@@ -38,10 +38,10 @@ export default function BuilderJourneySection() {
             transition={{ duration: 0.6 }}
             className="lg:w-1/2 text-center lg:text-left"
           >
-            <h2 className="text-4xl md:text-5xl lg:text-6xl text-white mb-6 tracking-tight">
+            <h2 className="text-4xl md:text-5xl lg:text-6xl text-zinc-900 dark:text-white mb-6 tracking-tight">
               Great builders start with the build.
             </h2>
-            <p className="text-lg md:text-xl text-white/70 leading-relaxed max-w-lg mx-auto lg:mx-0">
+            <p className="text-lg md:text-xl text-zinc-650 dark:text-white/70 leading-relaxed max-w-lg mx-auto lg:mx-0">
               They're great at turning prompts into products but building is only one part of the journey.
             </p>
           </motion.div>
@@ -54,7 +54,7 @@ export default function BuilderJourneySection() {
             transition={{ duration: 0.8, delay: 0.2 }}
             className="relative w-72 h-72 md:w-96 md:h-96 flex items-center justify-center shrink-0"
           >
-            <div className="absolute inset-4 rounded-full border border-white/5 border-dashed" />
+            <div className="absolute inset-4 rounded-full border border-zinc-200 dark:border-white/5 border-dashed" />
 
             { }
             <div className="relative z-20 w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br to-[#ff8c42] flex items-center justify-center shadow-[0_0_40px_rgba(255,88,0,0.4)]">
@@ -104,19 +104,19 @@ export default function BuilderJourneySection() {
         >
           <div className="relative flex flex-col md:flex-row items-center justify-between w-full max-w-4xl mx-auto gap-4 md:gap-0">
             { }
-            <div className="hidden md:block absolute top-1/2 left-[5%] right-[5%] h-[2px] bg-white/10 -translate-y-1/2 z-0" />
+            <div className="hidden md:block absolute top-1/2 left-[5%] right-[5%] h-[2px] bg-zinc-200 dark:bg-white/10 -translate-y-1/2 z-0" />
 
             {PROCESS_STEPS.map((step, index) => (
               <div key={step} className="relative z-10 flex flex-row md:flex-col items-center gap-3">
                 <div className={`w-12 h-12 rounded-xl flex items-center justify-center backdrop-blur-sm transition-colors duration-300
                   ${step === 'Build'
-                    ? 'border bg-[#FF5800]/20 text-[#FF5800] shadow-[0_0_20px_rgba(255,88,0,0.2)]'
-                    : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                    ? 'border border-[#FF5800]/50 bg-[#FF5800]/20 text-[#FF5800] shadow-[0_0_20px_rgba(255,88,0,0.2)]'
+                    : 'bg-zinc-100 dark:bg-white/5 text-zinc-500 dark:text-white/60 hover:bg-zinc-200 dark:hover:bg-white/10 hover:text-zinc-900 dark:hover:text-white border border-zinc-200 dark:border-transparent'
                   }`}
                 >
                   <span className="font-semibold text-sm">{index + 1}</span>
                 </div>
-                <span className={`text-sm font-medium ${step === 'Build' ? 'text-[#FF5800]' : 'text-white/80'}`}>
+                <span className={`text-sm font-medium ${step === 'Build' ? 'text-[#FF5800]' : 'text-zinc-700 dark:text-white/80'}`}>
                   {step}
                 </span>
               </div>

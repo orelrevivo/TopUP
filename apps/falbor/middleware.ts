@@ -14,6 +14,7 @@ const PUBLIC_ROUTES = [
   "/privacy",
   "/terms",
   "/about",
+  "/templates",
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/verify",
@@ -71,11 +72,21 @@ export async function middleware(request: NextRequest) {
       return NextResponse.rewrite(new URL(`/api/site/${subdomain}${pathname}`, request.url));
     }
 
+    const isPublicRoute = (path: string) => {
+      return (
+        PUBLIC_ROUTES.some((r) => path === r) ||
+        path === "/templates" ||
+        path.startsWith("/templates/") ||
+        path === "/api/templates" ||
+        path.startsWith("/api/templates/")
+      );
+    };
+
     const STATIC_EXTENSIONS = /\.(png|jpg|jpeg|gif|svg|webp|ico|css|js|woff2?|ttf|eot|pdf)$/i;
 
     if (
       STATIC_EXTENSIONS.test(pathname) ||
-      PUBLIC_ROUTES.some((r) => pathname === r) ||
+      isPublicRoute(pathname) ||
       STATIC_PREFIXES.some((p) => pathname.startsWith(p))
     ) {
       return NextResponse.next();
@@ -96,7 +107,7 @@ export async function middleware(request: NextRequest) {
 
     const sessionCookie = request.cookies.get(COOKIE_NAME);
     const isApiRoute = pathname.startsWith("/api/") || pathname.includes("/api/");
-    if (isApiRoute && !PUBLIC_ROUTES.some((r) => pathname === r)) {
+    if (isApiRoute && !isPublicRoute(pathname)) {
       if (!sessionCookie) {
         return unauthorized();
       }
@@ -122,7 +133,7 @@ export async function middleware(request: NextRequest) {
     };
 
     if (!sessionCookie) {
-      if (pathname === "/" || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/") || pathname.startsWith("/docs")) {
+      if (pathname === "/" || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/") || pathname.startsWith("/docs") || isPublicRoute(pathname)) {
         return handleSuccess();
       }
       return NextResponse.redirect(new URL("/login", request.url));
@@ -136,7 +147,7 @@ export async function middleware(request: NextRequest) {
       }
     }
 
-    if (pathname === "/" || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/") || pathname.startsWith("/docs")) {
+    if (pathname === "/" || pathname.startsWith("/chat/") || pathname.startsWith("/analyzed/") || pathname.startsWith("/docs") || isPublicRoute(pathname)) {
       return handleSuccess();
     }
     return NextResponse.redirect(new URL("/login", request.url));

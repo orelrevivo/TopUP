@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast } from 'react-toastify';
 import 'react-quill/dist/quill.snow.css';
+import { useAuth } from '~/hooks/useAuth';
 
 import type { Template, Review } from './types';
 import { Avatar } from './components/Avatar';
@@ -18,6 +19,7 @@ import { TemplateDescription } from './components/TemplateDescription';
 
 export default function TemplateDetailsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { user } = useAuth();
   const [template, setTemplate] = useState<Template | null>(null);
   const [reviews, setReviews] = useState<Review[]>([]);
   const [selectedImage, setSelectedImage] = useState(0);
@@ -52,6 +54,12 @@ export default function TemplateDetailsPage({ params }: { params: { id: string }
   }, [params.id]);
 
   const handleUseTemplate = async () => {
+    if (!user) {
+      toast.error("You can't use this template until you're logged in.", {
+        position: 'bottom-right',
+      });
+      return;
+    }
     setIsUsing(true);
 
     try {
@@ -70,6 +78,13 @@ export default function TemplateDetailsPage({ params }: { params: { id: string }
 
   const handleSubmitReview = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+
+    if (!user) {
+      toast.error("You can't submit reviews until you're logged in.", {
+        position: 'bottom-right',
+      });
+      return;
+    }
 
     if (!newReview.trim()) {
       toast.error('Write a short review before submitting.');

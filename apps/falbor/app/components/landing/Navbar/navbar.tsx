@@ -2,9 +2,11 @@
 
 import Link from 'next/link';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Settings } from 'lucide-react';
+import { Settings, Sun, Moon } from 'lucide-react';
 import { Badge } from "~/components/ui/Badge";
 import { useRouter } from 'next/navigation';
+import { useStore } from '@nanostores/react';
+import { themeStore, toggleTheme } from '~/lib/stores/theme';
 import HeroButtons from '../HeroButtons';
 
 interface MenuItem {
@@ -53,6 +55,8 @@ interface MenuDropdownProps {
 
 const MenuDropdown: React.FC<MenuDropdownProps> = ({ isOpen, onClose, items, left, onAction }) => {
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const theme = useStore(themeStore);
+    const isDark = theme === 'dark';
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -74,14 +78,18 @@ const MenuDropdown: React.FC<MenuDropdownProps> = ({ isOpen, onClose, items, lef
             style={{
                 left: `${left}px`,
                 top: '34px',
-                background: 'rgba(40, 40, 40, 0.75)',
-                border: '1px solid rgba(255, 255, 255, 0.18)',
+                background: isDark ? 'rgba(40, 40, 40, 0.75)' : 'rgba(255, 255, 255, 0.85)',
+                border: isDark ? '1px solid rgba(255, 255, 255, 0.18)' : '1px solid rgba(0, 0, 0, 0.12)',
                 borderRadius: '8px',
-                boxShadow: `
-          0 8px 32px rgba(0, 0, 0, 0.4),
-          0 2px 8px rgba(0, 0, 0, 0.3),
-          inset 0 1px 0 rgba(255, 255, 255, 0.12)
-        `,
+                //         boxShadow: isDark ? `
+                //   0 8px 32px rgba(0, 0, 0, 0.4),
+                //   0 2px 8px rgba(0, 0, 0, 0.3),
+                //   inset 0 1px 0 rgba(255, 255, 255, 0.12)
+                // ` : `
+                //   0 8px 32px rgba(0, 0, 0, 0.08),
+                //   0 2px 8px rgba(0, 0, 0, 0.05),
+                //   inset 0 1px 0 rgba(255, 255, 255, 0.5)
+                // `,
                 minWidth: '220px',
                 animation: 'menuFadeIn 0.15s cubic-bezier(0.23, 1, 0.32, 1) forwards',
             }}
@@ -89,13 +97,13 @@ const MenuDropdown: React.FC<MenuDropdownProps> = ({ isOpen, onClose, items, lef
             <div className="py-1">
                 {items.map((item, index) => {
                     if (item.type === 'separator') {
-                        return <div key={index} className="h-px bg-white/15 mx-2 my-1" />;
+                        return <div key={index} className="h-px bg-zinc-200 dark:bg-white/15 mx-2 my-1" />;
                     }
 
                     return (
                         <div
                             key={index}
-                            className="px-4 py-1 text-white text-sm cursor-pointer hover:bg-white/10 transition-colors duration-100 flex justify-between items-center"
+                            className="px-4 py-1 text-zinc-800 dark:text-white text-sm cursor-pointer hover:bg-zinc-100 dark:hover:bg-white/10 transition-colors duration-100 flex justify-between items-center"
                             onClick={() => {
                                 if (item.action) onAction?.(item.action);
                                 onClose();
@@ -107,7 +115,7 @@ const MenuDropdown: React.FC<MenuDropdownProps> = ({ isOpen, onClose, items, lef
                                 {item.hasSubmenu && <span className="ml-2 text-xs opacity-70">▶</span>}
                             </span>
                             {item.shortcut && (
-                                <span className="text-xs text-white/60 ml-4">{item.shortcut}</span>
+                                <span className="text-xs text-zinc-500 dark:text-white/60 ml-4">{item.shortcut}</span>
                             )}
                         </div>
                     );
@@ -194,35 +202,38 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
         [router, onMenuAction],
     );
 
+    const theme = useStore(themeStore);
+    const isDark = theme === 'dark';
+
     return (
         <div className="relative">
-            {}
+            { }
             <div
-                className={`hidden md:block backdrop-blur-md bg-white border-b border-zinc-200 ${className}`}
+                className={`hidden md:block backdrop-blur-md bg-white/80 dark:bg-zinc-950/80 rounded-xl ${className}`}
                 style={{ height: '50px' }}
             >
-                <div className="w-full max-w-5xl mx-auto flex justify-between items-center h-full px-4 border-l border-r border-zinc-200">
-                    {}
+                <div className="w-full max-w-5xl mx-auto flex justify-between items-center h-full px-4 rounded-xl">
+                    { }
                     <div className="flex items-center space-x-4">
                         <div
                             ref={(el) => { triggerRefs.current['apple'] = el; }}
                             onClick={() => toggleMenu('apple')}
                             className="cursor-pointer hover:opacity-80 transition-opacity duration-150 mb-1"
                         >
-                            <img src="/logo-dark-styled.png" width={120} alt="Logo" />
+                            <img src="/logo-light-styled.png" width={120} alt="Logo" className="inline-block dark:hidden" />
+                            <img src="/logo-dark-styled.png" width={120} alt="Logo" className="hidden dark:block" />
                         </div>
-
-                        <Link href="/pricing">
-                            <span className="text-black/80 hover:text-black/70 text-sm font-semibold">{appName}</span>
+                        <Link href="/templates">
+                            <span className="text-zinc-655 dark:text-white/80 hover:text-zinc-900 dark:hover:text-white/70 text-sm font-semibold">Templates</span>
                         </Link>
                         <Link href="/privacy">
-                            <span className="text-black/80 hover:text-black/70 text-sm font-semibold">Legal &amp; Privacy</span>
+                            <span className="text-zinc-655 dark:text-white/80 hover:text-zinc-900 dark:hover:text-white/70 text-sm font-semibold">Legal &amp; Privacy</span>
                         </Link>
                         {menus.map((menu) => (
                             <span
                                 key={menu.label}
                                 ref={(el) => { triggerRefs.current[menu.label] = el; }}
-                                className="text-black text-sm cursor-pointer hover:opacity-80 transition-opacity duration-150 select-none"
+                                className="text-zinc-800 dark:text-white text-sm cursor-pointer hover:opacity-80 transition-opacity duration-150 select-none"
                                 onClick={() => toggleMenu(menu.label)}
                             >
                                 {menu.label}
@@ -230,34 +241,51 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                         ))}
                     </div>
 
-                    {}
+                    { }
                     <div className="flex items-center space-x-4">
+                        <button
+                            onClick={toggleTheme}
+                            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center text-zinc-650 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                            aria-label="Toggle theme"
+                        >
+                            {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+                        </button>
                         <HeroButtons />
                     </div>
                 </div>
             </div>
 
-            {}
-            <div className={`md:hidden backdrop-blur-md bg-white border-b border-zinc-200 ${className}`}>
-                <div className="flex items-center justify-between h-14 px-4">
-                    {}
+            { }
+            <div className={`md:hidden backdrop-blur-md bg-white/80 dark:bg-zinc-950/80 rounded-xl ${className}`}>
+                <div className="flex items-center justify-between h-14 px-4 rounded-xl">
+                    { }
                     <Link href="/">
-                        <img src="/logo-dark-styled.png" width={110} alt="Logo" />
+                        <img src="/logo-light-styled.png" width={110} alt="Logo" className="inline-block dark:hidden" />
+                        <img src="/logo-dark-styled.png" width={110} alt="Logo" className="hidden dark:block" />
                     </Link>
 
-                    {}
+                    { }
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={toggleTheme}
+                            className="p-1.5 rounded-lg hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors flex items-center justify-center text-zinc-650 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-white"
+                            aria-label="Toggle theme"
+                        >
+                            {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+                        </button>
                         <Link href="/login">
-                            <span className="text-sm font-medium text-black/80">Sign In</span>
+                            <button className="text-sm font-medium bg-[#e7e7e7] dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3 py-1.5 rounded-md transition-colors">
+                                Sign In
+                            </button>
                         </Link>
                         <Link href="/signup">
-                            <button className="text-sm font-medium bg-[#e7e7e7] !text-black px-3 py-1.5 rounded-md">
+                            <button className="text-sm font-medium bg-[#e7e7e7] dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3 py-1.5 rounded-md transition-colors">
                                 Start free
                             </button>
                         </Link>
                         <button
                             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                            className="p-1.5 text-black/80 rounded-md transition-colors"
+                            className="p-1.5 text-zinc-850 dark:text-white/80 rounded-md transition-colors"
                             aria-label="Toggle menu"
                         >
                             {mobileMenuOpen ? (
@@ -276,44 +304,34 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                     </div>
                 </div>
 
-                {}
+                { }
                 {mobileMenuOpen && (
-                    <div className="border-t border-zinc-200 backdrop-blur-md bg-white px-4 py-4 flex flex-col gap-3">
+                    <div className="border-t border-zinc-200 dark:border-white/10 backdrop-blur-md bg-white/95 dark:bg-zinc-950/95 px-4 py-4 flex flex-col gap-3">
                         <Link href="/pricing" onClick={() => setMobileMenuOpen(false)}>
-                            <div className="py-2 text-sm font-semibold text-black/80 border-b border-zinc-200">
+                            <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
                                 {appName}
                             </div>
                         </Link>
                         <Link href="/privacy" onClick={() => setMobileMenuOpen(false)}>
-                            <div className="py-2 text-sm font-semibold text-black/80 border-b border-zinc-200">
+                            <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
                                 Legal &amp; Privacy
                             </div>
                         </Link>
+                        <Link href="/templates" onClick={() => setMobileMenuOpen(false)}>
+                            <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
+                                Templates
+                            </div>
+                        </Link>
                         <Link href="/about" onClick={() => setMobileMenuOpen(false)}>
-                            <div className="py-2 text-sm font-semibold text-black/80 border-b border-zinc-200">
+                            <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
                                 About
                             </div>
                         </Link>
-                        {}
-                        <div className="flex items-center gap-4 pt-1">
-                            <a href="https://x.com/WrRbybw84381" target="_blank" rel="noopener noreferrer">
-                                <img src="/landing/social/X.png" alt="X" className="w-5 h-5 object-contain" />
-                            </a>
-                            <a href="https://www.instagram.com/falbor.xyz" target="_blank" rel="noopener noreferrer">
-                                <img src="/landing/social/instagram.png" alt="Instagram" className="w-5 h-5 object-contain" />
-                            </a>
-                            <a href="https://www.linkedin.com/company/falbor-xyz" target="_blank" rel="noopener noreferrer">
-                                <img src="/landing/social/linkdin.png" alt="LinkedIn" className="w-8 h-8 object-contain" />
-                            </a>
-                            <a href="https://www.reddit.com/r/Falbor" target="_blank" rel="noopener noreferrer">
-                                <img src="/landing/social/reddit.png" alt="Reddit" className="w-5 h-5 object-contain" />
-                            </a>
-                        </div>
                     </div>
                 )}
             </div>
 
-            {}
+            { }
             <div className="hidden md:block">
                 <MenuDropdown
                     isOpen={activeMenu === 'apple'}

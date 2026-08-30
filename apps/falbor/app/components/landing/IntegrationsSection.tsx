@@ -14,13 +14,13 @@ type TileData = {
 
 export default function IntegrationsSection() {
 	return (
-		<div className="bg-[#0a0a0a] py-32 w-full flex items-center justify-center">
+		<div className="bg-white dark:bg-[#0a0a0a] py-32 w-full flex items-center justify-center transition-colors duration-200">
 			<div className="mx-auto grid max-w-6xl w-full grid-cols-1 gap-12 px-8 md:px-16 md:grid-cols-2 md:items-center relative z-10">
 				<div className="max-w-xl space-y-6">
-					<h2 className="font-bold text-white text-[2.5rem] md:text-[3rem] leading-[1.1] tracking-tight">
+					<h2 className="font-bold text-zinc-900 dark:text-white text-[2.5rem] md:text-[3rem] leading-[1.1] tracking-tight">
 						MCPs
 					</h2>
-					<p className="text-lg text-zinc-400 leading-relaxed font-light">
+					<p className="text-lg text-zinc-650 dark:text-zinc-400 leading-relaxed font-light">
 						Integrate with over 19+ tools and platforms to streamline your
 						workflow and boost productivity.
 					</p>
@@ -41,10 +41,10 @@ function IntegrationCard({ row, col, logo }: TileData) {
 	return (
 		<div
 			className={cn(
-				"absolute flex items-center justify-center rounded-md border",
+				"absolute flex items-center justify-center rounded-md border transition-colors duration-200",
 				logo
-					? "bg-zinc-900 shadow-xl shadow-black/50 border-zinc-700/50"
-					: "bg-zinc-950 border-zinc-900/50"
+					? "bg-zinc-50 dark:bg-zinc-900 shadow-xl shadow-zinc-200/50 dark:shadow-black/50 border-zinc-200 dark:border-zinc-700/50"
+					: "bg-zinc-100 dark:bg-zinc-950 border-zinc-200 dark:border-zinc-900/50"
 			)}
 			style={{
 				width: '72px',
@@ -58,7 +58,7 @@ function IntegrationCard({ row, col, logo }: TileData) {
 					alt={logo.alt}
 					className={cn(
 						"pointer-events-none select-none object-contain p-2",
-						logo.isInvertable && "invert opacity-80"
+						logo.isInvertable && "dark:invert opacity-80"
 					)}
 					height={40}
 					src={logo.src}

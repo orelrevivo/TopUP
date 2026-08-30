@@ -38,7 +38,7 @@ export const HistoryPanel = memo(({ messages, onRewind }: HistoryPanelProps) => 
         }
 
         
-        const filesModifiedCount = (msg.content.match(/<falborAction[^>]*type="file"/g) || []).length;
+        const filesModifiedCount = (msg.content?.match(/<falborAction[^>]*type="file"/g) || []).length;
 
         return {
           id: msg.id,

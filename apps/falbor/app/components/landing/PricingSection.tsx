@@ -6,32 +6,32 @@ import { Check, X } from 'lucide-react'
 
 export default function PricingSection() {
     return (
-        <section id="pricing" className="py-16 md:py-32 bg-black text-white relative overflow-hidden">
-            <div className="absolute inset-0 opacity-[0.05]"
-                style={{ backgroundImage: 'radial-gradient(circle, rgba(255,255,255,0.8) 1px, transparent 1px)', backgroundSize: '32px 32px' }} />
+        <section id="pricing" className="py-16 md:py-32 bg-white dark:bg-black text-zinc-900 dark:text-white relative overflow-hidden transition-colors duration-200">
+            <div className="absolute inset-0 opacity-[0.25] dark:opacity-[0.05] bg-[radial-gradient(rgba(0,0,0,0.15)_1px,transparent_1px)] dark:bg-[radial-gradient(rgba(255,255,255,0.8)_1px,transparent_1px)]"
+                style={{ backgroundSize: '32px 32px' }} />
             <div className="mx-auto max-w-5xl px-6 relative z-10">
                 <div className="mx-auto max-w-2xl space-y-6 text-center">
-                    <h1 className="text-center text-4xl lg:text-5xl tracking-tight">Pricing that Scales with You</h1>
-                    <p className="text-zinc-400 text-lg">
+                    <h1 className="text-center text-4xl lg:text-5xl tracking-tight text-zinc-900 dark:text-white">Pricing that Scales with You</h1>
+                    <p className="text-zinc-500 dark:text-zinc-400 text-lg">
                         Upgrade your account to unlock premium features and add balance for AI operations.
                         No subscriptions, just pay once and top up when needed.
                     </p>
                 </div>
                 <div className="mt-8 grid gap-6 md:mt-20 md:grid-cols-5 md:gap-0">
-                    <div className="flex flex-col justify-between space-y-8 border border-zinc-800 bg-zinc-900/30 p-6 md:col-span-2 md:my-2 md:rounded-r-none md:border-r-0 lg:p-10 rounded-l-xl rounded-r-xl md:rounded-r-none">
+                    <div className="flex flex-col justify-between space-y-8 border border-zinc-200 dark:border-zinc-800 bg-zinc-50/50 dark:bg-zinc-900/30 p-6 md:col-span-2 md:my-2 md:rounded-r-none md:border-r-0 lg:p-10 rounded-l-xl rounded-r-xl md:rounded-r-none">
                         <div className="space-y-4">
                             <div>
-                                <h2 className="font-medium text-white">Free</h2>
-                                <span className="my-3 block text-4xl font-black text-white">$0</span>
+                                <h2 className="font-medium text-zinc-900 dark:text-white">Free</h2>
+                                <span className="my-3 block text-4xl font-black text-zinc-900 dark:text-white">$0</span>
                                 <p className="text-zinc-500 text-sm">Forever</p>
                             </div>
                             <Link href="/signup" className="block w-full">
-                                <button className="w-full bg-transparent border border-zinc-700 hover:bg-zinc-800 text-white font-semibold py-2.5 rounded-md transition-colors">
+                                <button className="w-full bg-transparent border border-zinc-300 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 text-zinc-850 dark:text-white font-semibold py-2.5 rounded-md transition-colors">
                                     Current Plan
                                 </button>
                             </Link>
-                            <hr className="border-dashed border-zinc-800 my-6" />
-                            <ul className="list-outside space-y-4 text-sm text-zinc-400">
+                            <hr className="border-dashed border-zinc-200 dark:border-zinc-800 my-6" />
+                            <ul className="list-outside space-y-4 text-sm text-zinc-655 dark:text-zinc-400">
                                 <li className="flex items-start gap-3">
                                     <Check className="size-4 text-green-500 mt-0.5" />
                                     Website deployment to Falbor
@@ -55,18 +55,18 @@ export default function PricingSection() {
                             </ul>
                         </div>
                     </div>
-                    <div className="relative bg-[#0A0A0A]/80 border border-[#FF5800]/50 p-6 md:col-span-3 lg:p-10 rounded-xl overflow-hidden">
+                    <div className="relative bg-zinc-50/60 dark:bg-[#0A0A0A]/80 border border-zinc-200 dark:border-[#FF5800]/50 p-6 md:col-span-3 lg:p-10 rounded-xl overflow-hidden shadow-sm dark:shadow-none">
                         <div className="absolute top-0 right-6 -translate-y-0 bg-[#FF5800] text-white text-xs px-3 py-1 rounded-b-md font-semibold shadow-md">
                             Recommended
                         </div>
                         <div className="grid gap-8 sm:grid-cols-2 h-full">
                             <div className="space-y-4">
                                 <div>
-                                    <h2 className="font-medium text-white flex items-center gap-2">
+                                    <h2 className="font-medium text-zinc-900 dark:text-white flex items-center gap-2">
                                         Pro
-                                        <span className="text-[10px] bg-zinc-800 text-zinc-300 px-2 py-0.5 rounded uppercase tracking-wider font-bold">One-time</span>
+                                        <span className="text-[10px] bg-zinc-200 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300 px-2 py-0.5 rounded uppercase tracking-wider font-bold">One-time</span>
                                     </h2>
-                                    <span className="my-3 block text-4xl font-black text-white">$17</span>
+                                    <span className="my-3 block text-4xl font-black text-zinc-900 dark:text-white">$17</span>
                                     <p className="text-zinc-500 text-sm">Pay once, no recurring fees</p>
                                 </div>
                                 <Link href="/signup?plan=pro" className="block w-full">
@@ -78,9 +78,9 @@ export default function PricingSection() {
                                     Need more AI credits? You can top up your balance at any time inside your dashboard. ($1 = $1 AI Balance)
                                 </p>
                             </div>
-                            <div className="border-t border-zinc-800 pt-6 sm:border-t-0 sm:border-l sm:pt-0 sm:pl-8">
-                                <div className="text-sm font-semibold text-white mb-4">Everything in free, plus:</div>
-                                <ul className="list-outside space-y-4 text-sm text-zinc-300">
+                            <div className="border-t border-zinc-200 dark:border-zinc-800 pt-6 sm:border-t-0 sm:border-l sm:border-zinc-200 dark:sm:border-zinc-800 sm:pt-0 sm:pl-8">
+                                <div className="text-sm font-semibold text-zinc-900 dark:text-white mb-4">Everything in free, plus:</div>
+                                <ul className="list-outside space-y-4 text-sm text-zinc-655 dark:text-zinc-300">
                                     <li className="flex items-start gap-3">
                                         <Check className="size-4 text-[#FF5800] mt-0.5 flex-shrink-0" />
                                         Website deployment to Netlify & Vercel
@@ -95,7 +95,7 @@ export default function PricingSection() {
                                     </li>
                                     <li className="flex items-start gap-3">
                                         <Check className="size-4 text-[#FF5800] mt-0.5 flex-shrink-0" />
-                                        <span className="font-medium text-white">$35.00 AI credit balance included</span>
+                                        <span className="font-medium text-zinc-900 dark:text-white">$35.00 AI credit balance included</span>
                                     </li>
                                     <li className="flex items-start gap-3">
                                         <Check className="size-4 text-[#FF5800] mt-0.5 flex-shrink-0" />
