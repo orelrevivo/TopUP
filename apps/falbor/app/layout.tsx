@@ -8,6 +8,12 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { StayUpInit } from './components/stayup/StayUpInit.client';
 import { Montserrat } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
+import dynamic from 'next/dynamic';
+
+const AIOperator = dynamic(
+  () => import('./components/operator/AIOperator').then((mod) => mod.AIOperator),
+  { ssr: false }
+);
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -50,6 +56,7 @@ export default function FalborLayout({
           <AuthProvider>
             <StorageSync />
             {children}
+            <AIOperator />
           </AuthProvider>
         </GoogleOAuthProvider>
         <Analytics />

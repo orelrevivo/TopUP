@@ -897,11 +897,23 @@ export const ChatImpl = memo(
         }
       };
 
+      const handleExternalInputChange = (event: Event) => {
+        const customEvent = event as CustomEvent<string>;
+        if (customEvent.detail !== undefined) {
+          const syntheticEvent = {
+            target: { value: customEvent.detail },
+          } as React.ChangeEvent<HTMLTextAreaElement>;
+          handleInputChange(syntheticEvent);
+        }
+      };
+
       window.addEventListener('falbor:externalChatMessage', handleExternalMessage);
+      window.addEventListener('falbor:externalChatInputChange', handleExternalInputChange);
       return () => {
         window.removeEventListener('falbor:externalChatMessage', handleExternalMessage);
+        window.removeEventListener('falbor:externalChatInputChange', handleExternalInputChange);
       };
-    }, [sendMessage]);
+    }, [sendMessage, handleInputChange]);
 
     return (
       <BaseChat
