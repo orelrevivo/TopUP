@@ -486,29 +486,18 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
           })}>
             {!chatStarted && !hideIntro && (
               <div id="intro" className="mt-[23vh] max-w-md mx-auto text-center px-4 lg:px-0 flex flex-col items-center gap-4">
-                <div className="absolute top-34 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
+                <div className="absolute top-41 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
                   <img
                     src="/logo-light-styled.png"
                     alt="Falbor Logo"
-                    className="h-25 dark:hidden"
+                    className="h-20 dark:hidden"
                   />
                   <img
                     src="/logo-dark-styled.png"
                     alt="Falbor Logo"
-                    className="h-25 hidden dark:block"
+                    className="h-20 hidden dark:block"
                   />
                 </div>
-                <h1 className="text-falbor-elements-textPrimary text-3xl md:text-4xl animate-fade-in flex flex-wrap items-center justify-center gap-2 md:gap-3">
-                  <span className="whitespace-nowrap">You can research</span>
-                  <span className="flex items-center gap-2">
-                    <img
-                      src="/icons/verified.png"
-                      alt="Verified"
-                      className="w-8 h-8 md:w-10 md:h-10 inline-block"
-                    />
-                    <span className="whitespace-nowrap">Before building</span>
-                  </span>
-                </h1>
               </div>
             )}
             <FeedbackWidget hasMessages={(messages?.length || 0) > 1} />
