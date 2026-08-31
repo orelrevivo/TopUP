@@ -18,8 +18,8 @@ export function AIOperator() {
   const [isListening, setIsListening] = useState(false);
   const [transcript, setTranscript] = useState('');
   const [audioLevel, setAudioLevel] = useState(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
   const recognitionRef = useRef<any>(null);
-  const isSpeakingRef = useRef(false);
   const isStreaming = useStore(streamingState);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wasStreamingRef = useRef(false);
@@ -214,8 +214,6 @@ export function AIOperator() {
         };
 
         rec.onresult = (event: any) => {
-          if (isSpeakingRef.current) return;
-
           let currentTranscript = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             currentTranscript += event.results[i][0].transcript;
@@ -242,15 +240,6 @@ export function AIOperator() {
           console.log("[AI Operator Debug] SpeechRecognition session ended.");
           setIsListening(false);
           stopAudioAnalyzer();
-          
-          if (isActivated && !store.isThinking && !isSpeakingRef.current) {
-            console.log("[AI Operator Debug] Restarting SpeechRecognition...");
-            try {
-              rec.start();
-            } catch (err) {
-              console.error("[AI Operator Debug] Failed to restart SpeechRecognition:", err);
-            }
-          }
         };
 
         recognitionRef.current = rec;
@@ -265,25 +254,46 @@ export function AIOperator() {
 
     return () => {
       if (recognitionRef.current) {
-        recognitionRef.current.stop();
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+        recognitionRef.current = null;
       } else {
         stopAudioAnalyzer();
       }
     };
   }, [isActivated]);
 
-  // Handle OpenAI TTS
+  const shouldListen = isActivated && !store.isThinking && !isSpeaking && !isStreaming;
+
+  // Control listening state based on operator status
   useEffect(() => {
-    if (store.currentMessage && isActivated && typeof window !== 'undefined') {
-      // Pause listening before speaking
-      if (recognitionRef.current && isListening) {
-        isSpeakingRef.current = true;
+    if (!recognitionRef.current) return;
+
+    if (shouldListen) {
+      if (!isListening) {
+        try {
+          recognitionRef.current.start();
+        } catch (e) {
+          console.log("[AI Operator Debug] SpeechRecognition start pending or already running:", e);
+        }
+      }
+    } else {
+      if (isListening) {
         try {
           recognitionRef.current.stop();
         } catch (e) {
-          console.error(e);
+          console.error("[AI Operator Debug] Failed to stop SpeechRecognition:", e);
         }
       }
+    }
+  }, [shouldListen, isListening]);
+
+
+  // Handle OpenAI TTS
+  useEffect(() => {
+    if (store.currentMessage && isActivated && typeof window !== 'undefined') {
+      setIsSpeaking(true);
 
       fetch('/api/tts', {
         method: 'POST',
@@ -303,26 +313,18 @@ export function AIOperator() {
           audioRef.current = audio;
 
           audio.onended = () => {
-            isSpeakingRef.current = false;
+            setIsSpeaking(false);
             URL.revokeObjectURL(url);
-            // Resume listening after speaking
-            if (isActivated && recognitionRef.current && !store.isThinking) {
-              try {
-                recognitionRef.current.start();
-              } catch (err) {
-                console.error(err);
-              }
-            }
           };
 
           audio.play().catch((err) => {
             console.error('Audio playback failed:', err);
-            isSpeakingRef.current = false;
+            setIsSpeaking(false);
           });
         })
         .catch((err) => {
           console.error('TTS error:', err);
-          isSpeakingRef.current = false;
+          setIsSpeaking(false);
         });
     }
   }, [store.currentMessage, isActivated]);
