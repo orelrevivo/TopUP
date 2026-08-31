@@ -23,6 +23,9 @@ export function AIOperator() {
   const isStreaming = useStore(streamingState);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wasStreamingRef = useRef(false);
+  const speechBlockTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const isSpeechBlockedRef = useRef(false);
+
 
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -214,6 +217,10 @@ export function AIOperator() {
         };
 
         rec.onresult = (event: any) => {
+          if (isSpeaking || store.isThinking || isSpeechBlockedRef.current) {
+            return;
+          }
+
           let currentTranscript = '';
           for (let i = event.resultIndex; i < event.results.length; ++i) {
             currentTranscript += event.results[i][0].transcript;
@@ -224,13 +231,14 @@ export function AIOperator() {
           if (event.results[event.results.length - 1].isFinal) {
             const finalText = currentTranscript.trim();
             console.log("[AI Operator Debug] Final phrase recorded:", finalText);
-            if (finalText && !store.isThinking) {
+            if (finalText) {
               store.setVisibility(true);
               setIsActivated(true);
               handleMessageSubmit(finalText);
             }
           }
         };
+
 
         rec.onerror = (e: any) => {
           console.error('[AI Operator Debug] SpeechRecognition error:', e.error, e.message);
@@ -264,7 +272,27 @@ export function AIOperator() {
     };
   }, [isActivated]);
 
-  const shouldListen = isActivated && !store.isThinking && !isSpeaking && !isStreaming;
+  const shouldListen = isActivated && !isStreaming;
+
+  // Sync speech block state
+  useEffect(() => {
+    if (isSpeaking || store.isThinking) {
+      isSpeechBlockedRef.current = true;
+      if (speechBlockTimeoutRef.current) {
+        clearTimeout(speechBlockTimeoutRef.current);
+        speechBlockTimeoutRef.current = null;
+      }
+    } else {
+      speechBlockTimeoutRef.current = setTimeout(() => {
+        isSpeechBlockedRef.current = false;
+      }, 800);
+    }
+    return () => {
+      if (speechBlockTimeoutRef.current) {
+        clearTimeout(speechBlockTimeoutRef.current);
+      }
+    };
+  }, [isSpeaking, store.isThinking]);
 
   // Control listening state based on operator status
   useEffect(() => {
