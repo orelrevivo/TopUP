@@ -23,7 +23,7 @@ export function AIOperator() {
   const isStreaming = useStore(streamingState);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wasStreamingRef = useRef(false);
-  
+
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
   const isRecordingRef = useRef(false);
@@ -37,13 +37,13 @@ export function AIOperator() {
 
   const startMediaRecorder = () => {
     if (!streamRef.current || isRecordingRef.current) return;
-    
+
     try {
       console.log("[AI Operator Debug] Starting MediaRecorder...");
       const recorder = new MediaRecorder(streamRef.current);
       mediaRecorderRef.current = recorder;
       audioChunksRef.current = [];
-      
+
       recorder.ondataavailable = (event) => {
         if (event.data.size > 0) {
           audioChunksRef.current.push(event.data);
@@ -53,7 +53,7 @@ export function AIOperator() {
       recorder.onstop = async () => {
         isRecordingRef.current = false;
         console.log("[AI Operator Debug] MediaRecorder stopped. Processing audio...");
-        
+
         if (!speechDetectedRef.current) {
           console.log("[AI Operator Debug] No speech detected, ignoring audio chunk.");
           return;
@@ -111,27 +111,27 @@ export function AIOperator() {
       console.log("[AI Operator Debug] Requesting microphone stream for analyzer...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
-      
+
       const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
       const audioCtx = new AudioContextClass();
       audioContextRef.current = audioCtx;
-      
+
       // High-pass filter to block low frequency breath/exhalations and background hums (under 180Hz)
       const biquadFilter = audioCtx.createBiquadFilter();
       biquadFilter.type = 'highpass';
       biquadFilter.frequency.setValueAtTime(180, audioCtx.currentTime);
-      
+
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 32;
       analyserRef.current = analyser;
-      
+
       const source = audioCtx.createMediaStreamSource(stream);
       source.connect(biquadFilter);
       biquadFilter.connect(analyser);
-      
+
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       console.log("[AI Operator Debug] Audio Context, Filter, and Analyser initialized.");
-      
+
       // Start recording only if fallback requires it (Whisper fallback)
       if (shouldRecord) {
         startMediaRecorder();
@@ -146,7 +146,7 @@ export function AIOperator() {
         }
         const average = sum / dataArray.length;
         setAudioLevel(average);
-        
+
         // Voice Activity Detection (VAD) - only when fallback recording is enabled
         if (shouldRecord) {
           if (average > 15) { // Speech threshold (raised slightly to ignore noise)
@@ -169,7 +169,7 @@ export function AIOperator() {
           animationFrameRef.current = requestAnimationFrame(updateVolume);
         }
       };
-      
+
       updateVolume();
     } catch (e) {
       console.error('[AI Operator Debug] Audio analyzer error (likely mic blocked or busy):', e);
@@ -198,7 +198,7 @@ export function AIOperator() {
   useEffect(() => {
     if (typeof window !== 'undefined' && isActivated) {
       const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      
+
       if (SpeechRecognition) {
         console.log("[AI Operator Debug] Initializing native SpeechRecognition...");
         const rec = new SpeechRecognition();
@@ -246,7 +246,7 @@ export function AIOperator() {
       } else {
         // Fallback for Firefox (MediaRecorder + Whisper VAD loop)
         console.log("[AI Operator Debug] SpeechRecognition is NOT supported. Using MediaRecorder fallback.");
-        
+
         setIsListening(true);
         startAudioAnalyzer(true);
       }
@@ -256,7 +256,7 @@ export function AIOperator() {
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
-        } catch (e) {}
+        } catch (e) { }
         recognitionRef.current = null;
       } else {
         stopAudioAnalyzer();
@@ -337,7 +337,7 @@ export function AIOperator() {
       if (recognitionRef.current) {
         try {
           recognitionRef.current.stop();
-        } catch (e) {}
+        } catch (e) { }
       }
       setIsListening(false);
       store.setVisibility(false);
@@ -353,7 +353,7 @@ export function AIOperator() {
   const handleActivate = async () => {
     try {
       setIsActivated(true);
-      
+
       // Speak the welcome greeting immediately
       const greeting = `Hello ${user?.displayName || (user as any)?.username || (user as any)?.email || 'there'}, what would you like to build today?`;
       store.setCurrentMessage(greeting);
@@ -366,7 +366,7 @@ export function AIOperator() {
   const handleMessageSubmit = async (message: string) => {
     store.setThinking(true);
     store.setIsAskingUser(false);
-    
+
     // Show transcript temporarily
     setTranscript(message);
 
@@ -405,7 +405,7 @@ export function AIOperator() {
       <SimulatedCursor />
       <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
         {isActivated ? (
-          <OperatorBubble 
+          <OperatorBubble
             message={store.currentMessage}
             isAskingUser={false} // Disable text/button form in bubble
             onSubmit={handleMessageSubmit}
@@ -424,14 +424,13 @@ export function AIOperator() {
             </button>
           </div>
         )}
-        
+
         <motion.button
           onClick={() => store.setOpen(!store.isOpen)}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
-          className={`w-12 h-12 rounded-full text-white flex items-center justify-center shadow-lg transition-colors relative overflow-hidden ${
-            isListening ? 'bg-red-600 hover:bg-red-700 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'
-          }`}
+          className={`w-12 h-12 rounded-full text-white flex items-center justify-center shadow-lg transition-colors relative overflow-hidden ${isListening ? 'bg-red-600 hover:bg-red-700 animate-pulse' : 'bg-blue-600 hover:bg-blue-700'
+            }`}
         >
           <div className="relative z-10">
             <OperatorWave isThinking={store.isThinking} audioLevel={audioLevel} />
