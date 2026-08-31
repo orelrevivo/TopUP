@@ -2,12 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useStore } from '@nanostores/react';
 import { useOperatorStore } from '../../lib/operator/context';
 import { processOperatorResponse } from '../../lib/operator/executor';
 import { OperatorBubble } from './OperatorBubble';
 import { OperatorWave } from './OperatorWave';
 import { SimulatedCursor } from './SimulatedCursor';
 import { useAuth } from '../../hooks/useAuth';
+import { streamingState } from '../../lib/stores/streaming';
 
 export function AIOperator() {
   const store = useOperatorStore();
@@ -18,6 +20,9 @@ export function AIOperator() {
   const [audioLevel, setAudioLevel] = useState(0);
   const recognitionRef = useRef<any>(null);
   const isSpeakingRef = useRef(false);
+  const isStreaming = useStore(streamingState);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const wasStreamingRef = useRef(false);
   
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
@@ -101,7 +106,7 @@ export function AIOperator() {
     }
   };
 
-  const startAudioAnalyzer = async () => {
+  const startAudioAnalyzer = async (shouldRecord = false) => {
     try {
       console.log("[AI Operator Debug] Requesting microphone stream for analyzer...");
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -127,8 +132,10 @@ export function AIOperator() {
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
       console.log("[AI Operator Debug] Audio Context, Filter, and Analyser initialized.");
       
-      // Start recording immediately
-      startMediaRecorder();
+      // Start recording only if fallback requires it (Whisper fallback)
+      if (shouldRecord) {
+        startMediaRecorder();
+      }
 
       const updateVolume = () => {
         if (!analyserRef.current) return;
@@ -140,20 +147,22 @@ export function AIOperator() {
         const average = sum / dataArray.length;
         setAudioLevel(average);
         
-        // Voice Activity Detection (VAD)
-        if (average > 15) { // Speech threshold (raised slightly to ignore noise)
-          speechDetectedRef.current = true;
-          // Clear silence timer
-          if (silenceTimeoutRef.current) {
-            clearTimeout(silenceTimeoutRef.current);
-            silenceTimeoutRef.current = null;
+        // Voice Activity Detection (VAD) - only when fallback recording is enabled
+        if (shouldRecord) {
+          if (average > 15) { // Speech threshold (raised slightly to ignore noise)
+            speechDetectedRef.current = true;
+            // Clear silence timer
+            if (silenceTimeoutRef.current) {
+              clearTimeout(silenceTimeoutRef.current);
+              silenceTimeoutRef.current = null;
+            }
+          } else if (average <= 15 && speechDetectedRef.current && !silenceTimeoutRef.current) {
+            // Silence detected - set a timeout of 800ms to submit faster
+            silenceTimeoutRef.current = setTimeout(() => {
+              console.log("[AI Operator Debug] Silence timeout reached. Stopping recording.");
+              stopMediaRecorder();
+            }, 800);
           }
-        } else if (average <= 15 && speechDetectedRef.current && !silenceTimeoutRef.current) {
-          // Silence detected - set a timeout of 800ms to submit faster
-          silenceTimeoutRef.current = setTimeout(() => {
-            console.log("[AI Operator Debug] Silence timeout reached. Stopping recording.");
-            stopMediaRecorder();
-          }, 800);
         }
 
         if (stream.active) {
@@ -200,7 +209,8 @@ export function AIOperator() {
         rec.onstart = () => {
           console.log("[AI Operator Debug] SpeechRecognition started listening.");
           setIsListening(true);
-          startAudioAnalyzer();
+          // Only analyze audio level for visual wave, do not start recording/VAD (saving credits!)
+          startAudioAnalyzer(false);
         };
 
         rec.onresult = (event: any) => {
@@ -217,6 +227,8 @@ export function AIOperator() {
             const finalText = currentTranscript.trim();
             console.log("[AI Operator Debug] Final phrase recorded:", finalText);
             if (finalText && !store.isThinking) {
+              store.setVisibility(true);
+              setIsActivated(true);
               handleMessageSubmit(finalText);
             }
           }
@@ -247,7 +259,7 @@ export function AIOperator() {
         console.log("[AI Operator Debug] SpeechRecognition is NOT supported. Using MediaRecorder fallback.");
         
         setIsListening(true);
-        startAudioAnalyzer();
+        startAudioAnalyzer(true);
       }
     }
 
@@ -260,41 +272,81 @@ export function AIOperator() {
     };
   }, [isActivated]);
 
-  // Handle SpeechSynthesis (TTS)
+  // Handle OpenAI TTS
   useEffect(() => {
-    if (store.currentMessage && isActivated && typeof window !== 'undefined' && 'speechSynthesis' in window) {
+    if (store.currentMessage && isActivated && typeof window !== 'undefined') {
       // Pause listening before speaking
       if (recognitionRef.current && isListening) {
         isSpeakingRef.current = true;
-        recognitionRef.current.stop();
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {
+          console.error(e);
+        }
       }
 
-      setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(store.currentMessage);
-        utterance.volume = 0.5;
-        
-        const isHebrew = /[\u0590-\u05FF]/.test(store.currentMessage);
-        if (isHebrew) {
-          utterance.lang = 'he-IL';
-        }
+      fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: store.currentMessage }),
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error('TTS failed');
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
 
-        utterance.onend = () => {
-          isSpeakingRef.current = false;
-          // Resume listening after speaking
-          if (isActivated && recognitionRef.current && !store.isThinking) {
-            try {
-              recognitionRef.current.start();
-            } catch (err) {
-              console.error(err);
-            }
+          if (audioRef.current) {
+            audioRef.current.pause();
           }
-        };
 
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.speak(utterance);
-      }, 300);
+          const audio = new Audio(url);
+          audioRef.current = audio;
+
+          audio.onended = () => {
+            isSpeakingRef.current = false;
+            URL.revokeObjectURL(url);
+            // Resume listening after speaking
+            if (isActivated && recognitionRef.current && !store.isThinking) {
+              try {
+                recognitionRef.current.start();
+              } catch (err) {
+                console.error(err);
+              }
+            }
+          };
+
+          audio.play().catch((err) => {
+            console.error('Audio playback failed:', err);
+            isSpeakingRef.current = false;
+          });
+        })
+        .catch((err) => {
+          console.error('TTS error:', err);
+          isSpeakingRef.current = false;
+        });
     }
   }, [store.currentMessage, isActivated]);
+
+  // Watch streaming state to auto-hide operator while building
+  useEffect(() => {
+    if (isStreaming) {
+      wasStreamingRef.current = true;
+      // Stop listening while building to save credits and keep UI clean
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.stop();
+        } catch (e) {}
+      }
+      setIsListening(false);
+      store.setVisibility(false);
+    } else if (wasStreamingRef.current) {
+      wasStreamingRef.current = false;
+      // When building finishes, automatically show the operator and greet the user
+      store.setVisibility(true);
+      setIsActivated(true);
+      store.setCurrentMessage("The site is ready! Let me know if you want any changes.");
+    }
+  }, [isStreaming]);
 
   const handleActivate = async () => {
     try {
@@ -330,7 +382,7 @@ export function AIOperator() {
 
       if (response.ok) {
         const data = await response.json();
-        processOperatorResponse(data);
+        await processOperatorResponse(data);
       } else {
         store.setCurrentMessage('Sorry, I encountered an error. Let me try again.');
         store.setIsAskingUser(true);
