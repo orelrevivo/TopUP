@@ -11,6 +11,7 @@ export default function ConnectorList({ onSelect }: ConnectorListProps) {
       {MCP_CONNECTORS.map((connector) => (
         <button
           key={connector.id}
+          data-connector-id={connector.id}
           onClick={() => onSelect(connector.id)}
           className={classNames(
             'flex flex-col items-start p-3 text-left rounded-xl border transition-all duration-200',

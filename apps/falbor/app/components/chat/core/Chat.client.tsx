@@ -907,13 +907,37 @@ export const ChatImpl = memo(
         }
       };
 
+      const handleExternalModelChange = (event: Event) => {
+        const customEvent = event as CustomEvent<{ provider?: string; model: string }>;
+        if (customEvent.detail?.model) {
+          handleModelChange(customEvent.detail.model);
+          if (customEvent.detail.provider) {
+            const foundProvider = activeProviders.find(p => p.name === customEvent.detail.provider);
+            if (foundProvider) {
+              handleProviderChange(foundProvider);
+            }
+          }
+        }
+      };
+
+      const handleExternalChatModeChange = (event: Event) => {
+        const customEvent = event as CustomEvent<'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research'>;
+        if (customEvent.detail) {
+          setChatMode(customEvent.detail);
+        }
+      };
+
       window.addEventListener('falbor:externalChatMessage', handleExternalMessage);
       window.addEventListener('falbor:externalChatInputChange', handleExternalInputChange);
+      window.addEventListener('falbor:externalModelChange', handleExternalModelChange);
+      window.addEventListener('falbor:externalChatModeChange', handleExternalChatModeChange);
       return () => {
         window.removeEventListener('falbor:externalChatMessage', handleExternalMessage);
         window.removeEventListener('falbor:externalChatInputChange', handleExternalInputChange);
+        window.removeEventListener('falbor:externalModelChange', handleExternalModelChange);
+        window.removeEventListener('falbor:externalChatModeChange', handleExternalChatModeChange);
       };
-    }, [sendMessage, handleInputChange]);
+    }, [sendMessage, handleInputChange, activeProviders]);
 
     return (
       <BaseChat

@@ -12,6 +12,9 @@ export type OperatorActionType =
   | 'HIGHLIGHT_ELEMENT'
   | 'WAIT_FOR_BUILDER'
   | 'UPDATE_OPERATOR_MEMORY'
+  | 'SWITCH_SETTINGS_TAB'
+  | 'SWITCH_MODEL'
+  | 'SWITCH_CHAT_MODE'
   | 'SIMULATE_CLICK';
 
 export interface OperatorAction {

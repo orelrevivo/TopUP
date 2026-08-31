@@ -111,15 +111,21 @@ export function AIOperator() {
       const audioCtx = new AudioContextClass();
       audioContextRef.current = audioCtx;
       
+      // High-pass filter to block low frequency breath/exhalations and background hums (under 180Hz)
+      const biquadFilter = audioCtx.createBiquadFilter();
+      biquadFilter.type = 'highpass';
+      biquadFilter.frequency.setValueAtTime(180, audioCtx.currentTime);
+      
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 32;
       analyserRef.current = analyser;
       
       const source = audioCtx.createMediaStreamSource(stream);
-      source.connect(analyser);
+      source.connect(biquadFilter);
+      biquadFilter.connect(analyser);
       
       const dataArray = new Uint8Array(analyser.frequencyBinCount);
-      console.log("[AI Operator Debug] Audio Context and Analyser initialized successfully.");
+      console.log("[AI Operator Debug] Audio Context, Filter, and Analyser initialized.");
       
       // Start recording immediately
       startMediaRecorder();
@@ -135,19 +141,19 @@ export function AIOperator() {
         setAudioLevel(average);
         
         // Voice Activity Detection (VAD)
-        if (average > 10) { // Speech threshold
+        if (average > 15) { // Speech threshold (raised slightly to ignore noise)
           speechDetectedRef.current = true;
           // Clear silence timer
           if (silenceTimeoutRef.current) {
             clearTimeout(silenceTimeoutRef.current);
             silenceTimeoutRef.current = null;
           }
-        } else if (average <= 10 && speechDetectedRef.current && !silenceTimeoutRef.current) {
-          // Silence detected - set a timeout of 1.5s to submit
+        } else if (average <= 15 && speechDetectedRef.current && !silenceTimeoutRef.current) {
+          // Silence detected - set a timeout of 800ms to submit faster
           silenceTimeoutRef.current = setTimeout(() => {
             console.log("[AI Operator Debug] Silence timeout reached. Stopping recording.");
             stopMediaRecorder();
-          }, 1500);
+          }, 800);
         }
 
         if (stream.active) {
