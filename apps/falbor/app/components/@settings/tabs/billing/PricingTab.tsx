@@ -1,0 +1,263 @@
+"use client"
+
+import React, { useState, useEffect } from "react"
+import { Check, X, CreditCard, DollarSign } from "lucide-react"
+
+const PRO_PRICE = 17;
+const PRO_CREDITS = 35;
+
+const features = {
+  free: [
+    { text: "Website deployment to Falbor", included: true },
+    { text: "Short Screen Recordings (up to 20 mins)", included: true },
+    { text: "$6 initial AI credit balance", included: true },
+    { text: "Custom Supabase Databases", included: false },
+    { text: "Website deployment to Netlify & Vercel", included: false },
+  ],
+  pro: [
+    { text: "Website deployment to Netlify & Vercel", included: true },
+    { text: "Long Screen Recordings (up to 3 hours)", included: true },
+    { text: "Custom Supabase Databases", included: true },
+    { text: `$${PRO_CREDITS}.00 AI credit balance included`, included: true },
+    { text: "Priority Support (Coming soon)", included: true },
+  ]
+};
+
+export default function PricingTab() {
+  const [subscriptionTier, setSubscriptionTier] = useState("free")
+  const [isLoading, setIsLoading] = useState(true)
+  const [selectedAmount, setSelectedAmount] = useState(10)
+  const [promoCode, setPromoCode] = useState("")
+  const [isRedeeming, setIsRedeeming] = useState(false)
+  const [promoMessage, setPromoMessage] = useState("")
+  const [isPromoError, setIsPromoError] = useState(false)
+
+  const handleRedeem = async () => {
+    if (!promoCode.trim()) return
+    setIsRedeeming(true)
+    setPromoMessage("")
+    try {
+      const res = await fetch("/api/user/promo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: promoCode.trim() }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setPromoMessage("Coupon code applied successfully! $2.00 added and Early Access activated.")
+        setIsPromoError(false)
+        setPromoCode("")
+        fetchTier()
+      } else {
+        setPromoMessage(data.error || "Failed to redeem code.")
+        setIsPromoError(true)
+      }
+    } catch (e) {
+      setPromoMessage("Network error, please try again.")
+      setIsPromoError(true)
+    } finally {
+      setIsRedeeming(false)
+    }
+  }
+
+  const fetchTier = async () => {
+    const res = await fetch("/api/user/credits")
+    if (res.ok) {
+      const data = await res.json()
+      setSubscriptionTier((data.subscriptionTier || "free").toLowerCase())
+    }
+    setIsLoading(false)
+  }
+
+  useEffect(() => {
+    fetchTier()
+
+    
+    const bc = new BroadcastChannel('paypal_checkout');
+    bc.onmessage = (event) => {
+      if (event.data && event.data.type === 'PAYMENT_SUCCESS') {
+        fetchTier();
+      }
+    };
+
+    return () => {
+      bc.close();
+    }
+  }, [])
+
+  const openCheckout = (amount: number, tier?: string) => {
+    const url = `/checkout?amount=${amount}${tier ? `&tier=${tier}` : ''}`;
+    window.open(url, '_blank', 'width=600,height=800,menubar=no,toolbar=no,location=no,status=no');
+  }
+
+  if (isLoading) {
+    return <div className="flex justify-center p-8"><div className="i-svg-spinners:90-ring-with-bg text-purple-500 text-3xl animate-spin" /></div>
+  }
+
+  return (
+    <div className="max-w-2xl mx-auto space-y-6">
+      <div className="flex flex-col gap-2">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+          Subscription & Billing
+        </h2>
+        <p className="text-sm text-gray-600 dark:text-gray-400">
+          Upgrade your account to unlock premium features and add balance for AI operations.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {}
+        <div className="p-1 bg-[#E5E5E5] dark:bg-[#262626] rounded-xl">
+          <div className={`border rounded-xl p-6 flex flex-col
+            ${subscriptionTier === 'free'
+              ? 'border-purple-500 bg-purple-500/5 shadow-[0_0_20px_rgba(168,85,247,0.25)]'
+              : 'border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-[0_0_20px_rgba(0,0,0,0.15)]'
+            }`}>
+            <div className="mb-4">
+              <h3 className="text-xl font-bold text-gray-900 dark:text-white">Free</h3>
+              <p className="text-3xl font-extrabold text-gray-900 dark:text-white mt-2">$0</p>
+            </div>
+
+            <ul className="space-y-3 mb-6 flex-1">
+              {features.free.map((feat, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                  {feat.included ? (
+                    <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <X className="w-4 h-4 text-red-500/50 mt-0.5 flex-shrink-0" />
+                  )}
+                  <span className={!feat.included ? "opacity-50" : ""}>{feat.text}</span>
+                </li>
+              ))}
+            </ul>
+
+            <div className="mt-auto">
+              {subscriptionTier === 'free' ? (
+                <div className="w-full text-center py-2 bg-purple-500/20 text-purple-500 font-semibold rounded-lg border border-purple-500/30">
+                  Current Plan
+                </div>
+              ) : (
+                <div className="w-full text-center py-2 text-gray-500 dark:text-gray-500 font-semibold">
+                  -
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {}
+        <div className={`rounded-xl p-6 flex flex-col relative ${subscriptionTier === 'pro' ? 'bg-purple-200/20 dark:bg-[#242424]' : 'border-purple-500/30 bg-gray-50 dark:bg-gray-950'}`}>
+          {subscriptionTier === 'free' && (
+            <div className="absolute top-0 right-6 -translate-y-1/2 bg-purple-500 text-white text-xs px-3 py-1 rounded-full font-semibold shadow-md">
+              Recommended
+            </div>
+          )}
+
+          <div className="mb-4">
+            <h3 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              Pro <span className="text-xs bg-[#E5E5E5] dark:bg-[#262626] text-black dark:text-[#B7B6B7] px-2 py-0.5 rounded">One-time</span>
+            </h3>
+            <p className="text-3xl font-extrabold text-gray-900 dark:text-white mt-2">${PRO_PRICE}</p>
+          </div>
+
+          <ul className="space-y-3 mb-6 flex-1">
+            {features.pro.map((feat, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm text-gray-600 dark:text-gray-400">
+                {feat.included ? (
+                  <Check className="w-4 h-4 text-green-500 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <X className="w-4 h-4 text-red-500/50 mt-0.5 flex-shrink-0" />
+                )}
+                <span>{feat.text}</span>
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-auto relative z-10">
+            {subscriptionTier === 'pro' ? (
+              <div className="w-full text-center py-2 bg-white dark:bg-[#171717] border border-gray-200 dark:border-gray-800 text-black dark:text-white font-semibold rounded-xl">
+                Current Plan
+              </div>
+            ) : (
+              <button
+                onClick={() => openCheckout(PRO_PRICE, 'pro')}
+                className="w-full bg-[#0070ba] hover:bg-[#003087] text-white font-bold py-2.5 px-4 rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm"
+              >
+                <span>Pay with</span>
+                <span className="font-serif italic font-bold">PayPal</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {}
+      <div className="mt-4 mb-8 bg-purple-200/20 dark:border-gray-800 rounded-xl p-6 bg-white dark:bg-gray-900">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-2">
+          Add AI Balance
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-6">
+          Need more AI credits? You can top up your balance at any time. ($1 = $1 AI Balance)
+        </p>
+
+        <div className="flex flex-col md:flex-row gap-4 items-center">
+          <div className="w-full md:w-1/3">
+            <select
+              className="w-full bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-3 text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
+              value={selectedAmount}
+              onChange={(e) => setSelectedAmount(Number(e.target.value))}
+            >
+              {[5, 10, 20, 50, 100].map((amt) => (
+                <option key={amt} value={amt}>
+                  ${amt}.00 Balance
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="w-full md:w-2/3 relative z-0">
+            <button
+              onClick={() => openCheckout(selectedAmount)}
+              className="w-full md:w-auto min-w-[200px] border border-gray-200 dark:border-gray-800 bg-white dark:bg-[#242424] text-black dark:text-white font-semibold py-3 px-6 rounded-md transition-colors flex items-center justify-center gap-2 shadow-sm"
+            >
+              <span>Purchase</span>
+            </button>
+        </div>
+      </div>
+    </div>
+      {}
+      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 shadow-sm">
+        <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center gap-2 mb-2">
+          Redeem Promo Code
+        </h3>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Enter your promotion coupon or early access code below.
+        </p>
+
+        <div className="flex gap-4">
+          <input
+            type="text"
+            placeholder="Enter promo code"
+            value={promoCode}
+            onChange={(e) => setPromoCode(e.target.value)}
+            disabled={isRedeeming}
+            className="flex-1 bg-gray-50 dark:bg-gray-950 border border-gray-200 dark:border-gray-800 rounded-lg px-4 py-2.5 text-gray-900 dark:text-white focus:outline-none focus:border-purple-500 transition-colors"
+          />
+          <button
+            onClick={handleRedeem}
+            disabled={isRedeeming || !promoCode.trim()}
+            className="px-6 py-2.5 bg-purple-500 hover:bg-purple-600 disabled:opacity-50 text-white font-semibold rounded-lg transition-colors"
+          >
+            {isRedeeming ? "Redeeming..." : "Redeem"}
+          </button>
+        </div>
+
+        {promoMessage && (
+          <div className={`mt-4 text-sm font-medium ${isPromoError ? "text-red-500" : "text-green-500"}`}>
+            {promoMessage}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
