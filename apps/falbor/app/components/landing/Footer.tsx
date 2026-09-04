@@ -55,7 +55,7 @@ export default function Footer() {
               <img src="/landing/social/reddit.png" alt="Reddit" className="w-6 h-6 object-contain" />
             </a>
           </div>
-          <a href="https://fazier.com/launches/falbor.xyz" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=neutral" width="150" alt="Fazier badge" /></a>
+          <a href="https://fazier.com/launches/falbor.xyz" target="_blank"><img src="https://fazier.com/api/v1/public/badges/launch_badges.svg?badge_type=featured&theme=neutral" width="150" alt="Fazier badge" /></a>
           <a href="https://ufind.best/products/falbor" target="_blank" rel="noopener"><img src="https://ufind.best/badges/ufind-best-badge-light.svg" alt="Featured on ufind.best" width="150" className="dark:invert-0" /></a>
         </div>
       </footer>
