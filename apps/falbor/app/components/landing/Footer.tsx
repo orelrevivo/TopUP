@@ -7,7 +7,7 @@ export default function Footer() {
       <footer className="rounded-lg border border-zinc-200 dark:border-white/5 w-full bg-zinc-50 dark:bg-black pt-16 pb-8 px-6 text-zinc-500 dark:text-white/60 relative z-20 transition-colors duration-200">
         <div className="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
 
-          {}
+          { }
           <div className="flex flex-col gap-4">
             <div className="flex items-center gap-2">
               <img src="/logo-light-styled.png" alt="Falbor Logo" className="w-40 object-contain inline-block dark:hidden" />
@@ -19,7 +19,7 @@ export default function Footer() {
             </p>
           </div>
 
-          {}
+          { }
           <div className="flex flex-col md:flex-row gap-8 md:gap-16">
             <div className="flex flex-col gap-3">
               <h4 className="text-zinc-900 dark:text-white font-medium mb-1">Product</h4>
@@ -29,7 +29,7 @@ export default function Footer() {
             <div className="flex flex-col gap-3">
               <h4 className="text-zinc-900 dark:text-white font-medium mb-1">Company</h4>
               <Link href="/about" className="text-sm hover:text-zinc-900 dark:hover:text-white transition-colors">About</Link>
-              {}
+              { }
             </div>
             <div className="flex flex-col gap-3">
               <h4 className="text-zinc-900 dark:text-white font-medium mb-1">Legal</h4>
@@ -55,6 +55,7 @@ export default function Footer() {
               <img src="/landing/social/reddit.png" alt="Reddit" className="w-6 h-6 object-contain" />
             </a>
           </div>
+          <a href="https://fazier.com/launches/falbor.xyz" target="_blank"><img src="https://fazier.com/api/v1//public/badges/launch_badges.svg?badge_type=featured&theme=neutral" width="150" alt="Fazier badge" /></a>
           <a href="https://ufind.best/products/falbor" target="_blank" rel="noopener"><img src="https://ufind.best/badges/ufind-best-badge-light.svg" alt="Featured on ufind.best" width="150" className="dark:invert-0" /></a>
         </div>
       </footer>
