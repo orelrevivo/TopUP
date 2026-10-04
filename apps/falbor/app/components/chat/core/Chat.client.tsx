@@ -9,6 +9,7 @@ import { useMessageParser, usePromptEnhancer, useShortcuts } from '~/lib/hooks';
 import { description as descriptionStore, useChatHistory, chatId, chatMetadata } from '~/lib/persistence';
 import { chatStore } from '~/lib/stores/chat';
 import { workbenchStore } from '~/lib/stores/workbench';
+import { cloneWebsitePayload } from '~/lib/stores/cloneWebsite';
 import { webcontainer } from '~/lib/webcontainer';
 import { DEFAULT_MODEL, DEFAULT_PROVIDER, MODEL_REGEX, PROMPT_COOKIE_KEY, PROVIDER_LIST, PROVIDER_REGEX } from '~/utils/constants';
 import { setRewindId } from '~/lib/api/data/chat';
@@ -186,7 +187,7 @@ export const ChatImpl = memo(
     const { showChat } = useStore(chatStore);
     const [animationScope, animate] = useAnimate();
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
-    const [chatMode, setChatMode] = useState<'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research'>('build');
+    const [chatMode, setChatMode] = useState<'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research'>('idea');
     const [selectedElement, setSelectedElement] = useState<ElementInfo | null>(null);
     const mcpSettings = useMCPStore((state) => state.settings);
     const selectedMCPs = useMCPStore((state) => state.selectedMCPs);
@@ -350,7 +351,15 @@ export const ChatImpl = memo(
 
     useEffect(() => {
       chatStore.setKey('started', initialMessages.length > 0);
-    }, []);
+
+      
+      if (initialMessages.length === 1 && initialMessages[0].role === 'user' && initialMessages[0].content.includes('Import and analyze the repository')) {
+        const timer = setTimeout(() => {
+          reload();
+        }, 300);
+        return () => clearTimeout(timer);
+      }
+    }, [initialMessages]);
 
     useEffect(() => {
       processSampledMessages({
@@ -591,6 +600,42 @@ export const ChatImpl = memo(
       return parts;
     };
 
+    useEffect(() => {
+      const payload = cloneWebsitePayload.get();
+      if (payload) {
+        cloneWebsitePayload.set(null);
+
+        const attachments = payload.images.map((url, i) => {
+          const isJpeg = url.startsWith('data:image/jpeg');
+          return {
+            url,
+            name: `image-${i}.${isJpeg ? 'jpg' : 'png'}`,
+            contentType: isJpeg ? 'image/jpeg' : 'image/png'
+          };
+        });
+
+        const userMessageText = `[Model: ${model}]\n\n[Provider: ${provider.name}]\n\n${payload.prompt}`;
+
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `${new Date().getTime()}`,
+            role: 'user',
+            content: userMessageText,
+            parts: createMessageParts(userMessageText, payload.images),
+            experimental_attachments: attachments,
+          },
+        ]);
+
+        runAnimation();
+
+        reload({
+          ...(attachments.length > 0 ? { experimental_attachments: attachments } : {}),
+          body: chatBody
+        });
+      }
+    }, [model, provider, setMessages, reload, chatBody, runAnimation]);
+
     
     const filesToAttachments = async (files: File[]): Promise<Attachment[] | undefined> => {
       if (files.length === 0) {
@@ -632,6 +677,10 @@ export const ChatImpl = memo(
 
       let finalMessageContent = messageContent;
 
+      if (typeof window !== 'undefined' && window.location.pathname.includes('/sources')) {
+        finalMessageContent = `[SYSTEM CONTEXT: You are in Q&A mode on the Acquisition Sources page. Do NOT create code files, do NOT create falborArtifact or code tags, and do NOT open the Workbench. Reply strictly in conversational markdown text or standard markdown tables.]\n\n${finalMessageContent}`;
+      }
+
       const dbContext = selectedDatabase.get();
       if (dbContext === 'neon') {
         finalMessageContent = `${finalMessageContent}\n\n[Requirement: Integrate Neon database for storage. Generate the code immediately.]`;
@@ -666,11 +715,23 @@ export const ChatImpl = memo(
 
       if (!chatStarted) {
         setFakeLoading(true);
+        const newId = currentChatId || localChatId;
         if (!currentChatId) {
-          chatId.set(localChatId);
+          chatId.set(newId);
+        }
+        if (typeof window !== 'undefined' && !window.location.pathname.includes('/sources') && !window.location.pathname.includes(`/new/${newId}`) && !window.location.pathname.includes(`/vibe/${newId}`)) {
+          const match = window.location.pathname.match(/\/workspace\/([^\/]+)/);
+          const currentWorkspaceId = match ? match[1] : 'default';
+          const isVibePath = window.location.pathname.includes('/vibe');
+          const targetPath = isVibePath 
+            ? `/workspace/${currentWorkspaceId}/vibe/${newId}` 
+            : `/workspace/${currentWorkspaceId}/new/${newId}`;
+          window.history.replaceState({}, '', targetPath);
         }
 
-        if (autoSelectTemplate) {
+        const isSourcesPath = typeof window !== 'undefined' && window.location.pathname.includes('/sources');
+
+        if (autoSelectTemplate && !isSourcesPath) {
           const { template, title } = await selectStarterTemplate({
             message: finalMessageContent,
             model,

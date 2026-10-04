@@ -4,6 +4,7 @@ import { useStore } from '@nanostores/react';
 import { ClientOnly } from '~/components/ui/ClientOnly';
 import { chatStore } from '~/lib/stores/chat';
 import { settingsOpenStore, settingsTabStore } from '~/lib/stores/settings';
+import { aiSidebarStore } from '~/lib/stores/aiSidebar';
 import { classNames } from '~/utils/classNames';
 import { HeaderActionButtons } from './HeaderActionButtons.client';
 import { ChatDescription } from '~/lib/persistence/ChatDescription.client';
@@ -54,12 +55,12 @@ export function Header() {
           'border-falbor-elements-borderColor': chat.started,
         })}
       >
-        {}
+        { }
         <button
           onClick={toggleSidebar}
           className={classNames(
             'flex items-center justify-center p-2 -ml-2 text-falbor-elements-textPrimary',
-            
+
             'md:hidden'
           )}
           title="Toggle Sidebar"
@@ -67,7 +68,16 @@ export function Header() {
           <div className="i-ph:list w-6 h-6" />
         </button>
 
-        {}
+        <button
+          onClick={() => aiSidebarStore.toggle()}
+          className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors shadow-sm ml-2"
+          title="Toggle AI Agent Sidebar"
+        >
+          <i className="i-ph:sparkle-fill text-sm" />
+          <span>AI Agent</span>
+        </button>
+
+        { }
         {!isOpen && (
           <a
             href={isHacking ? '/hacking' : '/'}
@@ -78,23 +88,19 @@ export function Header() {
           </a>
         )}
 
-        {}
-        {!chat.started && !isOpen && (
+        { }
+        {!isOpen && (
           <button
             onClick={toggleSidebar}
-            className="hidden md:flex items-center justify-center p-2 -ml-2 text-falbor-elements-textPrimary"
-            title="Toggle Sidebar"
+            className="hidden md:flex items-center justify-center p-2 -ml-2 text-falbor-elements-textPrimary hover:bg-gray-200/60 dark:hover:bg-gray-800 rounded-md transition-colors mr-2"
+            title="Open Sidebar"
           >
-            <div className="i-ph:list w-6 h-6" />
+            <div className="i-ph:sidebar-simple w-5 h-5" />
           </button>
         )}
-        {}
-        {chat.started && !isOpen && (
-          <div
-            className="hidden md:flex items-center gap-2 z-logo text-falbor-elements-textPrimary cursor-pointer"
-            onClick={toggleSidebar}
-          >
-            <a href={isHacking ? '/hacking' : '/'} className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
+        {chat.started && (
+          <div className="hidden md:flex items-center gap-2 z-logo text-falbor-elements-textPrimary">
+            <a href={isHacking ? '/hacking' : '/'} className="text-2xl font-semibold text-accent-500 flex items-center">
               <img src={isHacking ? '/hacking/logo-light-styled.png' : '/logo-light-styled.png'} alt="logo" className="w-[130px] inline-block dark:hidden" />
               <img src={isHacking ? '/hacking/logo-dark-styled.png' : '/logo-dark-styled.png'} alt="logo" className="w-[130px] inline-block hidden dark:block" />
             </a>
@@ -110,7 +116,7 @@ export function Header() {
             <ClientOnly>
               {() => (
                 <div className="flex items-center gap-2">
-                  {}
+                  { }
                   <HeaderActionButtons chatStarted={chat.started} />
                 </div>
               )}

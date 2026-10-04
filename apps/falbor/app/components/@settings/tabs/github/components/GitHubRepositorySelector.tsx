@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { Button } from '~/components/ui/Button';
 import { BranchSelector } from '~/components/ui/BranchSelector';
 import { GitHubRepositoryCard } from './GitHubRepositoryCard';
+import { GitHubConnection } from './GitHubConnection';
 import type { GitHubRepoInfo } from '~/types/GitHub';
 import { useGitHubConnection, useGitHubStats } from '~/lib/hooks';
 import { classNames } from '~/utils/classNames';
@@ -139,11 +140,8 @@ export function GitHubRepositorySelector({ onClone, className }: GitHubRepositor
 
   if (!isConnected || !connection) {
     return (
-      <div className="text-center p-8">
-        <p className="text-falbor-elements-textSecondary mb-4">Please connect to GitHub first to browse repositories</p>
-        <Button variant="outline" onClick={() => window.location.reload()}>
-          Refresh Connection
-        </Button>
+      <div className="space-y-6">
+        <GitHubConnection connectionTest={null} onTestConnection={() => {}} />
       </div>
     );
   }

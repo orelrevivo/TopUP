@@ -4,10 +4,11 @@ import Link from 'next/link';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Settings, Sun, Moon } from 'lucide-react';
 import { Badge } from "~/components/ui/Badge";
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useStore } from '@nanostores/react';
 import { themeStore, toggleTheme } from '~/lib/stores/theme';
 import HeroButtons from '../HeroButtons';
+import { Dropdown, DropdownItem } from '~/components/ui/Dropdown';
 
 interface MenuItem {
     type: 'item';
@@ -139,6 +140,11 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
     className = '',
 }) => {
     const router = useRouter();
+    const pathname = usePathname();
+    const isMarketersPage = pathname === "/marketers";
+    const loginHref = isMarketersPage ? "/login?role=marketer" : "/login";
+    const signupHref = isMarketersPage ? "/signup?role=marketer" : "/signup";
+
     const [currentTime, setCurrentTime] = useState('');
     const [activeMenu, setActiveMenu] = useState<string | null>(null);
     const [dropdownLeft, setDropdownLeft] = useState(0);
@@ -220,11 +226,38 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                             onClick={() => toggleMenu('apple')}
                             className="cursor-pointer hover:opacity-80 transition-opacity duration-150 mb-1"
                         >
-                            <img src="/logo-light-styled.png" width={120} alt="Logo" className="inline-block dark:hidden" />
-                            <img src="/logo-dark-styled.png" width={120} alt="Logo" className="hidden dark:block" />
+                            <img src="/hacking/logo-light-styled.png" width={120} alt="Logo" className="inline-block dark:hidden" />
+                            <img src="/hacking/logo-dark-styled.png" width={120} alt="Logo" className="hidden dark:block" />
                         </div>
+                        <Dropdown
+                            align="start"
+                            trigger={
+                                <button className="text-zinc-655 dark:text-white/80 hover:text-zinc-900 dark:hover:text-white/70 text-sm font-semibold flex items-center gap-1 cursor-pointer outline-none">
+                                    Product
+                                    <span className="text-xs opacity-70">▼</span>
+                                </button>
+                            }
+                        >
+                            <DropdownItem asChild>
+                                <Link href="/builder" className="w-full text-left font-medium">
+                                    Builder
+                                </Link>
+                            </DropdownItem>
+                            <DropdownItem asChild>
+                                <Link href="/pricing" className="w-full text-left font-medium">
+                                    Pricing
+                                </Link>
+                            </DropdownItem>                            <DropdownItem asChild>
+                                <Link href="/enterprise" className="w-full text-left font-medium">
+                                    Enterprise
+                                </Link>
+                            </DropdownItem>
+                        </Dropdown>
                         <Link href="/templates">
                             <span className="text-zinc-655 dark:text-white/80 hover:text-zinc-900 dark:hover:text-white/70 text-sm font-semibold">Templates</span>
+                        </Link>
+                        <Link href="/blog">
+                            <span className="text-zinc-655 dark:text-white/80 hover:text-zinc-900 dark:hover:text-white/70 text-sm font-semibold">Blog</span>
                         </Link>
                         <Link href="/privacy">
                             <span className="text-zinc-655 dark:text-white/80 hover:text-zinc-900 dark:hover:text-white/70 text-sm font-semibold">Legal &amp; Privacy</span>
@@ -273,12 +306,12 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                         >
                             {isDark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
                         </button>
-                        <Link href="/login">
+                        <Link href={loginHref}>
                             <button className="text-sm font-medium bg-[#e7e7e7] dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3 py-1.5 rounded-md transition-colors">
                                 Sign In
                             </button>
                         </Link>
-                        <Link href="/signup">
+                        <Link href={signupHref}>
                             <button className="text-sm font-medium bg-[#e7e7e7] dark:bg-zinc-800 text-zinc-900 dark:text-white hover:bg-zinc-200 dark:hover:bg-zinc-700 px-3 py-1.5 rounded-md transition-colors">
                                 Start free
                             </button>
@@ -307,6 +340,16 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                 { }
                 {mobileMenuOpen && (
                     <div className="border-t border-zinc-200 dark:border-white/10 backdrop-blur-md bg-white/95 dark:bg-zinc-950/95 px-4 py-4 flex flex-col gap-3">
+                        <Link href="/builder" onClick={() => setMobileMenuOpen(false)}>
+                            <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
+                                Builder (Product)
+                            </div>
+                        </Link>
+                        <Link href="/enterprise" onClick={() => setMobileMenuOpen(false)}>
+                            <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
+                                Enterprise
+                            </div>
+                        </Link>
                         <Link href="/pricing" onClick={() => setMobileMenuOpen(false)}>
                             <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
                                 {appName}
@@ -320,6 +363,11 @@ const MacOSMenuBar: React.FC<MacOSMenuBarProps> = ({
                         <Link href="/templates" onClick={() => setMobileMenuOpen(false)}>
                             <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
                                 Templates
+                            </div>
+                        </Link>
+                        <Link href="/blog" onClick={() => setMobileMenuOpen(false)}>
+                            <div className="py-2 text-sm font-semibold text-zinc-850 dark:text-white/80 border-b border-zinc-200 dark:border-white/10">
+                                Blog
                             </div>
                         </Link>
                         <Link href="/about" onClick={() => setMobileMenuOpen(false)}>

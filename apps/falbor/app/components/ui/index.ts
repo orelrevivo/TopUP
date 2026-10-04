@@ -13,6 +13,7 @@ export * from './Label';
 export * from './ScrollArea';
 export * from './Switch';
 export * from './Tabs';
+export * from './Table';
 export * from './ThemeSwitch';
 
 // Loading components

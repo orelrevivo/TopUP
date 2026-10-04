@@ -22,20 +22,22 @@ export async function POST(request: NextRequest) {
   const mockUserId = userId || 'test-user';
   try {
     const body = (await request.json()) as {
-      id: string; messages: any[]; urlId?: string; description?: string; timestamp?: string; metadata?: any;
+      id: string; messages: any[]; urlId?: string; description?: string; timestamp?: string; metadata?: any; workspaceId?: string;
     };
-    const { id, messages: msgs, urlId, description: desc_text, timestamp, metadata } = body;
+    const { id, messages: msgs, urlId, description: desc_text, timestamp, metadata, workspaceId: bodyWorkspaceId } = body;
+    const wsId = bodyWorkspaceId || metadata?.workspaceId;
     const [chat] = await db
       .insert(chats)
       .values({
         id,
         userId: mockUserId,
+        workspaceId: wsId,
         title: desc_text || "New Chat",
         model: metadata?.model,
         provider: metadata?.provider,
         ...(timestamp ? { createdAt: new Date(timestamp), updatedAt: new Date() } : {}),
       })
-      .onConflictDoUpdate({ target: chats.id, set: { title: desc_text || "New Chat", updatedAt: new Date() } })
+      .onConflictDoUpdate({ target: chats.id, set: { title: desc_text || "New Chat", ...(wsId ? { workspaceId: wsId } : {}), updatedAt: new Date() } })
       .returning();
     if (msgs?.length) {
       const now = Date.now();

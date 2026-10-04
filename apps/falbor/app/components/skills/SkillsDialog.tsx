@@ -67,7 +67,7 @@ export const SkillsDialog: React.FC<SkillsDialogProps> = ({ open, onOpenChange }
 
   return (
     <DialogRoot open={open} onOpenChange={onOpenChange}>
-      <Dialog className="max-w-5xl w-full h-[80vh] flex flex-col p-0 overflow-hidden bg-falbor-elements-background-depth-1 border border-falbor-elements-borderColor shadow-2xl">
+      <Dialog className="!max-w-5xl !w-[90vw] h-[80vh] flex flex-col p-0 overflow-hidden bg-falbor-elements-background-depth-1 border border-falbor-elements-borderColor shadow-2xl">
         {activeTab === 'library' && (
           <div className="flex items-center justify-between px-6 py-4 border-b border-falbor-elements-borderColor">
             <DialogTitle className="text-xl font-bold text-falbor-elements-textPrimary m-0">

@@ -21,7 +21,10 @@ export default function LoginPage() {
     const [showPassword, setShowPassword] = useState(false);
 
     useEffect(() => {
-        setLoginUri(window.location.origin + "/api/auth/google");
+        const urlParams = new URLSearchParams(window.location.search);
+        const role = urlParams.get("role");
+        const baseUri = window.location.origin + "/api/auth/google";
+        setLoginUri(role ? `${baseUri}?role=${role}` : baseUri);
     }, []);
 
     const { login, loginWithGoogle } = useAuth();
@@ -38,7 +41,16 @@ export default function LoginPage() {
         } else if (result.error) {
             setError(result.error);
         } else {
-            router.push("/");
+            const urlParams = new URLSearchParams(window.location.search);
+            const role = urlParams.get("role");
+            const redirectUrl = urlParams.get("redirect");
+            if (role === "marketer") {
+                router.push("/marketer-onboarding");
+            } else if (redirectUrl) {
+                window.location.href = redirectUrl;
+            } else {
+                router.push("/");
+            }
         }
     };
 

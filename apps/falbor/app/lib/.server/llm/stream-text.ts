@@ -193,6 +193,8 @@ export async function streamText(props: {
   designScheme?: DesignScheme;
   supabaseProjectData?: any;
   neonProjectData?: any;
+  allowBuild?: boolean;
+  workspaceData?: any;
   onImageGenerated?: (filePath: string, base64: string) => void;
 }) {
   const {
@@ -212,6 +214,8 @@ export async function streamText(props: {
     designScheme,
     supabaseProjectData,
     neonProjectData,
+    allowBuild,
+    workspaceData,
     onImageGenerated,
   } = props;
   let currentModel = DEFAULT_MODEL;
@@ -309,9 +313,12 @@ export async function streamText(props: {
       supabaseProjectData,
       neonProjectData,
       chatMode,
-    }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData, undefined, neonProjectData);
+      allowBuild,
+      workspaceData,
+    }) ?? getSystemPrompt(WORK_DIR, options?.supabaseConnection, designScheme, supabaseProjectData, undefined, neonProjectData, allowBuild, workspaceData);
 
-  const FILE_WRITING_ENFORCEMENT = `
+  if (allowBuild) {
+    const FILE_WRITING_ENFORCEMENT = `
 <CRITICAL_ENFORCEMENT_RULES>
   THESE ARE THE MOST IMPORTANT RULES FOR GENERATING ARTIFACTS AND CODE. YOU MUST FOLLOW THEM EXACTLY OR YOUR OUTPUT WILL BREAK.
 
@@ -363,10 +370,9 @@ export async function streamText(props: {
     </falborAction>
   </falborArtifact>
 </CRITICAL_ENFORCEMENT_RULES>
-
-
 `;
-  systemPrompt = FILE_WRITING_ENFORCEMENT + systemPrompt;
+    systemPrompt = FILE_WRITING_ENFORCEMENT + systemPrompt;
+  }
 
   if (isSlidesMode) {
     systemPrompt += `

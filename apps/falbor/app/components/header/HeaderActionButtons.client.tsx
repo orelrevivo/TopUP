@@ -8,6 +8,7 @@ import { useCallback } from 'react';
 import { toast } from 'react-toastify';
 import { classNames } from '~/utils/classNames';
 import { streamingState } from '~/lib/stores/streaming';
+import { aiSidebarStore } from '~/lib/stores/aiSidebar';
 
 interface HeaderActionButtonsProps {
   chatStarted: boolean;
@@ -42,6 +43,14 @@ export function HeaderActionButtons({ chatStarted: _chatStarted }: HeaderActionB
       {}
       {}
       {}
+      <button
+        onClick={() => aiSidebarStore.toggle()}
+        className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 text-blue-600 dark:text-blue-400 rounded-lg text-xs font-semibold hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors shadow-sm"
+      >
+        <i className="i-ph:sparkle-fill text-sm" />
+        <span>AI Agent</span>
+      </button>
+
       {shouldShowButtons && (
         <div className="flex">
           <DeployButton />

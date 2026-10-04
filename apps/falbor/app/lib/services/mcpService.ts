@@ -136,6 +136,10 @@ export class MCPService {
     }
 
     if (!['stdio', 'sse', 'streamable-http'].includes(config.type)) {
+      if (config.access_token || config.authed_user || config.scope) {
+        // Connected OAuth connector config
+        return config as any;
+      }
       throw new Error(`provided "type" is invalid, only "stdio", "sse" or "streamable-http" are valid options.`);
     }
 
@@ -454,10 +458,10 @@ export class MCPService {
     }
 
     const tools: ToolSet = {};
-    for (const [toolName, tool] of Object.entries(this._toolsWithoutExecute)) {
+    for (const [toolName, tool] of Object.entries(this._tools)) {
       const serverName = this._toolNamesToServerNames.get(toolName);
       if (serverName) {
-        const isMatch = serverNames.some(req => serverName === req || serverName.startsWith(`${req}-`));
+        const isMatch = serverNames.some(req => serverName === req || serverName.toLowerCase().startsWith(`${req.toLowerCase()}-`));
         if (isMatch) {
           tools[toolName] = tool;
         }
@@ -465,7 +469,10 @@ export class MCPService {
     }
 
     serverNames.forEach(reqServer => {
-      const hasTools = Object.keys(tools).some(t => this._toolNamesToServerNames.get(t) === reqServer);
+      const hasTools = Object.keys(tools).some(t => {
+        const sName = this._toolNamesToServerNames.get(t);
+        return sName && (sName === reqServer || sName.toLowerCase().startsWith(`${reqServer.toLowerCase()}-`));
+      });
       if (!hasTools) {
         console.error(`\n[MCP_ERROR] The AI requested tools for "${reqServer}", but no tools were found! Make sure the "${reqServer}" server is correctly configured in your MCP Settings (mcp.json) and is currently running.\n`);
       }

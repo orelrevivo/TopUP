@@ -23,6 +23,7 @@ async function api(path: string, options?: RequestInit): Promise<any> {
 export interface ServerChat {
   id: string;
   userId?: string;
+  workspaceId?: string;
   messages: any[];
   urlId?: string;
   description?: string;

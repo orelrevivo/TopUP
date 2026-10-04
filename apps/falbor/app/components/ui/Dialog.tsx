@@ -10,7 +10,7 @@ import { FixedSizeList } from 'react-window';
 import { Checkbox } from './Checkbox';
 import { Label } from './Label';
 
-export { Close as DialogClose, Root as DialogRoot } from '@radix-ui/react-dialog';
+export { Close as DialogClose, Root as DialogRoot, Overlay as DialogOverlay, Content as DialogPanel } from '@radix-ui/react-dialog';
 
 interface DialogButtonProps {
   type: 'primary' | 'secondary' | 'danger';
@@ -125,7 +125,7 @@ export const Dialog = memo(({ children, className, showCloseButton = true, onClo
           exit="closed"
           variants={dialogVariants}
         >
-          <div className="flex flex-col">
+          <div className="flex flex-col h-full">
             {children}
             {showCloseButton && (
               <RadixDialog.Close asChild onClick={onClose}>

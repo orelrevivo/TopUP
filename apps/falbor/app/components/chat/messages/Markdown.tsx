@@ -74,10 +74,11 @@ interface MarkdownProps {
   setChatMode?: (mode: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research') => void;
   model?: string;
   provider?: ProviderInfo;
+  isCanvas?: boolean;
 }
 
 export const Markdown = memo(
-  ({ children, html = false, limitedMarkdown = false, append, setChatMode, model, provider }: MarkdownProps) => {
+  ({ children, html = false, limitedMarkdown = false, append, setChatMode, model, provider, isCanvas = false }: MarkdownProps) => {
     logger.trace('Render');
 
     const components = useMemo(() => {
@@ -86,6 +87,9 @@ export const Markdown = memo(
           const dataProps = node?.properties as Record<string, unknown>;
 
           if (className?.includes('__falborArtifact__')) {
+            if (isCanvas) {
+              return null;
+            }
             const messageId = node?.properties.dataMessageId as string;
             const artifactId = node?.properties.dataArtifactId as string;
 
@@ -175,6 +179,15 @@ export const Markdown = memo(
               </span>
             );
           }
+          if (className?.includes('__falborSkill__')) {
+            const dataProps = node?.properties as Record<string, unknown>;
+            const id = (dataProps['data-id'] || dataProps.dataId) as string;
+            return (
+              <span className="bg-purple-500/20 text-purple-600 dark:text-purple-400 rounded-[4px] px-1 font-medium mx-1 flex-inline items-center gap-1">
+                <i className="i-ph:magic-wand text-xs" /> {id}
+              </span>
+            );
+          }
           return (
             <span className={className} {...props}>
               {children}
@@ -195,7 +208,7 @@ export const Markdown = memo(
             const { className, ...rest } = firstChild.properties;
             const [, language = 'plaintext'] = /language-(\w+)/.exec(String(className) || '') ?? [];
 
-            return <CodeBlock code={firstChild.children[0].value} language={language as BundledLanguage} {...rest} />;
+            return <CodeBlock code={firstChild.children[0].value} language={language as any} {...rest} />;
           }
 
           return <pre {...rest}>{children}</pre>;

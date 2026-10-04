@@ -26,7 +26,7 @@ type MCPSettings = {
 
 const defaultSettings = {
   maxLLMSteps: 10,
-  mcpEnabled: false,
+  mcpEnabled: true,
   mcpConfig: {
     mcpServers: {},
   },

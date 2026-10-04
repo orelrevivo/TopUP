@@ -7,16 +7,17 @@ interface User {
   id: string;
   email: string;
   displayName?: string | null;
+  role?: string;
 }
 
 interface AuthContextValue {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ error?: string; requiresVerification?: boolean }>;
-  register: (email: string, password: string) => Promise<{ error?: string; requiresVerification?: boolean; email?: string }>;
+  register: (email: string, password: string, role?: string) => Promise<{ error?: string; requiresVerification?: boolean; email?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
-  loginWithGoogle: (data: { credential?: string; accessToken?: string }) => Promise<{ error?: string }>;
+  loginWithGoogle: (data: { credential?: string; accessToken?: string; role?: string }) => Promise<{ error?: string }>;
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -34,7 +35,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const refresh = useCallback(async () => {
     try {
       const res = await fetch("/api/auth/me");
-      const data = (await res.json()) as { user?: { id: string; email: string; displayName?: string | null } };
+      const data = (await res.json()) as { user?: { id: string; email: string; displayName?: string | null; role?: string } };
       setUser(data.user ?? null);
       if (data.user) {
         loadProfileFromServer();
@@ -74,12 +75,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const register = useCallback(async (email: string, password: string) => {
+  const register = useCallback(async (email: string, password: string, role?: string) => {
     try {
       const res = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, role }),
       });
       const data = (await res.json()) as { user?: any; error?: string; requiresVerification?: boolean; email?: string };
       if (!res.ok) return { error: data.error ?? "Registration failed" };
@@ -95,7 +96,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const loginWithGoogle = useCallback(async (tokenData: { credential?: string; accessToken?: string }) => {
+  const loginWithGoogle = useCallback(async (tokenData: { credential?: string; accessToken?: string; role?: string }) => {
     try {
       const res = await fetch("/api/auth/google", {
         method: "POST",

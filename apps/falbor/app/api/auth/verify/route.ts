@@ -1,5 +1,5 @@
 import { db } from "~/lib/db";
-import { users } from "~/lib/db/schema";
+import { users, marketerProfiles } from "~/lib/db/schema";
 import { createToken, SESSION_DURATION_DAYS } from "~/lib/auth";
 import { eq, and } from "drizzle-orm";
 
@@ -46,7 +46,15 @@ export async function POST(request: Request) {
       })
       .where(eq(users.id, user.id));
 
-    const token = await createToken(user.id);
+    const [marketerProfile] = await db
+      .select({ id: marketerProfiles.id })
+      .from(marketerProfiles)
+      .where(eq(marketerProfiles.userId, user.id))
+      .limit(1);
+      
+    const effectiveRole = marketerProfile ? "marketer" : user.role;
+
+    const token = await createToken(user.id, effectiveRole || undefined);
     const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
     const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
     const isProduction = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";
@@ -56,7 +64,7 @@ export async function POST(request: Request) {
       : `HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}; Expires=${expires}`;
 
     const body = JSON.stringify({
-      user: { id: user.id, email: user.email, displayName: user.displayName },
+      user: { id: user.id, email: user.email, displayName: user.displayName, role: effectiveRole },
     });
 
     return new Response(body, {

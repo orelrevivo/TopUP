@@ -19,6 +19,7 @@ function VerifiedForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const email = searchParams.get("email") || "";
+    const role = searchParams.get("role");
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -33,8 +34,8 @@ function VerifiedForm() {
             });
             const data = await res.json();
             if (res.ok) {
-                await refresh(); 
-                router.push("/welcome");
+                await refresh();
+                router.push(role === "marketer" ? "/marketer-onboarding" : "/welcome");
                 router.refresh();
             } else {
                 setError(data.error || "Verification failed");

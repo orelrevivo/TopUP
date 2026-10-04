@@ -8,6 +8,7 @@ import { GoogleOAuthProvider } from '@react-oauth/google';
 import { StayUpInit } from './components/stayup/StayUpInit.client';
 import { Montserrat } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/next';
+import { Toaster } from 'react-hot-toast';
 import dynamic from 'next/dynamic';
 
 const AIOperator = dynamic(
@@ -37,14 +38,33 @@ export default function FalborLayout({
         <script
           dangerouslySetInnerHTML={{
             __html: `
-              try {
-                let theme = localStorage.getItem('falbor_theme');
-                if (!theme) {
-                  theme = 'light';
-                  localStorage.setItem('falbor_theme', theme);
+              (function() {
+                try {
+                  let theme = localStorage.getItem('falbor_theme');
+                  if (!theme) {
+                    theme = 'light';
+                    localStorage.setItem('falbor_theme', theme);
+                  }
+                  document.documentElement.setAttribute('data-theme', theme);
+                } catch (e) {}
+                
+                function isWasmErr(msg) {
+                  const s = String(msg || '');
+                  return s.indexOf('DataCloneError') !== -1 || s.indexOf('WebAssembly.Memory') !== -1 || s.indexOf('staticblitz') !== -1;
                 }
-                document.documentElement.setAttribute('data-theme', theme);
-              } catch (e) {}
+                window.addEventListener('error', function(e) {
+                  if (isWasmErr(e.message) || isWasmErr(e.error)) {
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                  }
+                }, true);
+                window.addEventListener('unhandledrejection', function(e) {
+                  if (isWasmErr(e.reason)) {
+                    e.stopImmediatePropagation();
+                    e.preventDefault();
+                  }
+                }, true);
+              })();
             `,
           }}
         />
@@ -52,11 +72,12 @@ export default function FalborLayout({
       <body className={`${montserrat.className} ${montserrat.variable}`}>
         <ThemeSync />
         <StayUpInit />
+        <Toaster position="bottom-right" toastOptions={{ className: 'dark:bg-zinc-800 dark:text-white' }} />
         <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || ""}>
           <AuthProvider>
             <StorageSync />
             {children}
-            <AIOperator />
+            {/* <AIOperator /> */}
           </AuthProvider>
         </GoogleOAuthProvider>
         <Analytics />

@@ -19,7 +19,7 @@ const nextConfig = {
   },
 
   experimental: {
-    serverComponentsExternalPackages: ["shiki", "playwright-core", "@browserbasehq/stagehand", "chromium-bidi"],
+    serverComponentsExternalPackages: ["shiki", "playwright-core", "@browserbasehq/stagehand", "chromium-bidi", "undici"],
     serverActions: {
       bodySizeLimit: '10mb',
     },
@@ -34,10 +34,21 @@ const nextConfig = {
           { key: 'X-Content-Type-Options', value: 'nosniff' },
           { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
           { key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=()' },
-          { key: 'X-Frame-Options', value: 'DENY' },
           ...(process.env.NODE_ENV === 'production'
             ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }]
             : []),
+        ],
+      },
+      {
+        source: '/builder/:path*',
+        headers: [
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
+          { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
+        ],
+      },
+      {
+        source: '/hacking/:path*',
+        headers: [
           { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
           { key: 'Cross-Origin-Embedder-Policy', value: 'credentialless' },
         ],
@@ -45,20 +56,15 @@ const nextConfig = {
       {
         source: '/checkout',
         headers: [
-          { key: 'Cross-Origin-Opener-Policy', value: 'unsafe-none' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
+          { key: 'Cross-Origin-Opener-Policy', value: 'same-origin-allow-popups' },
         ],
       },
       {
-        // Deployed user sites served from DB — must not inherit the app's COEP
         source: '/api/site/:subdomain*',
         headers: [
-          { key: 'Cross-Origin-Opener-Policy', value: 'unsafe-none' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'unsafe-none' },
           { key: 'Cross-Origin-Resource-Policy', value: 'cross-origin' },
         ],
       },
-
     ];
   },
 
@@ -82,7 +88,7 @@ const nextConfig = {
     };
 
     if (isServer) {
-      config.externals = [...(config.externals || []), 'playwright-core', '@browserbasehq/stagehand', 'chromium-bidi'];
+      config.externals = [...(config.externals || []), 'playwright-core', '@browserbasehq/stagehand', 'chromium-bidi', 'undici'];
     }
 
     if (!isServer) {

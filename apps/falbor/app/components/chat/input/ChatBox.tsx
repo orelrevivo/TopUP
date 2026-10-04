@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import * as Switch from '@radix-ui/react-switch';
 import { ClientOnly } from '~/components/ui/ClientOnly';
 import { Dropdown, DropdownItem, DropdownSub, DropdownSubTrigger, DropdownSubContent, DropdownSeparator } from '~/components/ui/Dropdown';
@@ -30,6 +30,10 @@ import { useMCPStore } from '~/lib/stores/mcp';
 import Link from 'next/link';
 import { QuestionOverlay, type QuestionData } from '../core/QuestionOverlay';
 import { selectedDatabase } from '~/lib/stores/database';
+import { WorkspaceSettingsModal } from '~/components/workspace/workspace-settings/WorkspaceSettingsModal';
+import { useParams, usePathname } from 'next/navigation';
+
+
 
 interface ChatBoxProps {
   isModelSettingsCollapsed: boolean;
@@ -104,6 +108,83 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
   const [subscriptionTier, setSubscriptionTier] = React.useState<string>('free');
   const [displayTokenUsage, setDisplayTokenUsage] = React.useState<boolean>(false);
   const highlightDivRef = React.useRef<HTMLDivElement>(null);
+  const [isDraggingOver, setIsDraggingOver] = React.useState(false);
+  const dragCounterRef = React.useRef(0);
+
+  React.useEffect(() => {
+    const handleWindowDragEnter = (e: DragEvent) => {
+      e.preventDefault();
+      const types = e.dataTransfer?.types ? Array.from(e.dataTransfer.types) : [];
+      if (types.includes('Files')) {
+        dragCounterRef.current += 1;
+        setIsDraggingOver(true);
+      }
+    };
+
+    const handleWindowDragOver = (e: DragEvent) => {
+      e.preventDefault();
+      if (e.dataTransfer) {
+        e.dataTransfer.dropEffect = 'copy';
+      }
+      setIsDraggingOver(true);
+    };
+
+    const handleWindowDragLeave = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounterRef.current -= 1;
+      if (dragCounterRef.current <= 0 || e.clientX === 0 && e.clientY === 0) {
+        dragCounterRef.current = 0;
+        setIsDraggingOver(false);
+      }
+    };
+
+    const handleWindowDrop = (e: DragEvent) => {
+      e.preventDefault();
+      dragCounterRef.current = 0;
+      setIsDraggingOver(false);
+
+      const dataTransferFiles = e.dataTransfer?.files ? Array.from(e.dataTransfer.files) : [];
+      if (dataTransferFiles.length > 0) {
+        const imageFiles = dataTransferFiles.filter(f => f.type.startsWith('image/'));
+        if (imageFiles.length === 0) return;
+
+        const newImages: string[] = [];
+        let processedCount = 0;
+
+        imageFiles.forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const base64Image = event.target?.result as string;
+            if (base64Image) {
+              newImages.push(base64Image);
+            }
+            processedCount++;
+            if (processedCount === imageFiles.length) {
+              if (props.setUploadedFiles) {
+                props.setUploadedFiles(((prevFiles: File[]) => [...(prevFiles || []), ...imageFiles]) as any);
+              }
+              if (props.setImageDataList) {
+                props.setImageDataList(((prevData: string[]) => [...(prevData || []), ...newImages]) as any);
+              }
+            }
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+    };
+
+    window.addEventListener('dragenter', handleWindowDragEnter);
+    window.addEventListener('dragover', handleWindowDragOver);
+    window.addEventListener('dragleave', handleWindowDragLeave);
+    window.addEventListener('drop', handleWindowDrop);
+
+    return () => {
+      window.removeEventListener('dragenter', handleWindowDragEnter);
+      window.removeEventListener('dragover', handleWindowDragOver);
+      window.removeEventListener('dragleave', handleWindowDragLeave);
+      window.removeEventListener('drop', handleWindowDrop);
+    };
+  }, [props.uploadedFiles, props.imageDataList, props.setUploadedFiles, props.setImageDataList]);
 
   React.useEffect(() => {
     if (user) {
@@ -163,6 +244,11 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
 
   const availableModels = rawAvailableModels;
   const selectedModelInfo = availableModels.find(m => m?.name === props.model);
+
+  const [showSettings, setShowSettings] = useState(false);
+  const params = useParams();
+  const pathname = usePathname();
+  const workspaceId = params?.id as string;
 
   useEffect(() => {
     const handleInsertMcpToken = (e: Event) => {
@@ -243,21 +329,59 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
           </div>
         )
       )}
-      <div className={classNames('rounded-xl relative transition-all duration-300', {
-        'p-[1.5px] dark:p-1.5 dark:bg-transparent': !props.chatStarted
+      <div className={classNames('relative transition-all duration-300', {
+        'rounded-xl': props.chatStarted,
       })}>
         {!props.chatStarted && (
-          <>
-            <div className="absolute inset-0 rounded-xl overflow-hidden dark:hidden pointer-events-none">
-              <div className="absolute inset-[-150%] animate-[spin_5s_linear_infinite]"
-                style={{
-                  background: 'conic-gradient(from 0deg, transparent 0%, transparent 60%, #F7E5DF, #C8674C, #C8674C, transparent 100%)'
-                }}
-              />
+          pathname?.includes('/sources') ? (
+            <div className="bg-purple-500/10 dark:bg-purple-900/30 text-purple-900 dark:text-purple-200 px-4 pt-2.5 pb-4 -mb-2 flex justify-between items-center text-sm rounded-t-[8px] relative z-0 border-b border-purple-500/20">
+              <div className="font-semibold flex items-center gap-2">
+                <span className="i-ph:share-network w-4 h-4 text-purple-600 dark:text-purple-400" />
+                <span>Sources</span>
+                <span className="opacity-60 mx-1">•</span>
+                <span className="font-normal text-xs opacity-90">You can ask questions related to Acquisition Sources</span>
+              </div>
             </div>
-          </>
+          ) : user ? (
+            <div className="bg-[#0099ff]/20 dark:bg-[#3A2C1D] text-orange-800 dark:text-orange-200 px-4 pt-2.5 pb-4 -mb-2 flex justify-between items-center text-sm rounded-t-[8px] relative z-0">
+              <div className="text-[#0099ff] dark:text-orange-200 font-medium flex items-center gap-2">
+                <span className="font-medium">Low on credits</span>
+                <span className="opacity-80 mx-1.5">–</span>
+                <span className="opacity-90">{balance !== null ? balance : '...'} credits remaining</span>
+              </div>
+              <button
+                className="text-black/70 dark:text-[#14B8A6] dark:hover:text-teal-400 font-medium transition-colors flex items-center"
+                onClick={() => {
+                  import('~/lib/stores/settings').then(({ settingsOpenStore, settingsTabStore }) => {
+                    settingsTabStore.set('pricing');
+                    settingsOpenStore.set(true);
+                  });
+                }}
+              >
+                Upgrade team <span className="opacity-70 ml-1.5 text-lg leading-none mb-0.5">&times;</span>
+              </button>
+            </div>
+          ) : null
         )}
-        <div className="relative bg-white dark:bg-[#141414] backdrop-blur border border-[#D6D6D6] dark:border-[#353538] rounded-[10.5px] dark:rounded-lg h-full z-10">
+
+        <div className={classNames(
+          "relative backdrop-blur z-10",
+          props.chatStarted ? "bg-white dark:bg-[#111114] border border-[#D6D6D6] dark:border-[#353538] rounded-lg h-full overflow-hidden min-h-[60px]" : "bg-white dark:bg-[#1E1E21] border border-[#D6D6D6] dark:border-transparent rounded-[8px] min-h-[60px]"
+        )}>
+          {isDraggingOver ? (
+            <div className="absolute inset-0 z-50 p-3 bg-[#F4F3F6] dark:bg-[#1A191D] rounded-[10.5px] dark:rounded-lg flex items-center justify-center pointer-events-none">
+              <div className="w-full h-full border border-dashed border-gray-300 dark:border-gray-700 rounded-lg flex flex-col items-center justify-center p-6 text-center">
+                <div className="flex items-center gap-2 mb-1 text-gray-700 dark:text-gray-200 font-medium text-sm">
+                  <div className="i-ph:image text-lg text-gray-500" />
+                  <span>Drop files here to add to chat</span>
+                  <div className="i-ph:file-text text-lg text-gray-500" />
+                </div>
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  A maximum of 5 uploads per message at 10 MB each
+                </p>
+              </div>
+            </div>
+          ) : null}
           {props.pendingQuestions && props.pendingQuestions.length > 0 && !props.isStreaming && (
             <QuestionOverlay
               questions={props.pendingQuestions}
@@ -466,11 +590,13 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     maxHeight: props.TEXTAREA_MAX_HEIGHT,
                   }}
                   placeholder={
-                    props.chatMode === 'build'
-                      ? 'How can Falbor help you today?'
-                      : props.chatMode === 'troubleshoot'
-                        ? 'Paste an error or describe a problem you need to fix...'
-                        : 'What would you like to discuss?'
+                    props.chatMode === 'discuss'
+                      ? 'DISCUSS Mode: Chat & ask questions without file edits...'
+                      : props.chatMode === 'build'
+                        ? 'How can Falbor help you today?'
+                        : props.chatMode === 'troubleshoot'
+                          ? 'Paste an error or describe a problem you need to fix...'
+                          : 'What would you like to discuss?'
                   }
                   translate="no"
                 />
@@ -769,7 +895,23 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       )}
                       <span>Enhance prompt</span>
                     </DropdownItem>
+
+                    <DropdownSeparator />
+                    <DropdownItem onSelect={() => {
+                      setTimeout(() => setShowSettings(true), 150);
+                    }}>
+                      <div className="i-ph:gear text-xl text-falbor-elements-textSecondary"></div>
+                      <span>Settings</span>
+                    </DropdownItem>
                   </Dropdown>
+
+                  {workspaceId && (
+                    <WorkspaceSettingsModal
+                      isOpen={showSettings}
+                      onClose={() => setShowSettings(false)}
+                      workspaceId={workspaceId}
+                    />
+                  )}
 
                   <SpeechRecognitionButton
                     isListening={props.isListening}
@@ -777,7 +919,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     onStop={props.stopListening}
                     disabled={props.isStreaming}
                   />
-                  { }
+
                   {isSlidesMode && (
                     <IconButton
                       title="Disable Slides Mode"
@@ -803,9 +945,79 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       <span>2D Game</span>
                     </IconButton>
                   )}
+                </div>
 
-                  { }
-
+                <div className="flex items-center gap-1">
+                  {props.chatStarted && props.setChatMode && false && (
+                    <Dropdown
+                      sideOffset={8}
+                      align="end"
+                      trigger={
+                        <IconButton
+                          title="Select Chat Mode"
+                          className={classNames(
+                            'transition-all flex items-center gap-1.5 px-2 py-1',
+                            '!bg-[#F3F3F3] !text-gray-700'
+                          )}
+                        >
+                          <div className={classNames(
+                            'text-base',
+                            props.chatMode === 'build' && 'i-ph:rocket-launch-duotone',
+                            props.chatMode === 'troubleshoot' && 'i-ph:wrench-duotone',
+                            props.chatMode === 'discuss' && 'i-ph:chats-duotone',
+                            props.chatMode === 'idea' && 'i-ph:lightbulb-duotone',
+                            props.chatMode === 'mvp_research' && 'i-ph:flask-duotone',
+                            !['build', 'troubleshoot', 'discuss', 'idea', 'mvp_research'].includes(props.chatMode || '') && 'i-ph:sliders-horizontal-duotone'
+                          )} />
+                          <span className="text-xs font-medium capitalize">
+                            {props.chatMode === 'build' && 'MVP'}
+                            {props.chatMode === 'troubleshoot' && 'Troubleshoot'}
+                            {props.chatMode === 'discuss' && 'Chat'}
+                            {props.chatMode === 'idea' && 'Idea'}
+                            {props.chatMode === 'mvp_research' && 'Research'}
+                            {!['build', 'troubleshoot', 'discuss', 'idea', 'mvp_research'].includes(props.chatMode || '') && 'Mode'}
+                          </span>
+                          <div className="i-ph:caret-down text-xs" />
+                        </IconButton>
+                      }
+                    >
+                      <DropdownItem
+                        active={props.chatMode === 'build'}
+                        onSelect={() => props.setChatMode?.('build')}
+                      >
+                        <div className="i-ph:rocket-launch-duotone text-base" />
+                        <span>MVP</span>
+                      </DropdownItem>
+                      <DropdownItem
+                        active={props.chatMode === 'troubleshoot'}
+                        onSelect={() => props.setChatMode?.('troubleshoot')}
+                      >
+                        <div className="i-ph:wrench-duotone text-base" />
+                        <span>Troubleshoot</span>
+                      </DropdownItem>
+                      <DropdownItem
+                        active={props.chatMode === 'discuss'}
+                        onSelect={() => props.setChatMode?.('discuss')}
+                      >
+                        <div className="i-ph:chats-duotone text-base" />
+                        <span>Chat</span>
+                      </DropdownItem>
+                      <DropdownItem
+                        active={props.chatMode === 'idea'}
+                        onSelect={() => props.setChatMode?.('idea')}
+                      >
+                        <div className="i-ph:lightbulb-duotone text-base" />
+                        <span>Idea</span>
+                      </DropdownItem>
+                      <DropdownItem
+                        active={props.chatMode === 'mvp_research'}
+                        onSelect={() => props.setChatMode?.('mvp_research')}
+                      >
+                        <div className="i-ph:flask-duotone text-base" />
+                        <span>Research</span>
+                      </DropdownItem>
+                    </Dropdown>
+                  )}
 
                   {showWorkbench && (
                     <DesignSystemToolbar
@@ -813,16 +1025,6 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                       isDesignSystemMode={isDesignSystemMode}
                     />
                   )}
-                </div>
-
-                {props.input.length > 3 ? (
-
-
-
-
-                  <div></div>
-                ) : null}
-                <div className="flex items-center gap-1">
                   {false && availableModels.length > 0 && (
                     <Dropdown
                       sideOffset={8}
@@ -1105,22 +1307,16 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
         {displayTokenUsage && (
           <div className="text-center text-xs mt-2 text-falbor-elements-textTertiary">
             <span>
-              Remaining Balance: {balance ?? 0} credits
-              {subscriptionTier !== 'pro' && (
+              Remaining Balance: <strong className="text-falbor-elements-textPrimary">{typeof balance === 'number' ? balance.toFixed(1) : (balance ?? 0)} credits</strong>
+              {subscriptionTier === 'free' && (
                 <>
                   {' '}·{' '}
-                  <button
-                    onClick={(e) => {
-                      e.preventDefault();
-                      import('~/lib/stores/settings').then(({ settingsTabStore, settingsOpenStore }) => {
-                        settingsTabStore.set('pricing');
-                        settingsOpenStore.set(true);
-                      });
-                    }}
-                    className="text-[#0099ff] hover:underline"
+                  <a
+                    href="/upgrade"
+                    className="text-[#0099ff] font-semibold hover:underline"
                   >
-                    Switch to Pro for more usage
-                  </button>
+                    Upgrade Plan
+                  </a>
                 </>
               )}
             </span>

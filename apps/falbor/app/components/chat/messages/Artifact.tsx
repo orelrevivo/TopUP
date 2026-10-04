@@ -19,9 +19,7 @@ import ReactMarkdown from 'react-markdown';
 
 const AnalyzerActionItem = memo(({ action }: { action: any }) => {
   const openResearchView = () => {
-    workbenchStore.currentResearchData.set(action.content);
-    workbenchStore.currentView.set('research');
-    workbenchStore.showWorkbench.set(true);
+    window.dispatchEvent(new CustomEvent('pan-to-research'));
   };
 
   return (

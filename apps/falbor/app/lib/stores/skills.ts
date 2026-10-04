@@ -13,16 +13,61 @@ const isBrowser = typeof window !== 'undefined';
 const SKILLS_STORAGE_KEY = 'falbor_skills_library';
 
 const getInitialSkills = (): Skill[] => {
-  if (!isBrowser) return [];
+  const defaultSkills: Skill[] = [
+    {
+      id: 'ai-slop',
+      name: 'AI-Slop Detector',
+      description: 'Detects poorly written, AI-generated "slop" code and suggests rewrites.',
+      content: 'Review the following code and look for common AI-generated anti-patterns, generic naming, or redundant abstraction...',
+      isActive: true,
+      createdAt: Date.now()
+    },
+    {
+      id: 'design-professionalizer',
+      name: 'Design Professionalizer',
+      description: 'Enhances basic UI designs into modern, premium, and professional layouts.',
+      content: 'Analyze the given component. Identify spacing, typography, and color issues. Suggest a professional redesign using modern standards...',
+      isActive: true,
+      createdAt: Date.now()
+    },
+    {
+      id: 'ai-script-director',
+      name: 'AI Script Director',
+      description: 'Instructs the AI to evaluate scripts and suggest improvements for AI-readiness and flow.',
+      content: 'Analyze the current UI and UX for scripting flow and user journey...',
+      isActive: false,
+      createdAt: Date.now()
+    },
+    {
+      id: 'design-analyzer',
+      name: 'Design Analyzer',
+      description: 'Evaluates the product\'s design and suggests ways to elevate it to a professional standard.',
+      content: 'Launch a browser session to evaluate the site. Look for visual hierarchy, contrast, color harmonization, and whitespace utilization...',
+      isActive: false,
+      createdAt: Date.now()
+    }
+  ];
+
+  if (!isBrowser) return defaultSkills;
   try {
     const saved = localStorage.getItem(SKILLS_STORAGE_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved) as Skill[];
+      if (parsed && Array.isArray(parsed)) {
+        // Merge defaults that are missing
+        const missingDefaults = defaultSkills.filter(ds => !parsed.some(ps => ps.id === ds.id));
+        if (missingDefaults.length > 0) {
+          const merged = [...parsed, ...missingDefaults];
+          localStorage.setItem(SKILLS_STORAGE_KEY, JSON.stringify(merged));
+          return merged;
+        }
+        return parsed;
+      }
     }
   } catch (err) {
     console.error('Failed to parse skills from local storage:', err);
   }
-  return [];
+  return defaultSkills;
 };
 
 export const skillsStore = atom<Skill[]>(getInitialSkills());
@@ -38,8 +83,14 @@ export const fetchSkillsFromServer = async () => {
           ...s,
           createdAt: new Date(s.createdAt).getTime(),
         }));
-        skillsStore.set(fetchedSkills);
-        localStorage.setItem(SKILLS_STORAGE_KEY, JSON.stringify(fetchedSkills));
+        
+        // Merge with defaults so they are never lost
+        const defaults = getInitialSkills();
+        const missingDefaults = defaults.filter(ds => !fetchedSkills.some(fs => fs.id === ds.id));
+        const mergedSkills = [...fetchedSkills, ...missingDefaults];
+        
+        skillsStore.set(mergedSkills);
+        localStorage.setItem(SKILLS_STORAGE_KEY, JSON.stringify(mergedSkills));
       }
     }
   } catch (err) {

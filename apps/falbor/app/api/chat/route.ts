@@ -21,6 +21,8 @@ import { extractPropertiesFromMessage } from '~/lib/.server/llm/utils';
 import type { DesignScheme } from '~/types/design-scheme';
 import { MCPService } from '~/lib/services/mcpService';
 import { NativeToolsService } from '~/lib/services/nativeToolsService';
+import { getFirecrawlTool, getApolloTool } from '~/lib/tools/researchTools';
+import { getCanvasTools } from '~/lib/tools/canvasTools';
 import { StreamRecoveryManager } from '~/lib/.server/llm/stream-recovery';
 import { SupabaseService } from '~/lib/services/supabaseService';
 import { NeonService } from '~/lib/services/neonService';
@@ -79,13 +81,13 @@ async function chatAction({ context, request }: RouteArgs) {
     },
   });
 
-  const { messages, files, promptId, contextOptimization, supabase, chatMode, isSlidesMode, isGameMode, designScheme, maxLLMSteps, mcpEnabled, selectedMCPs, chatId, databaseProvider } =
+  const { messages, files, promptId, contextOptimization, supabase, chatMode, isSlidesMode, isGameMode, designScheme, maxLLMSteps, mcpEnabled, selectedMCPs, chatId, databaseProvider, workspaceId } =
     (await request.json()) as {
       messages: Messages;
       files: any;
       promptId?: string;
       contextOptimization: boolean;
-      chatMode: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research';
+      chatMode: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'workspace';
       isSlidesMode?: boolean;
       isGameMode?: boolean;
       designScheme?: DesignScheme;
@@ -102,10 +104,18 @@ async function chatAction({ context, request }: RouteArgs) {
       mcpEnabled?: boolean;
       selectedMCPs?: string[];
       chatId?: string;
+      workspaceId?: string;
     };
+
+  logger.info(`Received ${messages.length} messages. Last message content: ${JSON.stringify(messages[messages.length - 1]?.content)}, attachments: ${messages[messages.length - 1]?.experimental_attachments ? 'YES' : 'NO'}`);
+  if (messages[messages.length - 1]?.experimental_attachments) {
+    logger.info(`Attachments: ${messages[messages.length - 1].experimental_attachments?.length} files. First attachment URL length: ${messages[messages.length - 1].experimental_attachments?.[0]?.url?.length}`);
+  }
 
   console.log('[CHAT_ROUTE] Received body selectedMCPs:', selectedMCPs);
   console.log('[CHAT_ROUTE] Received body mcpEnabled:', mcpEnabled);
+  console.log('[CHAT_ROUTE] Received body chatMode:', chatMode);
+  console.log('[CHAT_ROUTE] Received body workspaceId:', workspaceId);
 
 
   const { providerSettings: providerSettingsTable } = require('~/lib/db/schema');
@@ -518,7 +528,6 @@ THEN build the pixel-perfect clone.`;
             execute: async () => 'ERROR: You attempted to use a JSON function call for scan. You MUST use the XML format <falborAction type="scan"> instead as per your system prompt instructions.'
           }),
         };
-
         let baseTools: Record<string, any> = {};
 
         if (chatMode !== 'build') {
@@ -531,6 +540,16 @@ THEN build the pixel-perfect clone.`;
             searchTwitter,
             ...poisonedWorkspaceTools,
           };
+
+          if (process.env.FIRECRAWL_API_KEY) {
+            baseTools.firecrawlSearch = getFirecrawlTool(process.env.FIRECRAWL_API_KEY);
+          }
+          if (process.env.APOLLO_API_KEY) {
+            baseTools.apolloSearch = getApolloTool(process.env.APOLLO_API_KEY);
+          }
+          if ((chatMode === 'idea' || chatMode === 'workspace') && workspaceId) {
+            baseTools = { ...baseTools, ...getCanvasTools(workspaceId) };
+          }
         }
 
         // Determine which MCPs to activate.
@@ -572,6 +591,7 @@ THEN build the pixel-perfect clone.`;
 
         let supabaseProjectData: any = undefined;
         let neonProjectData: any = undefined;
+        let workspaceData: any = undefined;
         const liveDeductionState = { deductedCents: 0 };
         const activeDatabaseProvider = databaseProvider || 'neon';
 
@@ -592,6 +612,43 @@ THEN build the pixel-perfect clone.`;
               message: e.message || 'Database provisioning failed',
             } satisfies ProgressAnnotation);
           }
+        }
+
+        if (workspaceId) {
+          try {
+            const { workspaces: wsTable, products: prodTable, competitors: compTable, productIdeas: ideasTable } = require('~/lib/db/schema');
+            const workspace = await db.query.workspaces.findFirst({
+              where: eq(wsTable.id, workspaceId)
+            });
+            const product = await db.query.products.findFirst({
+              where: eq(prodTable.workspaceId, workspaceId)
+            });
+            let competitors: any[] = [];
+            let ideas: any[] = [];
+            if (product) {
+              competitors = await db.query.competitors.findMany({
+                where: eq(compTable.productId, product.id)
+              });
+              ideas = await db.query.productIdeas.findMany({
+                where: eq(ideasTable.productId, product.id)
+              });
+            }
+            workspaceData = {
+              workspaceName: workspace?.name,
+              productName: product?.name,
+              productDescription: product?.description,
+              competitors,
+              ideas,
+              intelligence: workspace?.intelligenceData,
+              contextPrompt: workspace?.contextPrompt,
+              sourcesData: workspace?.sourcesData,
+            };
+            console.log('[CHAT_ROUTE] workspaceData productName:', workspaceData.productName, '| has intelligence:', !!workspaceData.intelligence, '| has contextPrompt:', !!workspaceData.contextPrompt);
+          } catch (e) {
+            logger.error('Failed to fetch workspace data:', e);
+          }
+        } else {
+          console.log('[CHAT_ROUTE] No workspaceId provided in request body!');
         }
 
         const lastUserMsg = processedMessages.findLast((m) => m.role === 'user');
@@ -698,6 +755,8 @@ THEN build the pixel-perfect clone.`;
           messageSliceId,
           supabaseProjectData,
           neonProjectData,
+          workspaceData,
+          allowBuild: processedMessages.length > 1,
           onImageGenerated: (filePath, base64) => {
             dataStream.writeData({
               type: 'file-write',
@@ -707,44 +766,16 @@ THEN build the pixel-perfect clone.`;
           }
         });
 
-        let generatedChars = 0;
-        let lastDeductedChars = 0;
-        let charsPerCent = 666;
-
-        const modelNameLower = (lastMessage?.content || '').toString().toLowerCase();
-        if (modelNameLower.includes('deepseek')) charsPerCent = 3000;
-        else if (modelNameLower.includes('haiku')) charsPerCent = 1000;
-        else if (modelNameLower.includes('gemini')) charsPerCent = 600;
-        else if (modelNameLower.includes('sonnet') || modelNameLower.includes('gpt')) charsPerCent = 200;
+        const userPlanId = (userRows[0]?.subscriptionTier || 'free').toLowerCase() as any;
+        const requestedModelName = requestedModel || 'default';
+        let totalGeneratedChars = 0;
 
         (async () => {
           for await (const part of result.fullStream) {
             streamRecovery.updateActivity();
 
-            // Track generated characters for live deduction
             if (part.type === 'text-delta' && typeof part.textDelta === 'string') {
-              generatedChars += part.textDelta.length;
-
-              if (generatedChars >= lastDeductedChars + charsPerCent) {
-                lastDeductedChars = generatedChars;
-                liveDeductionState.deductedCents += 1;
-
-                // Live deduct 1 cent
-                try {
-                  const dbRes = await db.update(users)
-                    .set({ balance: sql`${users.balance} - 1` })
-                    .where(eq(users.id, userId as string))
-                    .returning({ balance: users.balance });
-
-                  if (dbRes[0] && dbRes[0].balance <= 0) {
-                    logger.warn('User ran out of credits during stream');
-                    // We can't cleanly stop the AI stream from here without a complex abort controller,
-                    // but we can at least stop recording deductions, and the next request will be blocked.
-                  }
-                } catch (e) {
-                  // Ignore DB errors in rapid stream to avoid breaking
-                }
-              }
+              totalGeneratedChars += part.textDelta.length;
             }
 
             if (part.type === 'error') {
@@ -770,6 +801,23 @@ THEN build the pixel-perfect clone.`;
               return;
             }
           }
+
+          // Final accurate credit deduction based on token usage algorithm
+          try {
+            const { calculateCreditCost } = require('~/lib/billing/config');
+            const promptChars = processedMessages.reduce((acc, m) => acc + (typeof m.content === 'string' ? m.content.length : 0), 0);
+            const totalChars = promptChars + totalGeneratedChars;
+            const estimatedTokens = Math.max(50, Math.ceil(totalChars / 4));
+            const creditCost = calculateCreditCost(estimatedTokens, requestedModelName, userPlanId);
+
+            await db
+              .update(users)
+              .set({ balance: sql`${users.balance} - ${creditCost}` })
+              .where(eq(users.id, userId as string));
+          } catch (e) {
+            console.error('Failed to deduct credits:', e);
+          }
+
           streamRecovery.stop();
         })();
         result.mergeIntoDataStream(dataStream);

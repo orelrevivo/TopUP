@@ -7,11 +7,16 @@ import { ImportFolderButton } from '~/components/chat/input/ImportFolderButton';
 import { workbenchStore } from '~/lib/stores/workbench';
 
 type ChatData = {
-  messages?: Message[]; 
-  description?: string; 
+  messages?: Message[];
+  description?: string;
 };
 
-export function ImportButtons(importChat: ((description: string, messages: Message[]) => Promise<void>) | undefined) {
+interface ImportButtonsProps {
+  importChat?: (description: string, messages: Message[]) => Promise<void>;
+}
+
+export function ImportButtons(props: ImportButtonsProps | ((description: string, messages: Message[]) => Promise<void>)) {
+  const importChat = typeof props === 'function' ? props : props?.importChat;
   return (
     <>
       <input
@@ -31,7 +36,7 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
                   const content = e.target?.result as string;
                   const data = JSON.parse(content) as ChatData;
 
-                  
+
                   if (Array.isArray(data.messages)) {
                     await importChat(data.description || 'Imported Chat', data.messages);
                     toast.success('Chat imported successfully');
@@ -53,7 +58,7 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
             } catch (error) {
               toast.error(error instanceof Error ? error.message : 'Failed to import chat');
             }
-            e.target.value = ''; 
+            e.target.value = '';
           } else {
             toast.error('Something went wrong');
           }
@@ -81,15 +86,6 @@ export function ImportButtons(importChat: ((description: string, messages: Messa
           <div className="flex items-center gap-2 w-full text-falbor-elements-textPrimary">
             <div className="i-ph:game-controller text-lg text-falbor-elements-textSecondary"></div>
             <span>2D Game</span>
-          </div>
-        </DropdownItem>
-        <DropdownItem className="opacity-50 cursor-not-allowed">
-          <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-2 text-falbor-elements-textPrimary">
-              <div className="i-ph:copy text-lg text-falbor-elements-textSecondary"></div>
-              <span>Clone website</span>
-            </div>
-            <span className="text-[10px] bg-falbor-elements-background-depth-3 text-falbor-elements-textSecondary px-1.5 py-0.5 rounded-full font-medium">Soon</span>
           </div>
         </DropdownItem>
       </Dropdown>

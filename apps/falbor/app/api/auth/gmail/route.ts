@@ -27,13 +27,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Gmail OAuth not configured' }, { status: 500 });
     }
 
-    const state = Buffer.from(JSON.stringify({ name: connectionName, userId, connectionId })).toString('base64');
+    const returnPath = searchParams.get('returnPath');
+    const state = Buffer.from(JSON.stringify({ name: connectionName, userId, connectionId, returnPath })).toString('base64');
 
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', clientId);
     authUrl.searchParams.set('redirect_uri', redirectUri);
     authUrl.searchParams.set('response_type', 'code');
-    authUrl.searchParams.set('scope', 'https://mail.google.com/ https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile'); // request full access to read/send emails + profile
+    const scopes = [
+      'https://mail.google.com/',
+      'https://www.googleapis.com/auth/contacts.readonly',
+      'https://www.googleapis.com/auth/calendar.events.readonly',
+      'https://www.googleapis.com/auth/userinfo.email',
+      'https://www.googleapis.com/auth/userinfo.profile',
+    ].join(' ');
+
+    authUrl.searchParams.set('scope', scopes);
     authUrl.searchParams.set('access_type', 'offline'); // necessary for getting a refresh token
     authUrl.searchParams.set('prompt', 'consent'); // force consent screen to always get refresh token
     authUrl.searchParams.set('state', state);

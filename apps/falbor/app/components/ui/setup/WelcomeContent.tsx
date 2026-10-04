@@ -4,12 +4,28 @@ import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import { SetupButton } from './SetupButton';
 
+import { createWorkspace } from '~/lib/actions/workspaces';
+import { toast } from 'react-toastify';
+
 export function WelcomeContent() {
   const router = useRouter();
   const [loadingRoute, setLoadingRoute] = useState<'org' | 'chat' | null>(null);
 
-  const handleRoute = (route: string, type: 'org' | 'chat') => {
+  const handleRoute = async (route: string, type: 'org' | 'chat') => {
     setLoadingRoute(type);
+    
+    if (type === 'chat') {
+      try {
+        const workspaceId = await createWorkspace("Untitled Workspace");
+        router.push(`/workspace/${workspaceId}`);
+      } catch (e) {
+        console.error(e);
+        toast.error("Failed to create workspace");
+        setLoadingRoute(null);
+      }
+      return;
+    }
+
     router.push(route);
   };
 

@@ -14,18 +14,18 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-export async function createToken(userId: string): Promise<string> {
-  return new SignJWT({ userId })
+export async function createToken(userId: string, role?: string): Promise<string> {
+  return new SignJWT({ userId, role: role || "SUBACCOUNT_USER" })
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime(`${SESSION_DURATION_DAYS}d`)
     .setIssuedAt()
     .sign(JWT_SECRET);
 }
 
-export async function verifyToken(token: string): Promise<{ userId: string } | null> {
+export async function verifyToken(token: string): Promise<{ userId: string; role?: string } | null> {
   try {
     const { payload } = await jwtVerify(token, JWT_SECRET);
-    return { userId: payload.userId as string };
+    return { userId: payload.userId as string, role: payload.role as string };
   } catch {
     return null;
   }

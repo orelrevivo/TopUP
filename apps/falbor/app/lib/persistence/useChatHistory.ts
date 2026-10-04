@@ -32,7 +32,7 @@ export function useChatHistory() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const mixedId = params?.id as string | undefined;
+  const mixedId = (params?.chatId || params?.id) as string | undefined;
 
   const [archivedMessages, setArchivedMessages] = useState<Message[]>([]);
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
@@ -101,6 +101,12 @@ export function useChatHistory() {
               setUrlId(storedMessages.urlId ?? storedMessages.id);
               description.set((storedMessages as any).title || storedMessages.description);
               chatId.set(storedMessages.id);
+              const currentWorkspaceId = params?.id as string | undefined;
+              const chatWorkspaceId = (storedMessages as any)?.workspaceId;
+              if (chatWorkspaceId && currentWorkspaceId && chatWorkspaceId !== currentWorkspaceId) {
+                toast.warning(`This chat belongs to another workspace (${chatWorkspaceId}).`);
+              }
+
               const savedDeployUrl = typeof window !== 'undefined' ? localStorage.getItem(`deploy-url-${storedMessages.id}`) : null;
               if (savedDeployUrl && !loadedMetadata.deployUrl) {
                 loadedMetadata.deployUrl = savedDeployUrl;
@@ -109,6 +115,8 @@ export function useChatHistory() {
                 loadedMetadata.rewindId = rewindId;
               }
               chatMetadata.set(loadedMetadata as IChatMetadata | undefined);
+            } else if (!storedMessages) {
+              toast.error('Chat does not exist (404)');
             }
           })
           .catch((error) => {
@@ -238,8 +246,9 @@ export function useChatHistory() {
           const nextId = await chatApi.getNextId();
           chatId.set(nextId);
         }
-        if (!urlId) {
+        if (!urlId && chatId.get()) {
           navigateChat(chatId.get()!);
+          setUrlId(chatId.get());
         }
       }
 
@@ -267,7 +276,9 @@ export function useChatHistory() {
 
       try {
         const newId = await chatApi.duplicateChat(mixedId || listItemId);
-        router.push(`/chat/${newId}`);
+        const match = window.location.pathname.match(/\/workspace\/([^\/]+)/);
+        const workspaceId = match ? match[1] : 'default';
+        router.push(`/workspace/${workspaceId}/new/${newId}`);
         toast.success('Chat duplicated successfully');
       } catch (error) {
         toast.error('Failed to duplicate chat');
@@ -281,7 +292,9 @@ export function useChatHistory() {
           messages,
           metadata as Record<string, any> | undefined,
         );
-        window.location.href = `/chat/${newId}`;
+        const match = window.location.pathname.match(/\/workspace\/([^\/]+)/);
+        const workspaceId = match ? match[1] : 'default';
+        window.location.href = `/workspace/${workspaceId}/new/${newId}`;
         toast.success('Chat imported successfully');
       } catch (error) {
         if (error instanceof Error) {
@@ -315,7 +328,12 @@ export function useChatHistory() {
 }
 
 function navigateChat(nextId: string) {
+  if (typeof window !== 'undefined' && window.location.pathname.includes('/sources')) {
+    return;
+  }
   const url = new URL(window.location.href);
-  url.pathname = `/chat/${nextId}`;
+  const match = url.pathname.match(/\/workspace\/([^\/]+)/);
+  const workspaceId = match ? match[1] : 'default';
+  url.pathname = `/workspace/${workspaceId}/new/${nextId}`;
   window.history.replaceState({}, '', url);
 }

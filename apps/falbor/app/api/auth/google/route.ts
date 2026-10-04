@@ -1,5 +1,6 @@
 import { db } from "~/lib/db";
-import { users } from "~/lib/db/schema";
+import { users, workspaces } from "~/lib/db/schema";
+import { v4 } from "uuid";
 import { createToken, SESSION_DURATION_DAYS } from "~/lib/auth";
 import { eq } from "drizzle-orm";
 import { OAuth2Client } from "google-auth-library";
@@ -10,19 +11,27 @@ export async function POST(request: Request) {
   try {
     let credential = "";
     let accessToken = "";
+    let role = "";
     let isFormData = false;
 
     const contentType = request.headers.get("content-type") || "";
     
     if (contentType.includes("application/json")) {
-      const body = (await request.json()) as { credential?: string; accessToken?: string };
+      const body = (await request.json()) as { credential?: string; accessToken?: string; role?: string };
       credential = body.credential || "";
       accessToken = body.accessToken || "";
+      role = body.role || "";
     } else if (contentType.includes("application/x-www-form-urlencoded") || contentType.includes("multipart/form-data")) {
       const formData = await request.formData();
       credential = formData.get("credential")?.toString() || "";
       accessToken = formData.get("accessToken")?.toString() || "";
+      role = formData.get("role")?.toString() || "";
       isFormData = true;
+    }
+
+    if (!role) {
+      const url = new URL(request.url);
+      role = url.searchParams.get("role") || "";
     }
 
     if (!credential && !accessToken) {
@@ -80,9 +89,19 @@ export async function POST(request: Request) {
         username: uniqueUsername,
         displayName: name || email.split("@")[0],
         avatarUrl: picture || null,
+        role: role === "marketer" ? "marketer" : "SUBACCOUNT_USER",
       }).returning();
       
       user = newUser;
+
+      // Create a default workspace for the new user if they are not a marketer
+      if (role !== "marketer") {
+        await db.insert(workspaces).values({
+          id: v4(),
+          userId: user.id,
+          name: "Untitled Workspace",
+        });
+      }
     } else if (user.passwordHash) {
       // User exists but has a password (they signed up with email/password)
       return new Response(JSON.stringify({ error: "This email is registered with a password. Please log in with your email and password." }), {
@@ -92,7 +111,7 @@ export async function POST(request: Request) {
     }
 
     // Generate session token
-    const token = await createToken(user.id);
+    const token = await createToken(user.id, user.role || undefined);
     const maxAge = SESSION_DURATION_DAYS * 24 * 60 * 60;
     const expires = new Date(Date.now() + maxAge * 1000).toUTCString();
     const isProduction = process.env.VERCEL === "1" || process.env.NODE_ENV === "production";

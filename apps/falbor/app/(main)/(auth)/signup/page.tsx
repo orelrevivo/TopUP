@@ -24,7 +24,10 @@ export default function SignupPage() {
     const [acceptTerms, setAcceptTerms] = useState(false);
 
     useEffect(() => {
-        setLoginUri(window.location.origin + "/api/auth/google");
+        const urlParams = new URLSearchParams(window.location.search);
+        const role = urlParams.get("role");
+        const baseUri = window.location.origin + "/api/auth/google";
+        setLoginUri(role ? `${baseUri}?role=${role}` : baseUri);
     }, []);
 
     const { register, loginWithGoogle } = useAuth();
@@ -64,15 +67,24 @@ export default function SignupPage() {
         }
 
         setSubmitting(true);
-        const result = await register(email, password);
+        const urlParams = new URLSearchParams(window.location.search);
+        const roleParam = urlParams.get("role") || undefined;
+        const result = await register(email, password, roleParam);
         setSubmitting(false);
 
         if (result.error) {
             setError(result.error);
         } else if (result.requiresVerification) {
-            router.push(`/verified?email=${encodeURIComponent(email)}`);
+            const urlParams = new URLSearchParams(window.location.search);
+            const role = urlParams.get("role");
+            const verifiedUrl = role === "marketer"
+                ? `/verified?email=${encodeURIComponent(email)}&role=marketer`
+                : `/verified?email=${encodeURIComponent(email)}`;
+            router.push(verifiedUrl);
         } else {
-            router.push("/welcome");
+            const urlParams = new URLSearchParams(window.location.search);
+            const role = urlParams.get("role");
+            router.push(role === "marketer" ? "/marketer-onboarding" : "/welcome");
         }
     };
 

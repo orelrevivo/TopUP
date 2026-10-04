@@ -8,11 +8,15 @@ import { ScreenshotSelector } from './ScreenshotSelector';
 import { expoUrlAtom } from '~/lib/stores/qrCodeStore';
 import { ExpoQrModal } from '~/components/workbench/ExpoQrModal';
 import type { ElementInfo } from './Inspector';
+import { commentStore } from '~/lib/stores/commentStore';
+import { CommentPopover } from './CommentPopover';
+import { profileStore } from '~/lib/stores/profile';
 
 type ResizeSide = 'left' | 'right' | null;
 
 interface PreviewProps {
   setSelectedElement?: (element: ElementInfo | null) => void;
+  sendMessage?: (event: React.UIEvent, messageInput?: string) => void;
 }
 
 interface WindowSize {
@@ -53,7 +57,7 @@ const WINDOW_SIZES: WindowSize[] = [
   { name: '4K Display', width: 3840, height: 2160, icon: 'i-ph:monitor', hasFrame: true, frameType: 'desktop' },
 ];
 
-export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
+export const Preview = memo(({ setSelectedElement, sendMessage }: PreviewProps) => {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -67,8 +71,14 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   const [iframeUrl, setIframeUrl] = useState<string | undefined>();
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const isInspectorMode = useStore(workbenchStore.isInspectorMode);
+  const isCommentMode = useStore(commentStore.isCommentMode);
+  const comments = useStore(commentStore.comments);
+  const activeCommentId = useStore(commentStore.activeCommentId);
+  const profile = useStore(profileStore);
+  const [hoveredCommentElement, setHoveredCommentElement] = useState<ElementInfo | null>(null);
+  const [iframeScroll, setIframeScroll] = useState({ scrollX: 0, scrollY: 0 });
   const isSlidesMode = useStore(workbenchStore.isSlidesMode);
-  const [slidesState, setSlidesState] = useState({ currentSlide: 0, totalSlides: 0, slides: [] as {title: string}[] });
+  const [slidesState, setSlidesState] = useState({ currentSlide: 0, totalSlides: 0, slides: [] as { title: string }[] });
   const [isGridMode, setIsGridMode] = useState(false);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isDeviceModeOn, setIsDeviceModeOn] = useState(false);
@@ -84,7 +94,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     pointerId: null as number | null,
   });
 
-  
+
   const SCALING_FACTOR = 1;
 
   const [isWindowSizeDropdownOpen, setIsWindowSizeDropdownOpen] = useState(false);
@@ -218,7 +228,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   };
 
   useEffect(() => {
-    
+
     if (!isDeviceModeOn) {
       return;
     }
@@ -241,19 +251,19 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         newWidthPercent = state.startWidthPercent - dxPercent;
       }
 
-      
+
       newWidthPercent = Math.max(10, Math.min(newWidthPercent, 90));
 
-      
+
       setWidthPercent(newWidthPercent);
 
-      
+
       if (containerRef.current) {
         const containerWidth = containerRef.current.clientWidth;
         const newWidth = Math.round((containerWidth * newWidthPercent) / 100);
         setCurrentWidth(newWidth);
 
-        
+
         const previewContainer = containerRef.current.querySelector('div[style*="width"]');
 
         if (previewContainer) {
@@ -269,17 +279,17 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         return;
       }
 
-      
+
       const handles = document.querySelectorAll('.resize-handle-left, .resize-handle-right');
 
-      
+
       handles.forEach((handle) => {
         if ((handle as HTMLElement).hasPointerCapture?.(e.pointerId)) {
           (handle as HTMLElement).releasePointerCapture(e.pointerId);
         }
       });
 
-      
+
       resizingState.current = {
         ...resizingState.current,
         isResizing: false,
@@ -291,18 +301,18 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       document.body.style.cursor = '';
     };
 
-    
+
     document.addEventListener('pointermove', handlePointerMove, { passive: false });
     document.addEventListener('pointerup', handlePointerUp);
     document.addEventListener('pointercancel', handlePointerUp);
 
-    
+
     function cleanupResizeListeners() {
       document.removeEventListener('pointermove', handlePointerMove);
       document.removeEventListener('pointerup', handlePointerUp);
       document.removeEventListener('pointercancel', handlePointerUp);
 
-      
+
       if (resizingState.current.pointerId !== null) {
         const handles = document.querySelectorAll('.resize-handle-left, .resize-handle-right');
         handles.forEach((handle) => {
@@ -311,7 +321,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           }
         });
 
-        
+
         resizingState.current = {
           ...resizingState.current,
           isResizing: false,
@@ -324,17 +334,17 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       }
     }
 
-    
-    
+
+
     return cleanupResizeListeners;
   }, [isDeviceModeOn, SCALING_FACTOR]);
 
   useEffect(() => {
     const handleWindowResize = () => {
-      
+
       resizingState.current.windowWidth = window.innerWidth;
 
-      
+
       if (containerRef.current && isDeviceModeOn) {
         const containerWidth = containerRef.current.clientWidth;
         setCurrentWidth(Math.round((containerWidth * widthPercent) / 100));
@@ -343,7 +353,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
     window.addEventListener('resize', handleWindowResize);
 
-    
+
     if (containerRef.current && isDeviceModeOn) {
       const containerWidth = containerRef.current.clientWidth;
       setCurrentWidth(Math.round((containerWidth * widthPercent) / 100));
@@ -354,7 +364,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     };
   }, [isDeviceModeOn, widthPercent]);
 
-  
+
   useEffect(() => {
     if (containerRef.current && isDeviceModeOn) {
       const containerWidth = containerRef.current.clientWidth;
@@ -394,23 +404,23 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
         const previewId = match[1];
         const previewUrl = `/webcontainer/preview/${previewId}`;
 
-        
+
         let width = size.width;
         let height = size.height;
 
         if (isLandscape && (size.frameType === 'mobile' || size.frameType === 'tablet')) {
-          
+
           width = size.height;
           height = size.width;
         }
 
-        
-        if (showDeviceFrame && size.hasFrame) {
-          
-          const frameWidth = size.frameType === 'mobile' ? (isLandscape ? 120 : 40) : 60; 
-          const frameHeight = size.frameType === 'mobile' ? (isLandscape ? 80 : 80) : isLandscape ? 60 : 100; 
 
-          
+        if (showDeviceFrame && size.hasFrame) {
+
+          const frameWidth = size.frameType === 'mobile' ? (isLandscape ? 120 : 40) : 60;
+          const frameHeight = size.frameType === 'mobile' ? (isLandscape ? 80 : 80) : isLandscape ? 60 : 100;
+
+
           const newWindow = window.open(
             '',
             '_blank',
@@ -422,7 +432,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             return;
           }
 
-          
+
           const frameColor = getFrameColor();
           const frameRadius = size.frameType === 'mobile' ? '36px' : '20px';
           const framePadding =
@@ -434,7 +444,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                 ? '30px 50px'
                 : '50px 30px';
 
-          
+
           const notchTop = isLandscape ? '50%' : '20px';
           const notchLeft = isLandscape ? '30px' : '50%';
           const notchTransform = isLandscape ? 'translateY(-50%)' : 'translateX(-50%)';
@@ -447,7 +457,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
           const homeWidth = isLandscape ? '4px' : '40px';
           const homeHeight = isLandscape ? '40px' : '4px';
 
-          
+
           const htmlContent = `
             <!DOCTYPE html>
             <html>
@@ -538,12 +548,12 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             </html>
           `;
 
-          
+
           newWindow.document.open();
           newWindow.document.write(htmlContent);
           newWindow.document.close();
         } else {
-          
+
           const newWindow = window.open(
             previewUrl,
             '_blank',
@@ -566,7 +576,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     }
   };
 
-  
+
   const getFramePadding = useCallback(() => {
     if (!selectedWindowSize) {
       return '40px 20px';
@@ -575,46 +585,46 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     const isMobile = selectedWindowSize.frameType === 'mobile';
 
     if (isLandscape) {
-      
+
       return isMobile ? '40px 60px' : '30px 50px';
     }
 
     return isMobile ? '40px 20px' : '50px 30px';
   }, [isLandscape, selectedWindowSize]);
 
-  
+
   const getDeviceScale = useCallback(() => {
-    
+
     return 1;
   }, [isLandscape, selectedWindowSize, widthPercent]);
 
-  
+
   useEffect(() => {
-    
-    
+
+
     return () => {
-      
+
     };
   }, [isDeviceModeOn, showDeviceFrameInPreview, getDeviceScale, isLandscape, selectedWindowSize]);
 
-  
+
   const getFrameColor = useCallback(() => {
-    
+
     const isDarkMode =
       document.documentElement.classList.contains('dark') ||
       document.documentElement.getAttribute('data-theme') === 'dark' ||
       window.matchMedia('(prefers-color-scheme: dark)').matches;
 
-    
+
     return isDarkMode ? '#555' : '#111';
   }, []);
 
-  
+
   useEffect(() => {
     const darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
     const handleColorSchemeChange = () => {
-      
+
       if (showDeviceFrameInPreview) {
         setShowDeviceFrameInPreview(true);
       }
@@ -630,17 +640,45 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
   useEffect(() => {
     const handleMessage = (event: MessageEvent) => {
       if (event.data.type === 'INSPECTOR_READY') {
+        if (event.data.scrollY !== undefined) {
+          setIframeScroll({ scrollX: event.data.scrollX || 0, scrollY: event.data.scrollY || 0 });
+        }
         if (iframeRef.current?.contentWindow) {
           iframeRef.current.contentWindow.postMessage(
             {
               type: 'INSPECTOR_ACTIVATE',
-              active: isInspectorMode,
+              active: isInspectorMode || isCommentMode,
             },
             '*',
           );
         }
+      } else if (event.data.type === 'INSPECTOR_SCROLL') {
+        setIframeScroll({ scrollX: event.data.scrollX || 0, scrollY: event.data.scrollY || 0 });
+      } else if (event.data.type === 'INSPECTOR_HOVER') {
+        if (isCommentMode) {
+          setHoveredCommentElement(event.data.elementInfo);
+        }
       } else if (event.data.type === 'INSPECTOR_CLICK') {
         const element = event.data.elementInfo;
+
+        if (isCommentMode) {
+          const iframeRect = iframeRef.current?.getBoundingClientRect();
+          const containerRect = containerRef.current?.getBoundingClientRect();
+          const offsetX = iframeRect && containerRect ? iframeRect.left - containerRect.left : 0;
+          const offsetY = iframeRect && containerRect ? iframeRect.top - containerRect.top : 0;
+
+          const currentScrollY = iframeScroll.scrollY;
+          const currentScrollX = iframeScroll.scrollX;
+
+          const pageTop = (element.rect?.top ?? element.rect?.y ?? 0) + currentScrollY;
+          const pageLeft = (element.rect?.left ?? element.rect?.x ?? 0) + currentScrollX;
+
+          const posX = pageLeft + offsetX;
+          const posY = pageTop + offsetY;
+
+          commentStore.addComment(element, { x: posX, y: posY, pageTop, pageLeft });
+          return;
+        }
 
         navigator.clipboard.writeText(element.displayText).then(() => {
           setSelectedElement?.(element);
@@ -657,19 +695,19 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
     window.addEventListener('message', handleMessage);
 
     return () => window.removeEventListener('message', handleMessage);
-  }, [isInspectorMode]);
+  }, [isInspectorMode, isCommentMode]);
 
   useEffect(() => {
     if (iframeRef.current?.contentWindow) {
       iframeRef.current.contentWindow.postMessage(
         {
           type: 'INSPECTOR_ACTIVATE',
-          active: isInspectorMode,
+          active: isInspectorMode || isCommentMode,
         },
         '*',
       );
     }
-  }, [isInspectorMode]);
+  }, [isInspectorMode, isCommentMode]);
 
   return (
     <div ref={containerRef} className={`w-full h-full flex flex-col relative`}>
@@ -679,7 +717,12 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
       <div className="bg-falbor-elements-background-depth-2 p-2 flex items-center gap-2">
         <div className="flex items-center gap-2">
           <IconButton icon="i-ph:arrow-clockwise" onClick={reloadPreview} />
-          {}
+          <IconButton
+            icon="i-ph:chat-teardrop-dots"
+            onClick={() => commentStore.toggleCommentMode()}
+            title={isCommentMode ? 'Exit Comment Mode' : 'Comment on Element'}
+            className={isCommentMode ? 'text-blue-500 bg-blue-100 dark:bg-blue-950/60 font-bold' : ''}
+          />
           <div className="flex items-center gap-2">
             <IconButton
               icon="i-ph:devices"
@@ -712,7 +755,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
             />
 
             <div className="flex items-center relative">
-              {}
+              { }
 
               {isWindowSizeDropdownOpen && (
                 <>
@@ -752,7 +795,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                             const previewId = match[1];
                             const previewUrl = `/webcontainer/preview/${previewId}`;
 
-                            
+
                             window.open(
                               previewUrl,
                               `preview-${previewId}`,
@@ -940,7 +983,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                         : `${selectedWindowSize.height + (selectedWindowSize.frameType === 'mobile' ? 80 : 100)}px`,
                     }}
                   >
-                    {}
+                    { }
                     <div
                       style={{
                         position: 'absolute',
@@ -955,7 +998,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                       }}
                     />
 
-                    {}
+                    { }
                     <div
                       style={{
                         position: 'absolute',
@@ -1001,6 +1044,55 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
                 setIsSelectionMode={setIsSelectionMode}
                 containerRef={iframeRef}
               />
+
+              {isCommentMode &&
+                comments.map((comment) => {
+                  const iframeRect = iframeRef.current?.getBoundingClientRect();
+                  const containerRect = containerRef.current?.getBoundingClientRect();
+                  const offsetX = iframeRect && containerRect ? iframeRect.left - containerRect.left : 0;
+                  const offsetY = iframeRect && containerRect ? iframeRect.top - containerRect.top : 0;
+
+                  const pinY = comment.position.pageTop !== undefined
+                    ? comment.position.pageTop - iframeScroll.scrollY + offsetY
+                    : comment.position.y;
+
+                  const pinX = comment.position.pageLeft !== undefined
+                    ? comment.position.pageLeft - iframeScroll.scrollX + offsetX
+                    : comment.position.x;
+
+                  const isActive = activeCommentId === comment.id;
+
+                  return (
+                    <div key={comment.id}>
+                      <button
+                        onClick={() => commentStore.setActiveComment(comment.id)}
+                        className={`absolute z-40 w-8 h-8 rounded-full shadow-lg flex items-center justify-center text-xs font-bold transition-transform hover:scale-110 overflow-hidden ${isActive
+                            ? 'ring-4 ring-blue-400 border-2 border-white bg-blue-600 text-white'
+                            : 'border-2 border-white bg-gray-900 text-white shadow-md'
+                          }`}
+                        style={{
+                          left: pinX - 16,
+                          top: pinY - 16,
+                        }}
+                        title="View comment thread"
+                      >
+                        {profile?.avatar ? (
+                          <img src={profile.avatar} alt="User" className="w-full h-full object-cover" />
+                        ) : (
+                          <div className="i-ph:user-fill text-sm text-white" />
+                        )}
+                      </button>
+
+                      {isActive && (
+                        <CommentPopover
+                          comment={{ ...comment, position: { ...comment.position, x: pinX, y: pinY } }}
+                          onClose={() => commentStore.setActiveComment(null)}
+                          sendMessage={sendMessage}
+                        />
+                      )}
+                    </div>
+                  );
+                })}
             </>
           ) : (
             <div className="flex w-full h-full justify-center items-center bg-falbor-elements-background-depth-1 text-falbor-elements-textPrimary">
@@ -1010,7 +1102,7 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
           {isDeviceModeOn && !showDeviceFrameInPreview && (
             <>
-              {}
+              { }
               <div
                 style={{
                   position: 'absolute',
@@ -1037,38 +1129,38 @@ export const Preview = memo(({ setSelectedElement }: PreviewProps) => {
 
           {isSlidesMode && (
             <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-4 bg-falbor-elements-background-depth-2 px-6 py-3 rounded-full shadow-2xl border border-falbor-elements-borderColor z-[100] backdrop-blur-md bg-opacity-80">
-              <IconButton 
-                icon="i-ph:list" 
-                title="Toggle Sidebar" 
+              <IconButton
+                icon="i-ph:list"
+                title="Toggle Sidebar"
                 onClick={() => setIsSidebarOpen(!isSidebarOpen)}
                 className={isSidebarOpen ? 'text-falbor-elements-item-contentAccent' : ''}
               />
-              <IconButton 
-                icon="i-ph:squares-four" 
-                title="Grid View" 
+              <IconButton
+                icon="i-ph:squares-four"
+                title="Grid View"
                 onClick={() => {
                   setIsGridMode(!isGridMode);
                   iframeRef.current?.contentWindow?.postMessage({ type: 'SLIDE_TOGGLE_GRID' }, '*');
                 }}
                 className={isGridMode ? 'text-falbor-elements-item-contentAccent' : ''}
               />
-              
+
               <div className="w-px h-6 bg-falbor-elements-borderColor mx-2" />
-              
-              <IconButton 
-                icon="i-ph:caret-left" 
-                title="Previous Slide" 
+
+              <IconButton
+                icon="i-ph:caret-left"
+                title="Previous Slide"
                 onClick={() => iframeRef.current?.contentWindow?.postMessage({ type: 'SLIDE_PREV' }, '*')}
                 disabled={slidesState.currentSlide <= 0}
               />
-              
+
               <div className="text-sm font-medium tabular-nums min-w-[3rem] text-center">
                 {slidesState.totalSlides > 0 ? `${slidesState.currentSlide + 1} / ${slidesState.totalSlides}` : '...'}
               </div>
-              
-              <IconButton 
-                icon="i-ph:caret-right" 
-                title="Next Slide" 
+
+              <IconButton
+                icon="i-ph:caret-right"
+                title="Next Slide"
                 onClick={() => iframeRef.current?.contentWindow?.postMessage({ type: 'SLIDE_NEXT' }, '*')}
                 disabled={slidesState.currentSlide >= slidesState.totalSlides - 1 && slidesState.totalSlides > 0}
               />

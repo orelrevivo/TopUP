@@ -35,6 +35,7 @@ interface AssistantMessageProps {
   | (TextUIPart | ReasoningUIPart | ToolInvocationUIPart | SourceUIPart | FileUIPart | StepStartUIPart)[]
   | undefined;
   addToolResult: ({ toolCallId, result }: { toolCallId: string; result: any }) => void;
+  isCanvas?: boolean;
 }
 
 function openArtifactInWorkbench(filePath: string) {
@@ -84,7 +85,7 @@ function parseSkillUsages(content: string) {
     .replace(/<skill_usage\s+name="[^"]+"\s*\/>/g, '')
     .replace(/^\s+/, '');
 
-  
+
   let jsonStartIdx = -1;
   let hasMarkdownCodeblock = false;
 
@@ -100,7 +101,7 @@ function parseSkillUsages(content: string) {
     let endIdx = -1;
     for (let i = jsonStartIdx; i < cleanContent.length; i++) {
       if (cleanContent[i] === '{') braceCount++;
-      if (cleanContent[i] === '}') braceCount--;
+      else if (cleanContent[i] === '}') braceCount--;
       if (braceCount === 0) {
         endIdx = i;
         break;
@@ -112,7 +113,7 @@ function parseSkillUsages(content: string) {
       try {
         const parsed = JSON.parse(possibleJson);
         if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
-          
+
           let isToolCallLeak = Object.keys(parsed).some(k => ['action', 'query', 'type', 'limit', 'mediaType', 'tool', 'args'].includes(k));
 
           if (isToolCallLeak) {
@@ -127,7 +128,7 @@ function parseSkillUsages(content: string) {
           }
         }
       } catch (e) {
-        
+
       }
     }
   }
@@ -238,6 +239,7 @@ export const AssistantMessage = memo(
     provider,
     parts,
     addToolResult,
+    isCanvas = false,
   }: AssistantMessageProps) => {
     const filteredAnnotations = (annotations?.filter(
       (annotation: JSONValue) =>
@@ -256,68 +258,64 @@ export const AssistantMessage = memo(
       codeContext = filteredAnnotations.find((annotation) => annotation.type === 'codeContext')?.files;
     }
 
-    const usage: {
-      completionTokens: number;
-      promptTokens: number;
-      totalTokens: number;
-    } = filteredAnnotations.find((annotation) => annotation.type === 'usage')?.value;
-
     const toolInvocations = parts?.filter((part) => part.type === 'tool-invocation');
     const toolCallAnnotations = filteredAnnotations.filter(
       (annotation) => annotation.type === 'toolCall',
     ) as ToolCallAnnotation[];
 
     const { skills, cleanContent } = parseSkillUsages(content);
+    const canvasContent = cleanContent
+      .replace(/<falborArtifact[\s\S]*?<\/falborArtifact>/g, '')
+      .replace(/<falborAction[\s\S]*?<\/falborAction>/g, '')
+      .replace(/<falborAction[\s\S]*?\/>/g, '')
+      .trim();
 
     return (
       <div className="flex flex-col gap-3 items-center w-full">
-        {}
         <div className="relative flex flex-col bg-[#EEEEEE] dark:bg-[#252525] backdrop-blur-sm px-5 p-3.5 w-full rounded-lg break-words overflow-wrap-anywhere">
-          <>
+          {!isCanvas && <SkillInvocations skills={skills} />}
+          {!isCanvas && (codeContext || chatSummary) && (
             <div className=" flex gap-2 items-center text-sm text-falbor-elements-textSecondary mb-2">
-              {(codeContext || chatSummary) && (
-                <Popover side="right" align="start" trigger={<div className="i-ph:info" />}>
-                  {chatSummary && (
-                    <div className="max-w-chat">
-                      <div className="summary max-h-96 flex flex-col">
-                        <h2 className="border border-falbor-elements-borderColor rounded-md p4">Summary</h2>
-                        <div style={{ zoom: 0.7 }} className="overflow-y-auto m4">
-                          <Markdown>{chatSummary}</Markdown>
+              <Popover side="right" align="start" trigger={<div className="i-ph:info" />}>
+                {chatSummary && (
+                  <div className="max-w-chat">
+                    <div className="summary max-h-96 flex flex-col">
+                      <h2 className="border border-falbor-elements-borderColor rounded-md p4">Summary</h2>
+                      <div style={{ zoom: 0.7 }} className="overflow-y-auto m4">
+                        <Markdown>{chatSummary}</Markdown>
+                      </div>
+                    </div>
+                    {codeContext && (
+                      <div className="code-context flex flex-col p4 border border-falbor-elements-borderColor rounded-md">
+                        <h2>Context</h2>
+                        <div className="flex gap-4 mt-4 falbor" style={{ zoom: 0.6 }}>
+                          {codeContext.map((x) => {
+                            const normalized = normalizedFilePath(x);
+                            return (
+                              <Fragment key={normalized}>
+                                <code
+                                  className="bg-falbor-elements-artifacts-inlineCode-background text-falbor-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-falbor-elements-item-contentAccent hover:underline cursor-pointer"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    openArtifactInWorkbench(normalized);
+                                  }}
+                                >
+                                  {normalized}
+                                </code>
+                              </Fragment>
+                            );
+                          })}
                         </div>
                       </div>
-                      {codeContext && (
-                        <div className="code-context flex flex-col p4 border border-falbor-elements-borderColor rounded-md">
-                          <h2>Context</h2>
-                          <div className="flex gap-4 mt-4 falbor" style={{ zoom: 0.6 }}>
-                            {codeContext.map((x) => {
-                              const normalized = normalizedFilePath(x);
-                              return (
-                                <Fragment key={normalized}>
-                                  <code
-                                    className="bg-falbor-elements-artifacts-inlineCode-background text-falbor-elements-artifacts-inlineCode-text px-1.5 py-1 rounded-md text-falbor-elements-item-contentAccent hover:underline cursor-pointer"
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      openArtifactInWorkbench(normalized);
-                                    }}
-                                  >
-                                    {normalized}
-                                  </code>
-                                </Fragment>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                  <div className="context"></div>
-                </Popover>
-              )}
+                    )}
+                  </div>
+                )}
+                <div className="context"></div>
+              </Popover>
             </div>
-          </>
-          <SkillInvocations skills={skills} />
-          {parts && parts.some(p => p.type === 'reasoning') && (
+          )}
+          {!isCanvas && parts && parts.some(p => p.type === 'reasoning') && (
             <div className="flex flex-col gap-2 mb-2 w-full">
               {parts.filter(p => p.type === 'reasoning').map((part, index) => (
                 <div key={index} className="text-xs text-falbor-elements-textTertiary italic">
@@ -326,12 +324,12 @@ export const AssistantMessage = memo(
               ))}
             </div>
           )}
-          
-          <Markdown append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html>
-            {cleanContent}
+
+          <Markdown append={append} chatMode={chatMode} setChatMode={setChatMode} model={model} provider={provider} html isCanvas={isCanvas}>
+            {isCanvas ? canvasContent : cleanContent}
           </Markdown>
 
-          {parts ? (
+          {!isCanvas && (parts ? (
             <div className="flex flex-col gap-2 mt-4 w-full">
               {parts.filter(p => p.type === 'tool-invocation').map((part, index) => (
                 <ToolInvocations
@@ -350,8 +348,8 @@ export const AssistantMessage = memo(
                 addToolResult={addToolResult}
               />
             )
-          )}
-          {(onRewind || onFork) && messageId && (
+          ))}
+          {!isCanvas && (onRewind || onFork) && messageId && (
             <div className="absolute -bottom-4 right-4 flex gap-1 flex-row justify-end bg-falbor-elements-artifacts-inlineCode-background dark:bg-[#252525] border border-falbor-elements-borderColor rounded-md p-1 shadow-sm z-40">
               {onRewind && (
                 <WithTooltip tooltip="Revert to this message">

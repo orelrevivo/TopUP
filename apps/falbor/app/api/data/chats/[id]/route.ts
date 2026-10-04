@@ -12,6 +12,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const result = {
       id: chat.id,
       userId: chat.userId,
+      workspaceId: chat.workspaceId,
       isPublic: chat.isPublic,
       urlId: chat.id,
       title: chat.title,

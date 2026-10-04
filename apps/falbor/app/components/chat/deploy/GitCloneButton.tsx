@@ -34,25 +34,28 @@ const IGNORE_PATTERNS = [
   '**/yarn-debug.log*',
   '**/yarn-error.log*',
 
-  
+
   '**/*lock.yaml',
 ];
 
 const ig = ignore().add(IGNORE_PATTERNS);
 
-const MAX_FILE_SIZE = 100 * 1024; 
-const MAX_TOTAL_SIZE = 500 * 1024; 
+const MAX_FILE_SIZE = 100 * 1024;
+const MAX_TOTAL_SIZE = 500 * 1024;
 
 interface GitCloneButtonProps {
   className?: string;
   importChat?: (description: string, messages: Message[], metadata?: IChatMetadata) => Promise<void>;
+  autoOpenModal?: boolean;
+  defaultProvider?: 'github' | 'gitlab' | null;
+  onClose?: () => void;
 }
 
-export default function GitCloneButton({ importChat, className }: GitCloneButtonProps) {
+export default function GitCloneButton({ importChat, className, autoOpenModal, defaultProvider = null, onClose }: GitCloneButtonProps) {
   const { ready, gitClone } = useGit();
   const [loading, setLoading] = useState(false);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [selectedProvider, setSelectedProvider] = useState<'github' | 'gitlab' | null>(null);
+  const [isDialogOpen, setIsDialogOpen] = useState(!!autoOpenModal);
+  const [selectedProvider, setSelectedProvider] = useState<'github' | 'gitlab' | null>(defaultProvider);
 
   const handleClone = async (repoUrl: string) => {
     if (!ready) {
@@ -77,7 +80,7 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
         for (const filePath of filePaths) {
           const { data: content, encoding } = data[filePath];
 
-          
+
           if (
             content instanceof Uint8Array &&
             !filePath.match(/\.(txt|md|astro|mjs|js|jsx|ts|tsx|json|html|css|scss|less|yml|yaml|xml|svg|vue|svelte)$/i)
@@ -94,7 +97,7 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
               continue;
             }
 
-            
+
             const fileSize = new TextEncoder().encode(textContent).length;
 
             if (fileSize > MAX_FILE_SIZE) {
@@ -102,7 +105,7 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
               continue;
             }
 
-            
+
             if (totalSize + fileSize > MAX_TOTAL_SIZE) {
               skippedFiles.push(`${filePath} (would exceed total size limit)`);
               continue;
@@ -118,19 +121,13 @@ export default function GitCloneButton({ importChat, className }: GitCloneButton
           }
         }
 
-        const commands = await detectProjectCommands(fileContents);
-        const commandsMessage = createCommandsMessage(commands);
+        const repoName = repoUrl.split('/').slice(-1)[0].replace(/\.git$/, '');
 
-        const filesMessage: Message = {
-          role: 'assistant',
-          content: `Cloning the repo ${repoUrl} into ${workdir}
-${skippedFiles.length > 0
-              ? `\nSkipped files (${skippedFiles.length}):
-${skippedFiles.map((f) => `- ${f}`).join('\n')}`
-              : ''
-            }
+        const userMessage: Message = {
+          role: 'user',
+          content: `Import and analyze the repository ${repoUrl}. Survey the project structure, config, environment variables, dependencies, and set up everything needed to run it.
 
-<falborArtifact id="imported-files" title="Git Cloned Files" type="bundled">
+<falborArtifact id="imported-files" title="Git Cloned Files (${repoName})" type="bundled">
 ${fileContents
               .map(
                 (file) =>
@@ -144,13 +141,14 @@ ${escapeFalborTags(file.content)}
           createdAt: new Date(),
         };
 
-        const messages = [filesMessage];
+        const messages = [userMessage];
 
+        const commandsMessage: Message | undefined = undefined;
         if (commandsMessage) {
           messages.push(commandsMessage);
         }
 
-        await importChat(`Git Project:${repoUrl.split('/').slice(-1)[0]}`, messages);
+        await importChat(`Git Project: ${repoName}`, messages);
       }
     } catch (error) {
       console.error('Error during import:', error);
@@ -162,32 +160,34 @@ ${escapeFalborTags(file.content)}
 
   return (
     <>
-      <Button
-        onClick={() => {
-          setSelectedProvider(null);
-          setIsDialogOpen(true);
-        }}
-        title="Clone a repo"
-        variant="default"
-        size="default"
-        className={classNames(
-          'gap-2 bg-falbor-elements-background-depth-1 w-fit',
-          'text-[#444444] dark:text-falbor-elements-textPrimary',
-          'hover:bg-falbor-elements-background-depth-2',
-          'border border-falbor-elements-borderColor',
-          'h-10 px-4 py-2 min-w-[120px] justify-center',
-          'transition-all duration-200 ease-in-out',
-          className,
-        )}
-        disabled={!ready || loading}
-      >
-        <div className="flex items-center gap-1">
-          <img className='w-4 h-4 opacity-70' src="/icons/github-light.svg" alt="" />
-        </div>
-        Import from github
-      </Button>
+      {!autoOpenModal && (
+        <Button
+          onClick={() => {
+            setSelectedProvider(null);
+            setIsDialogOpen(true);
+          }}
+          title="Clone a repo"
+          variant="default"
+          size="default"
+          className={classNames(
+            'gap-2 bg-falbor-elements-background-depth-1 w-fit',
+            'text-[#444444] dark:text-falbor-elements-textPrimary',
+            'hover:bg-falbor-elements-background-depth-2',
+            'border border-falbor-elements-borderColor',
+            'h-10 px-4 py-2 min-w-[120px] justify-center',
+            'transition-all duration-200 ease-in-out',
+            className,
+          )}
+          disabled={!ready || loading}
+        >
+          <div className="flex items-center gap-1">
+            <img className='w-4 h-4 opacity-70' src="/icons/github-light.svg" alt="" />
+          </div>
+          Import from github
+        </Button>
+      )}
 
-      {}
+      { }
       {isDialogOpen && !selectedProvider && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor max-w-md w-full">
@@ -197,7 +197,10 @@ ${escapeFalborTags(file.content)}
                   Choose Repository Provider
                 </h3>
                 <button
-                  onClick={() => setIsDialogOpen(false)}
+                  onClick={() => {
+                    setIsDialogOpen(false);
+                    onClose?.();
+                  }}
                   className="p-2 rounded-lg bg-transparent hover:bg-falbor-elements-background-depth-1 dark:hover:bg-falbor-elements-background-depth-1 text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary dark:hover:text-falbor-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
                 >
                   <X className="w-5 h-5 transition-transform duration-200 hover:rotate-90" />
@@ -248,7 +251,7 @@ ${escapeFalborTags(file.content)}
         </div>
       )}
 
-      {}
+      { }
       {isDialogOpen && selectedProvider === 'github' && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -270,6 +273,7 @@ ${escapeFalborTags(file.content)}
                 onClick={() => {
                   setIsDialogOpen(false);
                   setSelectedProvider(null);
+                  onClose?.();
                 }}
                 className="p-2 rounded-lg bg-transparent hover:bg-falbor-elements-background-depth-1 dark:hover:bg-falbor-elements-background-depth-1 text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary dark:hover:text-falbor-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
               >
@@ -284,7 +288,7 @@ ${escapeFalborTags(file.content)}
         </div>
       )}
 
-      {}
+      { }
       {isDialogOpen && selectedProvider === 'gitlab' && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-950 rounded-xl shadow-xl border border-falbor-elements-borderColor dark:border-falbor-elements-borderColor w-full max-w-4xl max-h-[90vh] overflow-hidden">
@@ -306,6 +310,7 @@ ${escapeFalborTags(file.content)}
                 onClick={() => {
                   setIsDialogOpen(false);
                   setSelectedProvider(null);
+                  onClose?.();
                 }}
                 className="p-2 rounded-lg bg-transparent hover:bg-falbor-elements-background-depth-1 dark:hover:bg-falbor-elements-background-depth-1 text-falbor-elements-textSecondary dark:text-falbor-elements-textSecondary hover:text-falbor-elements-textPrimary dark:hover:text-falbor-elements-textPrimary transition-all duration-200 hover:scale-105 active:scale-95"
               >

@@ -172,6 +172,39 @@ export class NativeToolsService {
       }
     });
 
+    tools['gmail_send_email'] = tool({
+      description: 'Send an email via Gmail. Provide the recipient email, subject, and the plain text or HTML body.',
+      parameters: z.object({
+        to: z.string().describe('Recipient email address'),
+        subject: z.string().describe('Email subject'),
+        body: z.string().describe('Email body content (text or HTML)'),
+      }),
+      execute: async ({ to, subject, body }) => {
+        const utf8Subject = `=?utf-8?B?${Buffer.from(subject).toString('base64')}?=`;
+        const messageParts = [
+          `To: ${to}`,
+          `Subject: ${utf8Subject}`,
+          'Content-Type: text/html; charset=utf-8',
+          'MIME-Version: 1.0',
+          '',
+          body
+        ];
+        const rawEmail = messageParts.join('\r\n');
+        const encodedEmail = Buffer.from(rawEmail)
+          .toString('base64')
+          .replace(/\+/g, '-')
+          .replace(/\//g, '_')
+          .replace(/=+$/, '');
+
+        const res = await fetchWithAuth(`https://gmail.googleapis.com/gmail/v1/users/me/messages/send`, {
+          method: 'POST',
+          body: JSON.stringify({ raw: encodedEmail })
+        });
+        if (!res.ok) return `Failed to send email: ${await res.text()}`;
+        return `Email sent successfully to ${to}`;
+      }
+    });
+
     return tools;
   }
 

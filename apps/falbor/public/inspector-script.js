@@ -336,11 +336,19 @@
     }
   });
 
+  window.addEventListener('scroll', function () {
+    window.parent.postMessage({
+      type: 'INSPECTOR_SCROLL',
+      scrollX: window.scrollX || window.pageXOffset || 0,
+      scrollY: window.scrollY || window.pageYOffset || 0
+    }, '*');
+  }, true);
+
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', function () {
-      window.parent.postMessage({ type: 'INSPECTOR_READY' }, '*');
+      window.parent.postMessage({ type: 'INSPECTOR_READY', scrollY: window.scrollY || 0, scrollX: window.scrollX || 0 }, '*');
     });
   } else {
-    window.parent.postMessage({ type: 'INSPECTOR_READY' }, '*');
+    window.parent.postMessage({ type: 'INSPECTOR_READY', scrollY: window.scrollY || 0, scrollX: window.scrollX || 0 }, '*');
   }
 })();

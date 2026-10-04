@@ -8,6 +8,7 @@ const JWT_SECRET = process.env.JWT_SECRET
 const COOKIE_NAME = "session";
 
 const PUBLIC_ROUTES = [
+  "/api/test-tomba",
   "/login",
   "/signup",
   "/verified",
@@ -15,11 +16,18 @@ const PUBLIC_ROUTES = [
   "/terms",
   "/about",
   "/templates",
+  "/builder",
+  "/pricing",
+  "/enterprise",
+  "/blog",
+  "/marketers",
+  "/api/enterprise",
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/verify",
   "/api/auth/logout",
   "/api/health",
+  "/api/telegram/webhook",
   "/api/auth/google",
   "/api/auth/discord",
   "/api/auth/discord/callback",
@@ -57,7 +65,9 @@ export async function middleware(request: NextRequest) {
         }
       }
     } else {
-      if (parts.length >= 3) {
+      // Do not treat ngrok/trycloudflare or /api routes as tenant subdomains
+      const isTunnel = hostname.includes("ngrok") || hostname.includes("trycloudflare");
+      if (!isTunnel && !pathname.startsWith('/api/') && parts.length >= 3) {
         const sub = parts[0];
         if (sub !== 'www' && sub !== 'hacking' && sub !== 'api') {
           subdomain = sub;
@@ -75,10 +85,13 @@ export async function middleware(request: NextRequest) {
     const isPublicRoute = (path: string) => {
       return (
         PUBLIC_ROUTES.some((r) => path === r) ||
+        path.startsWith("/blog/") ||
         path === "/templates" ||
         path.startsWith("/templates/") ||
         path === "/api/templates" ||
-        path.startsWith("/api/templates/")
+        path.startsWith("/api/templates/") ||
+        path.startsWith("/marketers") ||
+        path.startsWith("/b2b/")
       );
     };
 
@@ -141,7 +154,16 @@ export async function middleware(request: NextRequest) {
 
     if (JWT_SECRET) {
       try {
-        await jwtVerify(sessionCookie.value, JWT_SECRET);
+        const { payload } = await jwtVerify(sessionCookie.value, JWT_SECRET);
+        
+        if (payload.role === "marketer" && pathname.startsWith("/workspace/")) {
+           return NextResponse.redirect(new URL("/b2b", request.url));
+        }
+
+        if (payload.role !== "marketer" && pathname.startsWith("/b2b/")) {
+           return NextResponse.redirect(new URL("/", request.url));
+        }
+
         return handleSuccess();
       } catch {
       }

@@ -6,10 +6,10 @@
   pointer-events: none;
   z-index: 0;
 
-  :global(html[data-theme='dark']) & {
-    background: url('/background/bg.png') center center / cover no-repeat;
-    mix-blend-mode: screen;
-  }
+  // :global(html[data-theme='dark']) & {
+  //   background: url('/background/bg.png') center center / cover no-repeat;
+  //   mix-blend-mode: screen;
+  // }
 
   :global(html[data-theme='light']) &,
   :global(html:not([data-theme='dark'])) & {

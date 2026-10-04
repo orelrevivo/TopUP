@@ -8,11 +8,16 @@ import BackgroundRays from '~/components/ui/BackgroundRays';
 import { ClientOnly } from '~/components/ui/ClientOnly';
 import { Menu } from '~/components/sidebar/Menu.client';
 import { Chat } from '~/components/chat/core/Chat.client';
+import { AISidebar } from '~/components/ai-side/AISidebar';
+import { useStore } from '@nanostores/react';
+import { aiSidebarStore } from '~/lib/stores/aiSidebar';
 import { useAuth } from '~/hooks/useAuth';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { LandingScrollHandler } from "~/components/landing/landing-scroll-handler";
 import { ThemeHandler } from "~/components/landing/ThemeHandler";
+import { getLastUsedWorkspace } from '~/lib/actions/workspaces';
 import FeaturesHero from "~/components/landing/FeaturesHero";
+import GrowthJourneySection from "~/components/landing/GrowthJourneySection";
 import BuilderJourneySection from "~/components/landing/BuilderJourneySection";
 import IdeaToMVPSection from "~/components/landing/IdeaToMVPSection";
 import Footer from "~/components/landing/Footer";
@@ -54,74 +59,114 @@ function getBlur(progress: number, sectionIndex: number): string {
 }
 
 import { Suspense } from 'react';
-import { useStore } from '@nanostores/react';
 import { chatStore } from '~/lib/stores/chat';
+import { TabsWithSlider } from '~/components/ui';
 
 function PageContent() {
   const { started } = useStore(chatStore);
   const { user, loading } = useAuth();
   const pathname = usePathname();
+  const router = useRouter();
+  const isAiSidebarOpen = useStore(aiSidebarStore.isOpen);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
   const bookContainerRef = useRef<HTMLDivElement>(null);
-
+  const containerRef = useRef<HTMLDivElement>(null);
 
   const card2Ref = useRef<HTMLDivElement>(null);
   const card3Ref = useRef<HTMLDivElement>(null);
   const card4Ref = useRef<HTMLDivElement>(null);
   const card5Ref = useRef<HTMLDivElement>(null);
-
-
   const dotRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const [activeSection, setActiveSection] = useState(0);
+  const [sidebarWidthPercent, setSidebarWidthPercent] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('falbor_ai_sidebar_width');
+      if (saved) {
+        const parsed = parseFloat(saved);
+        if (!isNaN(parsed) && parsed >= 12 && parsed <= 50) return parsed;
+      }
+    }
+    return 20;
+  });
+
+  const [isDragging, setIsDragging] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
-    if (user) return;
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('falbor_ai_sidebar_width', String(sidebarWidthPercent));
+    }
+  }, [sidebarWidthPercent]);
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
 
-    let attempts = 0;
-    const attach = () => {
-      const container = scrollContainerRef.current;
-      const track = bookContainerRef.current;
-
-      if (!container || !track) {
-        if (attempts++ < 20) setTimeout(attach, 50);
-        return;
-      }
-
-      const cards = [card2Ref, card3Ref, card4Ref, card5Ref];
-
-      const onScroll = () => {
-        const scrollTop = container.scrollTop;
-        const trackTop = track.offsetTop;
-        const trackHeight = track.offsetHeight;
-        const containerH = container.clientHeight;
-
-        const raw = (scrollTop - trackTop) / (trackHeight - containerH);
-        const progress = Math.max(0, Math.min(1, raw));
-
-        cards.forEach((ref, i) => {
-          if (!ref.current) return;
-          const sectionIndex = i + 1;
-          const op = getOpacity(progress, sectionIndex);
-          const bl = getBlur(progress, sectionIndex);
-          ref.current.style.opacity = op.toString();
-          ref.current.style.filter = bl;
-        });
-
-        const section = Math.min(TOTAL - 1, Math.floor(progress * TOTAL));
-        setActiveSection(section);
-      };
-
-      container.addEventListener('scroll', onScroll, { passive: true });
-      onScroll();
-      return () => container.removeEventListener('scroll', onScroll);
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !containerRef.current) return;
+      const containerRect = containerRef.current.getBoundingClientRect();
+      const relativeX = e.clientX - containerRect.left;
+      const newPercent = Math.max(12, Math.min(50, ((containerRect.width - relativeX) / containerRect.width) * 100));
+      setSidebarWidthPercent(newPercent);
     };
 
-    const cleanup = attach();
-    return () => { if (cleanup) cleanup(); };
-  }, [user, loading]);
+    const handleMouseUp = () => {
+      if (isDragging) setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.body.style.userSelect = 'none';
+      document.body.style.cursor = 'col-resize';
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+    } else {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+    }
+
+    return () => {
+      document.body.style.userSelect = '';
+      document.body.style.cursor = '';
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [isDragging]);
+
+  useEffect(() => {
+    if (user && pathname === '/' && !loading) {
+      if (user.role === "marketer") {
+        router.push("/b2b");
+        return;
+      }
+      getLastUsedWorkspace().then(workspace => {
+        if (workspace) {
+          router.push(`/workspace/${workspace.id}`);
+        } else {
+          router.push(`/welcome`);
+        }
+      });
+      return;
+    }
+  }, [user, loading, pathname, router]);
+
+  useEffect(() => {
+    if (pathname.startsWith('/workspace/')) {
+      const parts = pathname.split('/');
+      const workspaceId = parts[2];
+      if (workspaceId && workspaceId !== 'new' && workspaceId !== aiSidebarStore.currentWorkspaceId.get()) {
+        aiSidebarStore.setWorkspace(
+          workspaceId,
+          aiSidebarStore.events.get(),
+          aiSidebarStore.currentSessionId.get(),
+          aiSidebarStore.currentSessionTitle.get()
+        );
+      }
+    }
+  }, [pathname]);
 
   const scrollToSection = (i: number) => {
     const container = scrollContainerRef.current;
@@ -137,12 +182,23 @@ function PageContent() {
     });
   };
 
-  const isChatIdPage = pathname.startsWith('/chat/');
+  const isChatIdPage = pathname.startsWith('/chat/') || pathname.includes('/new/');
+  const isWorkspacePage = pathname.startsWith('/workspace/');
+  const isDarkBgPage = isChatIdPage || isWorkspacePage;
+  const landingTabs = [
+    { id: "business", label: "For Businesses" },
+    { id: "marketers", label: "For Marketers" },
+  ];
 
-  if (loading) {
+  const handleTabChange = (tabId: string) => {
+    if (tabId === "marketers") {
+      router.push("/marketers");
+    }
+  };
+  if (loading || (user && pathname === '/')) {
     return (
-      <div className={`flex flex-col h-full w-full relative ${isChatIdPage ? 'bg-[#F7FAFB] dark:bg-[#080808]' : ''}`}>
-        {!isChatIdPage && <BackgroundRays key={pathname} />}
+      <div className={`flex flex-col h-full w-full relative ${isDarkBgPage ? 'bg-[#F7FAFB] dark:bg-[#080808]' : ''}`}>
+        {!isDarkBgPage && <BackgroundRays key={pathname} />}
         <Header />
       </div>
     );
@@ -157,82 +213,75 @@ function PageContent() {
           <div className="w-full rounded-xl border border-zinc-200 dark:border-white/10" style={{ backdropFilter: 'blur(20px)' }}>
             <DefaultDemo />
           </div>
+          <div className="w-full flex items-center justify-center">
+            <TabsWithSlider
+              tabs={landingTabs}
+              activeTab="marketers"
+              onChange={handleTabChange}
+              className="bg-zinc-100 dark:bg-zinc-900 rounded-xl p-1 w-fit flex items-center justify-center"
+              sliderClassName="bg-white dark:bg-zinc-800 shadow-sm rounded-lg"
+              activeTabClassName="text-zinc-900 dark:text-white"
+              tabClassName="text-zinc-500 dark:text-zinc-400 border-0 bg-transparent dark:bg-transparent"
+            />
+          </div>
         </div>
         <div className="relative w-full flex flex-col items-center z-20">
           <div className="relative w-full flex items-center bg-white dark:bg-black z-0">
             <FeaturesHero />
           </div>
-          { }
-          <AgentFeaturesSection />
-          {/* <BuilderJourneySection /> */}
-          <div ref={bookContainerRef} className="h-[900vh] w-full relative bg-white dark:bg-black transition-colors duration-200">
-            <div className="sticky top-0 h-screen w-full overflow-hidden">
-              <div className="absolute inset-0 pointer-events-none z-0 overflow-hidden">
-                <motion.div
-                  className="absolute w-[800px] h-[800px] rounded-full"
-                  style={{ background: "radial-gradient(circle, rgba(255,88,0,0.07) 0%, transparent 70%)", top: "10%", left: "15%" }}
-                  animate={{ x: [0, 60, -30, 0], y: [0, -40, 30, 0] }}
-                  transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
-                />
-                <motion.div
-                  className="absolute w-[500px] h-[500px] rounded-full"
-                  style={{ background: "radial-gradient(circle, rgba(10,53,241,0.05) 0%, transparent 70%)", bottom: "10%", right: "10%" }}
-                  animate={{ x: [0, -50, 40, 0], y: [0, 30, -20, 0] }}
-                  transition={{ duration: 22, repeat: Infinity, ease: "easeInOut", delay: 4 }}
-                />
-              </div>
-              <div className="absolute inset-0 w-full h-full z-[1]">
-                <FeatureCard data={featuresData[0]} />
-              </div>
-              <div ref={card2Ref} className="absolute inset-0 w-full h-full z-[2]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
-                <FeatureCard data={featuresData[1]} />
-              </div>
-              <div ref={card3Ref} className="absolute inset-0 w-full h-full z-[3]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
-                <FeatureCard data={featuresData[2]} />
-              </div>
-              <div ref={card4Ref} className="absolute inset-0 w-full h-full z-[4]" style={{ opacity: 0, filter: 'blur(16px)', willChange: 'opacity, filter', transition: 'none' }}>
-                <FeatureCard data={featuresData[3]} />
-              </div>
-              { }
-              { }
-              <div className="absolute right-6 top-1/2 -translate-y-1/2 z-[100] flex flex-col gap-4 items-center">
-                {SECTIONS.map((label, i) => (
-                  <div key={label} className="relative flex items-center group">
-                    <div className="absolute right-7 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none bg-zinc-100 dark:bg-zinc-900 text-zinc-800 dark:text-zinc-200 text-xs px-2 py-1 rounded whitespace-nowrap border border-zinc-200 dark:border-zinc-800">
-                      {label}
-                    </div>
-                    <button
-                      onClick={() => scrollToSection(i)}
-                      className="w-2 h-2 rounded-full cursor-pointer transition-all duration-300"
-                      style={{
-                        background: '#FF5800',
-                        opacity: activeSection === i ? 1 : 0.3,
-                        transform: activeSection === i ? 'scale(1.6)' : 'scale(1)',
-                      }}
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <GrowthJourneySection />
         </div>
-        { }
         <IntegrationsSection />
-        <PricingSection />
         <Footer />
       </div>
     );
   }
 
+  const isNewWorkspaceChat = pathname.includes('/workspace/') && pathname.includes('/new/');
+  const isHideSidebar = pathname.startsWith('/chat/') || isNewWorkspaceChat;
+
   return (
-    <div className="flex flex-row h-[100dvh] w-full overflow-hidden bg-[#f0eded5c] dark:bg-[#080808]">
-      {!isChatIdPage && <ClientOnly>{() => <Menu />}</ClientOnly>}
-      <div className={`flex flex-col flex-1 min-w-0 h-full w-full relative ${isChatIdPage ? 'bg-[#f0eded5c] dark:bg-[#080808]' : ''}`}>
-        {!isChatIdPage && !started && <BackgroundRays key={pathname} />}
-        <Header />
-        <ClientOnly fallback={<BaseChat />}>
-          {() => <Chat />}
-        </ClientOnly>
+    <div className="flex flex-row h-[100dvh] w-full overflow-hidden bg-[#f7f7f8] dark:bg-[#111114]">
+      <div className='py-1'>
+        {!isHideSidebar && <ClientOnly>{() => <Menu />}</ClientOnly>}
+      </div>
+      <div ref={containerRef} className="flex py-4 flex-row w-full h-full overflow-hidden relative">
+        <div
+          style={{ width: isAiSidebarOpen ? `calc(${100 - sidebarWidthPercent}% - 5px)` : '100%' }}
+          className={`h-full min-w-0 bg-[#f7f7f8] dark:bg-[#111114] overflow-hidden ${isDragging ? 'transition-none' : 'transition-[width] duration-200'
+            }`}
+        >
+          <div className={`flex flex-col h-full w-full relative rounded-md border border-gray-300 dark:border-gray-800/80 overflow-hidden ${isDarkBgPage ? 'bg-white dark:bg-[#080808]' : 'bg-white dark:bg-[#080808]'}`}>
+            {!isDarkBgPage && !started && <BackgroundRays key={pathname} />}
+            {!isWorkspacePage && <Header />}
+            <ClientOnly fallback={<BaseChat />}>
+              {() => <Chat />}
+            </ClientOnly>
+          </div>
+        </div>
+
+        {isAiSidebarOpen && (
+          <div
+            className="w-[10px] cursor-col-resize z-[100] flex justify-center items-center select-none shrink-0 relative"
+            onMouseDown={handleMouseDown}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+          >
+            <div
+              className={`h-full w-full transition-colors ${isDragging || isHovered ? 'bg-[#8882]' : 'bg-transparent'
+                }`}
+            />
+          </div>
+        )}
+
+        <AISidebar
+          isDragging={isDragging}
+          className='mr-3'
+          style={{
+            width: isAiSidebarOpen ? `calc(${sidebarWidthPercent}% - 5px)` : 0,
+            minWidth: isAiSidebarOpen ? '240px' : 0,
+          }}
+        />
       </div>
     </div>
   );

@@ -185,7 +185,7 @@ export const Workbench = memo(
       workbenchStore
         .saveCurrentDocument()
         .then(() => {
-          
+
           const previewStore = usePreviewStore();
           previewStore.refreshAllPreviews();
         })

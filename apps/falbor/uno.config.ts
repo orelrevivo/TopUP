@@ -10,13 +10,17 @@ const collectionName = 'falbor';
 const customIconCollection = iconPaths.reduce(
   (acc, iconPath) => {
     const [iconName] = basename(iconPath).split('.');
-
-    acc[collectionName] ??= {};
-    acc[collectionName][iconName] = async () => readFileSync(iconPath, 'utf8');
+    try {
+      const content = readFileSync(iconPath, 'utf8');
+      if (content.trim().toLowerCase().startsWith('<svg')) {
+        acc[collectionName] ??= {};
+        acc[collectionName][iconName] = content;
+      }
+    } catch {}
 
     return acc;
   },
-  {} as Record<string, Record<string, () => Promise<string>>>,
+  {} as Record<string, Record<string, string>>,
 );
 
 const BASE_COLORS = {
@@ -337,11 +341,11 @@ export default defineConfig({
       },
     }),
     presetIcons({
-      warn: true,
+      warn: false,
       collections: {
         ...customIconCollection,
-        ph: () => import('@iconify-json/ph/icons.json', { with: { type: 'json' } }).then(i => i.default),
-        'svg-spinners': () => import('@iconify-json/svg-spinners/icons.json', { with: { type: 'json' } }).then(i => i.default),
+        ph: () => require('@iconify-json/ph/icons.json'),
+        'svg-spinners': () => require('@iconify-json/svg-spinners/icons.json'),
       },
       unit: 'em',
     }),

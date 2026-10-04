@@ -26,14 +26,16 @@ import NetlifyTab from '~/components/@settings/tabs/netlify/NetlifyTab';
 import CloudProvidersTab from '~/components/@settings/tabs/providers/cloud/CloudProvidersTab';
 import LocalProvidersTab from '~/components/@settings/tabs/providers/local/LocalProvidersTab';
 import McpTab from '~/components/@settings/tabs/mcp/McpTab';
+import SocialConnectionTab from '~/components/@settings/tabs/social/SocialConnectionTab';
 
 interface ControlPanelProps {
   open: boolean;
   onClose: () => void;
   activeTab: TabType | null;
+  inline?: boolean;
 }
 
-export const ControlPanel = ({ open, onClose, activeTab }: ControlPanelProps) => {
+export const ControlPanel = ({ open, onClose, activeTab, inline = false }: ControlPanelProps) => {
   const { logout } = useAuth();
   const isSidebarOpen = useStore(sidebarOpen);
 
@@ -74,11 +76,36 @@ export const ControlPanel = ({ open, onClose, activeTab }: ControlPanelProps) =>
       case 'netlify': return <NetlifyTab />;
       case 'event-logs': return <EventLogsTab />;
       case 'mcp': return <McpTab />;
+      case 'social-connection': return <SocialConnectionTab />;
       default: return null;
     }
   };
 
   if (!open) return null;
+
+  if (inline) {
+    return (
+      <div className="flex flex-col h-full w-full overflow-hidden">
+        <div className="h-12 flex items-center justify-between px-4">
+          <h2 className="text-base font-semibold text-gray-900 dark:text-white flex items-center gap-2">
+            {activeTab ? TAB_LABELS[activeTab] : 'Control Panel'}
+            <button
+              onClick={onClose}
+              className="flex items-center justify-center w-7 h-7 rounded-full hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+            >
+              <div className="i-ph:x w-4 h-4 text-gray-500 dark:text-gray-400" />
+            </button>
+          </h2>
+          <div className="flex items-center gap-4">
+            <AvatarDropdown onSelectTab={handleTabClick} />
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto p-6">
+          {activeTab && getTabComponent(activeTab)}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 flex z-30 modern-scrollbar pointer-events-auto">
@@ -91,7 +118,7 @@ export const ControlPanel = ({ open, onClose, activeTab }: ControlPanelProps) =>
         <div
           className={classNames(
             'w-full h-full',
-            isSidebarOpen ? 'sm:pl-[340px]' : 'sm:pl-0',
+            isSidebarOpen ? 'sm:pl-[260px]' : 'sm:pl-0',
             'transition-[padding] duration-200 ease-out',
             'flex flex-col overflow-hidden relative pointer-events-none'
           )}

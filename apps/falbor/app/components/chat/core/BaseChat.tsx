@@ -1,8 +1,27 @@
 'use client';
+import { useParams, usePathname } from "next/navigation";
+import { WorkspaceSourcesView } from '~/components/workspace/sources/WorkspaceSourcesView';
+import { WorkspaceCanvasView } from '~/components/workspace/canvas/WorkspaceCanvasView';
+import { WorkspaceTrendsView } from '~/components/workspace/trends/WorkspaceTrendsView';
+import { WorkspaceBudgetView } from '~/components/workspace/budget/WorkspaceBudgetView';
+import { WorkspaceBudgetMarketResultView } from '~/components/workspace/budget/WorkspaceBudgetMarketResultView';
+import { WorkspaceBrowserView } from '~/components/workspace/browser/WorkspaceBrowserView';
+import { WorkspaceAgentContactView } from '~/components/workspace/agent-contact/WorkspaceAgentContactView';
+import { WorkspaceAdsMarketingView } from '~/components/workspace/ads/WorkspaceAdsMarketingView';
+import { WorkspaceGoogleAdsView } from '~/components/workspace/ads/WorkspaceGoogleAdsView';
+import { WorkspaceMetaAdsView } from '~/components/workspace/ads/WorkspaceMetaAdsView';
+import { WorkspaceBlogContentView } from '~/components/workspace/ads/WorkspaceBlogContentView';
+import { WorkspacePresentationView } from '~/components/workspace/ads/WorkspacePresentationView';
+import { WorkspaceSignalRadarView } from '~/components/workspace/signal-radar/WorkspaceSignalRadarView';
+import { MyProspectsView } from '~/components/workspace/contacts/MyProspectsView';
+import { CommunityMessagesView } from '~/components/community/CommunityMessagesView';
+import { MilestoneView } from '~/components/milestone/MilestoneView';
 
 import type { JSONValue, Message } from 'ai';
 import React, { type RefCallback, useEffect, useState } from 'react';
 import { ClientOnly } from '~/components/ui/ClientOnly';
+import { MainContentSpinner } from '~/components/ui/MainContentSpinner';
+import { aiSidebarStore } from '~/lib/stores/aiSidebar';
 
 
 import { Workbench } from '~/components/workbench/Workbench.client';
@@ -32,6 +51,7 @@ import { StickToBottom, useStickToBottomContext } from '~/lib/hooks';
 import { toast } from 'react-toastify';
 import { Slider } from '~/components/ui/Slider';
 import { ChatBox } from '../input/ChatBox';
+import { ChatHistoryBox } from './ChatHistoryBox';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
 import LlmErrorAlert from '../alerts/LLMApiAlert';
@@ -46,6 +66,9 @@ import { FeedbackWidget } from '~/components/ui/FeedbackWidget';
 import { HistoryPanel } from './HistoryPanel';
 import { getImagesForChat, removeBackgroundFromBase64, saveImageToStore } from '~/lib/utils/imageStore';
 import { chatId } from '~/lib/persistence';
+import { ProductIntelligencePanel } from '~/components/workspace/intelligence/ProductIntelligencePanel';
+import { ControlPanel } from '~/components/@settings';
+import { settingsOpenStore, settingsTabStore } from '~/lib/stores/settings';
 
 const TEXTAREA_MIN_HEIGHT = 76;
 
@@ -162,6 +185,49 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     },
     ref,
   ) => {
+    const params = useParams();
+    const pathname = usePathname();
+    const workspaceId = params?.id as string;
+    const isLoggedIn = true;
+
+    const isSettingsOpen = useStore(settingsOpenStore);
+    const activeSettingsTab = useStore(settingsTabStore);
+    const isBrowserOpen = useStore(aiSidebarStore.isBrowserOpen);
+
+    // UI Layout helpers
+    const isCanvasPage = pathname?.includes('/canvas');
+    const isSourcesPage = pathname?.includes('/sources');
+    const isProductPage = pathname?.includes('/product') && !pathname?.includes('/product-deck');
+    const isVibePage = pathname?.includes('/vibe');
+    const isBudgetMarketPage = pathname?.includes('/budget/market');
+    const isBudgetPage = pathname?.includes('/budget') && !isBudgetMarketPage;
+    const isAdsMarketingPage = pathname?.includes('/ads-marketing');
+    const isGoogleAdsPage = pathname?.includes('/google-ads');
+    const isMetaAdsPage = pathname?.includes('/meta-ads');
+    const isBlogContentPage = pathname?.includes('/blog-content');
+    const isProductDeckPage = pathname?.includes('/product-deck');
+    const isAgentContactPage = pathname?.includes('/agent-contact');
+    const isMyProspectsPage = pathname?.includes('/my-prospects');
+    const isSignalRadarPage = pathname?.includes('/signal-radar');
+    const isCommunityMessagesPage = pathname?.includes('/community/messages');
+    const isMilestonePage = pathname?.includes('/milestone');
+    const isNewChat = pathname?.includes('/new/');
+    const isWorkspaceHome = !!workspaceId && !isCanvasPage && !isSourcesPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isCommunityMessagesPage && !isMilestonePage && !isNewChat;
+
+    let marketId = '';
+    if (isBudgetMarketPage) {
+      const match = pathname?.match(/\/market\/([^\/]+)/);
+      if (match) marketId = match[1];
+    }
+
+    const [isTabChanging, setIsTabChanging] = useState(false);
+
+    useEffect(() => {
+      setIsTabChanging(true);
+      const timer = setTimeout(() => setIsTabChanging(false), 200);
+      return () => clearTimeout(timer);
+    }, [pathname]);
+
     const TEXTAREA_MAX_HEIGHT = chatStarted ? 400 : 200;
     const [apiKeys, setApiKeys] = useState<Record<string, string>>({});
     const [modelList, setModelList] = useState<ModelInfo[]>([]);
@@ -474,178 +540,214 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const baseChat = (
       <div
         ref={ref}
-        className={classNames(styles.BaseChat, 'relative flex flex-1 min-h-0 h-full w-full overflow-hidden')}
+        className={classNames(styles.BaseChat, 'relative flex flex-1 min-h-0 h-full w-full overflow-hidden flex-col')}
         data-chat-visible={showChat}
       >
 
-        <div className="flex flex-col lg:flex-row overflow-hidden w-full h-full">
-          <div className={classNames(styles.Chat, 'flex flex-col h-full relative', {
-            'w-full': isCompact || !showWorkbench,
-            'lg:w-[var(--chat-min-width)] shrink-0': !isCompact && showWorkbench,
-            'flex-grow': isCompact || !showWorkbench
-          })}>
-            {!chatStarted && !hideIntro && (
-              <div id="intro" className="mt-[23vh] max-w-md mx-auto text-center px-4 lg:px-0 flex flex-col items-center gap-4">
-                <div className="absolute top-41 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3">
-                  <img
-                    src="/logo-light-styled.png"
-                    alt="Falbor Logo"
-                    className="h-20 dark:hidden"
-                  />
-                  <img
-                    src="/logo-dark-styled.png"
-                    alt="Falbor Logo"
-                    className="h-20 hidden dark:block"
-                  />
-                </div>
-              </div>
-            )}
-            <FeedbackWidget hasMessages={(messages?.length || 0) > 1} />
-            <HistoryPanel messages={fullMessages && fullMessages.length > (messages?.length || 0) ? fullMessages : (messages || [])} onRewind={onRewind} />
-            <StickToBottom
-              data-scrollable="true"
-              className={classNames('pt-2 px-2 relative', {
-                'h-full flex flex-col': chatStarted,
-              })}
-            >
-              <StickToBottom.Content className="flex flex-col gap-4 mt-2.5 relative">
-                <ClientOnly>
-                  {() => {
-                    return chatStarted ? (
-                      <Messages
-                        className="flex flex-col w-full flex-1 max-w-chat pb-4 mx-auto z-1"
-                        messages={messages}
-                        isStreaming={isStreaming}
-                        append={append}
-                        chatMode={chatMode}
-                        setChatMode={setChatMode}
-                        provider={provider}
-                        model={model}
-                        addToolResult={addToolResult}
-                      />
-                    ) : null;
-                  }}
-                </ClientOnly>
-                <ScrollToBottom />
-              </StickToBottom.Content>
-              <div
-                className={classNames('my-auto flex flex-col gap-2 w-full max-w-chat mx-auto z-prompt mb-6', {
-                  'sticky bottom-2': chatStarted,
-                })}
-              >
-                <div className="flex flex-col gap-2">
-                  {supabaseAlert && (
-                    <SupabaseChatAlert
-                      alert={supabaseAlert}
-                      clearAlert={() => clearSupabaseAlert?.()}
-                      postMessage={(message) => {
-                        sendMessage?.({} as any, message);
-                        clearSupabaseAlert?.();
+        <div className={classNames("flex-1 min-h-0 flex h-full", { "gap-[20px] pt-[10px] pl-[10px]": (!chatStarted || isSourcesPage || isCanvasPage || isProductPage || isVibePage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage) && isLoggedIn })}>
+          {!isCanvasPage && !isWorkspaceHome && !isSourcesPage && !isProductPage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isCommunityMessagesPage && !isMilestonePage && (
+            <div className={classNames("h-full min-h-0 flex flex-col", {
+              'pt-[10px]': chatStarted && (isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage),
+              'pt-[var(--header-height)]': chatStarted && !isSourcesPage && !isCanvasPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isCommunityMessagesPage && !isMilestonePage && !isWorkspaceHome,
+              'w-full flex-1': (chatStarted && !isSourcesPage && !isCanvasPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isCommunityMessagesPage && !isMilestonePage && !isWorkspaceHome) || !isLoggedIn || !workspaceId || isVibePage,
+              'w-[520px] shrink-0': (!chatStarted || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage) && isLoggedIn && !!workspaceId && !isCanvasPage && !isVibePage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isCommunityMessagesPage && !isMilestonePage && !isWorkspaceHome,
+              'hidden': isCanvasPage || isWorkspaceHome || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isCommunityMessagesPage || isMilestonePage
+            })}>
+              <div className={classNames(styles.Chat, 'flex flex-col h-full relative w-full')}>
+                <FeedbackWidget hasMessages={(messages?.length || 0) > 1} />
+                <HistoryPanel messages={fullMessages && fullMessages.length > (messages?.length || 0) ? fullMessages : (messages || [])} onRewind={onRewind} />
+                <StickToBottom
+                  data-scrollable="true"
+                  className={classNames('px-2 relative', {
+                    'h-full flex flex-col pt-0': chatStarted,
+                    'pt-2': !chatStarted
+                  })}
+                >
+                  <StickToBottom.Content className="flex flex-col gap-4 relative pt-0 mt-0">
+                    <ClientOnly>
+                      {() => {
+                        return chatStarted ? (
+                          <Messages
+                            className="flex flex-col w-full flex-1 max-w-chat pb-4 mx-auto z-1"
+                            messages={messages}
+                            isStreaming={isStreaming}
+                            append={append}
+                            chatMode={chatMode}
+                            setChatMode={setChatMode}
+                            provider={provider}
+                            model={model}
+                            addToolResult={addToolResult}
+                          />
+                        ) : null;
                       }}
-                    />
-                  )}
-                  {actionAlert && (
-                    <ChatAlert
-                      alert={actionAlert}
-                      clearAlert={() => clearAlert?.()}
-                      postMessage={(message) => {
-                        sendMessage?.({} as any, message);
-                        clearAlert?.();
-                      }}
-                    />
-                  )}
-                  {llmErrorAlert && <LlmErrorAlert alert={llmErrorAlert} clearAlert={() => clearLlmErrorAlert?.()} />}
-                  {!hideIntro && (
-                    <ViewErrorAlert
-                      postMessage={(message) => {
-                        sendMessage?.({} as any, message);
-                      }}
-                    />
-                  )}
-                </div>
-                <div className={classNames({ '': !chatStarted })}>
-                  {deployAlert && (
-                    <DeployChatAlert
-                      alert={deployAlert}
-                      clearAlert={() => clearDeployAlert?.()}
-                      postMessage={(message: string | undefined) => {
-                        sendMessage?.({} as any, message);
-                        clearSupabaseAlert?.();
-                      }}
-                    />
-                  )}
-                  {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
-                  <ChatBox
-                    isModelSettingsCollapsed={isModelSettingsCollapsed}
-                    setIsModelSettingsCollapsed={setIsModelSettingsCollapsed}
-                    provider={provider}
-                    setProvider={setProvider}
-                    providerList={providerList && providerList.length > 0 ? providerList : (PROVIDER_LIST as ProviderInfo[])}
-                    model={model}
-                    setModel={setModel}
-                    modelList={modelList}
-                    apiKeys={apiKeys}
-                    isModelLoading={isModelLoading}
-                    onApiKeysChange={onApiKeysChange}
-                    uploadedFiles={uploadedFiles}
-                    setUploadedFiles={setUploadedFiles}
-                    imageDataList={imageDataList}
-                    setImageDataList={setImageDataList}
-                    textareaRef={textareaRef}
-                    input={input}
-                    handleInputChange={handleInputChange}
-                    handlePaste={handlePaste}
-                    TEXTAREA_MIN_HEIGHT={TEXTAREA_MIN_HEIGHT}
-                    TEXTAREA_MAX_HEIGHT={TEXTAREA_MAX_HEIGHT}
-                    isStreaming={isStreaming}
-                    handleStop={handleStop}
-                    handleSendMessage={handleSendMessage}
-                    enhancingPrompt={enhancingPrompt}
-                    enhancePrompt={enhancePrompt}
-                    isListening={isListening}
-                    startListening={startListening}
-                    stopListening={stopListening}
-                    chatStarted={chatStarted}
-                    exportChat={exportChat}
-                    qrModalOpen={qrModalOpen}
-                    setQrModalOpen={setQrModalOpen}
-                    handleFileUpload={handleFileUpload}
-
-                    setChatMode={setChatMode}
-                    designScheme={designScheme}
-                    setDesignScheme={setDesignScheme}
-                    selectedElement={selectedElement}
-                    setSelectedElement={setSelectedElement}
-                    cloneUrl={cloneUrl}
-                    setCloneUrl={setCloneUrl}
-                    onWebSearchResult={onWebSearchResult}
-                    pendingQuestions={pendingQuestions}
-                  />
-                  {!hideSlider && !chatStarted && setChatMode && chatMode && (
-                    <div className="flex justify-start mt-3 max-w-chat mx-auto">
-                      <Slider
-                        selected={chatMode}
-                        options={{
-                          left: { value: 'build', text: 'MVP', icon: 'i-ph:rocket-launch-duotone' },
-                          middle: { value: 'troubleshoot', text: 'Troubleshoot', icon: 'i-ph:wrench-duotone' },
-                          right: { value: 'discuss', text: 'Chat', icon: 'i-ph:chats-duotone' },
-                          extra: { value: 'idea', text: 'Idea', icon: 'i-ph:lightbulb-duotone' },
-                          extra2: { value: 'mvp_research', text: 'Research', icon: 'i-ph:flask-duotone' },
-                        }}
-                        setSelected={setChatMode as any}
-                      />
+                    </ClientOnly>
+                    <ScrollToBottom />
+                  </StickToBottom.Content>
+                  <div
+                    className={classNames('my-auto flex flex-col gap-2 w-full max-w-chat mx-auto z-prompt mb-6', {
+                      'sticky bottom-2': chatStarted,
+                    })}
+                  >
+                    <div className="flex flex-col gap-2">
+                      {supabaseAlert && (
+                        <SupabaseChatAlert
+                          alert={supabaseAlert}
+                          clearAlert={() => clearSupabaseAlert?.()}
+                          postMessage={(message) => {
+                            sendMessage?.({} as any, message);
+                            clearSupabaseAlert?.();
+                          }}
+                        />
+                      )}
+                      {actionAlert && (
+                        <ChatAlert
+                          alert={actionAlert}
+                          clearAlert={() => clearAlert?.()}
+                          postMessage={(message) => {
+                            sendMessage?.({} as any, message);
+                            clearAlert?.();
+                          }}
+                        />
+                      )}
+                      {llmErrorAlert && <LlmErrorAlert alert={llmErrorAlert} clearAlert={() => clearLlmErrorAlert?.()} />}
+                      {!hideIntro && (
+                        <ViewErrorAlert
+                          postMessage={(message) => {
+                            sendMessage?.({} as any, message);
+                          }}
+                        />
+                      )}
                     </div>
-                  )}
-                  { }
-                </div>
+                    <div className={classNames({ '': !chatStarted })}>
+                      {deployAlert && (
+                        <DeployChatAlert
+                          alert={deployAlert}
+                          clearAlert={() => clearDeployAlert?.()}
+                          postMessage={(message: string | undefined) => {
+                            sendMessage?.({} as any, message);
+                            clearSupabaseAlert?.();
+                          }}
+                        />
+                      )}
+                      {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
+                      <ChatBox
+                        isModelSettingsCollapsed={isModelSettingsCollapsed}
+                        setIsModelSettingsCollapsed={setIsModelSettingsCollapsed}
+                        provider={provider}
+                        setProvider={setProvider}
+                        providerList={providerList && providerList.length > 0 ? providerList : (PROVIDER_LIST as ProviderInfo[])}
+                        model={model}
+                        setModel={setModel}
+                        modelList={modelList}
+                        apiKeys={apiKeys}
+                        isModelLoading={isModelLoading}
+                        onApiKeysChange={onApiKeysChange}
+                        uploadedFiles={uploadedFiles}
+                        setUploadedFiles={setUploadedFiles}
+                        imageDataList={imageDataList}
+                        setImageDataList={setImageDataList}
+                        textareaRef={textareaRef}
+                        input={input}
+                        handleInputChange={handleInputChange}
+                        handlePaste={handlePaste}
+                        TEXTAREA_MIN_HEIGHT={TEXTAREA_MIN_HEIGHT}
+                        TEXTAREA_MAX_HEIGHT={TEXTAREA_MAX_HEIGHT}
+                        isStreaming={isStreaming}
+                        handleStop={handleStop}
+                        handleSendMessage={handleSendMessage}
+                        enhancingPrompt={enhancingPrompt}
+                        enhancePrompt={enhancePrompt}
+                        isListening={isListening}
+                        startListening={startListening}
+                        stopListening={stopListening}
+                        chatStarted={chatStarted}
+                        exportChat={exportChat}
+                        qrModalOpen={qrModalOpen}
+                        setQrModalOpen={setQrModalOpen}
+                        handleFileUpload={handleFileUpload}
+
+                        setChatMode={setChatMode}
+                        designScheme={designScheme}
+                        setDesignScheme={setDesignScheme}
+                        selectedElement={selectedElement}
+                        setSelectedElement={setSelectedElement}
+                        cloneUrl={cloneUrl}
+                        setCloneUrl={setCloneUrl}
+                        onWebSearchResult={onWebSearchResult}
+                        pendingQuestions={pendingQuestions}
+                      />
+                      {!hideSlider && !isSourcesPage && !isCanvasPage && !isWorkspaceHome && !chatStarted && setChatMode && chatMode && (
+                        <div className="flex justify-start mt-3 max-w-chat mx-auto">
+                          <Slider
+                            selected={chatMode}
+                            options={{
+                              left: { value: 'build', text: 'MVP', icon: 'i-ph:rocket-launch-duotone' },
+                              middle: { value: 'troubleshoot', text: 'Troubleshoot', icon: 'i-ph:wrench-duotone' },
+                              right: { value: 'discuss', text: 'Chat', icon: 'i-ph:chats-duotone' },
+                              extra: { value: 'idea', text: 'Idea', icon: 'i-ph:lightbulb-duotone' },
+                              extra2: { value: 'mvp_research', text: 'Research', icon: 'i-ph:flask-duotone' },
+                            }}
+                            setSelected={setChatMode as any}
+                          />
+                        </div>
+                      )}
+                      {!chatStarted && isLoggedIn && !workspaceId && <ChatHistoryBox />}
+                    </div>
+                  </div>
+                </StickToBottom>
               </div>
-            </StickToBottom>
-          </div>
-          <ClientOnly>
-            {() => (
-              <Workbench chatStarted={chatStarted} isStreaming={isStreaming} setSelectedElement={setSelectedElement} sendMessage={sendMessage} />
-            )}
-          </ClientOnly>
+              <ClientOnly>
+                {() => (
+                  <Workbench chatStarted={chatStarted} isStreaming={isStreaming} setSelectedElement={setSelectedElement} sendMessage={sendMessage} />
+                )}
+              </ClientOnly>
+            </div>
+          )}
+          {((!chatStarted || isSourcesPage || isCanvasPage || isProductPage || isBudgetPage || isBudgetMarketPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isCommunityMessagesPage || isMilestonePage || isWorkspaceHome) && isLoggedIn && !isVibePage) && (
+            <div className={classNames("h-full pb-6 pr-6 min-w-0", (isBrowserOpen || isCanvasPage || isWorkspaceHome || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isCommunityMessagesPage || isMilestonePage) ? "w-full pl-6" : "flex-1")}>
+              <div className="mt-2 h-full flex flex-col">
+                {isSettingsOpen ? (
+                  <ControlPanel open={true} onClose={() => settingsOpenStore.set(false)} activeTab={activeSettingsTab as any} inline />
+                ) : isBrowserOpen ? (
+                  <WorkspaceBrowserView workspaceId={workspaceId} />
+                ) : isTabChanging ? (
+                  <MainContentSpinner message="Loading workspace view..." />
+                ) : isSourcesPage ? (
+                  <WorkspaceSourcesView workspaceId={workspaceId} />
+                ) : isCanvasPage ? (
+                  <WorkspaceCanvasView workspaceId={workspaceId} />
+                ) : isProductPage ? (
+                  <WorkspaceTrendsView workspaceId={workspaceId} />
+                ) : isBudgetPage ? (
+                  <WorkspaceBudgetView workspaceId={workspaceId} />
+                ) : isBudgetMarketPage ? (
+                  <WorkspaceBudgetMarketResultView workspaceId={workspaceId} marketId={marketId} />
+                ) : isAdsMarketingPage ? (
+                  <WorkspaceAdsMarketingView workspaceId={workspaceId} />
+                ) : isGoogleAdsPage ? (
+                  <WorkspaceGoogleAdsView workspaceId={workspaceId} />
+                ) : isMetaAdsPage ? (
+                  <WorkspaceMetaAdsView workspaceId={workspaceId} />
+                ) : isBlogContentPage ? (
+                  <WorkspaceBlogContentView workspaceId={workspaceId} />
+                ) : isProductDeckPage ? (
+                  <WorkspacePresentationView workspaceId={workspaceId} />
+                ) : isAgentContactPage ? (
+                  <WorkspaceAgentContactView workspaceId={workspaceId} />
+                ) : isMyProspectsPage ? (
+                  <MyProspectsView workspaceId={workspaceId} />
+                ) : isSignalRadarPage ? (
+                  <WorkspaceSignalRadarView workspaceId={workspaceId} />
+                ) : isCommunityMessagesPage ? (
+                  <CommunityMessagesView />
+                ) : isMilestonePage ? (
+                  <MilestoneView workspaceId={workspaceId} />
+                ) : isWorkspaceHome ? (
+                  <ProductIntelligencePanel workspaceId={workspaceId} />
+                ) : null}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     );

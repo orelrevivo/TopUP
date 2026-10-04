@@ -1,6 +1,5 @@
 import type { TabType } from './types';
-import { User, Settings, Sliders, Bell, Star, Database, Cloud, Laptop, Github, Wrench, List, LogOut, Brain, CreditCard, Receipt } from 'lucide-react';
-
+import { User, Settings, Sliders, Bell, Star, Database, Cloud, Laptop, Github, Wrench, List, LogOut, Brain, CreditCard, Receipt, Share2 } from 'lucide-react';
 
 const GitLabIcon = () => (
   <svg viewBox="0 0 24 24" className="w-4 h-4">
@@ -56,6 +55,7 @@ export const TAB_ICONS: Record<TabType, React.ComponentType<{ className?: string
   supabase: () => <SupabaseIcon />,
   'event-logs': List,
   mcp: Wrench,
+  'social-connection': Share2,
   logout: LogOut,
 };
 
@@ -77,6 +77,7 @@ export const TAB_LABELS: Record<TabType, string> = {
   supabase: 'Supabase',
   'event-logs': 'Event Logs',
   mcp: 'MCP Servers',
+  'social-connection': 'Social Connection',
   logout: 'Logout',
 };
 
@@ -98,6 +99,7 @@ export const TAB_DESCRIPTIONS: Record<TabType, string> = {
   supabase: 'Setup Supabase database connection',
   'event-logs': 'View system events and logs',
   mcp: 'Configure MCP (Model Context Protocol) servers',
+  'social-connection': 'Connect Twitter, Reddit, and LinkedIn for AI post automation',
   logout: 'Sign out of your account',
 };
 

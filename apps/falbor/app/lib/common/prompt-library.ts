@@ -18,7 +18,9 @@ export interface PromptOptions {
   };
   supabaseProjectData?: any;
   neonProjectData?: any;
-  chatMode?: 'discuss' | 'build' | 'troubleshoot' | 'idea' | 'mvp_research' | 'mvp_research';
+  chatMode?: string;
+  allowBuild?: boolean;
+  workspaceData?: any;
 }
 
 export class PromptLibrary {
@@ -33,12 +35,12 @@ export class PromptLibrary {
       default: {
         label: 'Default Prompt',
         description: 'An fine tuned prompt for better results and less token usage',
-        get: (options) => getFineTunedPrompt(options.cwd, options.supabase, options.designScheme, options.supabaseProjectData, options.chatMode, options.neonProjectData),
+        get: (options) => getFineTunedPrompt(options.cwd, options.supabase, options.designScheme, options.supabaseProjectData, options.chatMode as any, options.neonProjectData, options.workspaceData),
       },
       original: {
         label: 'Old Default Prompt',
         description: 'The OG battle tested default system Prompt',
-        get: (options) => getSystemPrompt(options.cwd, options.supabase, options.designScheme, options.supabaseProjectData, options.chatMode, options.neonProjectData),
+        get: (options) => getSystemPrompt(options.cwd, options.supabase, options.designScheme, options.supabaseProjectData, options.chatMode, options.neonProjectData, options.allowBuild, options.workspaceData),
       },
       optimized: {
         label: 'Optimized Prompt (experimental)',

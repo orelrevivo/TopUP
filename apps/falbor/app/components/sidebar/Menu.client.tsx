@@ -11,6 +11,8 @@ import type { TabType } from '~/components/@settings/core/types';
 import { SettingsButton } from '~/components/ui/SettingsButton';
 import { Button } from '~/components/ui/Button';
 import { db, deleteById, getAll, chatId, type ChatHistoryItem, useChatHistory } from '~/lib/persistence';
+import { createWorkspace, getUserWorkspaces, updateWorkspaceName } from '~/lib/actions/workspaces';
+import { WorkspaceSettingsModal } from '~/components/workspace/workspace-settings/WorkspaceSettingsModal';
 import * as hackingChatApi from '~/lib/api/data/hacking-chat';
 import { cubicEasingFn } from '~/utils/easings';
 import { HistoryItem } from './HistoryItem';
@@ -23,13 +25,14 @@ import { ControlPanel } from '~/components/@settings';
 import { useAuth } from '~/hooks/useAuth';
 import { sidebarOpen, sidebarPinned } from '~/lib/stores/sidebar';
 import { chatStore } from '~/lib/stores/chat';
-import { DropdownSeparator, Dropdown } from '../ui/Dropdown';
+import { DropdownSeparator, Dropdown, DropdownItem } from '../ui/Dropdown';
 import { McpTools } from '../chat/tools/MCPTools';
 import { MCP_CONNECTORS } from '../@settings/tabs/mcp/connectors';
 import { useMCPStore } from '~/lib/stores/mcp';
-import { Badge } from '../ui';
+import { Badge, Input } from '../ui';
 import Link from 'next/link';
 import { SkillsDialog } from '../skills/SkillsDialog';
+import { aiSidebarStore } from '~/lib/stores/aiSidebar';
 
 const squareMenuVariants = {
   closed: {
@@ -40,7 +43,7 @@ const squareMenuVariants = {
     },
   },
   open: {
-    width: '340px',
+    width: '260px',
     transition: {
       duration: 0.2,
       ease: cubicEasingFn,
@@ -61,7 +64,7 @@ const fullMenuVariants = {
   open: {
     opacity: 1,
     visibility: 'initial',
-    width: '340px',
+    width: '260px',
     transition: {
       duration: 0.2,
       ease: cubicEasingFn,
@@ -106,7 +109,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const router = useRouter();
   const isHacking = pathname?.startsWith('/hacking');
   const isSource = pathname?.startsWith('/sources');
-  const isBaseRoute = ['/', '/login', '/register', '/welcome', '/org-setup', '/sources', '/hacking', '/chat', '/u', '/docs'].some(route =>
+  const isBaseRoute = ['/', '/login', '/register', '/welcome', '/org-setup', '/sources', '/hacking', '/chat', '/u', '/docs', '/workspace'].some(route =>
     pathname === route || pathname?.startsWith(`${route}/`)
   );
   const isOrgRoute = pathname && !isBaseRoute;
@@ -124,6 +127,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const activeSettingsTab = useStore(settingsTabStore);
   const blinkPricing = useStore(blinkPricingStore);
   const profile = useStore(profileStore) as any;
+  const isAgentSidebarOpen = useStore(aiSidebarStore.isOpen);
 
   const tabConfiguration = useStore(tabConfigurationStore);
   const baseTabConfig = useMemo(() => {
@@ -150,8 +154,156 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedItems, setSelectedItems] = useState<string[]>([]);
   const [skillsDialogOpen, setSkillsDialogOpen] = useState(false);
+  const [isCreatingWorkspace, setIsCreatingWorkspace] = useState(false);
+  const [newWorkspaceName, setNewWorkspaceName] = useState('');
+  const [agentSessions, setAgentSessions] = useState<Array<{ id: string; title: string }>>([]);
+  const [workspacesList, setWorkspacesList] = useState<Array<{ id: string; name: string }>>([]);
+  const [isWorkspaceSettingsOpen, setIsWorkspaceSettingsOpen] = useState(false);
+  const [workspaceSettingsTab, setWorkspaceSettingsTab] = useState<string>('knowledge');
+  const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
+  const [workspaceToRename, setWorkspaceToRename] = useState<{ id: string; name: string } | null>(null);
+  const [renameInputValue, setRenameInputValue] = useState('');
+  const [isRenaming, setIsRenaming] = useState(false);
 
-  
+  const [userTier, setUserTier] = useState<string>('free');
+
+  useEffect(() => {
+    fetch('/api/user/credits')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (d?.subscriptionTier) {
+          setUserTier(d.subscriptionTier.toLowerCase());
+        }
+      })
+      .catch(() => {});
+  }, [pathname]);
+
+  const loadWorkspaces = useCallback(() => {
+    getUserWorkspaces()
+      .then((data) => {
+        setWorkspacesList(data.map((w) => ({ id: w.id, name: w.name || 'Untitled Workspace' })));
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    loadWorkspaces();
+  }, [loadWorkspaces, pathname]);
+
+  const handleRenameWorkspace = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!workspaceToRename || !renameInputValue.trim()) return;
+    setIsRenaming(true);
+    try {
+      await updateWorkspaceName(workspaceToRename.id, renameInputValue.trim());
+      toast.success('Workspace renamed');
+      setIsRenameDialogOpen(false);
+      setWorkspaceToRename(null);
+      loadWorkspaces();
+      router.refresh();
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to rename workspace');
+    } finally {
+      setIsRenaming(false);
+    }
+  };
+
+  const [isProductsOpen, setIsProductsOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('falbor_menu_products_open') === 'true';
+  });
+
+  const [isAgentSeasonOpen, setIsAgentSeasonOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('falbor_menu_agent_season_open') === 'true';
+  });
+
+  const [isAdsOpen, setIsAdsOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('falbor_menu_ads_open') === 'true';
+  });
+
+  const [isContactsOpen, setIsContactsOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('falbor_menu_contacts_open') === 'true';
+  });
+
+  const [isCommunityOpen, setIsCommunityOpen] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false;
+    return localStorage.getItem('falbor_menu_community_open') === 'true';
+  });
+
+  const toggleCommunityOpen = () => {
+    setIsCommunityOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('falbor_menu_community_open', String(next));
+      return next;
+    });
+  };
+
+  const toggleProductsOpen = () => {
+    setIsProductsOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('falbor_menu_products_open', String(next));
+      return next;
+    });
+  };
+
+  const toggleAdsOpen = () => {
+    setIsAdsOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('falbor_menu_ads_open', String(next));
+      return next;
+    });
+  };
+
+  const toggleContactsOpen = () => {
+    setIsContactsOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('falbor_menu_contacts_open', String(next));
+      return next;
+    });
+  };
+
+  const toggleAgentSeasonOpen = () => {
+    setIsAgentSeasonOpen((prev) => {
+      const next = !prev;
+      localStorage.setItem('falbor_menu_agent_season_open', String(next));
+      return next;
+    });
+  };
+
+  const activeWsId = pathname?.split('/')[2];
+
+  useEffect(() => {
+    if (activeWsId) {
+      import('~/lib/actions/agentSession').then(({ getAgentSessionsList }) => {
+        getAgentSessionsList(activeWsId).then(setAgentSessions).catch(console.error);
+      });
+    }
+  }, [activeWsId, pathname]);
+
+  const [isCreating, setIsCreating] = useState(false);
+
+  const handleCreateWorkspace = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newWorkspaceName.trim()) return;
+    setIsCreating(true);
+    try {
+      const workspaceId = await createWorkspace(newWorkspaceName.trim());
+      setNewWorkspaceName('');
+      setIsCreatingWorkspace(false);
+      loadWorkspaces();
+      router.push(`/workspace/${workspaceId}`);
+    } catch (error) {
+      console.error(error);
+      toast.error('Failed to create workspace');
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   const loadEntries = useCallback(() => {
     if (isHacking) {
       hackingChatApi.getAllChats()
@@ -174,8 +326,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
     }
   }, [isHacking]);
 
-  
-  
+
+
   const { filteredItems, handleSearchChange } = useSearchFilter({
     items: list,
     searchFields: ['description'],
@@ -186,7 +338,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const deleteChat = useCallback(
     async (id: string): Promise<void> => {
       if (isHacking) {
-        
+
         setList(prev => prev.filter(c => c.id !== id));
         return;
       }
@@ -351,7 +503,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
     }
   }, [open, loadEntries]);
 
-  
+
   useEffect(() => {
     if (searchParams) {
       const tab = searchParams.get('tab');
@@ -373,18 +525,19 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
 
   useEffect(() => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
-    
+    const isWorkspaceRoute = pathname?.includes('/workspace/');
+
     if (variant === 'square' && prevVariant.current !== 'square') {
       if (isMobile) {
-        
         sidebarOpen.set(false);
       } else {
         sidebarOpen.set(true);
       }
     } else if (variant !== 'square') {
-      
       if (isMobile) {
         sidebarOpen.set(false);
+      } else if (isWorkspaceRoute) {
+        sidebarOpen.set(true);
       } else if (!chat.started && isPinned) {
         sidebarOpen.set(true);
       } else {
@@ -392,37 +545,12 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
       }
     }
     prevVariant.current = variant;
-  }, [chat.started, isPinned, variant]);
+  }, [chat.started, isPinned, variant, pathname]);
 
   useEffect(() => {
-    const enterThreshold = 20;
-    const exitThreshold = 20;
 
-    function onMouseMove(event: MouseEvent) {
-      if (variant === 'square') return;
-      if (isSettingsOpen) {
-        return;
-      }
 
-      if (!chat.started && isPinned) {
-        return;
-      }
-
-      if (event.pageX < enterThreshold) {
-        sidebarOpen.set(true);
-      }
-
-      if (menuRef.current && event.clientX > menuRef.current.getBoundingClientRect().right + exitThreshold) {
-        sidebarOpen.set(false);
-      }
-    }
-
-    window.addEventListener('mousemove', onMouseMove);
-
-    return () => {
-      window.removeEventListener('mousemove', onMouseMove);
-    };
-  }, [variant, isSettingsOpen, chat.started, isPinned]);
+  }, []);
 
   const handleDuplicate = async (id: string) => {
     await duplicateCurrentChat(id);
@@ -441,7 +569,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
   const handleSettingsClose = () => {
     settingsOpenStore.set(false);
 
-    
+
     if (typeof window !== 'undefined') {
       const newUrl = new URL(window.location.href);
       newUrl.searchParams.delete('tab');
@@ -470,16 +598,24 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
       })
       .catch((err) => console.error('Error fetching connections', err));
   }, []);
+
   return (
     <>
-      {}
+      {!open && (
+        <button
+          onClick={() => sidebarOpen.set(true)}
+          className="fixed top-5 left-5 z-[99] p-2 bg-white dark:bg-[#1C1D21] text-gray-700 dark:text-gray-200 border border-gray-300 dark:border-gray-800 rounded-md shadow-md hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+          title="Open Sidebar"
+        >
+          <div className="i-ph:sidebar-simple w-4 h-4" />
+        </button>
+      )}
       {open && variant === 'square' && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-40"
           onClick={() => sidebarOpen.set(false)}
         />
       )}
-      {}
       {open && variant === 'full' && (
         <div
           className="md:hidden fixed inset-0 bg-black/50 z-40"
@@ -488,7 +624,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
       )}
       <motion.div
         ref={menuRef}
-        initial={variant === 'square' ? 'open' : 'closed'}
+        initial={false}
         animate={open ? 'open' : 'closed'}
         variants={variant === 'square' ? squareMenuVariants : fullMenuVariants}
         style={variant === 'full' ? {} : {}}
@@ -496,15 +632,15 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
           variant === 'square'
             ? classNames(
               'flex selection-accent flex-col side-menu h-full overflow-hidden shrink-0 border-none text-sm',
-              'absolute md:relative left-0 top-0 bottom-0 bg-white dark:bg-[#111114] md:bg-transparent shadow-xl md:shadow-none z-50 md:z-sidebar',
+              'absolute md:relative left-0 top-0 bottom-0 bg-[#f7f7f8] dark:bg-[#111114] md:bg-transparent shadow-xl md:shadow-none z-50 md:z-sidebar',
               !open && 'max-md:!w-0 max-md:!opacity-0 max-md:!p-0 pointer-events-none md:pointer-events-auto'
             )
             : classNames(
-              'flex selection-accent flex-col side-menu shrink-0 h-full bg-white dark:bg-[#111114] border-r border-falbor-elements-borderColor shadow-sm text-sm',
-              
+              'flex selection-accent flex-col side-menu shrink-0 h-full bg-[#f7f7f8] dark:bg-[#111114] text-sm',
+
               'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-xl',
               !open && 'max-md:!w-0 max-md:!opacity-0 max-md:overflow-hidden max-md:pointer-events-none',
-              
+
               'md:relative'
             ),
           variant === 'full' && isSettingsOpen ? 'z-40' : (variant === 'full' ? 'z-sidebar max-md:z-50' : '')
@@ -512,14 +648,14 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
       >
         {variant === 'square' ? (
           <div className={classNames(
-            "h-14 flex items-center px-4 gap-2 border-b border-transparent bg-transparent transition-all",
+            "h-12 flex items-center px-3 gap-2 bg-transparent transition-all",
             open ? "justify-between" : "justify-center"
           )}>
             {open && (
               <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-                <a href={isHacking ? "/hacking" : "/"} className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
-                  <img src={isHacking ? "/hacking/logo-light-styled.png" : "/logo-light-styled.png"} alt="logo" className="w-[130px] inline-block dark:hidden" />
-                  <img src={isHacking ? "/hacking/logo-dark-styled.png" : "/logo-dark-styled.png"} alt="logo" className="w-[130px] inline-block hidden dark:block" />
+                <a href={isHacking ? "/hacking" : "/"} className="text-xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
+                  <img src={isHacking ? "/hacking/logo-light-styled.png" : "/hacking/logo-light-styled.png"} alt="logo" className="w-[110px] inline-block dark:hidden" />
+                  <img src={isHacking ? "/hacking/logo-dark-styled.png" : "/hacking/logo-dark-styled.png"} alt="logo" className="w-[110px] inline-block hidden dark:block" />
                 </a>
               </div>
             )}
@@ -532,29 +668,29 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
               )}
               <button
                 onClick={() => sidebarOpen.set(!open)}
-                className="p-1.5 rounded-md text-gray-500 hover:bg-gray-200 dark:hover:bg-gray-800 transition-colors"
+                className="p-1 rounded-md text-gray-500 hover:bg-gray-200/60 dark:hover:bg-gray-800 transition-colors"
                 title="Toggle Sidebar"
               >
-                <div className="i-ph:sidebar w-5 h-5" />
+                <div className="i-ph:sidebar w-4 h-4" />
               </button>
             </div>
           </div>
         ) : (
-          <div className="h-[var(--header-height)] min-h-[56px] flex items-center justify-between px-4 gap-2 border-b border-transparent bg-transparent">
+          <div className="h-12 min-h-[48px] flex items-center justify-between px-3 gap-2 bg-transparent">
             <div className="flex items-center gap-2 overflow-hidden whitespace-nowrap">
-              <button
-                onClick={() => sidebarOpen.set(!open)}
-                className="flex items-center justify-center p-2 -ml-2 text-falbor-elements-textPrimary"
-                title="Toggle Sidebar"
-              >
-                <div className="i-ph:list w-6 h-6" />
-              </button>
-              <a href={isHacking ? "/hacking" : "/"} className="text-2xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
-                <img src={isHacking ? "/hacking/logo-light-styled.png" : "/logo-light-styled.png"} alt="logo" className="w-[130px] inline-block dark:hidden" />
-                <img src={isHacking ? "/hacking/logo-dark-styled.png" : "/logo-dark-styled.png"} alt="logo" className="w-[130px] inline-block hidden dark:block" />
+              <a href={isHacking ? "/hacking" : "/"} className="text-xl font-semibold text-accent-500 flex items-center" onClick={(e) => e.stopPropagation()}>
+                <img src={isHacking ? "/hacking/logo-light-styled.png" : "/hacking/logo-light-styled.png"} alt="logo" className="w-[110px] inline-block dark:hidden" />
+                <img src={isHacking ? "/hacking/logo-dark-styled.png" : "/hacking/logo-dark-styled.png"} alt="logo" className="w-[110px] inline-block hidden dark:block" />
               </a>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-0.5">
+              <button
+                onClick={() => sidebarOpen.set(!open)}
+                className="p-1.5 rounded-md text-gray-600 dark:text-gray-300 hover:bg-gray-200/70 dark:hover:bg-gray-800 transition-colors"
+                title="Toggle Sidebar"
+              >
+                <div className="i-ph:sidebar-simple w-4 h-4" />
+              </button>
               <ThemeSwitch />
               <SettingsButton onClick={handleSettingsClick} />
             </div>
@@ -585,177 +721,49 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                     key={tab.id}
                     onClick={() => {
                       settingsTabStore.set(tab.id as TabType);
-                      
+
                       const newUrl = new URL(window.location.href);
                       newUrl.searchParams.set('tab', tab.id);
                       window.history.pushState({}, '', newUrl.toString());
                     }}
                     className={classNames(
-                      'flex items-center gap-3 w-full px-3 py-1.5 rounded-md text-sm font-medium text-left transition-all',
+                      'flex items-center gap-3 w-full px-3 py-1.5 rounded-md text-xs font-medium text-left transition-all relative',
                       isSelected
-                        ? 'bg-falbor-elements-background-depth-3 text-falbor-elements-textPrimary font-semibold'
-                        : 'text-falbor-elements-textSecondary hover:bg-falbor-elements-background-depth-3 hover:text-falbor-elements-textPrimary',
+                        ? 'bg-gray-200/80 dark:bg-falbor-elements-background-depth-3 text-falbor-elements-textPrimary font-semibold'
+                        : 'text-falbor-elements-textSecondary hover:bg-gray-200/50 dark:hover:bg-falbor-elements-background-depth-3 hover:text-falbor-elements-textPrimary',
                       isBlinking ? 'animate-pulse bg-blue-500/20 text-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : ''
                     )}
                   >
                     {Icon && <Icon className={classNames("w-4 h-4", isBlinking ? "text-blue-500" : "")} />}
                     <span>{TAB_LABELS[tab.id as TabType]}</span>
+                    {tab.id === 'social-connection' && (
+                      <span className="ml-auto text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-500 dark:bg-purple-400/20 dark:text-purple-300">
+                        New
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
           ) : (
             <div className="flex-1 flex flex-col h-full w-full overflow-hidden">
-              <div className="p-4 space-y-1">
-                <div className="relative w-full">
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
-                    <span className="i-ph:magnifying-glass block h-4 w-4 text-gray-600 dark:text-gray-500" />
-                  </div>
-                  <input
-                    className="w-full bg-[#EBEBEB] dark:bg-gray-900 
-                    relative pl-9 pr-3 py-2 rounded-lg focus:outline-none
-                    focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900
-                    dark:text-gray-100 
-                    placeholder-gray-600 dark:placeholder-gray-500"
-                    type="search"
-                    placeholder="Search chats..."
-                    onChange={handleSearchChange}
-                    aria-label="Search chats"
-                  />
-                </div>
-                <Link href={'/chat'} className='relative w-full'>
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
-                    <div className="i-ph:plus w-4 h-4 mr-2 dark:text-white" />
-                  </div>
-                  <button
-                    className="flex items-center mt-1
-                    justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900
-                    relative pl-9 pr-3 py-2 
-                    rounded-lg focus:outline-none focus:ring-1
-                    focus:ring-purple-500/50 text-sm text-gray-900
-                    dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500"
-                  >
-                    New Chat
-                  </button>
-                </Link>
-                <Link href={'/org-setup'} className='relative w-full'>
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
-                    <div className="i-ph:buildings w-4 h-4 mr-2 dark:text-white text-gray-700" />
-                  </div>
-                  <button
-                    className="flex items-center mt-1
-                    justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900
-                    relative pl-9 pr-3 py-2 
-                    rounded-lg focus:outline-none focus:ring-1
-                    focus:ring-purple-500/50 text-sm text-gray-900
-                    dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-500"
-                  >
-                    Organization
-                  </button>
-                </Link>
-                {chat.started && (
+              {chat.started && (
+                <div className="px-3 py-1">
                   <button
                     onClick={() => chatSettingsOpenStore.set(true)}
-                    className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1"
+                    className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs text-gray-900 dark:text-gray-100"
                   >
-                    <div className="i-ph:gear text-xl text-falbor-elements-textSecondary mr-2" />
+                    <div className="i-ph:gear text-base text-falbor-elements-textSecondary mr-2" />
                     <span>Chat Settings</span>
                   </button>
-                )}
-                {}
-                <Link href={'/visual-editor'} className='relative w-full hidden md:block'>
-                  <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
-                    <div className="i-ph:paint-brush w-4 h-4 mr-2 dark:text-white text-gray-700" />
-                  </div>
-                  <button
-                    className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1"
-                  >
-                    <div className="i-ph:paint-brush text-xl text-falbor-elements-textSecondary mr-2" />
-                    Visual Editor
-                  </button>
-                </Link>
-                <button
-                  onClick={() => setSkillsDialogOpen(true)}
-                  className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1"
-                >
-                  <div className="i-ph:puzzle-piece text-xl text-falbor-elements-textSecondary mr-2" />
-                  <span>Create AI skill</span>
-                </button>
-                <Dropdown
-                  align="start"
-                  side={typeof window !== 'undefined' && window.innerWidth < 768 ? 'bottom' : 'right'}
-                  trigger={
-                    <button className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm text-gray-900 dark:text-gray-100 mt-1">
-                      <div className="i-ph:graph text-xl text-falbor-elements-textSecondary mr-2" />
-                      <span>Connectors</span>
-
-                      <Badge size="sm" variant="destructive" className="!rounded-md ml-auto mr-2">
-                        New
-                      </Badge>
-
-                      <div className="i-ph:caret-right text-xs text-falbor-elements-textSecondary" />
-                    </button>
-                  }
-                  className="w-64 max-h-[300px] overflow-y-auto z-[1000]"
-                >
-                  {MCP_CONNECTORS.filter(c => c.id !== 'custom').map((connector) => {
-                    const hasDbConnection = Array.isArray(connections) && connections.some((c) => c.connectorId === connector.id || c.connector_id === connector.id);
-                    const hasLocalConnection = Object.keys(useMCPStore.getState().settings?.mcpConfig?.mcpServers || {}).some(key => key.startsWith(`${connector.id}-`));
-                    const isConnected = hasDbConnection || hasLocalConnection;
-                    const isSelected = selectedMCPs.includes(connector.id);
-
-                    return (
-                      <div key={connector.id} className="relative group w-full">
-                        <button
-                          onClick={() => {
-                            if (isConnected) {
-                              toggleSelectedMCP(connector.id);
-                              if (!isSelected) {
-                                window.dispatchEvent(
-                                  new CustomEvent('insert-mcp-token', { detail: { connectorId: connector.id } })
-                                );
-                              }
-                            }
-                          }}
-                          disabled={!isConnected}
-                          className={classNames(
-                            'flex items-center justify-between w-full px-2 py-1.5 rounded-md text-sm text-left',
-                            isConnected
-                              ? 'text-falbor-elements-textPrmary hover:bg-falbor-elements-background-depth-3 cursor-pointer'
-                              : 'text-falbor-elements-textTertiary opacity-60 cursor-not-allowed',
-                            isSelected && 'bg-falbor-elements-background-depth-3'
-                          )}
-                        >
-                          <div className="flex items-center gap-2">
-                            <img src={connector.logo} className="w-5 h-5 object-contain" alt={connector.name} />
-                            <span>{connector.name}</span>
-                          </div>
-                          <div className="flex items-center gap-1">
-                            {isSelected && <div className="i-ph:check text-accent-500 text-sm" />}
-                            {!isConnected && (
-                              <div className="i-ph:warning-circle text-orange-500 text-sm opacity-80" />
-                            )}
-                          </div>
-                        </button>
-
-                        {!isConnected && (
-                          <div className="absolute left-full top-1/2 -translate-y-1/2 ml-2 px-2 py-1 bg-falbor-elements-background-depth-4 text-falbor-elements-textPrimary text-xs rounded border border-falbor-elements-borderColor shadow-sm opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-50">
-                            Needs to be connected in settings
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                  <DropdownSeparator />
-                  <McpTools asMenuItem={true} />
-                </Dropdown>
-              </div>
+                </div>
+              )}
               {isOrgRoute ? (
                 <div className="hidden md:block">
-                  <div className="flex items-center justify-between text-sm px-4 py-2">
-                    <div className="ml-2 text-gray-600 dark:text-gray-400 text-xl">Organization Settings</div>
+                  <div className="flex items-center justify-between text-xs px-3 py-1.5">
+                    <div className="ml-1 text-gray-600 dark:text-gray-400 font-medium text-xs">Organization Settings</div>
                   </div>
-                  <div className="flex-1 overflow-auto px-3 pb-3 space-y-1">
+                  <div className="flex-1 overflow-auto px-2 pb-2 space-y-0.5">
                     {[
                       { name: 'Overview', icon: 'i-ph:squares-four', path: `/${currentOrgId}` },
                       { name: 'Issues', icon: 'i-ph:warning-circle', path: `/${currentOrgId}/issues` },
@@ -765,19 +773,19 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                       const isActive = pathname === item.path;
                       return (
                         <Link key={item.name} href={item.path} className='relative w-full block'>
-                          <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
+                          <div className="absolute left-2.5 top-1/2 -translate-y-1/2 flex items-center pointer-events-none z-50">
                             <div className={classNames(
-                              `${item.icon} w-4 h-4 mr-2 transition-colors`,
+                              `${item.icon} w-3.5 h-3.5 mr-2 transition-colors`,
                               isActive ? "text-purple-500" : "dark:text-white text-gray-700"
                             )} />
                           </div>
                           <button
                             className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm mt-1",
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs mt-0.5",
                               isActive ? "bg-[#EBEBEB] dark:bg-gray-900 text-purple-600 dark:text-purple-400 font-medium" : "text-gray-900 dark:text-gray-100"
                             )}
                           >
-                            <div className="w-4 h-4 mr-2 opacity-0" />
+                            <div className="w-3.5 h-3.5 mr-2 opacity-0" />
                             {item.name}
                           </button>
                         </Link>
@@ -787,140 +795,602 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                 </div>
               ) : (
                 <>
-                  <div className="flex items-center justify-between text-sm px-4 py-2">
-                    <div className="font-medium text-gray-600 dark:text-gray-400">Your Chats</div>
-                    {selectionMode && (
-                      <div className="flex items-center gap-2">
-                        <Button variant="ghost" size="sm" onClick={selectAll}>
-                          {selectedItems.length === filteredList.length ? 'Deselect all' : 'Select all'}
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={handleBulkDeleteClick}
-                          disabled={selectedItems.length === 0}
-                        >
-                          Delete selected
-                        </Button>
-                      </div>
-                    )}
+                  <div className="flex items-center justify-between text-xs px-3 py-1">
+                    <div className="font-semibold text-gray-500 dark:text-gray-400 text-xs tracking-wide">Workspace</div>
                   </div>
-                  <div className="flex-1 overflow-auto px-3 pb-3">
-                    {filteredList.length === 0 && (
-                      <div className="px-4 text-gray-500 dark:text-gray-400 text-sm">
-                        {list.length === 0 ? 'No previous conversations' : 'No matches found'}
-                      </div>
-                    )}
-                    <DialogRoot open={dialogContent !== null}>
-                      {binDates(filteredList).map(({ category, items }) => (
-                        <div key={category} className="mt-2 first:mt-0 space-y-1">
-                          <div className="text-xs font-medium text-gray-500 dark:text-gray-400 sticky top-0 z-1 bg-white dark:bg-[#111114] px-4 py-1">
-                            {category}
+                  <div className="px-2 pb-1 space-y-1">
+                    <Dropdown
+                      align="start"
+                      side="bottom"
+                      sideOffset={4}
+                      trigger={
+                        <button className="flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 px-2.5 py-1.5 rounded-md focus:outline-none text-xs text-gray-900 dark:text-gray-100 font-medium transition-colors border border-gray-200/50 dark:border-gray-800/50">
+                          <div className="flex items-center gap-2 truncate">
+                            <div className="i-ph:folder w-3.5 h-3.5 shrink-0" />
+                            <span className="truncate">My Workspace</span>
                           </div>
-                          <div className="space-y-0.5 pr-1">
-                            {items.map((item) => (
-                              <HistoryItem
-                                key={item.id}
-                                item={item}
-                                exportChat={exportChat}
-                                onDelete={(event) => {
-                                  event.preventDefault();
-                                  event.stopPropagation();
-                                  console.log('Delete triggered for item:', item);
-                                  setDialogContentWithLogging({ type: 'delete', item });
-                                }}
-                                onDuplicate={() => handleDuplicate(item.id)}
-                                selectionMode={selectionMode}
-                                isSelected={selectedItems.includes(item.id)}
-                                onToggleSelection={toggleItemSelection}
-                                basePath={basePath}
-                              />
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                      <Dialog onBackdrop={closeDialog} onClose={closeDialog}>
-                        {dialogContent?.type === 'delete' && (
-                          <>
-                            <div className="p-6 bg-white dark:bg-gray-950">
-                              <DialogTitle className="text-gray-900 dark:text-white">Delete Chat?</DialogTitle>
-                              <DialogDescription className="mt-2 text-gray-600 dark:text-gray-400">
-                                <p>
-                                  You are about to delete{' '}
-                                  <span className="font-medium text-gray-900 dark:text-white">
-                                    {dialogContent.item.description}
-                                  </span>
-                                </p>
-                                <p className="mt-2">Are you sure you want to delete this chat?</p>
-                              </DialogDescription>
-                            </div>
-                            <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
-                              <DialogButton type="secondary" onClick={closeDialog}>
-                                Cancel
-                              </DialogButton>
-                              <DialogButton
-                                type="danger"
-                                onClick={(event) => {
-                                  console.log('Dialog delete button clicked for item:', dialogContent.item);
-                                  deleteItem(event, dialogContent.item);
-                                  closeDialog();
-                                }}
+                          <div className="i-ph:caret-down w-3 h-3 text-gray-400 shrink-0 ml-1" />
+                        </button>
+                      }
+                      className="w-64 p-1"
+                    >
+                      <div className="max-h-40 overflow-y-auto space-y-0.5">
+                        {workspacesList.length === 0 ? (
+                          <div className="px-2 py-1 text-xs text-gray-400 italic">No workspaces found</div>
+                        ) : (
+                          workspacesList.map((ws) => {
+                            const isCurrent = activeWsId === ws.id;
+                            return (
+                              <DropdownItem
+                                key={ws.id}
+                                onSelect={() => router.push(`/workspace/${ws.id}`)}
+                                className={classNames(
+                                  'flex items-center justify-between px-2 py-1.5 rounded-md text-xs cursor-pointer',
+                                  isCurrent && 'bg-[#0099ff]/20 text-gray-900 font-medium'
+                                )}
                               >
-                                Delete
-                              </DialogButton>
-                            </div>
-                          </>
-                        )}
-                        {dialogContent?.type === 'bulkDelete' && (
-                          <>
-                            <div className="p-6 bg-white dark:bg-gray-950">
-                              <DialogTitle className="text-gray-900 dark:text-white">Delete Selected Chats?</DialogTitle>
-                              <DialogDescription className="mt-2 text-gray-600 dark:text-gray-400">
-                                <p>
-                                  You are about to delete {dialogContent.items.length}{' '}
-                                  {dialogContent.items.length === 1 ? 'chat' : 'chats'}:
-                                </p>
-                                <div className="mt-2 max-h-32 overflow-auto border border-gray-100 dark:border-gray-800 rounded-md bg-gray-50 dark:bg-gray-900 p-2">
-                                  <ul className="list-disc pl-5 space-y-1">
-                                    {dialogContent.items.map((item) => (
-                                      <li key={item.id} className="text-sm">
-                                        <span className="font-medium text-gray-900 dark:text-white">{item.description}</span>
-                                      </li>
-                                    ))}
-                                  </ul>
+                                <div className="flex items-center gap-2 truncate">
+                                  <div className="i-ph:folder w-3.5 h-3.5 text-gray-900 shrink-0" />
+                                  <span className="truncate">{ws.name}</span>
                                 </div>
-                                <p className="mt-3">Are you sure you want to delete these chats?</p>
-                              </DialogDescription>
-                            </div>
-                            <div className="flex justify-end gap-3 px-6 py-4 bg-gray-50 dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800">
-                              <DialogButton type="secondary" onClick={closeDialog}>
-                                Cancel
-                              </DialogButton>
-                              <DialogButton
-                                type="danger"
-                                onClick={() => {
-                                  const itemsToDeleteNow = [...selectedItems];
-                                  console.log('Bulk delete confirmed for', itemsToDeleteNow.length, 'items', itemsToDeleteNow);
-                                  deleteSelectedItems(itemsToDeleteNow);
-                                  closeDialog();
-                                }}
-                              >
-                                Delete
-                              </DialogButton>
-                            </div>
-                          </>
+                                {isCurrent && <div className="i-ph:check w-3.5 h-3.5 text-purple-500 shrink-0" />}
+                              </DropdownItem>
+                            );
+                          })
                         )}
-                      </Dialog>
-                    </DialogRoot>
+                      </div>
+                      {activeWsId && (
+                        <>
+                          <DropdownItem
+                            onSelect={() => {
+                              const currentWs = workspacesList.find(w => w.id === activeWsId);
+                              setWorkspaceToRename(currentWs || { id: activeWsId, name: '' });
+                              setRenameInputValue(currentWs?.name || '');
+                              setIsRenameDialogOpen(true);
+                            }}
+                            className="flex items-center gap-2 px-2 py-1.5 text-xs text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md cursor-pointer font-medium"
+                          >
+                            <div className="i-ph:pencil w-3.5 h-3.5 text-gray-500" />
+                            <span>Rename Workspace</span>
+                          </DropdownItem>
+                          <DropdownItem
+                            onSelect={() => {
+                              setWorkspaceSettingsTab('knowledge');
+                              setIsWorkspaceSettingsOpen(true);
+                            }}
+                            className="flex items-center gap-2 px-2 py-1.5 text-xs text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md cursor-pointer font-medium"
+                          >
+                            <div className="i-ph:gear w-3.5 h-3.5 text-gray-500" />
+                            <span>Workspace Settings</span>
+                          </DropdownItem>
+                          {(() => {
+                            const userTier = (profile?.subscriptionTier || 'free').toLowerCase();
+                            const isPowerOrBusiness = userTier === 'power' || userTier === 'business';
+                            return (
+                              <DropdownItem
+                                onSelect={() => {
+                                  if (isPowerOrBusiness) {
+                                    setWorkspaceSettingsTab('members');
+                                    setIsWorkspaceSettingsOpen(true);
+                                  } else {
+                                    const activeWsId = pathname?.split('/')[2];
+                                    if (activeWsId) {
+                                      router.push(`/workspace/${activeWsId}/upgrade?highlight=power_business`);
+                                    } else {
+                                      router.push('/upgrade?highlight=power_business');
+                                    }
+                                  }
+                                }}
+                                className="flex items-center justify-between px-2 py-1.5 text-xs text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md cursor-pointer font-medium"
+                              >
+                                <div className="flex items-center gap-2">
+                                  <div className="i-ph:user-plus w-3.5 h-3.5 text-blue-500" />
+                                  <span>Invite Members</span>
+                                </div>
+                                {!isPowerOrBusiness && (
+                                  <Badge className="bg-[#0099ff]/20 rounded-md text-[#0099ff] text-[10px] px-1.5 py-0.5 ml-2">
+                                    Power+
+                                  </Badge>
+                                )}
+                              </DropdownItem>
+                            );
+                          })()}
+                          <DropdownSeparator />
+                        </>
+                      )}
+                      <DropdownItem
+                        onSelect={() => {
+                          setNewWorkspaceName('');
+                          setIsCreatingWorkspace(true);
+                        }}
+                        className="flex items-center gap-2 px-2 py-1.5 text-xs text-gray-900 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-md cursor-pointer font-medium"
+                      >
+                        <div className="i-ph:plus w-3.5 h-3.5" />
+                        <span>Add New Workspace</span>
+                      </DropdownItem>
+                    </Dropdown>
                   </div>
+                  <div className="px-2 pb-1">
+                    <div className="relative w-full block">
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const href = activeWsId ? `/workspace/${activeWsId}` : '/';
+                        const isHomeActive = pathname === href;
+                        return (
+                          <Link href={href}>
+                            <button className={classNames(
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors",
+                              isHomeActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              <div className="i-ph:house w-4 h-4 mr-2" />
+                              Main
+                            </button>
+                          </Link>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const href = activeWsId ? `/workspace/${activeWsId}/sources` : '/sources';
+                        const isSourcesActive = pathname === href;
+                        return (
+                          <Link href={href}>
+                            <button className={classNames(
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors",
+                              isSourcesActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              <div className="i-ph:share-network w-4 h-4 mr-2" />
+                              Sources
+                            </button>
+                          </Link>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const href = activeWsId ? `/workspace/${activeWsId}/canvas` : '/canvas';
+                        const isCanvasActive = pathname === href;
+                        return (
+                          <Link href={href}>
+                            <button className={classNames(
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isCanvasActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              <div className="i-ph:lightbulb w-4 h-4 mr-2" />
+                              Canvas
+                            </button>
+                          </Link>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const aiProspectsHref = activeWsId ? `/workspace/${activeWsId}/agent-contact` : '/agent-contact';
+                        const myProspectsHref = activeWsId ? `/workspace/${activeWsId}/my-prospects` : '/my-prospects';
+                        const isAiProspectsActive = pathname?.includes('/agent-contact');
+                        const isMyProspectsActive = pathname?.includes('/my-prospects');
+                        return (
+                          <div className="mt-1">
+                            <button
+                              onClick={toggleContactsOpen}
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                            >
+                              <div className={classNames(
+                                "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
+                                isContactsOpen ? "i-ph:caret-down" : "i-ph:caret-right"
+                              )} />
+                              <div className="i-ph:address-book w-4 h-4 mr-2" />
+                              Contacts
+                            </button>
+                            {isContactsOpen && (
+                              <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
+                                <Link href={aiProspectsHref}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isAiProspectsActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:sparkle w-3.5 h-3.5 mr-2" />
+                                    AI Prospects
+                                  </button>
+                                </Link>
+                                <Link href={myProspectsHref}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isMyProspectsActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:users-three w-3.5 h-3.5 mr-2" />
+                                    My Prospects
+                                  </button>
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const href = activeWsId ? `/workspace/${activeWsId}/signal-radar` : '/signal-radar';
+                        const isRadarActive = pathname?.includes('/signal-radar');
+                        return (
+                          <Link href={href}>
+                            <button className={classNames(
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isRadarActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              <div className="i-ph:broadcast w-4 h-4 mr-2" />
+                              Signal Radar
+                            </button>
+                          </Link>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const href = activeWsId ? `/workspace/${activeWsId}/vibe` : '/';
+                        const isVibeActive = pathname === href;
+                        return (
+                          <Link href={href}>
+                            <button className={classNames(
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-[#1C1D21] relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isVibeActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              <div className="i-ph:music-notes w-4 h-4 mr-2" />
+                              Vibe
+                            </button>
+                          </Link>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const isBusinessSubscriber = userTier === 'business';
+                        const href = activeWsId ? `/workspace/${activeWsId}/milestone` : '/milestone';
+                        const upgradeHref = activeWsId ? `/workspace/${activeWsId}/upgrade?highlight=business` : '/upgrade?highlight=business';
+                        const isMilestoneActive = pathname?.includes('/milestone');
+
+                        if (!isBusinessSubscriber) {
+                          return (
+                            <Link href={upgradeHref}>
+                              <button className="flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-[#1C1D21] relative px-3 py-2 rounded-lg focus:outline-none text-sm font-medium transition-colors mt-1 border border-orange-500/70 opacity-90">
+                                <div className="flex items-center text-gray-900 dark:text-gray-100">
+                                  <div className="i-ph:trophy w-4 h-4 mr-2 text-amber-500 opacity-60" />
+                                  <span>Milestone</span>
+                                </div>
+                                <Badge className="bg-orange-500/15 text-orange-600 dark:text-orange-400 text-[10px] px-1.5 py-0.5 rounded-md font-semibold border border-orange-500/30">
+                                  Business
+                                </Badge>
+                              </button>
+                            </Link>
+                          );
+                        }
+
+                        return (
+                          <Link href={href}>
+                            <button className={classNames(
+                              "flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-[#1C1D21] relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1 border border-orange-500/70 shadow-sm",
+                              isMilestoneActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              <div className="flex items-center">
+                                <div className="i-ph:trophy w-4 h-4 mr-2 text-amber-500" />
+                                <span>Milestone</span>
+                              </div>
+                              <Badge className="bg-orange-500/20 text-orange-600 dark:text-orange-400 text-[10px] px-1.5 py-0.5 rounded-md font-semibold">
+                                Active
+                              </Badge>
+                            </button>
+                          </Link>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const href = activeWsId ? `/workspace/${activeWsId}/agent` : '/';
+                        const isAgentActive = pathname === href;
+                        return (
+                          <Link href={href}>
+                            <button className={classNames(
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isAgentActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                            )}>
+                              <div className="i-ph:sparkle-fill w-4 h-4 mr-2 text-blue-500" />
+                              Agent Season
+                            </button>
+                          </Link>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const budgetHref = activeWsId ? `/workspace/${activeWsId}/budget` : '/';
+                        const adsMarketingHref = activeWsId ? `/workspace/${activeWsId}/ads-marketing` : '/';
+                        const isBudgetActive = pathname?.includes('/budget');
+                        const isAdsMarketingActive = pathname?.includes('/ads-marketing');
+                        return (
+                          <div className="mt-1">
+                            <button
+                              onClick={toggleAdsOpen}
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                            >
+                              <div className={classNames(
+                                "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
+                                isAdsOpen ? "i-ph:caret-down" : "i-ph:caret-right"
+                              )} />
+                              <div className="i-ph:megaphone w-4 h-4 mr-2" />
+                              Ads
+                            </button>
+                            {isAdsOpen && (
+                              <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
+                                <Link href={budgetHref}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isBudgetActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:currency-circle-dollar w-3.5 h-3.5 mr-2" />
+                                    Budget
+                                  </button>
+                                </Link>
+                                <Link href={adsMarketingHref}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isAdsMarketingActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:chart-line-up w-3.5 h-3.5 mr-2" />
+                                    Ads Marketing
+                                  </button>
+                                </Link>
+                                <Link href={activeWsId ? `/workspace/${activeWsId}/blog-content` : '/'}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    pathname?.includes('/blog-content') ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:article-duotone w-3.5 h-3.5 mr-2" />
+                                    Blog Content
+                                  </button>
+                                </Link>
+                                <Link href={activeWsId ? `/workspace/${activeWsId}/product-deck` : '/'}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    pathname?.includes('/product-deck') ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:presentation-chart-duotone w-3.5 h-3.5 mr-2" />
+                                    Product Deck <Badge className='bg-[#0099ff]/20 text-[#0099ff] ml-1 rounded-md'>Beta</Badge>
+                                  </button>
+                                </Link>
+                                <Link href={activeWsId ? `/workspace/${activeWsId}/google-ads` : '/'}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    pathname?.includes('/google-ads') ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )} disabled>
+                                    <img src="/icons/google.svg" alt="" className='w-3.5 h-3.5 mr-2' />
+                                    Google Ads <Badge>Coming Soon</Badge>
+                                  </button>
+                                </Link>
+                                <Link href={activeWsId ? `/workspace/${activeWsId}/meta-ads` : '/'}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    pathname?.includes('/meta-ads') ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <img src="/icons/meta.svg" alt="" className='w-4 h-3.5 mr-2' />
+                                    Meta Ads
+                                  </button>
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const href = activeWsId ? `/workspace/${activeWsId}/product` : '/workspace';
+                        const isProductsActive = pathname?.includes('/product');
+                        return (
+                          <div className="mt-1">
+                            <button
+                              onClick={toggleProductsOpen}
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                            >
+                              <div className={classNames(
+                                "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
+                                isProductsOpen ? "i-ph:caret-down" : "i-ph:caret-right"
+                              )} />
+                              <div className="i-ph:cube w-4 h-4 mr-2" />
+                              Products
+                            </button>
+                            {isProductsOpen && (
+                              <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
+                                <Link href={href}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isProductsActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:trend-up w-3.5 h-3.5 mr-2" />
+                                    Trends
+                                  </button>
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                      {(() => {
+                        const activeWsId = pathname?.split('/')[2];
+                        const messagesHref = activeWsId ? `/workspace/${activeWsId}/community/messages` : '/community/messages';
+                        const isMarketersActive = pathname === '/marketers';
+                        const isMessagesActive = pathname?.includes('/community/messages');
+                        return (
+                          <div className="mt-1">
+                            <button
+                              onClick={toggleCommunityOpen}
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                            >
+                              <div className={classNames(
+                                "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
+                                isCommunityOpen ? "i-ph:caret-down" : "i-ph:caret-right"
+                              )} />
+                              <div className="i-ph:users-three w-4 h-4 mr-2" />
+                              Community
+                            </button>
+                            {isCommunityOpen && (
+                              <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
+                                <Link href="/marketers" target="_blank">
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isMarketersActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:user-list w-3.5 h-3.5 mr-2" />
+                                    Marketers
+                                    <div className="i-ph:arrow-square-out w-4 h-4 ml-auto" />
+                                  </button>
+                                </Link>
+                                <Link href={messagesHref}>
+                                  <button className={classNames(
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isMessagesActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                  )}>
+                                    <div className="i-ph:chat-teardrop-dots w-3.5 h-3.5 mr-2" />
+                                    Messages
+                                  </button>
+                                </Link>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+                    </div>
+                  </div>
+                  {(() => {
+                    const isPricingActive = searchParams?.get('tab') === 'pricing';
+                    const handlePricingClick = (e: React.MouseEvent) => {
+                      e.preventDefault();
+                      const activeWsId = pathname?.split('/')[2];
+                      if (activeWsId) {
+                        router.push(`/workspace/${activeWsId}/upgrade`);
+                      } else {
+                        router.push('/upgrade');
+                      }
+                    };
+
+                    const handleReturnToAgent = () => {
+                      aiSidebarStore.isOpen.set(true);
+                    };
+
+                    const isTopTier = profile?.subscriptionTier === 'pro' || profile?.subscriptionTier === 'enterprise' || profile?.subscriptionTier === 'highest';
+
+                    return (
+                      <div className="p-3 mt-auto space-y-2">
+                        {!isAgentSidebarOpen && (
+                          <button
+                            onClick={handleReturnToAgent}
+                            className="flex items-center justify-between w-full px-3 py-2.5 
+                            rounded-md font-medium text-sm text-gray-900 dark:text-white 
+                            dark:hover:bg-purple-900/50 transition-colors focus:outline-none 
+                            border border-gray-300 dark:border-purple-800/60"
+                          >
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <div className="i-ph:sparkle-fill w-5 h-5 dark:text-white/90 shrink-0" />
+                              <div className="flex flex-col text-left leading-tight min-w-0">
+                                <span className="text-xs truncate">Return to the Agent</span>
+                                <span className="text-[10px] dark:text-white/90 font-normal">AI Agent</span>
+                              </div>
+                            </div>
+                            <div className="i-ph:arrow-right w-4 h-4 shrink-0 ml-1" />
+                          </button>
+                        )}
+                        {!isTopTier && (
+                          <Button
+                            onClick={handlePricingClick}
+                            className={classNames(
+                              "flex items-center justify-center w-full px-3 py-2 rounded-lg font-medium text-sm text-black transition-opacity hover:opacity-90 focus:outline-none focus:ring-1 focus:ring-amber-500/50",
+                              isPricingActive ? "opacity-90" : ""
+                            )}
+                            style={{ backgroundColor: '#ffc64cff' }}
+                          >
+                            <div className="i-ph:diamond w-4 h-4 mr-2 text-black shrink-0" />
+                            Upgrade Plan
+                          </Button>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </>
               )}
             </div>
           )}
         </div>
-        <SkillsDialog open={skillsDialogOpen} onOpenChange={setSkillsDialogOpen} />
       </motion.div>
-      <ControlPanel open={isSettingsOpen} onClose={handleSettingsClose} activeTab={activeSettingsTab} />
+
+      <DialogRoot open={isRenameDialogOpen}>
+        <Dialog onClose={() => setIsRenameDialogOpen(false)} onBackdrop={() => setIsRenameDialogOpen(false)}>
+          <form onSubmit={handleRenameWorkspace} className="p-6 space-y-4">
+            <DialogTitle>Rename Workspace</DialogTitle>
+            <DialogDescription>
+              Enter a new name for your workspace.
+            </DialogDescription>
+            <Input
+              autoFocus
+              type="text"
+              value={renameInputValue}
+              onChange={(e) => setRenameInputValue(e.target.value)}
+              placeholder="Workspace Name"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                onClick={() => setIsRenameDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={(e) => {
+                  handleRenameWorkspace(e);
+                }}
+                disabled={isRenaming || !renameInputValue.trim()}
+                className='bg-[#0099ff]/20 text-[#0099ff]'
+              >
+                {isRenaming ? 'Saving...' : 'Save Name'}
+              </Button>
+            </div>
+          </form>
+        </Dialog>
+      </DialogRoot>
+
+      <DialogRoot open={isCreatingWorkspace}>
+        <Dialog onClose={() => setIsCreatingWorkspace(false)} onBackdrop={() => setIsCreatingWorkspace(false)}>
+          <form onSubmit={handleCreateWorkspace} className="p-6 space-y-4">
+            <DialogTitle>Create Workspace</DialogTitle>
+            <DialogDescription>
+              Enter a name for your new workspace.
+            </DialogDescription>
+            <Input
+              autoFocus
+              type="text"
+              value={newWorkspaceName}
+              onChange={(e) => setNewWorkspaceName(e.target.value)}
+              placeholder="Workspace Name"
+            />
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                onClick={() => setIsCreatingWorkspace(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={(e) => {
+                  handleCreateWorkspace(e);
+                }}
+                disabled={isCreating || !newWorkspaceName.trim()}
+                className='bg-[#0099ff]/20 text-[#0099ff]'
+              >
+                {isCreating ? 'Creating...' : 'Create Workspace'}
+              </Button>
+            </div>
+          </form>
+        </Dialog>
+      </DialogRoot>
+
+      {activeWsId && (
+        <WorkspaceSettingsModal
+          isOpen={isWorkspaceSettingsOpen}
+          onClose={() => setIsWorkspaceSettingsOpen(false)}
+          workspaceId={activeWsId}
+          defaultTab={workspaceSettingsTab}
+        />
+      )}
+
+      <SkillsDialog open={skillsDialogOpen} onOpenChange={setSkillsDialogOpen} />
     </>
   );
 };

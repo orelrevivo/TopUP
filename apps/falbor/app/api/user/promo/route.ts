@@ -12,25 +12,27 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { code } = body;
+    const { code, workspaceId } = body;
 
     if (!code || typeof code !== 'string') {
       return NextResponse.json({ error: 'Promo code is required.' }, { status: 400 });
     }
 
     const normalizedCode = code.trim().replace(/\s+/g, '').toUpperCase();
-    if (normalizedCode !== 'EARLYACCESS') {
+    if (normalizedCode !== 'EARLYACCESS' && normalizedCode !== 'EVECOUPON') {
       return NextResponse.json({ error: 'Invalid promo code.' }, { status: 400 });
     }
 
-    // Check if the user has already used this promo code
+    const promoOrderId = workspaceId ? `PROMO_${normalizedCode}_WS_${workspaceId}` : `PROMO_${normalizedCode}`;
+
+    // Check if the user/workspace has already used this promo code
     const existingUsage = await db.select()
       .from(payments)
-      .where(and(eq(payments.userId, userId), eq(payments.orderId, 'PROMO_EARLY_ACCESS')))
+      .where(and(eq(payments.userId, userId), eq(payments.orderId, promoOrderId)))
       .limit(1);
 
     if (existingUsage.length > 0) {
-      return NextResponse.json({ error: 'This promo code has already been redeemed by this account.' }, { status: 400 });
+      return NextResponse.json({ error: 'This promo code has already been redeemed for this workspace.' }, { status: 400 });
     }
 
     const expiresAt = new Date();
@@ -47,9 +49,9 @@ export async function POST(req: Request) {
     // Record payment/redemption to prevent reuse
     await db.insert(payments).values({
       userId,
-      orderId: 'PROMO_EARLY_ACCESS',
+      orderId: promoOrderId,
       amount: 200,
-      tier: 'early access',
+      tier: 'promo',
     });
 
     return NextResponse.json({ success: true });

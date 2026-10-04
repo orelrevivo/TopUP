@@ -16,16 +16,19 @@ interface DropdownItemProps {
   onSelect?: (e: Event) => void;
   className?: string;
   asChild?: boolean;
-  active?: boolean; 
+  active?: boolean;
+  disabled?: boolean;
 }
 
-export const DropdownItem = ({ children, onSelect, className, asChild, active }: DropdownItemProps) => (
+export const DropdownItem = ({ children, onSelect, className, asChild, active, disabled }: DropdownItemProps) => (
   <DropdownMenu.Item
+    disabled={disabled}
     className={classNames(
       'relative flex items-center gap-2 px-1.5 py-1 rounded-md text-sm',
       'text-falbor-elements-textPrimary',
       'focus:bg-[#E3E3E3] dark:focus:bg-[#2A2A2A] hover:bg-[#E3E3E3] dark:hover:bg-[#2A2A2A]',
       'cursor-default',
+      disabled && 'opacity-50 pointer-events-none',
       active && 'bg-[#E3E3E3] dark:bg-[#2A2A2A]', 
       className,
     )}
@@ -56,7 +59,7 @@ export const Dropdown = ({ trigger, children, align = 'end', side, sideOffset = 
             'data-[side=left]:slide-in-from-right-2',
             'data-[side=right]:slide-in-from-left-2',
             'data-[side=top]:slide-in-from-bottom-2',
-            'z-[1000]',
+            'z-[99999]',
             className,
           )}
           side={side}
@@ -95,9 +98,10 @@ export const DropdownSubTrigger = ({ children, className }: DropdownSubTriggerPr
 interface DropdownSubContentProps {
   children: ReactNode;
   className?: string;
+  alignOffset?: number;
 }
 
-export const DropdownSubContent = ({ children, className }: DropdownSubContentProps) => (
+export const DropdownSubContent = ({ children, className, alignOffset }: DropdownSubContentProps) => (
   <DropdownMenu.Portal>
     <DropdownMenu.SubContent
       style={{ boxShadow: '0px 0px 5px #b3b1b1ff' }}
@@ -115,6 +119,7 @@ export const DropdownSubContent = ({ children, className }: DropdownSubContentPr
         className,
       )}
       sideOffset={5}
+      alignOffset={alignOffset}
     >
       {children}
     </DropdownMenu.SubContent>

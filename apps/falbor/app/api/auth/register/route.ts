@@ -1,14 +1,16 @@
 import { db } from "~/lib/db";
-import { users } from "~/lib/db/schema";
+import { users, workspaces } from "~/lib/db/schema";
+import { v4 } from "uuid";
 import { hashPassword } from "~/lib/auth";
 import { eq } from "drizzle-orm";
 import { Resend } from "resend";
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = (await request.json()) as {
+    const { email, password, role } = (await request.json()) as {
       email: string;
       password: string;
+      role?: string;
     };
 
     if (!email || !password) {
@@ -88,8 +90,18 @@ export async function POST(request: Request) {
         displayName: email.split("@")[0],
         isVerified: false,
         verificationCode,
+        role: role === "marketer" ? "marketer" : "SUBACCOUNT_USER",
       })
       .returning();
+
+    // Create a default workspace for the new user if they are not a marketer
+    if (role !== "marketer") {
+      await db.insert(workspaces).values({
+        id: v4(),
+        userId: user.id,
+        name: "Untitled Workspace",
+      });
+    }
 
     if (process.env.RESEND_API_KEY) {
       try {

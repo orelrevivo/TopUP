@@ -93,9 +93,7 @@ export async function GET(
     const headers = {
       'Content-Type': mimeType,
       'Cache-Control': 'public, max-age=3600',
-      // Allow the page to use the same COEP/COOP needed by the WebContainer
-      'Cross-Origin-Opener-Policy': 'same-origin',
-      'Cross-Origin-Embedder-Policy': 'credentialless',
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     };
 
     if (isBinary(resolvedPath)) {

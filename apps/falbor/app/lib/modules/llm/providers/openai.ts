@@ -13,8 +13,8 @@ export default class OpenAIProvider extends BaseProvider {
   };
 
   staticModels: ModelInfo[] = [
-    { name: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 32000, vision: false },
-    { name: 'gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 32000, vision: false },
+    { name: 'gpt-5.6-sol', label: 'GPT-5.6 Sol', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 32000, vision: true },
+    { name: 'gpt-5.6-luna', label: 'GPT-5.6 Luna', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 32000, vision: true },
     { name: 'gpt-4o', label: 'GPT-4o', provider: 'OpenAI', maxTokenAllowed: 128000, maxCompletionTokens: 4096 },
     {
       name: 'gpt-4o-mini',

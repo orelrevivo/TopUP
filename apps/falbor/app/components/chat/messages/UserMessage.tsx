@@ -106,9 +106,13 @@ function stripMetadata(content: string) {
 }
 
 function parseConnectors(content: string) {
-  return content.replace(/@([a-zA-Z0-9_-]+)(?=\s|$)/g, (match, id) => {
+  let result = content.replace(/@([a-zA-Z0-9_-]+)(?=\s|$)/g, (match, id) => {
     return `<span class="__falborConnector__" data-id="${id}"></span>`;
   });
+  result = result.replace(/\[Skill:\s*([a-zA-Z0-9_-]+)\]/g, (match, id) => {
+    return `<span class="__falborSkill__" data-id="${id}"></span>`;
+  });
+  return result;
 }
 
 function parseSkills(content: string) {
