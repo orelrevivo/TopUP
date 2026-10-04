@@ -1,0 +1,1 @@
+-- Empty migration: users columns already exist in shared database schema
