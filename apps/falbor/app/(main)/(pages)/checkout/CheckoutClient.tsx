@@ -97,9 +97,9 @@ export default function CheckoutClient({ clientId }: CheckoutClientProps) {
         <h1 className="text-2xl font-bold mb-2 text-white">Complete Purchase</h1>
 
         {tier ? (
-          <p className="text-gray-400 mb-8">You are upgrading to the <strong className="text-purple-400">{tier}</strong> plan for <strong>${amount}.00</strong></p>
+          <p className="text-gray-400 mb-8">You are upgrading to the <strong className="text-purple-400">{tier}</strong> plan</p>
         ) : (
-          <p className="text-gray-400 mb-8">You are adding <strong>${amount}.00</strong> to your AI balance.</p>
+          <p className="text-gray-400 mb-8">You are adding <strong>{amount} Credits</strong> to your AI balance.</p>
         )}
 
         {status === 'loading' && <div className="text-purple-400">Loading checkout...</div>}

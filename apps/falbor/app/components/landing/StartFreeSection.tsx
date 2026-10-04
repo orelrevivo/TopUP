@@ -7,7 +7,7 @@ const PERKS = [
     "No credit card required",
     "Cancel anytime",
     "Free MCP tools included",
-    "Start with $6 in your balance",
+    "Start with 10 free credits in your balance",
 ];
 
 export default function StartFreeSection() {
@@ -17,9 +17,9 @@ export default function StartFreeSection() {
                 {}
                 <div className="flex flex-col items-start justify-center">
                     <h2 className="leading-[1.2] font-semibold text-[#1a1a1a] mb-6 tracking-tight">
-                        <span className="text-[2.2rem] block">Start with $6 in your balance</span>
+                        <span className="text-[2.2rem] block">Start with 10 free credits</span>
                         <span className="text-[1.6rem] block">
-                            <TextShimmer>per month — free forever.</TextShimmer>
+                            <TextShimmer>in your balance — free forever.</TextShimmer>
                         </span>
                     </h2>
 

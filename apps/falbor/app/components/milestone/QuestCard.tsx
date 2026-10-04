@@ -54,7 +54,7 @@ export function QuestCard({ quest, onClaim, isClaiming }: QuestCardProps) {
               Reach {quest.usersRequired} Users ({Math.min(currentCount, quest.usersRequired)}/{quest.usersRequired})
             </h4>
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
-              Reward: <span className="font-semibold text-blue-600 dark:text-blue-400">+{quest.rewardCents} Credits</span> (${(quest.rewardCents / 100).toFixed(2)})
+              Reward: <span className="font-semibold text-blue-600 dark:text-blue-400">+{quest.rewardCents} Credits</span>
             </p>
           </div>
         </div>

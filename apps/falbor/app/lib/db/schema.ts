@@ -97,7 +97,7 @@ export const users = pgTable("users", {
     badges: jsonb("badges").default("[]"),
     stats: jsonb("stats").default("{}"),
     profileApps: jsonb("profile_apps").default("[]"),
-    balance: integer("balance").default(600).notNull(),
+    balance: integer("balance").default(10).notNull(),
     subscriptionTier: text("subscription_tier").default("free").notNull(),
     subscriptionExpiresAt: timestamp("subscription_expires_at"),
     isVerified: boolean("is_verified").default(true).notNull(),
