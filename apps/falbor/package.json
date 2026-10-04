@@ -23,7 +23,6 @@
     "@ai-sdk/ui-utils": "^1.2.11",
     "@browserbasehq/sdk": "^2.16.0",
     "@browserbasehq/stagehand": "^3.7.1",
-    "browser-use-sdk": "^4.0.0",
     "@clerk/nextjs": "^7.5.9",
     "@codemirror/autocomplete": "^6.18.3",
     "@codemirror/commands": "^6.7.1",
