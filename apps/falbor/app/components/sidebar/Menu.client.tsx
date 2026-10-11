@@ -175,7 +175,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
             setUnreadMentionsCount(unread);
           }
         })
-        .catch(() => {});
+        .catch(() => { });
     };
 
     checkUnread();
@@ -647,11 +647,11 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
           variant === 'square'
             ? classNames(
               'flex selection-accent flex-col side-menu h-full overflow-hidden shrink-0 border-none text-sm',
-              'absolute md:relative left-0 top-0 bottom-0 bg-[#f7f7f8] dark:bg-[#111114] md:bg-transparent shadow-xl md:shadow-none z-50 md:z-sidebar',
+              'absolute md:relative left-0 top-0 bottom-0 bg-[#f7f7f8] dark:bg-[#1A1A1A] md:bg-transparent shadow-xl md:shadow-none z-50 md:z-sidebar',
               !open && 'max-md:!w-0 max-md:!opacity-0 max-md:!p-0 pointer-events-none md:pointer-events-auto'
             )
             : classNames(
-              'flex selection-accent flex-col side-menu shrink-0 h-full bg-[#f7f7f8] dark:bg-[#111114] text-sm',
+              'flex selection-accent flex-col side-menu shrink-0 h-full bg-[#f7f7f8] dark:bg-[#1A1A1A] text-sm',
 
               'max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-50 max-md:shadow-xl',
               !open && 'max-md:!w-0 max-md:!opacity-0 max-md:overflow-hidden max-md:pointer-events-none',
@@ -974,11 +974,11 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors",
-                              isHomeActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors",
+                              isHomeActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="i-ph:house w-4 h-4 mr-2" />
-                              Main
+                              Overview
                             </button>
                           </Link>
                         );
@@ -990,8 +990,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors",
-                              isSourcesActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors",
+                              isSourcesActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="i-ph:share-network w-4 h-4 mr-2" />
                               Sources
@@ -1006,8 +1006,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
-                              isCompetitorsActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isCompetitorsActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="i-ph:sword w-4 h-4 mr-2" />
                               Competitors
@@ -1022,11 +1022,11 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
-                              isAiAeoActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isAiAeoActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="i-ph:robot w-4 h-4 mr-2" />
-                              AI Engine Optimization
+                              Visibility
                             </button>
                           </Link>
                         );
@@ -1038,11 +1038,11 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
-                              isCanvasActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isCanvasActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="i-ph:brain w-4 h-4 mr-2" />
-                              Agent Brain
+                              Knowledge
                             </button>
                           </Link>
                         );
@@ -1057,7 +1057,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                           <div className="mt-1">
                             <button
                               onClick={toggleContactsOpen}
-                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
                             >
                               <div className={classNames(
                                 "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
@@ -1070,20 +1070,20 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                               <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
                                 <Link href={aiProspectsHref}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    isAiProspectsActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isAiProspectsActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:sparkle w-3.5 h-3.5 mr-2" />
-                                    AI Prospects
+                                    Discovery
                                   </button>
                                 </Link>
                                 <Link href={myProspectsHref}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    isMyProspectsActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isMyProspectsActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:users-three w-3.5 h-3.5 mr-2" />
-                                    My Prospects
+                                    Leads
                                   </button>
                                 </Link>
                               </div>
@@ -1098,11 +1098,11 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
-                              isRadarActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isRadarActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="i-ph:broadcast w-4 h-4 mr-2" />
-                              Signal Radar
+                              Signals
                             </button>
                           </Link>
                         );
@@ -1114,8 +1114,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
-                              isMentionsActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isMentionsActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="flex items-center">
                                 <div className="i-ph:at w-4 h-4 mr-2" />
@@ -1137,16 +1137,16 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-[#1C1D21] relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
-                              isVibeActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isVibeActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="i-ph:music-notes w-4 h-4 mr-2" />
-                              Vibe
+                              Studio
                             </button>
                           </Link>
                         );
                       })()}
-                      {(() => {
+                      {/* {(() => {
                         const activeWsId = pathname?.split('/')[2];
                         const isBusinessSubscriber = userTier === 'business';
                         const href = activeWsId ? `/workspace/${activeWsId}/milestone` : '/milestone';
@@ -1156,7 +1156,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         if (!isBusinessSubscriber) {
                           return (
                             <Link href={upgradeHref}>
-                              <button className="flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-[#1C1D21] relative px-3 py-2 rounded-lg focus:outline-none text-sm font-medium transition-colors mt-1 border border-[#0099ff]/70 opacity-90">
+                              <button className="flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none text-sm font-medium transition-colors mt-1 border border-[#0099ff]/70 opacity-90">
                                 <div className="flex items-center text-gray-900 dark:text-gray-100">
                                   <div className="i-ph:trophy w-4 h-4 mr-2" />
                                   <span>Milestone</span>
@@ -1172,8 +1172,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-[#1C1D21] relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1 border border-[#0099ff]/70 shadow-sm",
-                              isMilestoneActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-between w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1 border border-[#0099ff]/70 shadow-sm",
+                              isMilestoneActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="flex items-center">
                                 <div className="i-ph:trophy w-4 h-4 mr-2" />
@@ -1185,7 +1185,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                             </button>
                           </Link>
                         );
-                      })()}
+                      })()} */}
                       {(() => {
                         const activeWsId = pathname?.split('/')[2];
                         const href = activeWsId ? `/workspace/${activeWsId}/agent` : '/';
@@ -1193,11 +1193,11 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                         return (
                           <Link href={href}>
                             <button className={classNames(
-                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
-                              isAgentActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                              "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors mt-1",
+                              isAgentActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                             )}>
                               <div className="i-ph:sparkle-fill w-4 h-4 mr-2 text-blue-500" />
-                              Agent Season
+                              Agents
                             </button>
                           </Link>
                         );
@@ -1212,21 +1212,21 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                           <div className="mt-1">
                             <button
                               onClick={toggleAdsOpen}
-                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
                             >
                               <div className={classNames(
                                 "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
                                 isAdsOpen ? "i-ph:caret-down" : "i-ph:caret-right"
                               )} />
                               <div className="i-ph:megaphone w-4 h-4 mr-2" />
-                              Ads
+                              Marketing
                             </button>
                             {isAdsOpen && (
                               <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
                                 <Link href={budgetHref}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    isBudgetActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isBudgetActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:currency-circle-dollar w-3.5 h-3.5 mr-2" />
                                     Budget
@@ -1234,35 +1234,35 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                                 </Link>
                                 <Link href={adsMarketingHref}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    isAdsMarketingActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isAdsMarketingActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:chart-line-up w-3.5 h-3.5 mr-2" />
-                                    Ads Marketing
+                                    Campaigns
                                   </button>
                                 </Link>
                                 <Link href={activeWsId ? `/workspace/${activeWsId}/blog-content` : '/'}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    pathname?.includes('/blog-content') ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    pathname?.includes('/blog-content') ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:article-duotone w-3.5 h-3.5 mr-2" />
-                                    Blog Content
+                                    Content
                                   </button>
                                 </Link>
                                 <Link href={activeWsId ? `/workspace/${activeWsId}/product-deck` : '/'}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    pathname?.includes('/product-deck') ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    pathname?.includes('/product-deck') ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:presentation-chart-duotone w-3.5 h-3.5 mr-2" />
-                                    Product Deck <Badge className='bg-[#0099ff]/20 text-[#0099ff] ml-1 rounded-md'>Beta</Badge>
+                                    Pitch <Badge className='bg-[#0099ff]/20 text-[#0099ff] ml-1 rounded-md'>Beta</Badge>
                                   </button>
                                 </Link>
                                 <Link href={activeWsId ? `/workspace/${activeWsId}/google-ads` : '/'}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    pathname?.includes('/google-ads') ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    pathname?.includes('/google-ads') ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )} disabled>
                                     <img src="/icons/google.svg" alt="" className='w-3.5 h-3.5 mr-2' />
                                     Google Ads <Badge>Coming Soon</Badge>
@@ -1270,8 +1270,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                                 </Link>
                                 <Link href={activeWsId ? `/workspace/${activeWsId}/meta-ads` : '/'}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    pathname?.includes('/meta-ads') ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    pathname?.includes('/meta-ads') ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <img src="/icons/meta.svg" alt="" className='w-4 h-3.5 mr-2' />
                                     Meta Ads
@@ -1290,7 +1290,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                           <div className="mt-1">
                             <button
                               onClick={toggleProductsOpen}
-                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
                             >
                               <div className={classNames(
                                 "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
@@ -1303,8 +1303,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                               <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
                                 <Link href={href}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    isProductsActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isProductsActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:trend-up w-3.5 h-3.5 mr-2" />
                                     Trends
@@ -1324,7 +1324,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                           <div className="mt-1">
                             <button
                               onClick={toggleCommunityOpen}
-                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
                             >
                               <div className={classNames(
                                 "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
@@ -1337,8 +1337,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                               <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
                                 <Link href="/marketers" target="_blank">
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    isMarketersActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isMarketersActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:user-list w-3.5 h-3.5 mr-2" />
                                     Marketers
@@ -1347,8 +1347,8 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                                 </Link>
                                 <Link href={messagesHref}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    isMessagesActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isMessagesActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:chat-teardrop-dots w-3.5 h-3.5 mr-2" />
                                     Messages
@@ -1367,7 +1367,7 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                           <div className="mt-1">
                             <button
                               onClick={toggleGamesOpen}
-                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
+                              className="flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-3 py-2 rounded-lg focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-sm font-medium transition-colors text-gray-900 dark:text-gray-100"
                             >
                               <div className={classNames(
                                 "w-4 h-4 mr-2 transition-transform duration-200 flex items-center justify-center text-xs text-gray-500 dark:text-gray-400",
@@ -1380,11 +1380,11 @@ export const Menu = ({ variant = 'full' }: MenuProps) => {
                               <div className="ml-4 pl-3 border-l border-gray-300 dark:border-gray-700 mt-1 space-y-1">
                                 <Link href={arenaHref}>
                                   <button className={classNames(
-                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-900 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
-                                    isArenaActive ? "bg-[#EBEBEB] dark:bg-gray-900" : "text-gray-900 dark:text-gray-100"
+                                    "flex items-center justify-start w-full hover:bg-[#EBEBEB] dark:hover:bg-gray-800 relative px-2.5 py-1.5 rounded-md focus:outline-none focus:ring-1 focus:ring-purple-500/50 text-xs font-medium transition-colors",
+                                    isArenaActive ? "bg-[#EBEBEB] dark:bg-gray-800 dark:text-white" : "text-gray-900 dark:text-gray-100"
                                   )}>
                                     <div className="i-ph:sword w-3.5 h-3.5 mr-2 text-purple-600" />
-                                    AI Startup Arena
+                                    Arena
                                   </button>
                                 </Link>
                               </div>

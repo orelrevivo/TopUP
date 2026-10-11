@@ -3,15 +3,15 @@
 @tailwind utilities;
 
 :root {
-  --falbor-elements-borderColor: #27272a;
-  --falbor-elements-borderColorActive: #3f3f46;
-  --falbor-elements-bg-depth-1: #09090b;
-  --falbor-elements-bg-depth-2: #18181b;
-  --falbor-elements-bg-depth-3: #27272a;
-  --falbor-elements-bg-depth-4: #3f3f46;
-  --falbor-elements-textPrimary: #fafafa;
-  --falbor-elements-textSecondary: #a1a1aa;
-  --falbor-elements-textTertiary: #71717a;
+    --falbor-elements-borderColor: #27272a;
+    --falbor-elements-borderColorActive: #3f3f46;
+    --falbor-elements-bg-depth-1: #09090b;
+    --falbor-elements-bg-depth-2: #18181b;
+    --falbor-elements-bg-depth-3: #27272a;
+    --falbor-elements-bg-depth-4: #3f3f46;
+    --falbor-elements-textPrimary: #fafafa;
+    --falbor-elements-textSecondary: #a1a1aa;
+    --falbor-elements-textTertiary: #71717a;
 }
 
 /* Every @sim/emcn component expresses hover through `hover-hover:` so touch

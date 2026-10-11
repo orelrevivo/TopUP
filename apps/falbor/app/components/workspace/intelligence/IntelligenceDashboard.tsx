@@ -137,7 +137,7 @@ export function IntelligenceDashboard({ workspaceId }: { workspaceId: string }) 
   ];
 
   return (
-    <div className="w-full flex flex-col bg-[#F5F4F0] dark:bg-[#121214] text-gray-900 dark:text-gray-100 font-sans border border-gray-300 dark:border-zinc-800 rounded-md overflow-hidden">
+    <div className="w-full flex flex-col bg-[#F5F4F0] dark:bg-[#292929] text-gray-900 dark:text-gray-100 font-sans border border-gray-300 dark:border-gray-700 rounded-md overflow-hidden">
       <div className="grid grid-cols-1 lg:grid-cols-5">
         <div className="lg:col-span-4 flex flex-col border-r border-gray-300 dark:border-zinc-800">
           <div className="grid grid-cols-5 bg-[#EFECE6] dark:bg-[#18181B]">

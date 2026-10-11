@@ -241,17 +241,17 @@ function PageContent() {
   const isHideSidebar = pathname.startsWith('/chat/') || isNewWorkspaceChat;
 
   return (
-    <div className="flex flex-row h-[100dvh] w-full overflow-hidden bg-[#f7f7f8] dark:bg-[#111114]">
+    <div className="flex flex-row h-[100dvh] w-full overflow-hidden bg-[#f7f7f8] dark:bg-[#1A1A1A]">
       <div className='py-1'>
         {!isHideSidebar && <ClientOnly>{() => <Menu />}</ClientOnly>}
       </div>
       <div ref={containerRef} className="flex flex-row w-full h-full overflow-hidden relative">
         <div
           style={{ width: isAiSidebarOpen ? `calc(${100 - sidebarWidthPercent}% - 5px)` : '100%' }}
-          className={`h-full min-w-0 bg-[#f7f7f8] dark:bg-[#111114] overflow-hidden ${isDragging ? 'transition-none' : 'transition-[width] duration-200'
+          className={`h-full min-w-0 bg-[#f7f7f8] dark:bg-[#1A1A1A] overflow-hidden ${isDragging ? 'transition-none' : 'transition-[width] duration-200'
             }`}
         >
-          <div className={`flex flex-col h-full w-full relative border border-gray-300 dark:border-gray-800/80 overflow-hidden ${isDarkBgPage ? 'bg-white dark:bg-[#080808]' : 'bg-white dark:bg-[#080808]'}`}>
+          <div className={`flex flex-col h-full w-full relative border border-gray-300 dark:border-gray-700 border-t-0 border-b-0 overflow-hidden ${isDarkBgPage ? 'bg-white dark:bg-[#212121]' : 'bg-white dark:bg-[#080808]'}`}>
             {!isDarkBgPage && !started && <BackgroundRays key={pathname} />}
             {!isWorkspacePage && <Header />}
             <ClientOnly fallback={<BaseChat />}>

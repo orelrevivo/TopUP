@@ -298,7 +298,11 @@ export const Markdown = memo(
 
 
 export const stripCodeFenceFromArtifact = (content: string) => {
-  if (!content || !content.includes('__falborArtifact__')) {
+  if (!content || typeof content !== 'string') {
+    return '';
+  }
+
+  if (!content.includes('__falborArtifact__')) {
     return content;
   }
 

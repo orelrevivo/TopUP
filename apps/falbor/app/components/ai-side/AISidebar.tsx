@@ -36,7 +36,7 @@ export const AISidebar = ({
     <div
       style={style}
       className={classNames(
-        'flex flex-col h-full bg-white dark:bg-[#080808] border border-gray-300 dark:border-gray-800/80 z-50 relative shrink-0',
+        'flex flex-col h-full bg-white dark:bg-[#212121]  border border-gray-300 dark:border-gray-700 border-t-0 border-b-0 z-50 relative shrink-0',
         enableTransition ? 'transition-[width,opacity,transform] duration-200' : 'transition-none',
         isOpen ? 'opacity-100 translate-x-0' : 'w-0 opacity-0 translate-x-full overflow-hidden border-0',
         className,

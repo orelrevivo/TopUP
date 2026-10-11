@@ -252,8 +252,8 @@ export function ProductIntelligencePanel({ workspaceId, initialData }: ProductIn
     <div className="flex-1 w-full h-full flex flex-col overflow-y-auto custom-scrollbar gap-6">
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
         <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <i className="i-ph:brain-duotone" />
-          Product Intelligence
+          <i className="i-ph:house" />
+          Overview
         </h2>
 
         <div className="flex flex-wrap items-center gap-3">
@@ -314,7 +314,7 @@ export function ProductIntelligencePanel({ workspaceId, initialData }: ProductIn
           { title: "Segments", value: `${data.targetAudienceHeatmap?.length || 3}`, onClick: () => toggleTile('heatmap') },
           { title: "Missing Info", value: missingCount, onClick: () => toggleTile('missing') }
         ].map((kpi, i) => (
-          <div key={i} onClick={kpi.onClick} className="bg-white dark:bg-[#111114] border border-gray-300 dark:border-[#1A1A1E] p-4 rounded-md cursor-pointer hover:border-blue-300 dark:hover:border-blue-900/50 transition-colors relative overflow-hidden group">
+          <div key={i} onClick={kpi.onClick} className="bg-white dark:bg-[#292929] border border-gray-300 dark:border-gray-700 p-4 rounded-md cursor-pointer hover:border-blue-300 dark:hover:border-blue-900/50 transition-colors relative overflow-hidden group">
             {loading && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent animate-[scanLine_2s_linear_infinite]" />}
             <div className="text-[13px] text-gray-500 font-medium mb-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">{kpi.title}</div>
             <div className="text-2xl font-semibold text-gray-900 dark:text-white truncate">
