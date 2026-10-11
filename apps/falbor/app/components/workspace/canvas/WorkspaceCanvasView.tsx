@@ -21,121 +21,195 @@ function CanvasInner({ workspaceId }: { workspaceId: string }) {
       const json = await res.json();
       
       const newNodes: any[] = [];
-      let yOffset = 50;
+      const newEdges: any[] = [];
 
-      // Map Foundation
-      if (json.intelligence) {
-        newNodes.push({
-          id: 'node-intelligence',
-          type: 'default',
-          position: { x: 250, y: yOffset },
-          data: { 
-            label: (
-              <div className="p-2 w-80 text-left">
-                <h3 className="font-bold flex items-center gap-2 mb-2"><i className="i-ph:brain-duotone text-purple-500" /> Workspace Knowledge</h3>
-                <div className="text-xs mb-1 font-semibold text-gray-500">Target Audience</div>
-                <div className="text-sm mb-2">{json.intelligence.targetAudience}</div>
-                <div className="text-xs mb-1 font-semibold text-gray-500">Positioning</div>
-                <div className="text-sm">{json.intelligence.positioning}</div>
+      // Central Brain Node
+      const centerId = 'node-brain-center';
+      newNodes.push({
+        id: centerId,
+        type: 'default',
+        position: { x: 500, y: 300 },
+        data: {
+          label: (
+            <div className="p-4 w-72 text-center select-none">
+              <div className="w-12 h-12 rounded-full bg-purple-600/10 dark:bg-purple-500/20 text-purple-600 dark:text-purple-400 mx-auto flex items-center justify-center text-2xl mb-2 shadow-inner ring-4 ring-purple-500/10">
+                <i className="i-ph:brain-duotone animate-pulse" />
               </div>
-            ) 
+              <h3 className="font-extrabold text-gray-900 dark:text-white text-base">Product Brain</h3>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Autonomous Neural Intelligence Map</p>
+            </div>
+          )
+        },
+        style: {
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
+          padding: 0
+        }
+      });
+
+      let angleStep = 0;
+      const radius = 380;
+      const totalItems = (json.intelligence ? 1 : 0) + (json.competitors?.length || 0) + (json.ideas?.length || 0) + (json.canvasCards?.length || 0);
+      const stepAngle = (2 * Math.PI) / Math.max(1, totalItems);
+
+      // 1. Intelligence Node
+      if (json.intelligence) {
+        const nodeId = 'node-intelligence';
+        const x = 500 + Math.cos(angleStep) * radius;
+        const y = 300 + Math.sin(angleStep) * (radius * 0.75);
+        angleStep += stepAngle;
+
+        newNodes.push({
+          id: nodeId,
+          type: 'default',
+          position: { x, y },
+          data: {
+            label: (
+              <div className="p-4 w-80 text-left bg-white/90 dark:bg-[#18181C]/90 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-zinc-800 shadow-xl overflow-hidden">
+                <div className="flex items-center gap-2 font-bold text-gray-900 dark:text-white text-sm mb-2 border-b border-gray-100 dark:border-zinc-800 pb-2">
+                  <i className="i-ph:compass-duotone text-purple-500 text-lg" />
+                  <span>AI Visibility Snapshot</span>
+                </div>
+                <div className="text-xs text-gray-500 mb-3">Based on workspace analysis</div>
+                <div className="space-y-1.5 text-xs text-gray-700 dark:text-gray-300">
+                  <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-purple-500" />Target: <span className="font-medium text-gray-900 dark:text-white">{json.intelligence.targetAudience || 'Market segment'}</span></div>
+                  <div className="flex items-center gap-2"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />Position: <span className="font-medium text-gray-900 dark:text-white">{json.intelligence.positioning || 'Calculated'}</span></div>
+                </div>
+              </div>
+            )
           },
-          style: { background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }
+          style: { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 }
         });
-        yOffset += 250;
+
+        newEdges.push({
+          id: `edge-${nodeId}`,
+          source: centerId,
+          target: nodeId,
+          animated: true,
+          style: { stroke: '#8B5CF6', strokeWidth: 2, strokeDasharray: '5 5' }
+        });
       }
 
-      // Map Competitors
+      // 2. Competitors
       if (json.competitors && json.competitors.length > 0) {
-        json.competitors.forEach((c: any, index: number) => {
+        json.competitors.forEach((c: any) => {
+          const nodeId = `node-comp-${c.id}`;
+          const x = 500 + Math.cos(angleStep) * radius;
+          const y = 300 + Math.sin(angleStep) * (radius * 0.75);
+          angleStep += stepAngle;
+
           newNodes.push({
-            id: `node-comp-${c.id}`,
+            id: nodeId,
             type: 'default',
-            position: { x: index * 350 + 50, y: yOffset },
-            data: { 
+            position: { x, y },
+            data: {
               label: (
-                <div className="p-2 w-72 text-left">
-                  <h4 className="font-bold flex items-center gap-2"><i className="i-ph:users-three-duotone text-blue-500" /> {c.name}</h4>
-                  <div className="text-xs mt-2 text-green-600 font-semibold">Strengths</div>
-                  <div className="text-xs mt-1">{c.strengths}</div>
-                  <div className="text-xs mt-2 text-red-600 font-semibold">Weaknesses</div>
-                  <div className="text-xs mt-1">{c.weaknesses}</div>
+                <div className="p-4 w-72 text-left bg-white/90 dark:bg-[#18181C]/90 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-zinc-800 shadow-xl overflow-hidden">
+                  <div className="flex items-center gap-2 font-bold text-gray-900 dark:text-white text-sm mb-2 border-b border-gray-100 dark:border-zinc-800 pb-2">
+                    <i className="i-ph:users-three-duotone text-blue-500 text-lg" />
+                    <span className="truncate">{c.name}</span>
+                  </div>
+                  <div className="text-xs text-emerald-600 font-semibold mb-0.5">Strengths</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 mb-2 leading-relaxed">{c.strengths}</div>
+                  <div className="text-xs text-rose-600 font-semibold mb-0.5">Weaknesses</div>
+                  <div className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">{c.weaknesses}</div>
                 </div>
-              ) 
+              )
             },
-            style: { background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }
+            style: { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 }
+          });
+
+          newEdges.push({
+            id: `edge-${nodeId}`,
+            source: centerId,
+            target: nodeId,
+            animated: true,
+            style: { stroke: '#3B82F6', strokeWidth: 2 }
           });
         });
-        yOffset += 250;
       }
 
-      // Map Ideas
+      // 3. Ideas
       if (json.ideas && json.ideas.length > 0) {
-        json.ideas.forEach((idea: any, index: number) => {
+        json.ideas.forEach((idea: any) => {
+          const nodeId = `node-idea-${idea.id}`;
+          const x = 500 + Math.cos(angleStep) * radius;
+          const y = 300 + Math.sin(angleStep) * (radius * 0.75);
+          angleStep += stepAngle;
+
           newNodes.push({
-            id: `node-idea-${idea.id}`,
+            id: nodeId,
             type: 'default',
-            position: { x: index * 350 + 50, y: yOffset },
-            data: { 
+            position: { x, y },
+            data: {
               label: (
-                <div className="p-2 w-72 text-left">
-                  <h4 className="font-bold flex items-center gap-2 mb-2"><i className="i-ph:sparkle-duotone text-yellow-500" /> {idea.title}</h4>
-                  <div className="text-xs mb-2 text-gray-600">{idea.description}</div>
-                  <div className="bg-gray-50 p-2 rounded text-xs text-gray-500 border border-gray-100">
-                    <span className="font-semibold block mb-1">AI Reasoning</span>
+                <div className="p-4 w-80 text-left bg-white/90 dark:bg-[#18181C]/90 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-zinc-800 shadow-xl overflow-hidden">
+                  <div className="flex items-center gap-2 font-bold text-gray-900 dark:text-white text-sm mb-2 border-b border-gray-100 dark:border-zinc-800 pb-2">
+                    <i className="i-ph:sparkle-duotone text-amber-500 text-lg" />
+                    <span className="truncate">{idea.title}</span>
+                  </div>
+                  <div className="text-xs text-gray-600 dark:text-gray-300 mb-3 leading-relaxed">{idea.description}</div>
+                  <div className="bg-purple-50/50 dark:bg-purple-950/30 p-2.5 rounded-xl text-xs text-purple-900 dark:text-purple-300 border border-purple-100 dark:border-purple-900/40">
+                    <span className="font-semibold block mb-0.5">AI Strategic Insight</span>
                     {idea.reasoning}
                   </div>
                 </div>
-              ) 
+              )
             },
-            style: { background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }
+            style: { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 }
+          });
+
+          newEdges.push({
+            id: `edge-${nodeId}`,
+            source: centerId,
+            target: nodeId,
+            animated: true,
+            style: { stroke: '#F59E0B', strokeWidth: 2 }
           });
         });
-        yOffset += 300;
       }
 
-      // Map Cards
+      // 4. Custom Cards
       if (json.canvasCards && json.canvasCards.length > 0) {
-        json.canvasCards.forEach((card: any, index: number) => {
+        json.canvasCards.forEach((card: any) => {
+          const nodeId = `node-card-${card.id}`;
+          const x = 500 + Math.cos(angleStep) * radius;
+          const y = 300 + Math.sin(angleStep) * (radius * 0.75);
+          angleStep += stepAngle;
+
           newNodes.push({
-            id: `node-card-${card.id}`,
+            id: nodeId,
             type: 'default',
-            position: { x: (index % 3) * 400 + 50, y: yOffset + Math.floor(index / 3) * 300 },
-            data: { 
+            position: { x, y },
+            data: {
               label: (
-                <div className="p-3 w-80 text-left">
-                  <h4 className="font-bold flex items-center gap-2 mb-2"><i className="i-ph:cards-duotone text-purple-500" /> {card.title}</h4>
-                  <div className="text-xs text-gray-700 max-h-40 overflow-y-auto custom-scrollbar prose prose-sm">
+                <div className="p-4 w-80 text-left bg-white/90 dark:bg-[#18181C]/90 backdrop-blur-md rounded-2xl border border-gray-200/80 dark:border-zinc-800 shadow-xl overflow-hidden">
+                  <div className="flex items-center gap-2 font-bold text-gray-900 dark:text-white text-sm mb-2 border-b border-gray-100 dark:border-zinc-800 pb-2">
+                    <i className="i-ph:cards-duotone text-emerald-500 text-lg" />
+                    <span className="truncate">{card.title}</span>
+                  </div>
+                  <div className="text-xs text-gray-700 dark:text-gray-300 max-h-48 overflow-y-auto custom-scrollbar prose prose-xs break-words">
                     <Markdown>{card.content}</Markdown>
                   </div>
                 </div>
-              ) 
+              )
             },
-            style: { background: '#fff', border: '1px solid #e2e8f0', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }
+            style: { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0 }
           });
-        });
-      }
 
-      // If no nodes, add a placeholder node
-      if (newNodes.length === 0) {
-        newNodes.push({
-          id: 'placeholder-node',
-          type: 'default',
-          position: { x: 400, y: 300 },
-          data: { 
-            label: (
-              <div className="p-4 text-center">
-                <i className="i-ph:magic-wand text-4xl text-blue-500 mb-2" />
-                <h3 className="font-bold text-lg mb-1">Infinite AI Canvas</h3>
-                <p className="text-sm text-gray-500">The agent will map its findings, sketches, and reasoning here 24/7.</p>
-              </div>
-            ) 
-          },
-          style: { background: '#fff', border: '2px dashed #cbd5e1', borderRadius: '16px' }
+          newEdges.push({
+            id: `edge-${nodeId}`,
+            source: centerId,
+            target: nodeId,
+            animated: true,
+            style: { stroke: '#10B981', strokeWidth: 2 }
+          });
         });
       }
 
       setNodes(newNodes);
+      setEdges(newEdges);
 
     } catch (e) {
       console.error(e);
@@ -146,7 +220,6 @@ function CanvasInner({ workspaceId }: { workspaceId: string }) {
 
   useEffect(() => {
     loadData();
-    // Poll occasionally to see if AI updated the canvas
     const interval = setInterval(loadData, 30000);
     return () => clearInterval(interval);
   }, [workspaceId]);
@@ -160,13 +233,11 @@ function CanvasInner({ workspaceId }: { workspaceId: string }) {
     }
   }, [liveCanvas.focusTrigger, setCenter]);
 
-  // Force fitView when new live nodes arrive so the user never loses them!
   useEffect(() => {
-    console.log('[CANVAS-DEBUG] Live canvas nodes updated!', liveCanvas.nodes);
     if (liveCanvas.nodes.length > 0) {
       setTimeout(() => fitView({ padding: 0.2, duration: 800 }), 100);
     }
-  }, [liveCanvas.nodes.length, fitView, liveCanvas.nodes]);
+  }, [liveCanvas.nodes.length, fitView]);
 
   const allNodes = useMemo(() => {
     const liveNodes = liveCanvas.nodes.map(n => ({
@@ -175,29 +246,34 @@ function CanvasInner({ workspaceId }: { workspaceId: string }) {
       position: { x: n.x, y: n.y },
       data: {
         label: n.type === 'generating' ? (
-          <div className="p-4 w-64 text-center">
-            <span className="w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 bg-[length:200%_100%] animate-[pulse_2s_ease-in-out_infinite,gradient_2s_linear_infinite] block rounded mb-2" />
-            <span className="text-sm font-semibold text-blue-500 animate-pulse">AI is generating...</span>
+          <div className="p-4 w-72 text-center bg-white/90 dark:bg-[#18181C]/90 backdrop-blur-md rounded-2xl border border-purple-500/50 shadow-xl">
+            <span className="w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-blue-500 bg-[length:200%_100%] animate-pulse block rounded mb-2" />
+            <span className="text-xs font-semibold text-purple-600 dark:text-purple-400 animate-pulse">Neural Brain Synthesizing...</span>
           </div>
         ) : (
-          <div className="p-3 w-[400px] text-left">
-            {n.label && <h4 className="font-bold flex items-center gap-2 mb-2 text-blue-600 border-b border-blue-100 pb-2"><i className="i-ph:sparkle-duotone" /> {n.label}</h4>}
-            <div className="text-sm text-gray-700 max-h-96 overflow-y-auto custom-scrollbar prose prose-sm break-words">
+          <div className="p-4 w-80 text-left bg-white/90 dark:bg-[#18181C]/90 backdrop-blur-md rounded-2xl border border-purple-500/40 shadow-xl">
+            {n.label && (
+              <h4 className="font-bold flex items-center gap-2 mb-2 text-purple-600 dark:text-purple-400 border-b border-purple-100 dark:border-purple-900/40 pb-2 text-sm">
+                <i className="i-ph:sparkle-duotone" />
+                <span className="truncate">{n.label}</span>
+              </h4>
+            )}
+            <div className="text-xs text-gray-700 dark:text-gray-300 max-h-60 overflow-y-auto custom-scrollbar prose prose-xs break-words">
               <Markdown>{n.content || ''}</Markdown>
             </div>
           </div>
         )
       },
-      style: { background: '#fff', border: n.type === 'generating' ? '2px solid #3b82f6' : '1px solid #3b82f6', borderRadius: '12px', boxShadow: '0 4px 20px -2px rgb(59 130 246 / 0.4)', zIndex: 1000 }
+      style: { background: 'transparent', border: 'none', boxShadow: 'none', padding: 0, zIndex: 1000 }
     }));
     return [...nodes, ...liveNodes];
   }, [nodes, liveCanvas.nodes]);
 
   if (loading && nodes.length === 0) {
     return (
-      <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 bg-falbor-elements-background">
-        <span className="i-ph:circle-notch w-10 h-10 animate-spin mb-4" />
-        <p>AI is assembling your canvas...</p>
+      <div className="w-full h-full flex flex-col items-center justify-center text-gray-500 bg-[#FAFAFA] dark:bg-[#111114]">
+        <span className="i-ph:brain-duotone w-12 h-12 text-purple-600 animate-pulse mb-3" />
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">Assembling Product Brain Network...</p>
       </div>
     );
   }
@@ -216,12 +292,12 @@ function CanvasInner({ workspaceId }: { workspaceId: string }) {
           proOptions={{ hideAttribution: true }}
           className="bg-dot-pattern"
         >
-          <Background color="#9CA3AF" gap={20} size={1} />
-          <Controls className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 !shadow-sm" />
-          <Panel position="top-left" className="bg-white/80 dark:bg-black/50 backdrop-blur px-3 py-1.5 rounded-md border border-gray-200 dark:border-gray-800 shadow-sm text-sm font-medium">
-            <div className="flex items-center gap-2 text-gray-600 dark:text-gray-300">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              Live Workspace Canvas
+          <Background color="#9CA3AF" gap={24} size={1} />
+          <Controls className="!bg-white dark:!bg-gray-800 !border-gray-200 dark:!border-gray-700 !shadow-sm !rounded-xl" />
+          <Panel position="top-left" className="bg-white/80 dark:bg-black/50 backdrop-blur px-3.5 py-2 rounded-xl border border-gray-200 dark:border-gray-800 shadow-sm text-xs font-semibold">
+            <div className="flex items-center gap-2 text-gray-700 dark:text-gray-300">
+              <span className="w-2 h-2 rounded-full bg-purple-500 animate-ping" />
+              <span>Product Brain Network</span>
             </div>
           </Panel>
         </ReactFlow>

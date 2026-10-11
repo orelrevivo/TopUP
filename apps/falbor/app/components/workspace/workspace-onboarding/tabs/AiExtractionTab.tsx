@@ -155,9 +155,9 @@ export function AiExtractionTab({
 
           <button
             onClick={handleNext}
-            disabled={isAiProcessing || isSubmitting}
-            className={`px-6 py-2 rounded-lg font-medium transition-colors shadow-sm ${!isAiProcessing && !isSubmitting
-              ? 'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200'
+            disabled={isSubmitting || !promptContent.trim()}
+            className={`px-6 py-2 rounded-lg font-medium transition-colors shadow-sm ${!isSubmitting && promptContent.trim()
+              ? 'bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 cursor-pointer'
               : 'bg-gray-200 text-gray-400 dark:bg-[#1C1D21] dark:text-gray-600 cursor-not-allowed'
               }`}
           >

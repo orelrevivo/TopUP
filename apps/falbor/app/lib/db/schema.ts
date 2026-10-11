@@ -1,5 +1,5 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, uuid, jsonb, boolean, integer, decimal, serial, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, uuid, jsonb, boolean, integer, decimal, serial, varchar, real, index, uniqueIndex } from "drizzle-orm/pg-core";
 
 // Re-export types so `import { Agency } from '~/lib/db/schema'` keeps working.
 // The actual type definitions are in types.ts (safe for client components).
@@ -41,6 +41,23 @@ export const signalPosts = pgTable("signal_posts", {
     relevanceScore: integer("relevance_score").default(0),
     relevanceReason: text("relevance_reason"),
     painPoints: jsonb("pain_points").default("[]"),
+    postedAt: text("posted_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const brandMentionPosts = pgTable("brand_mention_posts", {
+    id: uuid("id").primaryKey().defaultRandom(),
+    workspaceId: text("workspace_id").notNull(),
+    platform: text("platform").notNull(),
+    title: text("title").notNull(),
+    content: text("content").notNull(),
+    url: text("url"),
+    author: text("author"),
+    likes: integer("likes").default(0),
+    comments: integer("comments").default(0),
+    brandKeyword: text("brand_keyword").notNull(),
+    sentiment: text("sentiment").default("neutral"),
+    relevanceReason: text("relevance_reason"),
     postedAt: text("posted_at"),
     createdAt: timestamp("created_at").defaultNow().notNull(),
 });
@@ -1351,3 +1368,268 @@ export const claimedMilestones = pgTable("claimed_milestones", {
     rewardCents: integer("reward_cents").notNull(),
     claimedAt: timestamp("claimed_at").defaultNow().notNull(),
 });
+
+export const workspaceBuilds = pgTable("workspace_builds", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    status: varchar("status", { length: 20 }).default("pending").notNull(),
+    currentStage: varchar("current_stage", { length: 50 }),
+    lastSuccessfulStage: varchar("last_successful_stage", { length: 50 }),
+    retryCount: integer("retry_count").default(0).notNull(),
+    errorMessage: text("error_message"),
+    leaseOwner: varchar("lease_owner", { length: 64 }),
+    leaseExpiresAt: timestamp("lease_expires_at"),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+    workspaceIdx: uniqueIndex("workspace_builds_workspace_idx").on(t.workspaceId),
+    statusIdx: index("workspace_builds_status_idx").on(t.status),
+}));
+
+export const workspaceBuildStages = pgTable("workspace_build_stages", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    buildId: uuid("build_id").notNull().references(() => workspaceBuilds.id, { onDelete: "cascade" }),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    stageKey: varchar("stage_key", { length: 50 }).notNull(),
+    position: integer("position").notNull(),
+    status: varchar("status", { length: 20 }).default("pending").notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    errorMessage: text("error_message"),
+    result: jsonb("result"),
+    startedAt: timestamp("started_at"),
+    completedAt: timestamp("completed_at"),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+    buildStageIdx: uniqueIndex("workspace_build_stages_build_stage_idx").on(t.buildId, t.stageKey),
+    workspaceIdx: index("workspace_build_stages_workspace_idx").on(t.workspaceId),
+}));
+
+export const workspaceProductProfiles = pgTable("workspace_product_profiles", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    productName: text("product_name"),
+    domain: text("domain"),
+    summary: text("summary"),
+    category: text("category"),
+    icp: text("icp"),
+    problem: text("problem"),
+    pricing: text("pricing"),
+    positioning: text("positioning"),
+    maturity: text("maturity"),
+    useCases: jsonb("use_cases").default("[]"),
+    features: jsonb("features").default("[]"),
+    knownCompetitors: jsonb("known_competitors").default("[]"),
+    conversionBlockers: jsonb("conversion_blockers").default("[]"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+    workspaceIdx: uniqueIndex("workspace_product_profiles_workspace_idx").on(t.workspaceId),
+}));
+
+export const buyerQuestions = pgTable("buyer_questions", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    buildId: uuid("build_id").references(() => workspaceBuilds.id, { onDelete: "set null" }),
+    question: text("question").notNull(),
+    questionHash: varchar("question_hash", { length: 64 }).notNull(),
+    category: varchar("category", { length: 30 }).notNull(),
+    intent: varchar("intent", { length: 20 }).default("medium").notNull(),
+    audience: text("audience"),
+    rationale: text("rationale"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    workspaceHashIdx: uniqueIndex("buyer_questions_workspace_hash_idx").on(t.workspaceId, t.questionHash),
+}));
+
+export const modelRuns = pgTable("model_runs", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    questionId: uuid("question_id").notNull().references(() => buyerQuestions.id, { onDelete: "cascade" }),
+    provider: varchar("provider", { length: 20 }).notNull(),
+    model: varchar("model", { length: 100 }).notNull(),
+    status: varchar("status", { length: 20 }).default("pending").notNull(),
+    attempts: integer("attempts").default(0).notNull(),
+    rawResponse: text("raw_response"),
+    errorMessage: text("error_message"),
+    latencyMs: integer("latency_ms"),
+    analysisStatus: varchar("analysis_status", { length: 20 }).default("pending").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+    questionProviderIdx: uniqueIndex("model_runs_question_provider_idx").on(t.questionId, t.provider),
+    workspaceIdx: index("model_runs_workspace_idx").on(t.workspaceId),
+}));
+
+export const aiAnswerAnalyses = pgTable("ai_answer_analyses", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    modelRunId: uuid("model_run_id").notNull().references(() => modelRuns.id, { onDelete: "cascade" }),
+    productMentioned: boolean("product_mentioned").default(false).notNull(),
+    productRecommended: boolean("product_recommended").default(false).notNull(),
+    productPosition: integer("product_position"),
+    describedProduct: text("described_product"),
+    descriptionAccurate: boolean("description_accurate"),
+    pricingAccurate: boolean("pricing_accurate"),
+    statusAccurate: boolean("status_accurate"),
+    attributedFeatures: jsonb("attributed_features").default("[]"),
+    misunderstandsProduct: boolean("misunderstands_product").default(false).notNull(),
+    recognition: jsonb("recognition").default("{}"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    runIdx: uniqueIndex("ai_answer_analyses_run_idx").on(t.modelRunId),
+    workspaceIdx: index("ai_answer_analyses_workspace_idx").on(t.workspaceId),
+}));
+
+export const aiAnswerBrands = pgTable("ai_answer_brands", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    analysisId: uuid("analysis_id").notNull().references(() => aiAnswerAnalyses.id, { onDelete: "cascade" }),
+    brandName: text("brand_name").notNull(),
+    domain: text("domain"),
+    position: integer("position").notNull(),
+    isUserProduct: boolean("is_user_product").default(false).notNull(),
+    reason: text("reason"),
+}, (t) => ({
+    workspaceBrandIdx: index("ai_answer_brands_workspace_brand_idx").on(t.workspaceId, t.brandName),
+    analysisIdx: index("ai_answer_brands_analysis_idx").on(t.analysisId),
+}));
+
+export const workspaceCompetitorProfiles = pgTable("workspace_competitor_profiles", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    brandName: text("brand_name").notNull(),
+    domain: text("domain"),
+    positioning: jsonb("positioning").default("{}"),
+    pricing: jsonb("pricing").default("{}"),
+    features: jsonb("features").default("[]"),
+    audience: jsonb("audience").default("{}"),
+    whyRecommends: jsonb("why_recommends").default("[]"),
+    headToHead: jsonb("head_to_head").default("{}"),
+    sources: jsonb("sources").default("[]"),
+    newContent: jsonb("new_content").default("[]"),
+    messagingChanges: jsonb("messaging_changes").default("[]"),
+    communityPresence: jsonb("community_presence").default("[]"),
+    ads: jsonb("ads").default("{}"),
+    timelineEvents: jsonb("timeline_events").default("[]"),
+    hasEvidence: boolean("has_evidence").default(true).notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+    workspaceCompetitorKeyIdx: uniqueIndex("workspace_competitor_key_idx").on(t.workspaceId, t.brandName),
+}));
+
+export const aiAnswerSources = pgTable("ai_answer_sources", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    analysisId: uuid("analysis_id").notNull().references(() => aiAnswerAnalyses.id, { onDelete: "cascade" }),
+    domain: text("domain").notNull(),
+    url: text("url"),
+    sourceType: varchar("source_type", { length: 30 }).notNull(),
+    isFirstParty: boolean("is_first_party").default(false).notNull(),
+    isCommunity: boolean("is_community").default(false).notNull(),
+    discussesProduct: boolean("discusses_product").default(false).notNull(),
+    discussesProblem: boolean("discusses_problem").default(false).notNull(),
+    mentionsCompetitors: boolean("mentions_competitors").default(false).notNull(),
+    isCurrent: boolean("is_current"),
+}, (t) => ({
+    workspaceDomainIdx: index("ai_answer_sources_workspace_domain_idx").on(t.workspaceId, t.domain),
+    analysisIdx: index("ai_answer_sources_analysis_idx").on(t.analysisId),
+}));
+
+export const workspaceMetricSnapshots = pgTable("workspace_metric_snapshots", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    buildId: uuid("build_id").references(() => workspaceBuilds.id, { onDelete: "set null" }),
+    visibility: real("visibility").notNull(),
+    shareOfVoice: real("share_of_voice").notNull(),
+    averagePosition: real("average_position"),
+    productUnderstanding: real("product_understanding").notNull(),
+    answersCount: integer("answers_count").notNull(),
+    breakdown: jsonb("breakdown").default("{}"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    workspaceTimeIdx: index("workspace_metric_snapshots_workspace_time_idx").on(t.workspaceId, t.createdAt),
+}));
+
+export const questionCriticality = pgTable("question_criticality", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    questionId: uuid("question_id").notNull().references(() => buyerQuestions.id, { onDelete: "cascade" }),
+    intentWeight: real("intent_weight").notNull(),
+    competitivePressure: real("competitive_pressure").notNull(),
+    gapSeverity: real("gap_severity").notNull(),
+    acquisitionSignal: real("acquisition_signal").notNull(),
+    modelAgreement: real("model_agreement").notNull(),
+    score: real("score").notNull(),
+    level: varchar("level", { length: 10 }).notNull(),
+    updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (t) => ({
+    questionIdx: uniqueIndex("question_criticality_question_idx").on(t.questionId),
+    workspaceIdx: index("question_criticality_workspace_idx").on(t.workspaceId),
+}));
+
+export const acquisitionOpportunities = pgTable("acquisition_opportunities", {
+    id: uuid("id").defaultRandom().primaryKey(),
+    workspaceId: varchar("workspace_id", { length: 255 }).notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+    buildId: uuid("build_id").references(() => workspaceBuilds.id, { onDelete: "set null" }),
+    title: text("title").notNull(),
+    horizon: varchar("horizon", { length: 10 }).notNull(),
+    channel: text("channel"),
+    observedEvidence: jsonb("observed_evidence").default("[]"),
+    recommendation: text("recommendation").notNull(),
+    expectedOutcome: text("expected_outcome"),
+    measurement: text("measurement"),
+    reach: real("reach").notNull(),
+    intent: real("intent").notNull(),
+    icpRelevance: real("icp_relevance").notNull(),
+    competitiveGap: real("competitive_gap").notNull(),
+    effort: real("effort").notNull(),
+    confidence: real("confidence").notNull(),
+    priorityScore: real("priority_score").notNull(),
+    relatedQuestionIds: jsonb("related_question_ids").default("[]"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (t) => ({
+    workspacePriorityIdx: index("acquisition_opportunities_workspace_priority_idx").on(t.workspaceId, t.priorityScore),
+}));
+// Extracted from live DB to prevent Drizzle dropping them
+export const globalSettings = pgTable("global_settings", {
+  id: serial("id").primaryKey(),
+  riskyPathKeywords: text("risky_path_keywords"),
+  largePrThreshold: integer("large_pr_threshold"),
+  missingTests: boolean("missing_tests"),
+  dependencyChange: boolean("dependency_change"),
+  reportFormat: text("report_format"),
+  includeLowRisk: boolean("include_low_risk"),
+  enablePostToGithub: boolean("enable_post_to_github"),
+  githubAppInstallationId: text("github_app_installation_id"),
+});
+
+export const repositories = pgTable("repositories", {
+  id: uuid("id").primaryKey(),
+  name: text("name"),
+  fullName: text("full_name"),
+  githubId: text("github_id"),
+  connectedAt: timestamp("connected_at"),
+});
+
+export const adrRules = pgTable("adr_rules", {
+  id: uuid("id").primaryKey(),
+  repositoryId: uuid("repository_id"),
+  title: text("title"),
+  description: text("description"),
+  severity: text("severity"),
+  createdAt: timestamp("created_at"),
+});
+
+export const prReports = pgTable("pr_reports", {
+  id: uuid("id").primaryKey(),
+  repositoryId: uuid("repository_id"),
+  prNumber: text("pr_number"),
+  title: text("title"),
+  riskLevel: text("risk_level"),
+  summary: text("summary"),
+  markdownReport: text("markdown_report"),
+  createdAt: timestamp("created_at"),
+});
+

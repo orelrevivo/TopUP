@@ -23,18 +23,28 @@ interface PlatformSelectorProps {
     selected: string[];
     onToggle: (id: string) => void;
     onContinue: () => void;
+    title?: string;
+    description?: string;
+    buttonText?: string;
 }
 
-export function PlatformSelector({ selected, onToggle, onContinue }: PlatformSelectorProps) {
+export function PlatformSelector({
+    selected,
+    onToggle,
+    onContinue,
+    title = 'Signal Radar',
+    description = 'Select at least 3 platforms for the AI to scan. It will surface real conversations where people describe the exact problem your product solves.',
+    buttonText = 'Scan for Signals →',
+}: PlatformSelectorProps) {
     const canContinue = selected.length >= 3;
 
     return (
         <div className="flex-1 flex flex-col items-center justify-center h-full px-6">
             <div className="w-full max-w-2xl">
                 <div className="mb-8 text-center">
-                    <h2 className="text-2xl font-bold text-falbor-elements-textPrimary">Signal Radar</h2>
+                    <h2 className="text-2xl font-bold text-falbor-elements-textPrimary">{title}</h2>
                     <p className="text-sm text-falbor-elements-textSecondary mt-2 max-w-md mx-auto">
-                        Select at least 3 platforms for the AI to scan. It will surface real conversations where people describe the exact problem your product solves.
+                        {description}
                     </p>
                 </div>
 
@@ -81,7 +91,7 @@ export function PlatformSelector({ selected, onToggle, onContinue }: PlatformSel
                                 : 'bg-gray-200 dark:bg-gray-800 text-gray-400 cursor-not-allowed'
                         )}
                     >
-                        Scan for Signals →
+                        {buttonText}
                     </button>
                 </div>
             </div>

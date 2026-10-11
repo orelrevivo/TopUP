@@ -11,6 +11,7 @@ const PUBLIC_ROUTES = [
   "/api/test-tomba",
   "/login",
   "/signup",
+  "/reset-password",
   "/verified",
   "/privacy",
   "/terms",
@@ -25,6 +26,9 @@ const PUBLIC_ROUTES = [
   "/api/auth/login",
   "/api/auth/register",
   "/api/auth/verify",
+  "/api/auth/reset-password/send-code",
+  "/api/auth/reset-password/verify-code",
+  "/api/auth/reset-password/reset",
   "/api/auth/logout",
   "/api/health",
   "/api/telegram/webhook",
@@ -40,7 +44,8 @@ const PUBLIC_ROUTES = [
   "/api/auth/stripe",
   "/api/auth/stripe/callback",
   "/visual-editor/api/stripe/webhook",
-  "/api/cron/daily"
+  "/api/cron/daily",
+  "/docs"
 ];
 
 const STATIC_PREFIXES = ["/_next", "/favicon", "/icons", "/logo", "/apple-touch-icon", "/social_preview", "/landing"];
@@ -69,7 +74,7 @@ export async function middleware(request: NextRequest) {
       const isTunnel = hostname.includes("ngrok") || hostname.includes("trycloudflare");
       if (!isTunnel && !pathname.startsWith('/api/') && parts.length >= 3) {
         const sub = parts[0];
-        if (sub !== 'www' && sub !== 'hacking' && sub !== 'api') {
+        if (sub !== 'www' && sub !== 'hacking' && sub !== 'docs' && sub !== 'api') {
           subdomain = sub;
         }
       }
@@ -86,12 +91,15 @@ export async function middleware(request: NextRequest) {
       return (
         PUBLIC_ROUTES.some((r) => path === r) ||
         path.startsWith("/blog/") ||
+        path.startsWith("/reset-password") ||
+        path.startsWith("/api/auth/reset-password") ||
         path === "/templates" ||
         path.startsWith("/templates/") ||
         path === "/api/templates" ||
         path.startsWith("/api/templates/") ||
         path.startsWith("/marketers") ||
-        path.startsWith("/b2b/")
+        path.startsWith("/b2b/") ||
+        path.startsWith("/docs")
       );
     };
 
@@ -137,6 +145,11 @@ export async function middleware(request: NextRequest) {
     const handleSuccess = () => {
       const hostname = request.headers.get("host") || "";
       const isLocalhost = hostname.includes("localhost") || hostname.includes("127.0.0.1");
+
+      if (!isLocalhost && (hostname === "docs.falbor.xyz" || hostname.startsWith("docs."))) {
+        const rewritePath = pathname === "/" ? "/docs" : (pathname.startsWith("/docs") ? pathname : `/docs${pathname}`);
+        return NextResponse.rewrite(new URL(rewritePath, request.url));
+      }
 
       if (!isLocalhost && hostname === "hacking.falbor.xyz") {
         const rewritePath = pathname === "/" ? "/hacking" : `/hacking${pathname}`;

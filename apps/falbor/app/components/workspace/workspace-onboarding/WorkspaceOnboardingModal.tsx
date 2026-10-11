@@ -87,8 +87,9 @@ export function WorkspaceOnboardingModal({ workspaceId }: WorkspaceOnboardingMod
       try {
         await updateWorkspaceOnboarding(workspaceId, promptContent);
         router.refresh();
+        window.location.reload();
       } catch (e) {
-        console.error(e);
+        console.error('Failed to update workspace onboarding:', e);
         setIsSubmitting(false);
       }
     }

@@ -10,7 +10,6 @@ import type { Message } from 'ai';
 import styles from './Markdown.module.scss';
 import ThoughtBox from './ThoughtBox';
 import FunctionCallBox from './FunctionCallBox';
-import { ScreenshotAccordion } from '../../hacking/ScreenshotAccordion';
 import type { ProviderInfo } from '~/types/model';
 
 const logger = createScopedLogger('MarkdownComponent');
@@ -104,17 +103,11 @@ export const Markdown = memo(
             return <Artifact messageId={messageId} artifactId={artifactId} append={append} model={model} provider={provider?.name} />;
           }
 
-          if (className?.includes('__falborScreenshot__')) {
-            const url = (dataProps['data-url'] || dataProps.dataUrl) as string;
-            const title = (dataProps['data-title'] || dataProps.dataTitle) as string;
-            return <ScreenshotAccordion url={url} title={title || "Screenshot"} />;
-          }
-
           if (className?.includes('__falborSelectedElement__')) {
             const messageId = node?.properties.dataMessageId as string;
             const elementDataAttr = node?.properties.dataElement as string;
 
-            
+
             let elementData: any = null;
 
             if (elementDataAttr) {
@@ -312,12 +305,12 @@ export const stripCodeFenceFromArtifact = (content: string) => {
   const lines = content.split('\n');
   const artifactLineIndex = lines.findIndex((line) => line.includes('__falborArtifact__'));
 
-  
+
   if (artifactLineIndex === -1) {
     return content;
   }
 
-  
+
   if (artifactLineIndex > 0 && lines[artifactLineIndex - 1]?.trim().match(/^```\w*$/)) {
     lines[artifactLineIndex - 1] = '';
   }

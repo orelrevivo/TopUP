@@ -17,7 +17,7 @@ const posts: BlogPost[] = [
     date: "2026-09-22",
     author: "Falbor Team",
     coverImage: "/landing/blog/how-to-build-a-website-cover.png",
-    mdPath: "../../Docs/blog/how-to-build-a-website.md",
+    mdPath: "../../docs/blog/how-to-build-a-website.md",
   },
 ];
 

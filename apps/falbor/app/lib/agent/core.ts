@@ -112,6 +112,7 @@ INSTRUCTIONS:
 12. CRITICAL BLOG CONTENT IMPROVEMENT RULE: When requested to improve or generate blog content or when [CONTEXT: BLOG_CONTENT_IMPROVEMENT_MCP] is provided, use \`blog_content_get\` to retrieve the current post, refine/expand it in HTML format, and call \`blog_content_update\` to save the updated post directly.
 13. CRITICAL PRODUCT DECK IMPROVEMENT RULE: When requested to improve or generate presentation deck content or when [CONTEXT: PRODUCT_DECK_IMPROVEMENT_MCP] is provided, use \`presentation_get\` to retrieve the current pitch deck slides, refine or edit specific slide content in clean HTML format, and call \`presentation_update\` to save the updated deck directly.
 14. CRITICAL SIGNAL RADAR RULE: When [CONTEXT: SIGNAL_RADAR] is provided, you MUST: (a) call \`read_workspace\` to understand the product's main problem and target audience, (b) call \`serp_search\` multiple times — once per platform — using queries like "site:reddit.com {problem}" or "{problem} discussion site:linkedin.com" to find REAL posts where people complain about the exact problem the product solves, (c) collect 5-10 real, unique posts per platform (aim for 15-25 total), each with a real URL, real author handle, real engagement numbers if visible, and a short excerpt of the actual content, (d) call \`ui_update_signal_posts\` EXACTLY ONCE with all found posts. CRITICAL: Do NOT call \`tomba_search_prospects\` or any email/contact tool for this task. Do NOT fabricate URLs — only use URLs returned by \`serp_search\`. Do NOT ask for permission.
+15. CRITICAL BRAND MENTIONS RULE: When [CONTEXT: BRAND_MENTIONS] is provided, you MUST: (a) Identify the exact product/company name (e.g., "${productName}"). (b) Call \`serp_search\` ONLY for the user's selected platforms (e.g., "site:reddit.com ${productName}" or "site:twitter.com ${productName}"). (c) STRICT FILTERING: You MUST ONLY include posts where the title or snippet explicitly contains the exact product or company name. If search results do not explicitly mention and discuss the product/company by name, DISCARD THEM. Do NOT output generic search hits or unrelated site results. (d) Call \`ui_update_brand_mention_posts\` EXACTLY ONCE with only verified explicit mentions. If no posts explicitly mention the company name on the selected platforms, return 0 posts.
 
 ${channelRules}`;
 }
@@ -313,6 +314,51 @@ export async function buildAgentTools(workspace: any, selectedMCPs: string[] = [
                     console.error('Failed to persist signal posts to DB:', err);
                 }
                 return JSON.stringify({ success: true, count: posts.length, message: 'Signal posts updated in the UI and database. Workflow complete. Do NOT call ui_update_signal_posts again.' });
+            }
+        }),
+        ui_update_brand_mention_posts: tool({
+            description: 'Update the Mentions dashboard with posts explicitly mentioning the product or company name. Call this EXACTLY ONCE after discovering all posts.',
+            parameters: z.object({
+                posts: z.array(z.object({
+                    platform: z.string().describe('Platform name: Reddit, LinkedIn, Twitter, Google, IndieHackers, etc.'),
+                    title: z.string().describe('Post title or headline'),
+                    content: z.string().describe('Excerpt or summary of the post content explicitly mentioning the company/product'),
+                    url: z.string().optional().default('#').describe('URL to the post'),
+                    author: z.string().optional().default('Anonymous'),
+                    likes: z.number().optional().default(0),
+                    comments: z.number().optional().default(0),
+                    brandKeyword: z.string().optional().default(workspace?.name || 'Falbor').describe('The specific product or company name explicitly mentioned in the post'),
+                    sentiment: z.enum(['positive', 'neutral', 'negative']).optional().default('neutral').describe('Sentiment of the mention'),
+                    relevanceReason: z.string().optional().default('').describe('Why this post is relevant to the brand'),
+                    postedAt: z.string().optional().default('Recently'),
+                }))
+            }),
+            execute: async ({ posts }) => {
+                try {
+                    if (workspace?.id && posts.length > 0) {
+                        const crypto = require('crypto');
+                        const { brandMentionPosts } = require('~/lib/db/schema');
+                        const normalizedPosts = posts.map(p => ({
+                            id: crypto.randomUUID(),
+                            workspaceId: workspace.id,
+                            platform: p.platform,
+                            title: p.title,
+                            content: p.content,
+                            url: p.url || '#',
+                            author: p.author || 'Anonymous',
+                            likes: p.likes || 0,
+                            comments: p.comments || 0,
+                            brandKeyword: p.brandKeyword || workspace.name || 'Brand',
+                            sentiment: p.sentiment || 'neutral',
+                            relevanceReason: p.relevanceReason || '',
+                            postedAt: p.postedAt || 'Recently',
+                        }));
+                        await db.insert(brandMentionPosts).values(normalizedPosts);
+                    }
+                } catch (err) {
+                    console.error('Failed to persist brand mention posts to DB:', err);
+                }
+                return JSON.stringify({ success: true, count: posts.length, message: 'Brand mention posts updated in the UI and database. Workflow complete. Do NOT call ui_update_brand_mention_posts again.' });
             }
         }),
         ui_update_agent_contact_table: tool({

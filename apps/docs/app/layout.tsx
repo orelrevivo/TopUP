@@ -1,4 +1,13 @@
 import Link from 'next/link';
+import './global.css';
+import { Navbar } from '@/components/navbar/navbar';
+import { Footer } from '@/components/footer/footer';
+
+import { DOCS_CONFIG } from '@/lib/docs-config';
+
+const SIDEBAR_ITEMS = DOCS_CONFIG.filter(
+  (item) => item.category === 'Documentation'
+);
 
 export default function DocsLayout({
   children,
@@ -6,48 +15,44 @@ export default function DocsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
-      <body>
-        <div className="flex w-full h-full text-white bg-black">
-          {/* Docs Sidebar */}
-          <aside className="w-64 flex-shrink-0 border-r border-gray-800 bg-black/90 p-6 flex flex-col gap-4">
-            <h2 className="text-xl font-bold mb-4 text-[#FF5800]">Documentation</h2>
-            <nav className="flex flex-col gap-2">
-              <Link href="/docs/builder" className="hover:text-[#FF5800] transition-colors">
-                Website Builder
-              </Link>
-              <Link href="/docs/database" className="hover:text-[#FF5800] transition-colors">
-                Database
-              </Link>
-              <Link href="/docs/organizations" className="hover:text-[#FF5800] transition-colors">
-                Organizations
-              </Link>
-              <Link href="/docs/workflow" className="hover:text-[#FF5800] transition-colors">
-                Workflow
-              </Link>
-              <Link href="/docs/darknet" className="hover:text-[#FF5800] transition-colors">
-                Darknet
-              </Link>
-              <div className="my-2 border-t border-gray-800"></div>
-              <Link href="/docs/chat" className="hover:text-[#FF5800] transition-colors">
-                Chat
-              </Link>
-              <Link href="/docs/models" className="hover:text-[#FF5800] transition-colors">
-                Models
-              </Link>
-              <Link href="/docs/stayup" className="hover:text-[#FF5800] transition-colors">
-                Stayup
-              </Link>
-            </nav>
-          </aside>
+    <html lang="en" className="dark" suppressHydrationWarning>
+      <body className="min-h-screen bg-[var(--bg)] text-[var(--text-primary)] antialiased" suppressHydrationWarning>
+        <div className="flex min-h-screen flex-col">
+          <Navbar />
 
-          {/* Main Content Area */}
-          <main className="flex-1 overflow-y-auto p-8">
-            {children}
-          </main>
+          <div className="flex flex-1 w-full max-w-[1400px] mx-auto px-6">
+            {/* Docs Sidebar */}
+            <aside className="w-60 flex-shrink-0 py-8 pr-6 hidden md:flex flex-col gap-6 sticky top-[100px] h-[calc(100vh-100px)] overflow-y-auto">
+              <div>
+                <h3 className="mb-3 text-[11px] font-semibold uppercase tracking-wider text-[var(--text-subtle)]">
+                  Documentation Nav
+                </h3>
+                <nav className="flex flex-col gap-1 text-sm">
+                  {DOCS_CONFIG.map((item) => (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className="rounded-md px-3 py-2 text-[var(--text-secondary)] transition-colors hover:bg-[var(--surface-hover)] hover:text-[var(--text-primary)]"
+                    >
+                      {item.title}
+                    </Link>
+                  ))}
+                </nav>
+              </div>
+            </aside>
+
+            {/* Main Content Area */}
+            <main className="flex-1 overflow-y-auto py-8 px-10 min-w-0">
+              {children}
+            </main>
+          </div>
+
+          <Footer />
         </div>
       </body>
     </html>
   );
 }
+
+
 

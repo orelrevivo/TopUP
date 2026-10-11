@@ -6,6 +6,7 @@ export interface PlanConfig {
   price: number;
   monthlyCredits: number;
   maxAgents: number | 'unlimited';
+  maxWorkspaces: number;
   browserView: boolean;
   creditEfficiencyMultiplier: number; // Applied to cost calculations: Free=1.2, Pro=1.0, Power=0.85, Business=0.75
   features: string[];
@@ -40,9 +41,11 @@ export const BILLING_CONFIG = {
       price: 0,
       monthlyCredits: 10,
       maxAgents: 2,
+      maxWorkspaces: 1,
       browserView: false,
       creditEfficiencyMultiplier: 1.2, // Free consumes 20% faster
       features: [
+        '1 Workspace allowed',
         '10 monthly credits',
         'Maximum 2 Agents',
         'No Browser View',
@@ -55,11 +58,13 @@ export const BILLING_CONFIG = {
       price: 19,
       monthlyCredits: 150,
       maxAgents: 'unlimited',
+      maxWorkspaces: 3,
       browserView: true,
       creditEfficiencyMultiplier: 1.0, // Standard baseline efficiency
       popular: true,
       features: [
         'Everything in Free',
+        'Up to 3 Workspaces',
         '150 monthly credits',
         'Unlimited Agents',
         'Browser View enabled',
@@ -72,10 +77,12 @@ export const BILLING_CONFIG = {
       price: 39,
       monthlyCredits: 500,
       maxAgents: 'unlimited',
+      maxWorkspaces: 5,
       browserView: true,
       creditEfficiencyMultiplier: 0.85, // 15% better efficiency
       features: [
         'Everything in Pro',
+        'Up to 5 Workspaces',
         '500 monthly credits',
         'Invite member to workspace',
         'Unlimited Agents',
@@ -89,10 +96,12 @@ export const BILLING_CONFIG = {
       price: 99,
       monthlyCredits: 1500,
       maxAgents: 'unlimited',
+      maxWorkspaces: 10,
       browserView: true,
       creditEfficiencyMultiplier: 0.75, // 25% better efficiency
       features: [
         'Everything in Power',
+        'Up to 10 Workspaces',
         '1,500 monthly credits',
         'Invite member to workspace',
         'Unlimited Agents',

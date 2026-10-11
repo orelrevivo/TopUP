@@ -13,9 +13,13 @@ import { WorkspaceMetaAdsView } from '~/components/workspace/ads/WorkspaceMetaAd
 import { WorkspaceBlogContentView } from '~/components/workspace/ads/WorkspaceBlogContentView';
 import { WorkspacePresentationView } from '~/components/workspace/ads/WorkspacePresentationView';
 import { WorkspaceSignalRadarView } from '~/components/workspace/signal-radar/WorkspaceSignalRadarView';
+import { WorkspaceMentionsView } from '~/components/workspace/mentions/WorkspaceMentionsView';
 import { MyProspectsView } from '~/components/workspace/contacts/MyProspectsView';
 import { CommunityMessagesView } from '~/components/community/CommunityMessagesView';
 import { MilestoneView } from '~/components/milestone/MilestoneView';
+import { WorkspaceCompetitorsView } from '~/components/workspace/competitors/WorkspaceCompetitorsView';
+import { WorkspaceAiAeoView } from '~/components/workspace/ai-aeo/WorkspaceAiAeoView';
+import { AiStartupArenaView } from '~/components/workspace/games/AiStartupArenaView';
 
 import type { JSONValue, Message } from 'ai';
 import React, { type RefCallback, useEffect, useState } from 'react';
@@ -51,6 +55,8 @@ import { StickToBottom, useStickToBottomContext } from '~/lib/hooks';
 import { toast } from 'react-toastify';
 import { Slider } from '~/components/ui/Slider';
 import { ChatBox } from '../input/ChatBox';
+import { WorkspaceBuildProgress } from '~/components/workspace/build/WorkspaceBuildProgress';
+import { useWorkspaceBuild } from '~/lib/hooks/useWorkspaceBuild';
 import { ChatHistoryBox } from './ChatHistoryBox';
 import type { DesignScheme } from '~/types/design-scheme';
 import type { ElementInfo } from '~/components/workbench/Inspector';
@@ -195,6 +201,8 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const isBrowserOpen = useStore(aiSidebarStore.isBrowserOpen);
 
     // UI Layout helpers
+    const isAiAeoPage = pathname?.includes('/ai-aeo');
+    const isCompetitorsPage = pathname?.includes('/competitors');
     const isCanvasPage = pathname?.includes('/canvas');
     const isSourcesPage = pathname?.includes('/sources');
     const isProductPage = pathname?.includes('/product') && !pathname?.includes('/product-deck');
@@ -209,10 +217,14 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
     const isAgentContactPage = pathname?.includes('/agent-contact');
     const isMyProspectsPage = pathname?.includes('/my-prospects');
     const isSignalRadarPage = pathname?.includes('/signal-radar');
+    const isMentionsPage = pathname?.includes('/mentions');
     const isCommunityMessagesPage = pathname?.includes('/community/messages');
     const isMilestonePage = pathname?.includes('/milestone');
+    const isArenaPage = pathname?.includes('/games/ai-startup-arena');
     const isNewChat = pathname?.includes('/new/');
-    const isWorkspaceHome = !!workspaceId && !isCanvasPage && !isSourcesPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isCommunityMessagesPage && !isMilestonePage && !isNewChat;
+    const isWorkspaceHome = !!workspaceId && !isAiAeoPage && !isCompetitorsPage && !isCanvasPage && !isSourcesPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isMentionsPage && !isCommunityMessagesPage && !isMilestonePage && !isArenaPage && !isNewChat;
+    const { build: workspaceBuild, isBuilding: isWorkspaceBuilding, retry: retryWorkspaceBuild } = useWorkspaceBuild(workspaceId);
+    const showBuildProgress = isWorkspaceBuilding && !!workspaceBuild && (isWorkspaceHome || isSourcesPage || isCanvasPage || isSignalRadarPage || isMentionsPage || isMilestonePage || isBlogContentPage || isProductDeckPage);
 
     let marketId = '';
     if (isBudgetMarketPage) {
@@ -544,14 +556,14 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
         data-chat-visible={showChat}
       >
 
-        <div className={classNames("flex-1 min-h-0 flex h-full", { "gap-[20px] pt-[10px] pl-[10px]": (!chatStarted || isSourcesPage || isCanvasPage || isProductPage || isVibePage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage) && isLoggedIn })}>
-          {!isCanvasPage && !isWorkspaceHome && !isSourcesPage && !isProductPage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isCommunityMessagesPage && !isMilestonePage && (
+        <div className={classNames("flex-1 min-h-0 flex h-full", { "gap-[20px] pt-[10px] pl-[10px]": (!chatStarted || isAiAeoPage || isCompetitorsPage || isSourcesPage || isCanvasPage || isProductPage || isVibePage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage || isArenaPage || isSignalRadarPage || isMentionsPage) && isLoggedIn })}>
+          {!isCanvasPage && !isWorkspaceHome && !isAiAeoPage && !isCompetitorsPage && !isSourcesPage && !isProductPage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isMentionsPage && !isCommunityMessagesPage && !isMilestonePage && !isArenaPage && (
             <div className={classNames("h-full min-h-0 flex flex-col", {
-              'pt-[10px]': chatStarted && (isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage),
-              'pt-[var(--header-height)]': chatStarted && !isSourcesPage && !isCanvasPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isCommunityMessagesPage && !isMilestonePage && !isWorkspaceHome,
-              'w-full flex-1': (chatStarted && !isSourcesPage && !isCanvasPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isCommunityMessagesPage && !isMilestonePage && !isWorkspaceHome) || !isLoggedIn || !workspaceId || isVibePage,
-              'w-[520px] shrink-0': (!chatStarted || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage) && isLoggedIn && !!workspaceId && !isCanvasPage && !isVibePage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isCommunityMessagesPage && !isMilestonePage && !isWorkspaceHome,
-              'hidden': isCanvasPage || isWorkspaceHome || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isCommunityMessagesPage || isMilestonePage
+              'pt-[10px]': chatStarted && (isAiAeoPage || isCompetitorsPage || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage || isArenaPage),
+              'pt-[var(--header-height)]': chatStarted && !isAiAeoPage && !isCompetitorsPage && !isSourcesPage && !isCanvasPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isMentionsPage && !isCommunityMessagesPage && !isMilestonePage && !isArenaPage && !isWorkspaceHome,
+              'w-full flex-1': (chatStarted && !isAiAeoPage && !isCompetitorsPage && !isSourcesPage && !isCanvasPage && !isProductPage && !isVibePage && !isBudgetPage && !isBudgetMarketPage && !isAdsMarketingPage && !isGoogleAdsPage && !isMetaAdsPage && !isBlogContentPage && !isProductDeckPage && !isCommunityMessagesPage && !isMilestonePage && !isArenaPage && !isWorkspaceHome) || !isLoggedIn || !workspaceId || isVibePage,
+              'w-[520px] shrink-0': (!chatStarted || isAiAeoPage || isCompetitorsPage || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isMilestonePage || isArenaPage) && isLoggedIn && !!workspaceId && !isCanvasPage && !isVibePage && !isAgentContactPage && !isMyProspectsPage && !isSignalRadarPage && !isMentionsPage && !isCommunityMessagesPage && !isMilestonePage && !isWorkspaceHome && !isCompetitorsPage && !isAiAeoPage && !isArenaPage,
+              'hidden': isCanvasPage || isWorkspaceHome || isAiAeoPage || isCompetitorsPage || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isAdsMarketingPage || isGoogleAdsPage || isMetaAdsPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isMentionsPage || isCommunityMessagesPage || isMilestonePage || isArenaPage
             })}>
               <div className={classNames(styles.Chat, 'flex flex-col h-full relative w-full')}>
                 <FeedbackWidget hasMessages={(messages?.length || 0) > 1} />
@@ -631,6 +643,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       )}
                       {progressAnnotations && <ProgressCompilation data={progressAnnotations} />}
                       <ChatBox
+                        inputLockedMessage={isWorkspaceBuilding ? 'Your workspace is still being built. The AI is currently researching your product and market.' : undefined}
                         isModelSettingsCollapsed={isModelSettingsCollapsed}
                         setIsModelSettingsCollapsed={setIsModelSettingsCollapsed}
                         provider={provider}
@@ -703,15 +716,21 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
               </ClientOnly>
             </div>
           )}
-          {((!chatStarted || isSourcesPage || isCanvasPage || isProductPage || isBudgetPage || isBudgetMarketPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isCommunityMessagesPage || isMilestonePage || isWorkspaceHome) && isLoggedIn && !isVibePage) && (
-            <div className={classNames("h-full pb-6 pr-6 min-w-0", (isBrowserOpen || isCanvasPage || isWorkspaceHome || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isCommunityMessagesPage || isMilestonePage) ? "w-full pl-6" : "flex-1")}>
-              <div className="mt-2 h-full flex flex-col">
+          {((!chatStarted || isAiAeoPage || isCompetitorsPage || isSourcesPage || isCanvasPage || isProductPage || isBudgetPage || isBudgetMarketPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isMentionsPage || isCommunityMessagesPage || isMilestonePage || isArenaPage || isWorkspaceHome) && isLoggedIn && !isVibePage) && (
+            <div className={classNames("h-full pb-6 pr-6 min-w-0", (isBrowserOpen || isAiAeoPage || isCompetitorsPage || isCanvasPage || isWorkspaceHome || isSourcesPage || isProductPage || isBudgetPage || isBudgetMarketPage || isBlogContentPage || isProductDeckPage || isAgentContactPage || isMyProspectsPage || isSignalRadarPage || isMentionsPage || isCommunityMessagesPage || isMilestonePage || isArenaPage) ? "w-full pl-6" : "flex-1")}>
+              <div className="mt-2 h-full flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
                 {isSettingsOpen ? (
                   <ControlPanel open={true} onClose={() => settingsOpenStore.set(false)} activeTab={activeSettingsTab as any} inline />
                 ) : isBrowserOpen ? (
                   <WorkspaceBrowserView workspaceId={workspaceId} />
                 ) : isTabChanging ? (
                   <MainContentSpinner message="Loading workspace view..." />
+                ) : showBuildProgress && workspaceBuild ? (
+                  <WorkspaceBuildProgress build={workspaceBuild} onRetry={retryWorkspaceBuild} />
+                ) : isAiAeoPage ? (
+                  <WorkspaceAiAeoView workspaceId={workspaceId} />
+                ) : isCompetitorsPage ? (
+                  <WorkspaceCompetitorsView workspaceId={workspaceId} />
                 ) : isSourcesPage ? (
                   <WorkspaceSourcesView workspaceId={workspaceId} />
                 ) : isCanvasPage ? (
@@ -738,10 +757,14 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                   <MyProspectsView workspaceId={workspaceId} />
                 ) : isSignalRadarPage ? (
                   <WorkspaceSignalRadarView workspaceId={workspaceId} />
+                ) : isMentionsPage ? (
+                  <WorkspaceMentionsView workspaceId={workspaceId} />
                 ) : isCommunityMessagesPage ? (
                   <CommunityMessagesView />
                 ) : isMilestonePage ? (
                   <MilestoneView workspaceId={workspaceId} />
+                ) : isArenaPage ? (
+                  <AiStartupArenaView workspaceId={workspaceId} />
                 ) : isWorkspaceHome ? (
                   <ProductIntelligencePanel workspaceId={workspaceId} />
                 ) : null}

@@ -89,7 +89,15 @@ export default function LoginPage() {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-sm text-falbor-elements-textSecondary">Password</label>
+                            <div className="flex justify-between items-center">
+                                <label className="text-sm text-falbor-elements-textSecondary">Password</label>
+                                <Link
+                                    href={`/reset-password${email ? `?email=${encodeURIComponent(email)}` : ''}`}
+                                    className="text-xs text-accent-500 hover:underline"
+                                >
+                                    Forgot password?
+                                </Link>
+                            </div>
                             <div className="relative">
                                 <Input
                                     type={showPassword ? "text" : "password"}

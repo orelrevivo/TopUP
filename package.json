@@ -11,6 +11,9 @@
     "start": "npm run start --workspace=falbor"
   },
   "dependencies": {
+    "fumadocs-core": "^16.17.1",
+    "fumadocs-openapi": "^12.4.1",
+    "fumadocs-ui": "^16.17.1",
     "uuid": "^14.0.1"
   },
   "devDependencies": {

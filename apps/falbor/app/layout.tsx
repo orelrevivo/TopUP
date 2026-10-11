@@ -1,5 +1,5 @@
 import '@unocss/reset/tailwind.css';
-import './globals.css';
+import './_styles/globals.css';
 import './styles/index.scss';
 import { AuthProvider } from './hooks/useAuth';
 import { StorageSync } from './lib/auth/StorageSync';
@@ -7,6 +7,8 @@ import { ThemeSync } from './components/ui/ThemeSync.client';
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import { StayUpInit } from './components/stayup/StayUpInit.client';
 import { Montserrat } from 'next/font/google';
+import { inter } from './_styles/fonts/inter/inter';
+import { season } from './_styles/fonts/season/season';
 import { Analytics } from '@vercel/analytics/next';
 import { Toaster } from 'react-hot-toast';
 import dynamic from 'next/dynamic';
@@ -69,7 +71,7 @@ export default function FalborLayout({
           }}
         />
       </head>
-      <body className={`${montserrat.className} ${montserrat.variable}`}>
+      <body className={`${season.variable} ${inter.variable} ${montserrat.className} ${montserrat.variable}`}>
         <ThemeSync />
         <StayUpInit />
         <Toaster position="bottom-right" toastOptions={{ className: 'dark:bg-zinc-800 dark:text-white' }} />

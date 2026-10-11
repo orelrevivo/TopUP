@@ -1,8 +1,19 @@
+import "server-only";
 import { SignJWT, jwtVerify } from "jose";
 import bcrypt from "bcryptjs";
 import type { NextRequest } from "next/server";
 
-const JWT_SECRET = new TextEncoder().encode(process.env.JWT_SECRET!);
+function getJwtSecret(): Uint8Array {
+  const secret = process.env.JWT_SECRET;
+  if (!secret) {
+    if (process.env.NODE_ENV === "production") {
+      throw new Error("JWT_SECRET environment variable is not defined");
+    }
+    return new TextEncoder().encode("development-fallback-secret-key-32-chars-min!");
+  }
+  return new TextEncoder().encode(secret);
+}
+
 const COOKIE_NAME = "session";
 export const SESSION_DURATION_DAYS = 7;
 
@@ -19,12 +30,12 @@ export async function createToken(userId: string, role?: string): Promise<string
     .setProtectedHeader({ alg: "HS256" })
     .setExpirationTime(`${SESSION_DURATION_DAYS}d`)
     .setIssuedAt()
-    .sign(JWT_SECRET);
+    .sign(getJwtSecret());
 }
 
 export async function verifyToken(token: string): Promise<{ userId: string; role?: string } | null> {
   try {
-    const { payload } = await jwtVerify(token, JWT_SECRET);
+    const { payload } = await jwtVerify(token, getJwtSecret());
     return { userId: payload.userId as string, role: payload.role as string };
   } catch {
     return null;

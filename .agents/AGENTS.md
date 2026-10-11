@@ -192,3 +192,113 @@ Understand → Rebuild everything → Add unnecessary abstractions → Explain e
 ```
 
 The goal is to keep the Falbor codebase clean, consistent, maintainable, and written like a real production codebase rather than AI-generated code.
+
+
+## Design Consistency Across the Product
+
+Every UI change must preserve the existing design language and
+remain visually consistent with the rest of the product.
+
+Before creating or modifying UI:
+
+- Inspect the existing page, its parent layout, sibling pages,
+  shared components, design tokens, and related styles.
+- Identify the established patterns for spacing, typography,
+  colors, borders, navigation, page layouts, loading states,
+  empty states, dialogs, and interactions.
+- Reuse existing components and patterns instead of inventing
+  new ones.
+- When working inside a feature area such as a workspace,
+  follow the conventions shared by the other pages in that area.
+- Preserve existing relationships between layouts, components,
+  styles, and navigation.
+- Do not introduce a new visual style when an existing pattern
+  already solves the problem.
+- Do not duplicate shared UI or styling logic unnecessarily.
+- If a reusable component needs improvement, consider updating
+  the existing component instead of creating a competing version.
+- Do not make unrelated visual changes while implementing a
+  feature or fixing a bug.
+
+A page must feel like part of Falbor, not like a separate product.
+
+Before finishing, review the changed UI against related pages
+and verify that the implementation follows their existing patterns.
+
+
+
+## Security and Authorization
+
+Treat security as a requirement for every feature, not as an
+optional review at the end.
+
+- Never trust user-supplied IDs, URL parameters, request bodies,
+  query parameters, headers, or client-side permission checks.
+- Every protected server-side operation must independently verify
+  authentication and authorization.
+- Verify that the authenticated user has permission to access
+  the specific resource and perform the requested action.
+- For multi-tenant data, enforce workspace ownership or membership
+  in server-side database queries and mutations.
+- Never assume that access to a page grants permission to access
+  its underlying data or APIs.
+- Apply authorization checks to server actions, API routes,
+  route handlers, file operations, background jobs, and other
+  relevant entry points.
+- Validate untrusted input on the server using existing project
+  validation patterns.
+- Prevent unauthorized access to other users' data, workspaces,
+  files, conversations, integrations, and API resources.
+- Keep secrets and privileged operations on the server.
+- Do not expose sensitive data, internal errors, credentials,
+  or private configuration in client responses or logs.
+- Follow existing rate-limiting and abuse-prevention patterns
+  for sensitive or expensive operations.
+- Use the least privilege necessary for database access,
+  integrations, and external API calls.
+- Preserve existing security controls when refactoring code.
+- Never weaken authentication or authorization to make a feature
+  easier to implement.
+
+For every change involving authentication, authorization, user
+data, workspaces, files, or APIs:
+
+1. Identify the relevant trust boundaries and resources.
+2. Inspect existing authorization helpers and security patterns.
+3. Verify permissions on the server for every relevant operation.
+4. Check whether changing an ID or manipulating a request could
+   expose another user's data or trigger an unauthorized action.
+5. Add or update automated tests for relevant security boundaries.
+6. Verify that unauthorized requests fail without exposing data.
+
+Never claim that a feature is secure merely because the UI hides
+unauthorized actions. Authorization must be enforced server-side.
+
+## Professional Implementation Workflow
+
+For every task, follow this process:
+
+1. Understand the requested outcome and identify its scope.
+2. Inspect the relevant files, architecture, existing patterns,
+   shared components, and dependencies before making changes.
+3. Identify potential effects on related pages, APIs, data,
+   permissions, and existing functionality.
+4. Implement the smallest complete solution that fits the
+   existing architecture.
+5. Reuse existing utilities, components, and abstractions.
+6. Add or update tests when functionality, authorization, or
+   important behavior changes.
+7. Run the relevant available checks, such as tests, linting,
+   type checking, and builds when appropriate.
+8. Review the final changes for regressions, duplicated logic,
+   inconsistent UI, security issues, and unnecessary complexity.
+
+Never claim that a check passed unless it was actually executed
+and its result was verified.
+
+If a check cannot be run, explain briefly why.
+If a requirement is ambiguous and guessing could cause significant
+architectural, security, or product problems, ask before proceeding.
+
+Do not modify unrelated files or introduce unnecessary refactors.
+Keep code clean and avoid unnecessary comments and documentation.

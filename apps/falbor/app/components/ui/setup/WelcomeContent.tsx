@@ -18,9 +18,9 @@ export function WelcomeContent() {
       try {
         const workspaceId = await createWorkspace("Untitled Workspace");
         router.push(`/workspace/${workspaceId}`);
-      } catch (e) {
+      } catch (e: any) {
         console.error(e);
-        toast.error("Failed to create workspace");
+        toast.error(e?.message || "You are on the free plan; you cannot create a workspace.");
         setLoadingRoute(null);
       }
       return;

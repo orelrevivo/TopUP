@@ -180,7 +180,9 @@ export default defineConfig({
   theme: {
     spacing: SPACING,
     fontFamily: {
-      sans: ['var(--font-montserrat)', 'sans-serif'],
+      sans: ['var(--font-season)', 'var(--font-inter)', 'var(--font-montserrat)', 'sans-serif'],
+      season: ['var(--font-season)', 'sans-serif'],
+      inter: ['var(--font-inter)', 'sans-serif'],
     },
     colors: {
       ...COLOR_PRIMITIVES,

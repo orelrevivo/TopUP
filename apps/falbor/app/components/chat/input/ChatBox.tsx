@@ -80,6 +80,7 @@ interface ChatBoxProps {
   cloneUrl?: string | null;
   setCloneUrl?: ((url: string | null) => void) | undefined;
   pendingQuestions?: QuestionData[];
+  inputLockedMessage?: string;
 }
 
 export const ChatBox: React.FC<ChatBoxProps> = (props) => {
@@ -511,6 +512,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                 </div>
 
                 <textarea
+                  disabled={!!props.inputLockedMessage}
                   ref={props.textareaRef}
                   onScroll={(e) => {
                     if (highlightDivRef.current) {
@@ -590,7 +592,9 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                     maxHeight: props.TEXTAREA_MAX_HEIGHT,
                   }}
                   placeholder={
-                    props.chatMode === 'discuss'
+                    props.inputLockedMessage
+                      ? props.inputLockedMessage
+                      : props.chatMode === 'discuss'
                       ? 'DISCUSS Mode: Chat & ask questions without file edits...'
                       : props.chatMode === 'build'
                         ? 'How can Falbor help you today?'
@@ -607,7 +611,7 @@ export const ChatBox: React.FC<ChatBoxProps> = (props) => {
                   <SendButton
                     show={props.input.length > 0 || props.isStreaming || props.uploadedFiles.length > 0 || !!props.cloneUrl}
                     isStreaming={props.isStreaming}
-                    disabled={(!props.providerList || props.providerList.length === 0) || !user}
+                    disabled={(!props.providerList || props.providerList.length === 0) || !user || !!props.inputLockedMessage}
                     onClick={(event) => {
                       if (!user) return;
 

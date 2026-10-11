@@ -2,6 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
+import { useAuth } from '~/hooks/useAuth';
 import { BILLING_CONFIG, PlanConfig, PlanId } from '~/lib/billing/config';
 import { PayPalScriptProvider, PayPalButtons } from '@paypal/react-paypal-js';
 import { toast } from 'react-toastify';
@@ -20,6 +22,7 @@ interface UpgradeViewProps {
 export function UpgradeView({ workspaceId, paypalClientId }: UpgradeViewProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
   const [currentTier, setCurrentTier] = useState<PlanId>('free');
   const [balance, setBalance] = useState<number>(10);
   const [loading, setLoading] = useState(true);
@@ -199,6 +202,12 @@ export function UpgradeView({ workspaceId, paypalClientId }: UpgradeViewProps) {
                     >
                       Included
                     </button>
+                  ) : !user ? (
+                    <Link href={`/login?redirect=${encodeURIComponent(typeof window !== 'undefined' ? window.location.pathname : '/pricing')}`} className="block w-full">
+                      <button className="w-full h-10 rounded-lg bg-[#0099ff]/20 text-[#0099ff] transition-colors flex items-center justify-center gap-2">
+                        Log in to Subscribe
+                      </button>
+                    </Link>
                   ) : (
                     <div className="w-full space-y-2">
                       <PayPalButtons
@@ -237,6 +246,12 @@ export function UpgradeView({ workspaceId, paypalClientId }: UpgradeViewProps) {
 
                 <p className="mt-6 text-xs font-semibold text-zinc-900 dark:text-white">You get:</p>
                 <ul className="mt-4 space-y-3.5 text-xs">
+                  <li className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300 font-semibold">
+                    <span className="i-ph:check text-emerald-500 text-base shrink-0 -mt-0.5" />
+                    <span>
+                      {plan.maxWorkspaces === 1 ? '1 Workspace' : `Up to ${plan.maxWorkspaces} Workspaces`}
+                    </span>
+                  </li>
                   <li className="flex items-center gap-2 text-zinc-600 dark:text-zinc-300">
                     <span className="i-ph:check text-emerald-500 text-base shrink-0 -mt-0.5" />
                     <Tooltip content="FalborAI">
@@ -244,7 +259,7 @@ export function UpgradeView({ workspaceId, paypalClientId }: UpgradeViewProps) {
                     </Tooltip>
                     <span>{plan.monthlyCredits} Credits / month</span>
                   </li>
-                  {plan.features.map((feat, i) => (
+                  {plan.features.filter(f => !f.toLowerCase().includes('workspace')).map((feat, i) => (
                     <li key={i} className="flex items-start gap-3 text-zinc-600 dark:text-zinc-300">
                       <span className="i-ph:check text-emerald-500 text-base shrink-0 -mt-0.5" />
                       <span>{feat}</span>

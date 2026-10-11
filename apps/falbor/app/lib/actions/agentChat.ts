@@ -109,6 +109,17 @@ export async function sendAgentMessage(text: string, opts: { apiText?: string } 
                         html: `\`\`\`signal_posts\n${JSON.stringify(args?.posts || [], null, 2)}\n\`\`\``,
                         status: 'completed'
                     });
+                } else if (name === 'ui_update_brand_mention_posts') {
+                    const existingEvent = [...aiSidebarStore.events.get()].reverse().find((e) => e.title === 'Mentions Updated');
+                    const targetId = existingEvent?.id || v4();
+
+                    aiSidebarStore.upsertEvent({
+                        id: targetId,
+                        type: 'text',
+                        title: 'Mentions Updated',
+                        html: `\`\`\`mention_posts\n${JSON.stringify(args?.posts || [], null, 2)}\n\`\`\``,
+                        status: 'completed'
+                    });
                 } else if (name === 'run_browser_task') {
                     const existingBrowserEvent = [...aiSidebarStore.events.get()].reverse().find((e) => e.type === 'browser');
                     const targetId = existingBrowserEvent?.id || v4();

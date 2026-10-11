@@ -2,10 +2,10 @@ import React, { useState } from 'react';
 import { useStore } from '@nanostores/react';
 import { cloneWebsiteModalOpen, cloneWebsitePayload } from '~/lib/stores/cloneWebsite';
 import { Dialog, DialogRoot, DialogTitle, DialogDescription } from '~/components/ui/Dialog';
-import UnifiedInputPane from '~/(main)/(pages)/ai/_components/unified-input/UnifiedInputPane';
-import { Stack } from '~/(main)/(pages)/ai/_lib/stacks';
-import { EditorTheme, Settings } from '~/(main)/(pages)/ai/_types';
-import { CodeGenerationModel } from '~/(main)/(pages)/ai/_lib/models';
+import UnifiedInputPane from '~/(main)/(flows)/ai/_components/unified-input/UnifiedInputPane';
+import { Stack } from '~/(main)/(flows)/ai/_lib/stacks';
+import { EditorTheme, Settings } from '~/(main)/(flows)/ai/_types';
+import { CodeGenerationModel } from '~/(main)/(flows)/ai/_lib/models';
 
 import { useChatHistory, chatId } from '~/lib/persistence';
 import { generateId } from 'ai';
