@@ -102,12 +102,12 @@ export function MissingInfoTab({ workspaceId, missingInformation, onDataUpdated 
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-gray-100 dark:border-[#1A1A1E] pb-4">
         <p className="text-xs text-gray-500 mt-0.5">
           Answer the questions below to enrich the AI agent&apos;s knowledge base.
-          <span className="bg-red-200 dark:bg-red-800 text-red-600 dark:text-red-400">
+          <span className="bg-red-200 dark:bg-red-800 text-red-600 dark:text-black">
             We recommend answering these questions yourself rather than using AI, because you know your project better than AI does.
           </span>
         </p>
         <div className="flex items-center gap-2 shrink-0">
-          <div className="relative group flex items-center gap-1.5 border p-1 rounded-md">
+          <div className="relative group flex items-center gap-1.5 border dark:border-gray-700 p-1 rounded-md">
             <button
               onClick={handleAiAutoAnswer}
               disabled={aiLoading}
@@ -128,7 +128,7 @@ export function MissingInfoTab({ workspaceId, missingInformation, onDataUpdated 
               </button>
             ) : (
               <Badge variant="secondary">
-                {'<--'} :( Not Recommended
+                Beta
               </Badge>
             )}
           </div>
@@ -143,9 +143,9 @@ export function MissingInfoTab({ workspaceId, missingInformation, onDataUpdated 
           return (
             <div
               key={idx}
-              className="bg-white dark:bg-[#111114] flex flex-col gap-3"
+              className="bg-white dark:bg-[#111114] flex flex-col gap-3 px-2"
             >
-              <div className="flex items-start gap-2.5">
+              <div className="flex items-start gap-2.5 mt-2">
                 <p className="text-sm text-gray-900 dark:text-white leading-snug">{q}</p>
               </div>
 
@@ -155,10 +155,11 @@ export function MissingInfoTab({ workspaceId, missingInformation, onDataUpdated 
                   onChange={(e) => setAnswers((prev) => ({ ...prev, [q]: e.target.value }))}
                   onKeyDown={(e) => handleKeyDown(e, q)}
                   placeholder="Type your answer here..."
+                  className='dark:bg-black dark:border-gray-700'
                   rows={2}
                 />
 
-                <div className="flex justify-end">
+                <div className="flex justify-end mt-2 mb-2">
                   <button
                     onClick={() => handleAnswerSubmit(q)}
                     disabled={!text.trim() || isSubmitting}

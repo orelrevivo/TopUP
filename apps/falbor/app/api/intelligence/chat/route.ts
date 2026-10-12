@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     return new Response('Logged', { status: 200 });
   }
 
-  const { workspaceId, message, history, selectedMCPs, agentId } = body;
+  const { workspaceId, sessionId, message, history, selectedMCPs, agentId } = body;
 
   const authUser = await getAuthUserDetails();
   if (!authUser) return new Response('Unauthorized', { status: 401 });
@@ -79,8 +79,13 @@ export async function POST(req: Request) {
     }
   }
 
-  // This endpoint is the web UI. Telegram should call runAgentText() from ~/lib/agent/core instead.
   const agentTools = await buildAgentTools(workspace, selectedMCPs, user.id, body.browserSessionId, body.browserActiveTabId);
+
+  const accumulatedEvents: any[] = [];
+  if (Array.isArray(body.historyEvents)) {
+    accumulatedEvents.push(...body.historyEvents);
+  }
+
   const result = streamText({
     model: getAgentModel(),
     system: buildAgentSystemPrompt(workspace, 'web', selectedMCPs, agent),
@@ -88,7 +93,101 @@ export async function POST(req: Request) {
     tools: agentTools,
     maxSteps: 20,
     maxTokens: 3000,
-    onFinish: async ({ usage }) => {
+    onStepFinish: async (step) => {
+      try {
+        if (!sessionId) return;
+        const { agentSessions } = await import('~/lib/db/schema');
+        const { eq } = await import('drizzle-orm');
+
+        const [session] = await db
+          .select({ events: agentSessions.events })
+          .from(agentSessions)
+          .where(eq(agentSessions.id, sessionId));
+
+        const existingEvents = Array.isArray(session?.events) ? [...session.events] : [];
+
+        if (step.toolCalls && step.toolCalls.length > 0) {
+          for (const tc of step.toolCalls) {
+            const alreadyExists = existingEvents.some((e: any) => e.id === tc.toolCallId);
+            if (!alreadyExists) {
+              existingEvents.push({
+                id: tc.toolCallId,
+                type: 'tool',
+                title: tc.toolName,
+                status: 'completed',
+                toolInvocations: [
+                  {
+                    type: 'tool-invocation',
+                    toolInvocation: {
+                      state: 'call',
+                      toolCallId: tc.toolCallId,
+                      toolName: tc.toolName,
+                      args: tc.args,
+                    },
+                  },
+                ],
+              });
+            }
+          }
+        }
+
+        if (step.text && step.text.trim()) {
+          const stepText = step.text.trim();
+          const lastEvent = existingEvents[existingEvents.length - 1];
+          if (lastEvent && lastEvent.type === 'text' && lastEvent.status === 'active') {
+            lastEvent.title = stepText;
+            lastEvent.status = 'completed';
+          } else {
+            existingEvents.push({
+              id: `step-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+              type: 'text',
+              title: stepText,
+              status: 'completed',
+            });
+          }
+        }
+
+        await db
+          .update(agentSessions)
+          .set({ events: existingEvents, updatedAt: new Date() })
+          .where(eq(agentSessions.id, sessionId));
+      } catch (err) {
+        console.error('Error in onStepFinish persisting events:', err);
+      }
+    },
+    onFinish: async ({ usage, text }) => {
+      try {
+        if (sessionId && text && text.trim()) {
+          const { agentSessions } = await import('~/lib/db/schema');
+          const { eq } = await import('drizzle-orm');
+          const [session] = await db
+            .select({ events: agentSessions.events })
+            .from(agentSessions)
+            .where(eq(agentSessions.id, sessionId));
+
+          const existingEvents = Array.isArray(session?.events) ? [...session.events] : [];
+          const textTrimmed = text.trim();
+          const alreadyLogged = existingEvents.some(
+            (e: any) => e.type === 'text' && (e.title === textTrimmed || textTrimmed.includes(e.title))
+          );
+
+          if (!alreadyLogged) {
+            existingEvents.push({
+              id: `finish-${Date.now()}`,
+              type: 'text',
+              title: textTrimmed,
+              status: 'completed',
+            });
+            await db
+              .update(agentSessions)
+              .set({ events: existingEvents, updatedAt: new Date() })
+              .where(eq(agentSessions.id, sessionId));
+          }
+        }
+      } catch (err) {
+        console.error('Error persisting final agent events on finish:', err);
+      }
+
       try {
         const { calculateCreditCost } = await import('~/lib/billing/config');
         const { users } = await import('~/lib/db/schema');

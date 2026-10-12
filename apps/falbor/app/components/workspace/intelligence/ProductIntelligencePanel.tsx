@@ -7,6 +7,7 @@ import { getAgentSessionEvents } from '~/lib/actions/agentSession';
 import { aiSidebarStore } from '~/lib/stores/aiSidebar';
 import { runDeepIntelligenceResearch } from '~/lib/actions/intelligenceStream';
 import { DialogRoot, Dialog, DialogTitle } from '~/components/ui/Dialog';
+import { useAuth } from '~/hooks/useAuth';
 
 import { ProductHealthTab } from './tabs/ProductHealthTab';
 import { StageTab } from './tabs/StageTab';
@@ -128,7 +129,7 @@ function Tile({ title, icon, value, colorClass, onClick, isGenerating }: any) {
 import { IntelligenceDashboard } from './IntelligenceDashboard';
 
 export function ProductIntelligencePanel({ workspaceId, initialData }: ProductIntelligencePanelProps) {
-  // ... existing hooks ...
+  const { user } = useAuth();
   const [data, setData] = useState<IntelligenceData | null>(initialData ? normalizeIntelligence(initialData) : null);
   const [loading, setLoading] = useState(!initialData);
   const [error, setError] = useState<string | null>(null);
@@ -249,116 +250,122 @@ export function ProductIntelligencePanel({ workspaceId, initialData }: ProductIn
   const missingCount = data.missingInformation?.length ?? 0;
 
   return (
-    <div className="flex-1 w-full h-full flex flex-col overflow-y-auto custom-scrollbar gap-6">
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-        <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
-          <i className="i-ph:house" />
-          Overview
-        </h2>
+    <div className="flex-1 w-full h-full flex flex-col overflow-y-auto custom-scrollbar">
+      <div className="w-full mt-5 max-w-[1040px] mx-auto flex flex-col gap-6 transition-[max-width] duration-200">
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+          <div className="flex flex-col gap-1">
+            <span className="text-xs font-medium text-gray-500 dark:text-gray-400 capitalize">
+              {new Date().toLocaleDateString('en-US', { weekday: 'long' })}, {new Date().getDate()}/{new Date().getMonth() + 1}
+            </span>
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white flex items-center gap-2">
+              👋 Hey, {user?.displayName || (user?.email ? user.email.split('@')[0] : 'there')}
+            </h2>
+          </div>
 
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            onClick={() => aiSidebarStore.toggle()}
-            className="px-3 py-1.5 bg-[#EBEBEB] dark:bg-[#2A2A2A] text-gray-900 dark:text-white rounded-md text-sm flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors"
-          >
-            <i className="i-ph:sparkle-fill text-base text-[#0099ff]" />
-            Cofounder Agent
-          </button>
-          <button
-            onClick={() => {
-              fetchIntelligence(true);
-              aiSidebarStore.addEvent({
-                id: `regen-${Date.now()}`,
-                type: 'text',
-                title: 'Regenerating Product Intelligence...',
-                details: [
-                  'Analyzing latest product context and target metrics',
-                  'Updating competitor matrix, market signals, and audience heatmap'
-                ],
-                status: 'completed'
-              });
-              if (data?.nextBestAction) {
+          <div className="flex flex-wrap items-center gap-3">
+            <button
+              onClick={() => aiSidebarStore.toggle()}
+              className="px-3 py-1.5 bg-[#EBEBEB] dark:bg-[#2A2A2A] text-gray-900 dark:text-white rounded-md text-sm flex items-center gap-2 hover:bg-gray-200 dark:hover:bg-[#333] transition-colors"
+            >
+              <i className="i-ph:sparkle-fill text-base text-[#0099ff]" />
+              Cofounder Agent
+            </button>
+            <button
+              onClick={() => {
+                fetchIntelligence(true);
                 aiSidebarStore.addEvent({
-                  id: `action-${Date.now()}`,
+                  id: `regen-${Date.now()}`,
                   type: 'text',
-                  title: `Next Best Action: ${data.nextBestAction.title}`,
+                  title: 'Regenerating Product Intelligence...',
                   details: [
-                    data.nextBestAction.description,
-                    data.nextBestAction.expectedOutcome ? `Expected Outcome: ${data.nextBestAction.expectedOutcome}` : '',
-                    data.nextBestAction.promptText ? `Mission Prompt: ${data.nextBestAction.promptText}` : ''
-                  ].filter(Boolean),
+                    'Analyzing latest product context and target metrics',
+                    'Updating competitor matrix, market signals, and audience heatmap'
+                  ],
                   status: 'completed'
                 });
-              }
-              aiSidebarStore.open();
-            }}
-            disabled={loading}
-            className="bg-[#0099ff]/10 text-[#0099ff] rounded-md px-3 py-1.5 text-sm flex items-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
-          >
-            <i className={classNames("i-ph:arrows-clockwise", loading && "animate-spin")} />
-            {loading ? 'Analyzing...' : 'Regenerate'}
-          </button>
-        </div>
-      </div>
-      {error && (
-        <div className="mb-4 flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
-          <span className="break-words">Couldn't regenerate: {error}. Showing your previous results.</span>
-          <button onClick={() => fetchIntelligence(true)} className="shrink-0 px-3 py-1 bg-red-100 dark:bg-red-900/40 rounded-lg font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors">Retry</button>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        {[
-          { title: "Product Health", value: `${data.healthScore}%`, onClick: () => toggleTile('health') },
-          { title: "Current Stage", value: data.stage || 'Validation', onClick: () => toggleTile('stage') },
-          { title: "Segments", value: `${data.targetAudienceHeatmap?.length || 3}`, onClick: () => toggleTile('heatmap') },
-          { title: "Missing Info", value: missingCount, onClick: () => toggleTile('missing') }
-        ].map((kpi, i) => (
-          <div key={i} onClick={kpi.onClick} className="bg-white dark:bg-[#292929] border border-gray-300 dark:border-gray-700 p-4 rounded-md cursor-pointer hover:border-blue-300 dark:hover:border-blue-900/50 transition-colors relative overflow-hidden group">
-            {loading && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent animate-[scanLine_2s_linear_infinite]" />}
-            <div className="text-[13px] text-gray-500 font-medium mb-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">{kpi.title}</div>
-            <div className="text-2xl font-semibold text-gray-900 dark:text-white truncate">
-              {loading ? (
-                <span className="text-blue-500 text-sm animate-pulse flex items-center gap-1.5 mt-1">
-                  <i className="i-ph:sparkle animate-spin" /> Gen...
-                </span>
-              ) : kpi.value}
-            </div>
+                if (data?.nextBestAction) {
+                  aiSidebarStore.addEvent({
+                    id: `action-${Date.now()}`,
+                    type: 'text',
+                    title: `Next Best Action: ${data.nextBestAction.title}`,
+                    details: [
+                      data.nextBestAction.description,
+                      data.nextBestAction.expectedOutcome ? `Expected Outcome: ${data.nextBestAction.expectedOutcome}` : '',
+                      data.nextBestAction.promptText ? `Mission Prompt: ${data.nextBestAction.promptText}` : ''
+                    ].filter(Boolean),
+                    status: 'completed'
+                  });
+                }
+                aiSidebarStore.open();
+              }}
+              disabled={loading}
+              className="bg-[#0099ff]/10 text-[#0099ff] rounded-md px-3 py-1.5 text-sm flex items-center gap-2 hover:bg-blue-100 dark:hover:bg-blue-900/40 transition-colors"
+            >
+              <i className={classNames("i-ph:arrows-clockwise", loading && "animate-spin")} />
+              {loading ? 'Analyzing...' : 'Regenerate'}
+            </button>
           </div>
-        ))}
-      </div>
-      <IntelligenceDashboard workspaceId={workspaceId} />
-      <DialogRoot open={!!expandedTile} onOpenChange={(open) => { if (!open) setExpandedTile(null); }}>
-        {!!expandedTile && (
-          <Dialog
-            onClose={() => setExpandedTile(null)}
-            onBackdrop={() => setExpandedTile(null)}
-            className="!w-[800px] !h-[700px] !max-w-[95vw] !max-h-[90vh] flex flex-col overflow-hidden"
-          >
-            <div className="p-6 md:p-8 flex-1 flex flex-col overflow-hidden">
-              <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-[#1A1A1E] pb-4 flex-shrink-0">
-                {getDialogTitle()}
-              </DialogTitle>
+        </div>
+        {error && (
+          <div className="mb-4 flex items-center justify-between gap-3 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 px-4 py-3 rounded-xl text-sm">
+            <span className="break-words">Couldn't regenerate: {error}. Showing your previous results.</span>
+            <button onClick={() => fetchIntelligence(true)} className="shrink-0 px-3 py-1 bg-red-100 dark:bg-red-900/40 rounded-lg font-medium hover:bg-red-200 dark:hover:bg-red-900/60 transition-colors">Retry</button>
+          </div>
+        )}
 
-              <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
-                {expandedTile === 'health' && <ProductHealthTab healthScore={data.healthScore} sourcesUsed={data.sourcesUsed} />}
-                {expandedTile === 'stage' && <StageTab stage={data.stage} />}
-                {expandedTile === 'heatmap' && <TargetAudienceHeatmapTab data={data} />}
-                {expandedTile === 'matrix' && <CompetitorMatrixTab data={data} />}
-                {expandedTile === 'action' && <NextBestActionTab nextBestAction={data.nextBestAction} />}
-                {expandedTile === 'missing' && (
-                  <MissingInfoTab
-                    workspaceId={workspaceId}
-                    missingInformation={data.missingInformation}
-                    onDataUpdated={(updatedData) => setData(normalizeIntelligence(updatedData))}
-                  />
-                )}
-                {expandedTile === 'funnel' && <AcquisitionFunnelTab data={data} />}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { title: "Product Health", value: `${data.healthScore}%`, onClick: () => toggleTile('health') },
+            { title: "Current Stage", value: data.stage || 'Validation', onClick: () => toggleTile('stage') },
+            { title: "Segments", value: `${data.targetAudienceHeatmap?.length || 3}`, onClick: () => toggleTile('heatmap') },
+            { title: "Missing Info", value: missingCount, onClick: () => toggleTile('missing') }
+          ].map((kpi, i) => (
+            <div key={i} onClick={kpi.onClick} className="bg-white dark:bg-[#292929] border border-gray-300 dark:border-gray-700 p-4 rounded-md cursor-pointer hover:border-blue-300 dark:hover:border-blue-900/50 transition-colors relative overflow-hidden group">
+              {loading && <div className="absolute inset-0 bg-gradient-to-r from-transparent via-blue-500/10 to-transparent animate-[scanLine_2s_linear_infinite]" />}
+              <div className="text-[13px] text-gray-500 font-medium mb-2 group-hover:text-gray-700 dark:group-hover:text-gray-300 transition-colors">{kpi.title}</div>
+              <div className="text-2xl font-semibold text-gray-900 dark:text-white truncate">
+                {loading ? (
+                  <span className="text-blue-500 text-sm animate-pulse flex items-center gap-1.5 mt-1">
+                    <i className="i-ph:sparkle animate-spin" /> Gen...
+                  </span>
+                ) : kpi.value}
               </div>
             </div>
-          </Dialog>
-        )}
-      </DialogRoot>
+          ))}
+        </div>
+        <IntelligenceDashboard workspaceId={workspaceId} />
+        <DialogRoot open={!!expandedTile} onOpenChange={(open) => { if (!open) setExpandedTile(null); }}>
+          {!!expandedTile && (
+            <Dialog
+              onClose={() => setExpandedTile(null)}
+              onBackdrop={() => setExpandedTile(null)}
+              className="!w-[800px] !h-[700px] !max-w-[95vw] !max-h-[90vh] flex flex-col overflow-hidden"
+            >
+              <div className="p-6 md:p-8 flex-1 flex flex-col overflow-hidden">
+                <DialogTitle className="text-xl font-semibold text-gray-900 dark:text-white mb-6 border-b border-gray-100 dark:border-[#1A1A1E] pb-4 flex-shrink-0">
+                  {getDialogTitle()}
+                </DialogTitle>
+
+                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2">
+                  {expandedTile === 'health' && <ProductHealthTab healthScore={data.healthScore} sourcesUsed={data.sourcesUsed} />}
+                  {expandedTile === 'stage' && <StageTab stage={data.stage} />}
+                  {expandedTile === 'heatmap' && <TargetAudienceHeatmapTab data={data} />}
+                  {expandedTile === 'matrix' && <CompetitorMatrixTab data={data} />}
+                  {expandedTile === 'action' && <NextBestActionTab nextBestAction={data.nextBestAction} />}
+                  {expandedTile === 'missing' && (
+                    <MissingInfoTab
+                      workspaceId={workspaceId}
+                      missingInformation={data.missingInformation}
+                      onDataUpdated={(updatedData) => setData(normalizeIntelligence(updatedData))}
+                    />
+                  )}
+                  {expandedTile === 'funnel' && <AcquisitionFunnelTab data={data} />}
+                </div>
+              </div>
+            </Dialog>
+          )}
+        </DialogRoot>
+      </div>
     </div>
   );
 }

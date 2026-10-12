@@ -8,6 +8,7 @@ import { HeaderControls } from './HeaderControls';
 import { AgentMessages } from './AgentMessages';
 import { AgentChatInput } from './AgentChatInput';
 import { useAgentSessionPolling } from './hooks/useAgentSessionPolling';
+import { getAgentSessionEvents } from '~/lib/actions/agentSession';
 
 export const AISidebar = ({
   className,
@@ -21,12 +22,25 @@ export const AISidebar = ({
   const isOpen = useStore(aiSidebarStore.isOpen);
   const isActive = useStore(aiSidebarStore.isActive);
   const rawEvents = useStore(aiSidebarStore.events);
+  const currentWorkspaceId = useStore(aiSidebarStore.currentWorkspaceId);
+  const currentSessionId = useStore(aiSidebarStore.currentSessionId);
   const events = Array.isArray(rawEvents) ? rawEvents : [];
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    if (!currentWorkspaceId) return;
+    if (!currentSessionId || events.length === 0) {
+      getAgentSessionEvents(currentWorkspaceId, currentSessionId || undefined).then((res) => {
+        if (res && res.id) {
+          aiSidebarStore.setWorkspace(currentWorkspaceId, res.events || [], res.id, res.title || 'Onboarding');
+        }
+      });
+    }
+  }, [currentWorkspaceId, currentSessionId]);
 
   useAgentSessionPolling(isOpen);
 

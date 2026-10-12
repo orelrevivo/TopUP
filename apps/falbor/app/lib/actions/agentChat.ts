@@ -44,12 +44,15 @@ export async function sendAgentMessage(text: string, opts: { apiText?: string } 
     const ctrl = new AbortController();
     controller = ctrl;
 
+    const currentSessionId = aiSidebarStore.currentSessionId.get();
+
     try {
         const res = await fetch('/api/intelligence/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
                 workspaceId, 
+                sessionId: currentSessionId,
                 message: opts.apiText ?? text, 
                 history, 
                 selectedMCPs,

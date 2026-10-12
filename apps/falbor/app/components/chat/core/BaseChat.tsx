@@ -602,6 +602,7 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                       'sticky bottom-2': chatStarted,
                     })}
                   >
+                    {!chatStarted && <h1 className="dark:text-white/80 text-3xl">What do you want to build?</h1>}
                     <div className="flex flex-col gap-2">
                       {supabaseAlert && (
                         <SupabaseChatAlert
@@ -680,7 +681,6 @@ export const BaseChat = React.forwardRef<HTMLDivElement, BaseChatProps>(
                         qrModalOpen={qrModalOpen}
                         setQrModalOpen={setQrModalOpen}
                         handleFileUpload={handleFileUpload}
-
                         setChatMode={setChatMode}
                         designScheme={designScheme}
                         setDesignScheme={setDesignScheme}

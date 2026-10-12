@@ -1,11 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useStore } from '@nanostores/react';
 import { aiSidebarStore } from '~/lib/stores/aiSidebar';
+import {
+  getAgentSessionsList,
+  createNewAgentSession,
+  getAgentSessionEvents,
+  renameAgentSession,
+  deleteAgentSession,
+} from '~/lib/actions/agentSession';
 
 export interface AgentSession {
   id: string;
   title: string;
   createdAt: Date;
+  updatedAt?: Date;
+  events?: any;
 }
 
 export function useAgentSessions() {
@@ -14,11 +23,17 @@ export function useAgentSessions() {
   const currentSessionTitle = useStore(aiSidebarStore.currentSessionTitle);
 
   const [sessions, setSessions] = useState<AgentSession[]>([]);
+  const sessionCacheRef = useRef<Map<string, any[]>>(new Map());
 
   useEffect(() => {
     if (workspaceId) {
-      import('~/lib/actions/agentSession').then(({ getAgentSessionsList }) => {
-        getAgentSessionsList(workspaceId).then(setSessions);
+      getAgentSessionsList(workspaceId).then((list) => {
+        setSessions(list);
+        list.forEach((s) => {
+          if (s.events && Array.isArray(s.events)) {
+            sessionCacheRef.current.set(s.id, s.events);
+          }
+        });
       });
     }
   }, [workspaceId, currentSessionId]);
@@ -26,9 +41,13 @@ export function useAgentSessions() {
   const refreshSessions = async () => {
     if (!workspaceId) return [];
     try {
-      const { getAgentSessionsList } = await import('~/lib/actions/agentSession');
       const list = await getAgentSessionsList(workspaceId);
       setSessions(list);
+      list.forEach((s) => {
+        if (s.events && Array.isArray(s.events)) {
+          sessionCacheRef.current.set(s.id, s.events);
+        }
+      });
       return list;
     } catch (err) {
       console.error('Failed to refresh sessions:', err);
@@ -39,9 +58,9 @@ export function useAgentSessions() {
   const handleCreateNewChat = async () => {
     if (!workspaceId) return;
     try {
-      const { createNewAgentSession, getAgentSessionsList } = await import('~/lib/actions/agentSession');
       const newSession = await createNewAgentSession(workspaceId);
       if (newSession) {
+        sessionCacheRef.current.set(newSession.id, []);
         aiSidebarStore.setSession(newSession.id, newSession.title, []);
         const list = await getAgentSessionsList(workspaceId);
         setSessions(list);
@@ -53,12 +72,21 @@ export function useAgentSessions() {
 
   const handleSelectSession = async (sessionId: string, sessionTitle: string) => {
     if (sessionId === currentSessionId || !workspaceId) return;
-    aiSidebarStore.setSession(sessionId, sessionTitle, []);
+
+    const cached = sessionCacheRef.current.get(sessionId);
+    if (cached !== undefined) {
+      aiSidebarStore.setSession(sessionId, sessionTitle, cached);
+    } else {
+      aiSidebarStore.setSession(sessionId, sessionTitle, []);
+    }
+
     try {
-      const { getAgentSessionEvents } = await import('~/lib/actions/agentSession');
       const res = await getAgentSessionEvents(workspaceId, sessionId);
       const evs = Array.isArray(res) ? res : res?.events || [];
-      aiSidebarStore.setSession(sessionId, sessionTitle, evs);
+      sessionCacheRef.current.set(sessionId, evs);
+      if (aiSidebarStore.currentSessionId.get() === sessionId) {
+        aiSidebarStore.events.set(evs);
+      }
     } catch (err) {
       console.error('Failed to load session events:', err);
     }
@@ -69,7 +97,6 @@ export function useAgentSessions() {
     const newTitle = titleInput.trim();
     aiSidebarStore.setSession(currentSessionId, newTitle, aiSidebarStore.events.get());
     try {
-      const { renameAgentSession, getAgentSessionsList } = await import('~/lib/actions/agentSession');
       await renameAgentSession(currentSessionId, newTitle);
       if (workspaceId) {
         const list = await getAgentSessionsList(workspaceId);
@@ -83,8 +110,8 @@ export function useAgentSessions() {
   const handleDeleteSession = async () => {
     if (!currentSessionId || !workspaceId) return;
     try {
-      const { deleteAgentSession, getAgentSessionsList } = await import('~/lib/actions/agentSession');
       await deleteAgentSession(currentSessionId);
+      sessionCacheRef.current.delete(currentSessionId);
       const remaining = await getAgentSessionsList(workspaceId);
       setSessions(remaining);
       if (remaining.length > 0) {

@@ -54,26 +54,26 @@ export function useChatHistory() {
               let rewindId = searchParams.get('rewindTo') || (snapshotData?.type === 'multi' ? snapshotData.rewindId : null);
 
               let validSnapshot: Snapshot | undefined;
-              
+
               if (snapshotData?.type === 'multi') {
                 const snapshots = snapshotData.snapshots || {};
                 if (rewindId && snapshots[rewindId]) {
                   validSnapshot = snapshots[rewindId];
                 } else {
-                  
+
                   const keys = Object.keys(snapshots);
                   if (keys.length > 0) {
 
                     let found = false;
                     for (let i = storedMessages.messages.length - 1; i >= 0; i--) {
-                       if (snapshots[storedMessages.messages[i].id]) {
-                           validSnapshot = snapshots[storedMessages.messages[i].id];
-                           found = true;
-                           break;
-                       }
+                      if (snapshots[storedMessages.messages[i].id]) {
+                        validSnapshot = snapshots[storedMessages.messages[i].id];
+                        found = true;
+                        break;
+                      }
                     }
                     if (!found) {
-                        validSnapshot = snapshots[keys[keys.length - 1]];
+                      validSnapshot = snapshots[keys[keys.length - 1]];
                     }
                   }
                 }
@@ -91,7 +91,7 @@ export function useChatHistory() {
               if (validSnapshot && Object.keys(validSnapshot.files || {}).length > 0) {
                 restoreSnapshot(mixedId, validSnapshot);
                 hasSnapshot = true;
-                
+
                 workbenchStore.showWorkbench.set(true);
               }
 

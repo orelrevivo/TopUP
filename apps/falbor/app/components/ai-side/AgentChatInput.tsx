@@ -53,7 +53,7 @@ export const AgentChatInput = () => {
       .then((d) => {
         if (d && d.balance !== undefined) setUserBalance(Number(d.balance));
       })
-      .catch(() => {});
+      .catch(() => { });
   }, [events, isActive]);
 
   const activeWsId = pathname?.split('/')[2] || '';
@@ -68,7 +68,7 @@ export const AgentChatInput = () => {
               if (current) setUserRole(current.role);
             }
           })
-          .catch(() => {});
+          .catch(() => { });
       });
     }
   }, [pathname]);
@@ -267,33 +267,11 @@ Target Action & Instructions:
     handleOptionSelect(selectedOption);
   };
 
-  const showSuggestions = events.length === 0 && !isActive;
-
   return (
     <form
       onSubmit={handleSendMessage}
-      className="p-3 relative"
+      className="p-3 relative max-w-[440px] w-full mx-auto"
     >
-      {showSuggestions && (
-        <div className="mb-3 flex flex-col items-start gap-1.5 animate-fade-in">
-          <span className="text-xs font-semibold text-gray-500 dark:text-gray-400 pl-0.5">
-            Suggestions
-          </span>
-          <div className="flex flex-col items-start gap-1.5 w-full">
-            {FALBOR_SUGGESTIONS.map((sugg, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setChatInput(sugg.prompt)}
-                className="flex items-center gap-1.5 text-xs font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/70 border border-gray-200 dark:border-gray-700 rounded-md px-2.5 py-1.5 transition-colors shadow-sm text-left max-w-full truncate"
-              >
-                <i className="i-ph:chat-teardrop-text text-gray-400 text-sm shrink-0" />
-                <span className="truncate">{sugg.label}</span>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {sortedOptions.length > 0 && !isActive && (
         <div className="p-3 border border-gray-300 bg-white dark:bg-gray-900 text-gray-900 dark:text-white rounded-t-lg animate-fade-in z-30">
@@ -398,7 +376,7 @@ Target Action & Instructions:
       {/* Growth Agent Start Widget */}
       {isAgentContactPage && !isActive && sortedOptions.length === 0 && (
         <div className="relative z-0 -mb-2">
-          <div className="bg-[#EBEBEB] dark:bg-[#3A2C1D] px-4 pt-3 pb-5 flex justify-between items-center text-sm rounded-t-[8px]">
+          <div className="bg-[#EBEBEB] dark:bg-[#282828] px-4 pt-3 pb-5 flex justify-between items-center text-sm rounded-t-xl">
             <div className="font-medium flex items-center gap-2">
               <span className="text-sm text-gray-900 dark:text-orange-100">Let's find you the best prospects</span>
             </div>
@@ -413,7 +391,28 @@ Target Action & Instructions:
           </div>
         </div>
       )}
-      <div className={`flex flex-col border ${blogInputError ? 'border-red-500 border-2 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'border-gray-300 dark:border-gray-700'} gap-2 p-2 focus-within:border-gray-400 min-h-[140px] max-h-[280px] relative z-10 ${sortedOptions.length > 0 ? 'rounded-b-lg border-t-0 bg-white dark:bg-[#0c0c0c]' : 'rounded-lg bg-white dark:bg-[#0c0c0c] shadow-[0_-4px_10px_-2px_rgba(0,0,0,0.05)]'}`}>
+      <div className="relative z-0 -mb-2">
+        <div className="bg-[#EBEBEB] dark:bg-[#282828] px-4 pt-3 pb-5 flex justify-between items-center text-sm rounded-t-xl">
+          <span className="text-[#8e8e93] dark:text-[#909095] font-medium text-[12px]">Connect your apps</span>
+          <div className="flex items-center gap-1.5">
+            {allConnectors.slice(0, 6).map((c) => {
+              const isSelected = selectedMCPs.includes(c.id);
+              return (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => insertConnector(c.id)}
+                  title={`${c.name} (${isSelected ? 'Selected' : 'Click to select'})`}
+                  className={`p-0.5 rounded transition-transform hover:scale-110 ${isSelected ? 'ring-1 ring-blue-500' : 'opacity-90 hover:opacity-100'}`}
+                >
+                  <img src={c.logo} alt={c.name} className="w-4 h-4 object-contain" />
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+      <div className={`flex flex-col border bg-white dark:bg-[#212121] ${blogInputError ? 'border-red-500 border-2 shadow-[0_0_8px_rgba(239,68,68,0.5)]' : 'border-black/10 dark:border-white/10'} gap-2 p-3 bg-transparent rounded-xl relative z-10 focus-within:border-gray-400 dark:focus-within:border-white/20 transition-all`}>
         {selectedMCPs.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 px-1 pt-1 pb-1">
             {selectedMCPs.map((mcpId) => {
@@ -476,12 +475,12 @@ Target Action & Instructions:
               isViewer
                 ? 'Viewers cannot send messages to AI Agent'
                 : isActive
-                ? 'AI is working... Click stop to pause'
-                : sortedOptions.length > 0
-                ? 'Or type a custom answer...'
-                : 'What is your purpose for today?'
+                  ? 'AI is working... Click stop to pause'
+                  : sortedOptions.length > 0
+                    ? 'Or type a custom answer...'
+                    : 'What is your purpose for today?'
             }
-            className="w-full h-full min-h-[90px] bg-transparent px-2 py-1 text-sm text-gray-900 dark:text-white caret-gray-900 dark:caret-white focus:outline-none placeholder-gray-400 disabled:opacity-60 resize-none"
+            className="w-full h-full min-h-[50px] bg-transparent px-2 py-1 text-sm text-gray-900 dark:text-white caret-gray-900 dark:caret-white focus:outline-none placeholder-gray-400 disabled:opacity-60 resize-none"
           />
         </div>
 
@@ -589,9 +588,8 @@ Target Action & Instructions:
               <a
                 href={activeWsId ? `/workspace/${activeWsId}/upgrade` : '/upgrade'}
                 title="View Subscription & Credits"
-                className="text-[11px] font-semibold text-gray-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 bg-gray-100 hover:bg-purple-50 dark:bg-gray-800/60 dark:hover:bg-purple-950/40 px-2 py-1 rounded-md transition-colors flex items-center gap-1"
+                className="text-[11px] py-2 px-2 text-gray-500 hover:text-purple-600 dark:text-gray-400 dark:hover:text-purple-400 bg-gray-100 hover:bg-purple-50 dark:bg-gray-800/60 dark:hover:bg-purple-950/40 rounded-md transition-colors flex items-center gap-1"
               >
-                <i className="i-ph:lightning-fill text-amber-500 text-xs" />
                 <span>{userBalance.toFixed(1)} credits</span>
               </a>
             )}
@@ -621,7 +619,6 @@ Target Action & Instructions:
           </div>
         </div>
       </div>
-
 
       <SkillsDialog open={isSkillsDialogOpen} onOpenChange={setIsSkillsDialogOpen} />
     </form>

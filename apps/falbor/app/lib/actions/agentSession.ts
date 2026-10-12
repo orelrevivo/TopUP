@@ -27,7 +27,7 @@ export async function getAgentSessionsList(workspaceId: string) {
       title: s.title,
       createdAt: s.createdAt,
       updatedAt: s.updatedAt,
-      events: s.events,
+      events: (s.events as any[]) || [],
     }));
   } catch (error) {
     console.error('Failed to get agent sessions list:', error);

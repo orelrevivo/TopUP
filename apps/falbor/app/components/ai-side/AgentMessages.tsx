@@ -573,23 +573,79 @@ export const EventItem = ({ event }: { event: AIEvent }) => {
   );
 };
 
+const FALBOR_SUGGESTIONS = [
+  {
+    icon: 'i-ph:briefcase',
+    label: 'What should I work on today?',
+    prompt: 'Analyze current workspace progress and tell me what high-impact tasks I should work on today.',
+  },
+  {
+    icon: 'i-ph:note-pencil',
+    label: 'Draft my weekly status update',
+    prompt: 'Draft a concise, professional weekly progress status update based on my product intelligence.',
+  },
+  {
+    icon: 'i-ph:book-open',
+    label: 'How do I work with Falbor?',
+    prompt: 'Explain what you can do for me as my AI Cofounder agent and how we can work together.',
+  },
+];
+
 export const AgentMessages = ({ events, isActive }: { events: AIEvent[]; isActive: boolean }) => {
   const currentAgent = useStore(aiSidebarStore.currentAgent);
-  const hasLiveEvent = events.some((e) => e.status === 'active');
+
+  const handleSuggestionClick = (prompt: string) => {
+    sendAgentMessage(prompt);
+  };
+
+  const agentName = currentAgent?.name || 'Falbor';
+  const agentDesc =
+    currentAgent?.instructions ||
+    currentAgent?.goal ||
+    "I'll help you stay on top of your work in Falbor by flagging what matters, surfacing what's next, and jumping in when you need a hand.";
 
   return (
-    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col">
+    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 flex flex-col justify-end">
       {events.length === 0 && !isActive ? (
-        <div className="flex-1 flex flex-col items-center justify-center text-center p-6 text-gray-500">
-          {currentAgent?.avatarUrl ? (
-            <img className="w-45 h-45 rounded-full object-cover mb-4" src={currentAgent.avatarUrl} alt="Agent Avatar" />
-          ) : (
-            <img className="w-45 h-45 mb-4" src="/icons/FalborAgent.svg" alt="Default Icon" />
-          )}
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            <h2 className='text-4xl'>Hi my name is <TextShimmer>{currentAgent?.name ? `the ${currentAgent.name}` : 'the Falbor Agent'}</TextShimmer>.</h2>
-            <span className='text-xl'>I am here to help you with any task you need help with inside the website or outside the website.</span>
+        <div className="flex flex-col items-start text-left py-2 px-1 max-w-[440px] w-full mx-auto animate-fade-in">
+          {/* Logo / Agent Avatar on left */}
+          <div className="mb-4">
+            {currentAgent?.avatarUrl ? (
+              <img className="w-10 h-10 rounded-full object-cover" src={currentAgent.avatarUrl} alt="Agent Avatar" />
+            ) : (
+              <img className="w-9 h-9 object-contain" src="/icons/logo.svg" alt="Falbor" />
+            )}
+          </div>
+
+          {/* Heading */}
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">
+              Hi, I'm {agentName}
+            </h1>
+            <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-gray-200/70 dark:bg-[#2c2c2e] text-gray-600 dark:text-gray-400">
+              AI Agent
+            </span>
+          </div>
+
+          {/* Short description */}
+          <p className="text-sm text-gray-600 dark:text-[#a0a0a5] leading-relaxed mb-6 max-w-md">
+            {agentDesc}
           </p>
+
+          {/* Suggestion buttons */}
+          <div className="flex flex-col gap-2">
+            {FALBOR_SUGGESTIONS.map((sugg, idx) => (
+              <button
+                key={idx}
+                type="button"
+                onClick={() => handleSuggestionClick(sugg.prompt)}
+                className="flex items-center gap-3 w-full p-3 rounded-xl bg-gray-100 dark:bg-[#282828] text-gray-800 dark:text-gray-200 transition-colors text-left text-sm font-medium"
+              >
+                <i className={`${sugg.icon} text-lg text-gray-500 dark:text-gray-400 shrink-0`} />
+                <span className="truncate flex-1">{sugg.label}</span>
+              </button>
+            ))}
+          </div>
         </div>
       ) : (
         <div className="flex flex-col w-full pb-4">
@@ -598,10 +654,12 @@ export const AgentMessages = ({ events, isActive }: { events: AIEvent[]; isActiv
           ))}
 
           {isActive && (
-            <TextShimmer>
-              <i className="i-ph:spinner animate-spin text-sm text-blue-500" />
-              Agent thinking
-            </TextShimmer>
+            <div className="mt-2">
+              <TextShimmer>
+                <i className="i-ph:spinner animate-spin text-sm text-blue-500 mr-2" />
+                Agent thinking
+              </TextShimmer>
+            </div>
           )}
         </div>
       )}

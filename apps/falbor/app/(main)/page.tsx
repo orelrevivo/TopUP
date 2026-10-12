@@ -158,12 +158,7 @@ function PageContent() {
       const parts = pathname.split('/');
       const workspaceId = parts[2];
       if (workspaceId && workspaceId !== 'new' && workspaceId !== aiSidebarStore.currentWorkspaceId.get()) {
-        aiSidebarStore.setWorkspace(
-          workspaceId,
-          aiSidebarStore.events.get(),
-          aiSidebarStore.currentSessionId.get(),
-          aiSidebarStore.currentSessionTitle.get()
-        );
+        aiSidebarStore.setWorkspace(workspaceId, [], null, 'Onboarding');
       }
     }
   }, [pathname]);
